@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="SettingsScreen" extends="Group">
+  <script type="text/brightscript" uri="SettingsScreen.brs" />
+  <interface>
+    <function name="openSettings" />
+    <field id="close" type="boolean" alwaysNotify="true" />
+    <field id="saved" type="boolean" alwaysNotify="true" />
+  </interface>
+  <children>
+    <Rectangle
+      id="backdrop"
+      width="1920"
+      height="1080"
+      color="0x0A0A12FF" />
+    <Label
+      id="heading"
+      text="JellyFlam3 settings"
+      translation="[120,36]"
+      width="1200"
+      font="font:LargeBoldSystemFont"
+      color="0xE8E8F0FF" />
+    <Label
+      id="versionLabel"
+      text=""
+      translation="[1280,44]"
+      width="520"
+      horizAlign="right"
+      font="font:SmallSystemFont"
+      color="0xA0A0B0FF" />
+    <Label
+      id="hint"
+      text="Up/Down / OK edits / Probe display writes registry + Pi profile / Save / Back"
+      translation="[120,96]"
+      width="1680"
+      wrap="true"
+      font="font:SmallSystemFont"
+      color="0xA0A0B0FF" />
+    <SettingRow id="row_baseUrl" translation="[120,155]" />
+    <SettingRow id="row_apiKey" translation="[120,225]" />
+    <SettingRow id="row_userId" translation="[120,295]" />
+    <SettingRow id="row_libraryId" translation="[120,365]" />
+    <SettingRow id="row_commercialMode" translation="[120,435]" />
+    <SettingRow id="row_streamMode" translation="[120,505]" />
+    <SettingRow id="row_shuffleFlock" translation="[120,575]" />
+    <SettingRow id="row_probeDisplay" translation="[120,645]" />
+    <SettingRow id="row_save" translation="[120,730]" />
+    <SettingRow id="row_cancel" translation="[120,800]" />
+    <Label
+      id="footer"
+      text=""
+      translation="[120,885]"
+      width="1680"
+      height="160"
+      wrap="true"
+      color="0xC8C8D0FF"
+      font="font:SmallestSystemFont" />
+  </children>
+</component>

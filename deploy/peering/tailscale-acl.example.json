@@ -1,0 +1,29 @@
+# Example Tailscale ACL fragment for JellyFlam3 flock peering (guide 05).
+# Paste into the tailnet policy file (admin console) — do not commit live keys.
+#
+# Locked auth path for Phase 2 DoD: reusable / ephemeral **pre-auth key** in
+# secrets.env as TS_AUTHKEY (never commit). Host service runs:
+#   tailscale up --auth-key="$TS_AUTHKEY" --advertise-tags=tag:jellyflam3
+#
+# Tag owners and ACL editors must be restricted to flock admins.
+
+{
+  "tagOwners": {
+    "tag:jellyflam3": ["autogroup:admin"]
+  },
+  "acls": [
+    {
+      "action": "accept",
+      "src": ["tag:jellyflam3"],
+      "dst": ["tag:jellyflam3:*"]
+    }
+  ],
+  "ssh": [
+    {
+      "action": "check",
+      "src": ["autogroup:admin"],
+      "dst": ["tag:jellyflam3"],
+      "users": ["jellyflam3", "autogroup:nonroot"]
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<window>
+  <!-- videowindow cannot take focus — use a hidden button as defaultcontrol -->
+  <defaultcontrol always="true">90</defaultcontrol>
+  <controls>
+    <!-- Focus sink + underlay BEFORE videowindow (videowindow must be topmost). -->
+    <control type="button" id="90">
+      <description>focus sink (invisible; receives remote so onAction runs)</description>
+      <left>0</left>
+      <top>0</top>
+      <width>1</width>
+      <height>1</height>
+      <texturefocus></texturefocus>
+      <texturenofocus></texturenofocus>
+      <label></label>
+      <visible>true</visible>
+    </control>
+    <control type="image">
+      <description>fullscreen black under video</description>
+      <left>0</left>
+      <top>0</top>
+      <width>1920</width>
+      <height>1080</height>
+      <aspectratio>stretch</aspectratio>
+      <texture colordiffuse="FF0A0A12">white.png</texture>
+    </control>
+    <control type="label" id="100">
+      <left>0</left>
+      <top>500</top>
+      <width>1920</width>
+      <height>80</height>
+      <align>center</align>
+      <aligny>center</aligny>
+      <font>font13</font>
+      <textcolor>88FFFFFF</textcolor>
+      <visible>false</visible>
+      <label>JellyFlam3</label>
+    </control>
+    <!-- Last control: windowed Player renders here -->
+    <control type="videowindow" id="1">
+      <description>loop player (windowed, no OSD chrome)</description>
+      <left>0</left>
+      <top>0</top>
+      <width>1920</width>
+      <height>1080</height>
+    </control>
+  </controls>
+</window>

@@ -1,0 +1,4 @@
+# Shell / Python / PowerShell: LF so shebangs and Pi checkouts work.
+*.sh text eol=lf
+*.py text eol=lf
+*.ps1 text eol=lf

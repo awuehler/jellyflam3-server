@@ -1,0 +1,29 @@
+[Unit]
+Description=JellyFlam3 render worker
+After=network-online.target jellyfin.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=jellyflam3
+Group=jellyflam3
+WorkingDirectory=/opt/jellyflam3-server
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=-/opt/jellyflam3-server/secrets.env
+ExecStart=/usr/bin/python3 -m pipeline.worker --config /opt/jellyflam3-server/configs/jellyflam3.yaml
+Restart=on-failure
+RestartSec=10
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+# Cap worker to ~3 of 4 Pi 5 cores so Jellyfin/SSH stay responsive.
+# Matches configs render.max_cpus: 3 (also enforced via taskset/nthreads in pipeline).
+CPUQuota=300%
+AllowedCPUs=0-2
+
+# Idle-gate may SIGSTOP/SIGCONT this process
+# Do not use KillMode=process-group tricks that fight the supervisor
+
+[Install]
+WantedBy=multi-user.target

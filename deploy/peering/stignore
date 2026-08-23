@@ -1,0 +1,8 @@
+# JellyFlam3 peers inbox (Phase 2 guide 05 + Phase 3 share security)
+# Syncthing: include patterns first, then catch-all deny.
+# Allow genomes, optional companion posters, integrity sidecars; deny everything else.
+!*.flam3
+!*-poster.jpg
+!*.flam3.sha256
+!*.flam3.jellyflam3.sig
+*

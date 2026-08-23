@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="FlockItem" extends="Group">
+  <script type="text/brightscript" uri="FlockItem.brs" />
+  <interface>
+    <field id="itemContent" type="node" onChange="onContentChange" />
+    <field id="focusPercent" type="float" onChange="onFocusPercent" />
+    <field id="rowFocusPercent" type="float" onChange="onFocusPercent" />
+  </interface>
+  <children>
+    <!-- Poster tile + placeholder when no Primary -->
+    <Rectangle
+      id="bg"
+      width="320"
+      height="180"
+      color="0x1A1A28FF" />
+    <Poster
+      id="poster"
+      width="320"
+      height="180"
+      loadDisplayMode="scaleToZoom"
+      visible="false" />
+    <Label
+      id="placeholder"
+      translation="[16,70]"
+      width="288"
+      height="40"
+      text="No poster"
+      horizAlign="center"
+      font="font:SmallSystemFont"
+      color="0x8888A0FF"
+      visible="true" />
+    <Rectangle
+      id="focusRing"
+      width="320"
+      height="180"
+      color="0xE8E8F060"
+      visible="false" />
+    <Rectangle
+      id="titleBar"
+      translation="[0,132]"
+      width="320"
+      height="48"
+      color="0x0A0A12CC" />
+    <Label
+      id="title"
+      translation="[8,134]"
+      width="304"
+      height="24"
+      font="font:SmallestSystemFont"
+      color="0xE8E8F0FF"
+      wrap="false"
+      text="" />
+    <Label
+      id="meta"
+      translation="[8,156]"
+      width="304"
+      height="22"
+      font="font:SmallestSystemFont"
+      color="0xA0A0B8FF"
+      wrap="false"
+      text="" />
+  </children>
+</component>

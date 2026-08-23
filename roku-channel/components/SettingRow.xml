@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="SettingRow" extends="Group">
+  <script type="text/brightscript" uri="SettingRow.brs" />
+  <interface>
+    <function name="setActive" />
+    <field id="label" type="string" onChange="onLabelChanged" />
+    <field id="rowSelected" type="boolean" alwaysNotify="true" />
+    <field id="navKey" type="string" alwaysNotify="true" />
+  </interface>
+  <children>
+    <Rectangle
+      id="bg"
+      width="1680"
+      height="72"
+      color="0x1A1A28FF" />
+    <Label
+      id="text"
+      translation="[28,20]"
+      width="1620"
+      height="40"
+      font="font:MediumSystemFont"
+      color="0xE8E8F0FF" />
+  </children>
+</component>

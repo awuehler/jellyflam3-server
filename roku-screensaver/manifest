@@ -1,0 +1,15 @@
+title=JellyFlam3 Screensaver
+screensaver_title=JellyFlam3 Dreams
+subtitle=Ambient stills from your flock
+major_version=1
+minor_version=0
+build_version=6
+mm_icon_focus_hd=pkg:/images/mm_icon_focus_hd.png
+mm_icon_focus_sd=pkg:/images/mm_icon_focus_hd.png
+splash_screen_hd=pkg:/images/splash-screen.png
+splash_screen_sd=pkg:/images/splash-screen.png
+splash_color=#0a0a12
+splash_min_time=1000
+ui_resolutions=fhd
+rsg_version=1.2
+requires_networking=1

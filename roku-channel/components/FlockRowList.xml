@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="FlockRowList" extends="RowList">
+  <script type="text/brightscript" uri="FlockRowList.brs" />
+  <interface>
+    <field id="requestSettings" type="boolean" alwaysNotify="true" />
+  </interface>
+</component>

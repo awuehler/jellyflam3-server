@@ -1,0 +1,19 @@
+{
+  "id": "electricsheep.pedigree.smoke.0001",
+  "origin": "local_pedigree",
+  "method": "mutate",
+  "parents": [
+    "genomes/samples/electricsheep.247.14181.flam3"
+  ],
+  "generation": 1,
+  "license": "cc-by",
+  "tags": [
+    "cc-by",
+    "git-pedigree",
+    "human",
+    "smoke"
+  ],
+  "promoted_from": "electricsheep.pedigree.mutate.ccd9218c",
+  "promoted_at": "2026-08-12T00:21:31Z",
+  "note": "Curated git smoke seed (Phase 3 guide 06); sheep-tax before merge."
+}

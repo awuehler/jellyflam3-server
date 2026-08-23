@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ScreenSaverScene" extends="Scene">
+  <script type="text/brightscript" uri="RegistryPresets.brs" />
+  <script type="text/brightscript" uri="ScreenSaverScene.brs" />
+  <children>
+    <Rectangle width="1920" height="1080" color="0x0a0a12FF" />
+    <Poster
+      id="stillA"
+      width="1920"
+      height="1080"
+      loadDisplayMode="scaleToZoom"
+      translation="[0,0]"
+      opacity="1.0"
+    />
+    <Poster
+      id="stillB"
+      width="1920"
+      height="1080"
+      loadDisplayMode="scaleToZoom"
+      translation="[0,0]"
+      opacity="0.0"
+    />
+    <Animation
+      id="fadeToB"
+      duration="1.5"
+      easeFunction="inOutQuad"
+      repeat="false"
+    >
+      <FloatFieldInterpolator
+        key="[0.0, 1.0]"
+        keyValue="[1.0, 0.0]"
+        fieldToInterp="stillA.opacity"
+      />
+      <FloatFieldInterpolator
+        key="[0.0, 1.0]"
+        keyValue="[0.0, 1.0]"
+        fieldToInterp="stillB.opacity"
+      />
+    </Animation>
+    <Animation
+      id="fadeToA"
+      duration="1.5"
+      easeFunction="inOutQuad"
+      repeat="false"
+    >
+      <FloatFieldInterpolator
+        key="[0.0, 1.0]"
+        keyValue="[1.0, 0.0]"
+        fieldToInterp="stillB.opacity"
+      />
+      <FloatFieldInterpolator
+        key="[0.0, 1.0]"
+        keyValue="[0.0, 1.0]"
+        fieldToInterp="stillA.opacity"
+      />
+    </Animation>
+    <Label
+      id="status"
+      width="1920"
+      height="80"
+      translation="[0,1000]"
+      horizAlign="center"
+      font="font:MediumBoldSystemFont"
+      color="0xCCCCCCFF"
+      text=""
+    />
+  </children>
+</component>

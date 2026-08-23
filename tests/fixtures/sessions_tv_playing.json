@@ -1,0 +1,14 @@
+[
+  {
+    "Id": "sess1",
+    "Client": "JellyFlam3",
+    "DeviceName": "Roku Streaming Stick",
+    "DeviceType": "TV",
+    "IsActive": true,
+    "NowPlayingItem": {
+      "Name": "jellyflam3.demo.seed",
+      "Id": "abc",
+      "Type": "Movie"
+    }
+  }
+]

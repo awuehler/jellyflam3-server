@@ -1,0 +1,40 @@
+# HW profile overlay — Gold Sheep Lite (8 GB class)
+# Apply: python3 -m pipeline.hw_profile apply 08a
+# Hostnames: rpi-jellyflam3-08a, rpi-jellyflam3-08b, …
+# VoD band mid-tier: shorter center than -16 for typical mid-size flock storage.
+
+render:
+  hw_profile: rpi-jellyflam3-08
+  edition: gold_sheep_lite
+  quality: 900
+  temporal_samples: 450
+  supersample: 2
+  temporal_filter_width: 1.2
+  estimator_radius: 9
+  max_cpus: 3
+  free_space_gb_min: 8
+
+vod:
+  min_duration_sec: 11
+  max_duration_sec: 37
+  max_duration_sec_hard: 90
+  allow_bypass_max: true
+  target_duration_sec: 31
+  nframes: 744
+  duration_mode: dynamic
+  dynamic:
+    base_sec: 31
+    snap_to_periods: true
+
+encode:
+  video_bitrate: 4M
+  maxrate: 6M
+  bufsize: 8M
+
+# Per-host archive-seed cron (too_close_to_archive skip in breed_idle).
+# Lab 08a crontab: 19 5 1,11,21 * *
+breed:
+  idle_breed:
+    archive_cron_dom: [1, 11, 21]
+    archive_cron_hour: 5
+    archive_cron_minute: 19

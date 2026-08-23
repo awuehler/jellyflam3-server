@@ -1,0 +1,48 @@
+name: tests
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Exec bits check
+        run: bash scripts/ensure_exec_bits.sh --check
+
+      - name: Pytest (full suite; media_layout runs on Linux)
+        run: python -m pytest tests/ -q --tb=short
+
+  # Optional furnace smoke — skipped on GitHub-hosted runners without flam3/ffmpeg.
+  # Lab Pi gate: ./scripts/smoke_render.sh (Owner OK / RC checklist).
+  smoke-render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML for smoke config helper
+        run: pip install PyYAML
+
+      - name: smoke_render when flam3+ffmpeg present
+        run: |
+          if command -v flam3-genome >/dev/null 2>&1 && command -v ffmpeg >/dev/null 2>&1; then
+            bash scripts/smoke_render.sh
+          else
+            echo "SKIP smoke_render: flam3-genome or ffmpeg not installed on runner"
+            echo "Run on a furnace Pi for SMOKE_RENDER_OK acceptance."
+          fi

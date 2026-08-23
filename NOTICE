@@ -1,0 +1,32 @@
+JellyFlam3 Server
+Copyright (c) 2026 JellyFlam3 Server contributors
+
+This project incorporates or interoperates with third-party open-source software:
+
+=== flam3 ===
+Copyright Spotworks LLC / Scott Draves et al.
+License: GPL (see https://github.com/scottdraves/flam3)
+Site: https://flam3.com/
+
+=== Electric Sheep ===
+Copyright Spotworks LLC / Scott Draves et al.
+Client: GPL — https://github.com/scottdraves/electricsheep
+Genome content (Free Sheep): Creative Commons — human-submitted typically CC BY;
+algorithm/brood typically CC BY-NC. Robot remixes of human parents are still
+treated as algorithm sheep (NC) under project policy; percent change does not
+flip NC→BY. See https://electricsheep.org/license/
+Gold Sheep / Dreams in High Fidelity / paid masters: not Creative Commons;
+do not ingest into JellyFlam3. See https://electricsheep.org/termsofservice/
+Infinidream (https://infinidream.ai/) is a separate platform descendant — not
+Phase 1 furnace feedstock.
+
+=== FFmpeg ===
+https://github.com/FFmpeg/FFmpeg — LGPL/GPL depending on build configuration
+https://ffmpeg.org/
+
+=== Jellyfin ===
+https://github.com/jellyfin/jellyfin — GPL-2.0
+https://jellyfin.org/
+
+=== jellyfin-roku (reference / ops client) ===
+https://github.com/jellyfin/jellyfin-roku — GPL-2.0

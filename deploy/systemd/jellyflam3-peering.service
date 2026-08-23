@@ -1,0 +1,22 @@
+[Unit]
+Description=JellyFlam3 peering host-service marker (Opt In state)
+Documentation=file:///opt/jellyflam3-server/docs/phase2/05_SYNCTHING_GENOME_PEERING.md
+# Lifecycle is driven by: python3 -m pipeline.peering opt-in|opt-out
+# This unit exists so operators can see WantedBy linkage; it does not replace the CLI.
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=jellyflam3
+Group=jellyflam3
+WorkingDirectory=/opt/jellyflam3-server
+Environment=PYTHONPATH=/opt/jellyflam3-server
+EnvironmentFile=-/opt/jellyflam3-server/secrets.env
+# Ensure layout + status file exist when enabled (idempotent).
+ExecStart=/usr/bin/python3 -m pipeline.peering ensure-layout --config /opt/jellyflam3-server/configs/jellyflam3.yaml
+ExecStop=/bin/true
+
+[Install]
+WantedBy=multi-user.target

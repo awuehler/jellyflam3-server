@@ -1,0 +1,167 @@
+# 07 — License and metadata
+
+## Boundary
+
+Provenance/license tagging and commercial filtering — **not** playback UI.
+
+Canonical Free Sheep policy: [electricsheep.org/license](https://electricsheep.org/license/).  
+Implementation: `pipeline/license_filter.py` (`infer_tags_from_genome`, `is_commercial_allowed`).  
+Project attributions: [NOTICE](../../NOTICE).
+
+> Practical ops guidance for JellyFlam3 — **not legal advice**. When archive page license and heuristics disagree, prefer the archive (human / brood / edge links).
+
+## Free Sheep vs out-of-scope content
+
+| Source | Role in the furnace |
+|---|---|
+| **Free Electric Sheep** `.flam3` (archives) | Allowed seeds — tag BY vs BY-NC |
+| **Your own** genomes | Allowed — tag as you intend; still attribute flam3/ES inspiration where appropriate |
+| **Gold Sheep** / HiFi Dreams / paid Spotworks masters | **Do not ingest** — not CC; personal viewing only ([terms](https://electricsheep.org/termsofservice/)) |
+| **Infinidream** (app/cloud platform) | Separate product; not Phase 1 feedstock |
+
+## Attribution
+
+Free Sheep reuse requires credit, e.g. *“Artwork by Scott Draves and the Electric Sheep”* (plus designer `nick` when human).
+
+- Prefer stable IDs in filenames: `electricsheep.{generation}.{id}.mp4`
+- Keep `generation-N` + `sheep-ID` in the **sidecar** (and Jellyfin tags when present) so each VoD points back to the genome
+- Auto-download/repost: link exact source or at least generation + serial ([ES reuse rules](https://electricsheep.org/license/))
+
+## Phase 1 metadata policy (private-first)
+
+Long-term furnace use is a **wide Free Sheep / own-genome collection**, with **&gt;90% private viewing**; commercial venue use is unlikely.
+
+| Concern | Phase 1 approach |
+|---|---|
+| License / provenance SoT | **Sidecar-only** — `{basename}.jellyflam3.json` next to the MP4 (`tags`, `license`, `duration_sec`, …) |
+| Commercial-safe filtering | Implemented (`license.commercial_mode`, BrightScript `commercialMode`); **default off** |
+| Jellyfin Items API `Tags` | **Best-effort / deferred** — soft-fail leaves `Tags: []`; not required for private Path 1 |
+| When to push Items API tags | Later ops polish (harden `POST /Items/{id}/Tags` or item update + backfill) if Jellyfin UI / `commercialMode` browsing needs them |
+
+```text
+ingest → infer_tags_from_genome → write sidecar (required)
+                              └→ add_tags via Jellyfin API (optional; soft-fail OK)
+```
+
+## Tag scheme
+
+| Tag | Meaning |
+|---|---|
+| `cc-by` | Attribution OK — commercial filter **allows** |
+| `cc-by-nc` | Non-commercial only — commercial filter **excludes** |
+| `generation-NNN` | Flock generation (from filename) |
+| `sheep-ID` | Sheep serial (from filename) |
+| `human` / `brood` | Provenance (designer vs algorithm) |
+
+When `license.commercial_mode: true`, exclude `cc-by-nc` (and any `exclude_tags`). BrightScript honors the same contract.
+
+## `.flam3` filename convention
+
+Canonical form (implemented in `pipeline/sheep_names.py`):
+
+```text
+electricsheep.<kind>.<id>[.<more>].flam3
+```
+
+| kind | Example | Role |
+|---|---|---|
+| `{gen}` (digits) | `electricsheep.247.00505.flam3` | Archive Free Sheep |
+| `smoke` / `tv` | `electricsheep.smoke.480p.flam3`, `electricsheep.tv.1080p.flam3` | Encode templates (not flock sheep) |
+| `pedigree` | `electricsheep.pedigree.smoke.0001.flam3`, `electricsheep.pedigree.mutate.<id>.flam3` | Git pedigree smoke/examples + local breed children |
+| `random` / `mutate` / `reclaim` | `electricsheep.random.*`, `.mutate.*`, `.reclaim.*` | Lab / recovery mints |
+
+Inbox staging normalizes legacy `jellyflam3.*` stems to `electricsheep.*`. Catalog MP4 / sidecar basenames follow the same stem. Sidecars remain `{stem}.jellyflam3.json` (product brand, not genome prefix).
+
+## Reading a source `.flam3`
+
+### Generation / identity
+
+Filename `electricsheep.{gen}.{id}.flam3` → tags `generation-{gen}`, `sheep-{id}`.
+
+### Provenance signals in XML
+
+| Signal | Tag | Typical Free Sheep license |
+|---|---|---|
+| `nick="Designer"` (not `brood`) | `human` | **CC BY** |
+| `nick="brood"`, `notes="brooding"`, `action="clone brood"`, “brood” in edits | `brood` | **CC BY-NC** |
+| Ambiguous / missing | — | **Conservative → `cc-by-nc`** |
+
+`<edit …>` lineage is **genealogy + credit history**, not a license upgrade for children.
+
+### Decision tree (ingest)
+
+```text
+1. Parse filename → generation-N, sheep-ID
+2. Scan XML for nick / brood / edit lineage
+3. If human designer nick (≠ brood) → human + cc-by
+   Else → brood (if seen) + cc-by-nc   ← default when unsure
+4. Write **sidecar** (required); try Jellyfin Items tags (optional)
+5. If commercial_mode: drop items with exclude_tags (cc-by-nc)
+```
+
+## Genomic inheritance and commercial licensing
+
+Electric Sheep classifies Free Sheep by **how the sheep was created**, not by visual/genetic distance from parents ([license](https://electricsheep.org/license/); algorithm sheep are BY-NC “and have a lineage”; human uploads are BY).
+
+| Situation | Practical license posture |
+|---|---|
+| Unchanged **human** archive genome | **CC BY** (+ attribution) |
+| Unchanged **brood** / algorithm archive genome | **CC BY-NC** |
+| **Server/robot** mutate or cross of a human parent (ES flock offspring) | Treat as **algorithm sheep → CC BY-NC** (human ancestor in lineage does **not** make the child BY) |
+| Local `flam3-genome` mutate/cross of a **CC BY** human seed | Derivative of BY — remix generally allowed **including commercial**, with **attribution** |
+| Local mutate/cross of a **CC BY-NC** seed | Stays in **NC** commercial bucket |
+| Mix BY + NC parents | **Conservative: NC** |
+| **Percent / magnitude of mutation** | **Does not** flip NC → BY |
+
+```text
+Human CC BY parent
+  └─ ES server/robot mutate or cross  →  usually CC BY-NC child
+
+% parameter or visual change?
+  → does not commercialize an NC (or algorithm) sheep
+```
+
+### Commercial filter rule
+
+```text
+Algorithm/brood / cc-by-nc (or mixed/unclear)?
+  → commercial_mode: EXCLUDE
+
+Clear human CC BY (or BY-legal local derivative of BY-only parents)?
+  → allow if attributed
+
+Gold / Infinidream / paid masters?
+  → do not put in the furnace
+```
+
+## Config
+
+```yaml
+license:
+  commercial_mode: false    # default: private flock shows BY + BY-NC
+                            # true → exclude cc-by-nc from commercial-safe paths
+  exclude_tags:
+    - cc-by-nc
+  default_tags: []
+```
+
+- **Sidecar** (`{stem}.jellyflam3.json` beside the catalog MP4) is the **sole metadata source of truth** for that sheep (license/tags in Phase 1; later stills index, pedigree hints, viewer votes). Jellyfin Items Tags are best-effort only.
+- **Commercial filter** stays in code for the uncommon venue case; leave `commercial_mode: false` / Roku `commercialMode=false` unless you need it.
+- BrightScript `commercialMode=true` filters on Jellyfin Items `Tags` — with empty API tags it is effectively a no-op until Items tag write is hardened. Private default does not need that path.
+- Optional later: Jellyfin **commercial-safe** collection excluding NC.
+
+## Artifacts
+
+| Artifact | Kind | Role |
+|---|---|---|
+| `pipeline/license_filter.py` | pipeline | Infer tags; commercial allow / exclude |
+| `pipeline/sheep_names.py` | pipeline | Canonical `electricsheep.<kind>.<id>.flam3` naming |
+| `{stem}.jellyflam3.json` sidecars | config | **Sole metadata SoT** beside catalog MP4 (license / provenance; later stills, votes) |
+| `configs/jellyflam3.yaml` (`license`) | config | `commercial_mode`, `exclude_tags` |
+| `NOTICE` | config | Third-party / project attributions |
+
+## Exit criteria
+
+- [x] NC genomes tagged `cc-by-nc` (heuristics → **sidecar**; unit-tested)
+- [x] Commercial filter excludes NC when enabled (unit-tested; BrightScript contract retained, default off)
+- [x] Tags persisted for ops — **sidecar-only** Phase 1 (`*.jellyflam3.json`); Items API tags deferred

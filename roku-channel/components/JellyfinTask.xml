@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="JellyfinTask" extends="Task">
+  <script type="text/brightscript" uri="JellyfinTask.brs" />
+  <interface>
+    <field id="baseUrl" type="string" />
+    <field id="apiKey" type="string" />
+    <field id="userId" type="string" />
+    <field id="libraryId" type="string" />
+    <field id="commercialMode" type="boolean" />
+    <field id="command" type="string" />
+    <field id="itemId" type="string" />
+    <field id="positionTicks" type="integer" />
+    <!-- DirectStream (HLS remux) or DirectPlay (Static MP4) -->
+    <field id="playMethod" type="string" />
+    <!-- POST display profile JSON to Pi sink -->
+    <field id="displaySinkUrl" type="string" />
+    <field id="profileJson" type="string" />
+    <field id="sinkToken" type="string" />
+    <!-- string JSON — nested AA from Task→render often silently fails -->
+    <field id="resultJson" type="string" alwaysNotify="true" />
+  </interface>
+</component>

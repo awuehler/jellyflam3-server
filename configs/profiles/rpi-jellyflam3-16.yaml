@@ -1,0 +1,40 @@
+# HW profile overlay — Gold Sheep Lite (16 GB class)
+# Apply: python3 -m pipeline.hw_profile apply 16a
+# Hostnames: rpi-jellyflam3-16a, rpi-jellyflam3-16b, …
+# VoD band scaled for largest typical sheep SSD / scratch headroom.
+
+render:
+  hw_profile: rpi-jellyflam3-16
+  edition: gold_sheep_lite
+  quality: 900
+  temporal_samples: 450
+  supersample: 2
+  temporal_filter_width: 1.2
+  estimator_radius: 9
+  max_cpus: 3
+  free_space_gb_min: 8
+
+vod:
+  min_duration_sec: 11
+  max_duration_sec: 43
+  max_duration_sec_hard: 113
+  allow_bypass_max: true
+  target_duration_sec: 43
+  nframes: 1032
+  duration_mode: dynamic
+  dynamic:
+    base_sec: 43
+    snap_to_periods: true
+
+encode:
+  video_bitrate: 4M
+  maxrate: 6M
+  bufsize: 8M
+
+# Per-host archive-seed cron (too_close_to_archive skip in breed_idle).
+# Lab 16a crontab: 27 7 7,17,27 * *
+breed:
+  idle_breed:
+    archive_cron_dom: [7, 17, 27]
+    archive_cron_hour: 7
+    archive_cron_minute: 27

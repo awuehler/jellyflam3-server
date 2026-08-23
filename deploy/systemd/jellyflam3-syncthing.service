@@ -1,0 +1,21 @@
+[Unit]
+Description=JellyFlam3 managed Syncthing (genome peering — *.flam3 only)
+Documentation=file:///opt/jellyflam3-server/docs/phase2/05_SYNCTHING_GENOME_PEERING.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=jellyflam3
+Group=jellyflam3
+WorkingDirectory=/var/lib/jellyflam3/syncthing
+Environment=HOME=/var/lib/jellyflam3/syncthing
+Environment=STNODEFAULTFOLDER=1
+# GUI bound to loopback only — day-to-day ops via jellyflam3 peering CLI
+ExecStart=/usr/bin/syncthing serve --no-browser --gui-address=127.0.0.1:8384
+Restart=on-failure
+RestartSec=5
+Nice=5
+
+[Install]
+WantedBy=multi-user.target

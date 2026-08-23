@@ -1,0 +1,241 @@
+# JellyFlam3 Server — Phase 1 config
+# Copy to configs/jellyflam3.yaml and adjust paths for your Pi.
+
+paths:
+  genomes_inbox: genomes/inbox
+  genomes_quarantine: genomes/quarantine
+  # Post-render archive of inbox genomes (pedigree parent pool — Phase 2 guide 07)
+  genomes_done: genomes/done
+  jobs_dir: /var/lib/jellyflam3/jobs
+  frames_scratch: /var/cache/jellyflam3/frames
+  # Mount root for catalog. Pipeline writes under media_library/by-generation/.
+  # Jellyfin live Sheep library must point at /media/sheep/by-generation (not this root).
+  media_library: /media/sheep
+  # Phase 3 guide 09 — Jellyfin-visible refactor poster/MP4 previews (separate library)
+  # refactor_preview_root: /media/sheep/_refactor-preview
+  # Jellyfin Rework Poster / Refactor previews library → that folder only.
+  template: configs/templates/electricsheep.tv.1080p.flam3
+  status_file: /var/lib/jellyflam3/idle_gate_status.json
+  log_dir: /var/lib/jellyflam3/logs
+  # Guide 04 F: one JSON file per TV/screen (Roku sticks/TVs, Kodi, …)
+  display_profiles: /var/lib/jellyflam3/display_profiles
+
+vod:
+  # Defaults below; HW overlays in configs/profiles/ scale band + base_sec by Pi class
+  # (filesystem / RAM headroom). Re-apply: python3 -m pipeline.hw_profile apply 08a
+  min_duration_sec: 11
+  max_duration_sec: 37            # soft max (profile may raise/lower)
+  max_duration_sec_hard: 90       # hard ceiling when soft bypass on
+  allow_bypass_max: true          # XML signals may exceed soft max; never hard max
+  target_duration_sec: 23         # fixed-mode default / profile center hint
+  fps: 24
+  # nframes = target_duration_sec * fps → 552
+  nframes: 552
+  duration_mode: dynamic          # fixed | dynamic (guide 08)
+  smoke_duration_sec: 13 # JELLYFLAM3_SMOKE=1 only — never publish (→ 312 @ 24 fps)
+  smoke_nframes: 312
+  dynamic:
+    base_sec: 23                  # dynamic center; profiles set 43 / 31 / 23
+    # WARNING: period-snap LCM can jump toward soft max — see guide 08.
+    # Locked fleet default on all HW profiles (seamless loop closure).
+    # snap_to_periods: false   # debug-only one-off; not fleet policy
+    snap_to_periods: true
+    profile_04_short_bias: 4      # seconds shorter on hw_profile *-04
+    weights:
+      complexity: 0.35
+      queue_pressure: -0.25       # shorter when inbox backlog high
+      jitter_sec: 0               # set >0 for flock variety
+
+encode:
+  video_bitrate: 4M
+  maxrate: 6M
+  bufsize: 8M
+  profile: high
+  level: "4.2"
+  pix_fmt: yuv420p
+  audio: aac_silent
+
+idle_gate:
+  enabled: true
+  poll_interval_sec: 20
+  idle_delay_sec: 600
+  active_within_seconds: 60
+  # Match Jellyfin Sessions Client / DeviceName / DeviceType
+  tv_client_patterns:
+    - "(?i)roku"
+    - "(?i)jellyflam3"
+    - "(?i)jellyfin.?roku"
+    - "(?i)tv"
+  # Phase 3 guide 01: image-only screensaver must never close the furnace
+  ignore_client_patterns:
+    - "(?i)jellyflam3.?screensaver"
+    - "(?i)screensaver"
+  block_on_any_transcode: true
+  block_non_tv_playback: false
+  # Last resort: systemd freeze/thaw of worker unit while gate closed
+  freeze_worker: false
+  worker_unit: jellyflam3-worker.service
+
+jellyfin:
+  # Prefer env from secrets.env: JELLYFIN_URL, JELLYFIN_API_KEY, etc.
+  url: "${JELLYFIN_URL}"
+  api_key: "${JELLYFIN_API_KEY}"
+  user_id: "${JELLYFIN_USER_ID}"
+  library_id: "${JELLYFIN_LIBRARY_ID}"
+  commercial_collection_name: commercial-safe
+  refresh_after_ingest: true
+  # Phase 2 flock UX: mid-loop poster beside MP4 + Images API Primary upload
+  attach_posters: true
+  refresh_settle_sec: 2
+  image_upload_retries: 5
+  image_upload_backoff_sec: 1.0
+
+# Phase 3 guide 01 — screensaver stills (ffmpeg from catalog MP4s)
+stills:
+  enabled: true
+  count: 4                 # frames per sheep under by-generation/{gen}/stills/{stem}/
+  jpeg_quality: 2          # ffmpeg -q:v (2 ≈ high quality JPEG)
+  respect_idle_gate: true  # pause extract while TV playback closes the gate
+
+license:
+  # Phase 1 SoT = on-disk sidecar *.jellyflam3.json (Items API Tags best-effort).
+  # false = private flock shows BY + BY-NC (default; venue use uncommon)
+  # true = exclude cc-by-nc from commercial-safe paths
+  # See docs/phase1/07_LICENSE_AND_METADATA.md — brood/robot remix → NC; % change does not flip
+  commercial_mode: false
+  exclude_tags:
+    - cc-by-nc
+  default_tags: []
+
+render:
+  target_width: 1920
+  target_height: 1080
+  # HW profile class (guide 09): rpi-jellyflam3-16 | -08 | -04 — apply via:
+  #   python3 -m pipeline.hw_profile apply 08a
+  # Hostnames: rpi-jellyflam3-16a|16b…, -08a|08b…, -04a|04b…
+  # -04 uses edition: compact (same Lite quality; shorter loops for disk).
+  hw_profile: rpi-jellyflam3-08
+  # Leave headroom for Jellyfin/SSH/system (Pi 5 = 4 cores → use 3 = nproc-1).
+  # max_cpus: 3 | 0=all | -1=leave one core free (default when omitted: nproc-1)
+  max_cpus: 3
+  flam3_nthreads: 0   # 0 = follow max_cpus; >0 overrides animate thread count
+  free_space_gb_min: 8
+  # gold_sheep_lite (-16/-08) or compact (-04, same knobs); below full Gold ss4/q2000
+  edition: gold_sheep_lite
+  quality: 900
+  temporal_samples: 450
+  supersample: 2
+  temporal_filter_width: 1.2
+
+# Worker reclaim of crashed mid-render jobs (see pipeline/job_recovery.py)
+worker:
+  reclaim_orphans_on_start: true
+  requeue_orphans: true
+
+# Ambient living-room TV palette (OkLCh dual-pole). mode: off | complementary | split_complementary
+palette:
+  mode: complementary
+  space: oklch
+  seed: genome_accent          # genome_accent | curator_hex
+  # curator_hex: "#6ec8ff"
+  split_delta_deg: 30
+  lightness_bias: asymmetric
+  saturation_cap: 0.55
+
+tools:
+  flam3_genome: flam3-genome
+  flam3_animate: flam3-animate
+  flam3_render: flam3-render
+  ffmpeg: ffmpeg
+  ffprobe: ffprobe
+
+# Archive feedstock for seed_inbox --archive (Electric Sheep Free Sheep)
+seed_archive:
+  enabled: true
+  index_url: "https://electricsheep.com/archives/"
+  page_files: ["1.html", "2.html", "3.html"]
+  generations: [247, 245, 244, 243, 242, 198, 191, 169, 165]
+  manifest: configs/archive_seed_manifest.json
+  cache_dir: genomes/archive_cache
+  selection: random
+  tv_port: true
+  # --skip-catalog is the seed-inbox default (skip genomes that already have a
+  # catalog MP4). Daily idle-breed + ~10-day archive fill keep the furnace busy;
+  # use --no-skip-catalog only when you want overwrite / re-render of catalog sheep.
+  # fetch_count: 5              # fixed N; else random in [min, max]
+  fetch_count_min: 3
+  fetch_count_max: 7
+
+# Genome peering: Syncthing over Tailscale (Phase 2). Default Opt Out.
+# User-facing surface = host service Opt In / Opt Out only (see docs/phase2/05_SYNCTHING_GENOME_PEERING.md).
+# Sync = *.flam3 + optional *-poster.jpg + integrity sidecars (Phase 3 guide 05).
+# Land = genomes/peers/inbox (Syncthing). Worker does NOT auto-pick — promote --apply → genomes/inbox.
+# CLI: python3 -m pipeline.peering status|opt-in|opt-out|publish|promote|gen-keys|trust-key
+peering:
+  share_opt_in: false
+  host_service_unit: jellyflam3-peering.service
+  peers_dir: genomes/peers
+  peers_inbox: genomes/peers/inbox
+  opt_in_ack: genomes/peers/OPT_IN
+  status_file: /var/lib/jellyflam3/peering_status.json
+  sync_glob: "*.flam3,*-poster.jpg,*.flam3.sha256,*.flam3.jellyflam3.sig"
+  share_pedigree_only_eventually: true  # policy flag when origin tagging exists
+  # Phase 3 guide 05 — Ed25519 preferred; SHA-256 when no signing key
+  share_security:
+    enabled: true
+    prefer_ed25519: true
+    allow_sha256_fallback: true
+    private_key_file: /var/lib/jellyflam3/share_security/ed25519.pem
+    public_key_file: /var/lib/jellyflam3/share_security/ed25519.pub
+    trusted_keys_dir: /var/lib/jellyflam3/share_security/trusted
+  syncthing:
+    enabled_when_opted_in: true
+    unit: jellyflam3-syncthing.service
+    # config lives under HOME=/var/lib/jellyflam3/syncthing (managed unit)
+    # First-time folder/device introduce is operator runbook (not opt-in):
+    #   folder id jellyflam3-peers-inbox → peers_inbox path; see deploy/peering/README.md
+    # Optional later (Phase 4): mesh-ensure / gitignored peer-list CLI
+    #   — see deploy/peering/README.md + docs/phase4/00_OVERVIEW.md
+  tailscale:
+    enabled_when_opted_in: true
+    tag: tag:jellyflam3
+    auth_key_env: TS_AUTHKEY   # pre-auth key in secrets.env — never commit
+
+# Sheep tax: XML / vocabulary scan & repair (Phase 2 — docs/phase2/06_SHEEP_TAX.md)
+# Order: tax → TV-port. Peer promote calls pipeline.sheep_tax.scan_file.
+sheep_tax:
+  enabled: true
+  on_archive_fetch: true
+  on_peer_promote: true
+  on_worker_ingest: true
+  repair: true
+  multi_flame: strip_to_first   # or reject
+  strip_unknown_elements: false
+  # quarantine unrepaired failures under paths.genomes_quarantine
+
+# Pedigree breeding (Phase 2 — docs/phase2/07_PEDIGREE_BREEDING.md)
+breed:
+  tax_parents: true
+  multi_flame: strip_to_first   # or reject
+  default_cross_method: alternate   # alternate | union
+  # Daily idle breed cron (scripts/cron_breed_idle.sh) — always one child per run.
+  # Lab fleet crontab: 11 5 * * * (05:11 local) on 16a / 08a / 04a.
+  idle_breed:
+    enabled: true
+    history_file: /var/lib/jellyflam3/breed_idle_history.json
+    small_flock_threshold: 6      # pool size at/below: dedup vs last 1 outcome
+    dedup_depth_small: 1
+    dedup_depth_large: 2          # larger flocks: avoid last 2 fingerprints
+    max_rerolls: 24
+    # MUST match THIS host's archive-seed crontab (too_close_to_archive skip).
+    # Values below are 04a (03:17 on days 3,13,23). On a live Pi, re-apply the HW
+    # profile so these merge from configs/profiles/rpi-jellyflam3-{16,08,04}.yaml:
+    #   python3 -m pipeline.hw_profile apply 16a   # DOM 7,17,27  07:27
+    #   python3 -m pipeline.hw_profile apply 08a   # DOM 1,11,21  05:19
+    #   python3 -m pipeline.hw_profile apply 04a   # DOM 3,13,23  03:17
+    archive_cron_dom: [3, 13, 23]
+    archive_cron_hour: 3
+    archive_cron_minute: 17
+    min_hours_before_archive: 1.0
+    include_samples: true
+    include_pedigree: true

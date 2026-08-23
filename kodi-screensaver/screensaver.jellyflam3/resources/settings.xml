@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+  <category label="Jellyfin flock">
+    <setting id="server_url" type="text" label="Jellyfin URL" default=""/>
+    <setting id="api_key" type="text" label="API key" default=""/>
+    <setting id="user_id" type="text" label="User id" default=""/>
+    <setting id="library_id" type="text" label="Library (Parent) id" default=""/>
+    <setting id="commercial_mode" type="bool" label="Commercial-safe (skip NC)" default="false"/>
+    <setting id="flock_limit" type="number" label="Max items to fetch" default="200"/>
+  </category>
+</settings>

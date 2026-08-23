@@ -1,0 +1,6 @@
+<flame time="0" size="640 360" center="0 0" scale="160" rotate="0"
+  supersample="1" filter="1" filter_shape="gaussian"
+  temporal_filter_type="box" temporal_filter_width="1"
+  quality="50" temporal_samples="10"
+  background="0 0 0" brightness="4" gamma="4" vibrancy="1"
+  highlight_power="-1" />

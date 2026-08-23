@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="HomeScene" extends="Scene">
+  <script type="text/brightscript" uri="RegistryPresets.brs" />
+  <script type="text/brightscript" uri="HomeScene.brs" />
+  <interface>
+    <function name="handleDeepLink" />
+  </interface>
+  <children>
+    <Rectangle
+      id="backdrop"
+      width="1920"
+      height="1080"
+      color="0x0A0A12FF" />
+    <Label
+      id="title"
+      text="JellyFlam3"
+      translation="[80,36]"
+      width="1400"
+      font="font:LargeBoldSystemFont"
+      color="0xE8E8F0FF" />
+    <Button
+      id="settingsBtn"
+      text="Settings"
+      translation="[1580,32]"
+      minWidth="240"
+      focusable="true" />
+    <Label
+      id="subtitle"
+      text="Ambient dreams — OK to play · * / Options for Settings"
+      translation="[80,96]"
+      width="1760"
+      font="font:SmallSystemFont"
+      color="0xA0A0B0FF" />
+
+    <!-- Focus / detail chrome -->
+    <Group id="detailPanel" translation="[80,140]">
+      <Rectangle
+        id="detailBg"
+        width="1760"
+        height="168"
+        color="0x141422FF" />
+      <Label
+        id="detailTitle"
+        translation="[28,16]"
+        width="1704"
+        height="44"
+        font="font:MediumSystemFont"
+        color="0xF0F0F8FF"
+        wrap="false"
+        text="Select a dream" />
+      <Label
+        id="detailMeta"
+        translation="[28,62]"
+        width="1704"
+        height="32"
+        font="font:SmallSystemFont"
+        color="0xC8C8D8FF"
+        wrap="false"
+        text="" />
+      <Label
+        id="chipDuration"
+        translation="[28,98]"
+        width="200"
+        height="28"
+        font="font:SmallestSystemFont"
+        color="0x9AA0C0FF"
+        text="" />
+      <Label
+        id="chipGeneration"
+        translation="[240,98]"
+        width="220"
+        height="28"
+        font="font:SmallestSystemFont"
+        color="0x9AA0C0FF"
+        text="" />
+      <Label
+        id="chipLicense"
+        translation="[480,98]"
+        width="280"
+        height="28"
+        font="font:SmallestSystemFont"
+        color="0x9AA0C0FF"
+        text="" />
+      <Label
+        id="chipPedigree"
+        translation="[780,98]"
+        width="480"
+        height="28"
+        font="font:SmallestSystemFont"
+        color="0x9AA0C0FF"
+        text="" />
+      <Label
+        id="detailDesc"
+        translation="[28,128]"
+        width="1704"
+        height="32"
+        font="font:SmallestSystemFont"
+        color="0x787890FF"
+        wrap="false"
+        text="" />
+    </Group>
+
+    <Label
+      id="status"
+      text="Loading…"
+      translation="[80,324]"
+      width="1200"
+      font="font:SmallSystemFont"
+      color="0x8888A0FF" />
+    <Button
+      id="retryBtn"
+      text="Retry"
+      translation="[1320,312]"
+      minWidth="200"
+      focusable="true"
+      visible="false" />
+    <FlockRowList
+      id="rowList"
+      translation="[80,360]"
+      itemComponentName="FlockItem"
+      itemSize="[1760,320]"
+      rowItemSize="[[320,180]]"
+      rowItemSpacing="[[24,0]]"
+      rowHeights="[320]"
+      numRows="2"
+      itemSpacing="[0,36]"
+      showRowLabel="[true]"
+      rowLabelOffset="[[0,8]]"
+      focusable="true" />
+    <BusySpinner
+      id="spinner"
+      translation="[900,560]"
+      visible="true" />
+  </children>
+</component>

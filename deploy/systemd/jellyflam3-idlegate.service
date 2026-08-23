@@ -1,0 +1,19 @@
+[Unit]
+Description=JellyFlam3 idle-gate supervisor
+After=network-online.target jellyfin.service jellyflam3-worker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=jellyflam3
+Group=jellyflam3
+WorkingDirectory=/opt/jellyflam3-server
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=-/opt/jellyflam3-server/secrets.env
+ExecStart=/usr/bin/python3 -m pipeline.idle_gate --config /opt/jellyflam3-server/configs/jellyflam3.yaml
+Restart=on-failure
+RestartSec=5
+Nice=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="PlayerScreen" extends="Group">
+  <script type="text/brightscript" uri="PlayerScreen.brs" />
+  <interface>
+    <function name="playSheep" />
+    <function name="stopSheep" />
+    <field id="close" type="boolean" alwaysNotify="true" />
+    <field id="clipFinished" type="boolean" alwaysNotify="true" />
+    <field id="allowShuffleAdvance" type="boolean" />
+  </interface>
+  <children>
+    <Video
+      id="Video"
+      width="1920"
+      height="1080"
+      translation="[0,0]"
+      loop="false"
+      enableUI="false" />
+    <Label
+      id="status"
+      translation="[80,980]"
+      width="1760"
+      font="font:SmallSystemFont"
+      color="0xE8E8F0FF"
+      text=""
+      visible="false" />
+    <Timer
+      id="progressTimer"
+      repeat="true"
+      duration="10" />
+  </children>
+</component>

@@ -1,0 +1,42 @@
+# HW profile overlay — 4 GB class (same Lite quality; shorter loops for disk)
+# Apply: python3 -m pipeline.hw_profile apply 04a
+# Hostnames: rpi-jellyflam3-04a, rpi-jellyflam3-04b, …
+# VoD band tightest soft/hard for smaller sheep volumes; profile_04_short_bias
+# shortens dynamic center (base_sec 23 − bias 4 → ~19 s).
+
+render:
+  hw_profile: rpi-jellyflam3-04
+  edition: compact
+  quality: 900
+  temporal_samples: 450
+  supersample: 2
+  temporal_filter_width: 1.2
+  estimator_radius: 9
+  max_cpus: 3
+  free_space_gb_min: 4
+
+vod:
+  min_duration_sec: 11
+  max_duration_sec: 31
+  max_duration_sec_hard: 60
+  allow_bypass_max: true
+  target_duration_sec: 19
+  nframes: 456
+  duration_mode: dynamic
+  dynamic:
+    base_sec: 23
+    snap_to_periods: true
+    profile_04_short_bias: 4
+
+encode:
+  video_bitrate: 3M
+  maxrate: 4M
+  bufsize: 6M
+
+# Per-host archive-seed cron (too_close_to_archive skip in breed_idle).
+# Lab 04a crontab: 17 3 3,13,23 * *
+breed:
+  idle_breed:
+    archive_cron_dom: [3, 13, 23]
+    archive_cron_hour: 3
+    archive_cron_minute: 17

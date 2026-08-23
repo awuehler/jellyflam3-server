@@ -1,0 +1,7 @@
+<flame time="0" size="1920 1080" center="0 0" scale="480" rotate="0"
+  supersample="2" filter="1" filter_shape="gaussian"
+  temporal_filter_type="box" temporal_filter_width="1.2"
+  quality="900" passes="1" temporal_samples="450"
+  estimator_radius="9" estimator_minimum="0" estimator_curve="0.6" gamma_threshold="0.01"
+  background="0 0 0" brightness="4" gamma="4" vibrancy="1"
+  highlight_power="-1" />

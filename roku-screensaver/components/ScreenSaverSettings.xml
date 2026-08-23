@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ScreenSaverSettings" extends="Scene">
+  <script type="text/brightscript" uri="ScreenSaverSettings.brs" />
+  <children>
+    <Rectangle width="1920" height="1080" color="0x0a0a12FF" />
+    <Label
+      id="title"
+      text="JellyFlam3 Screensaver Settings"
+      width="1920"
+      height="60"
+      translation="[0,40]"
+      horizAlign="center"
+      font="font:LargeBoldSystemFont"
+      color="0xFFFFFFFF"
+    />
+    <Label
+      id="help"
+      width="1600"
+      height="120"
+      translation="[160,110]"
+      wrap="true"
+      font="font:SmallSystemFont"
+      color="0xAAAAAAFF"
+      text="Jellyfin URL / API key / user / library are written only by the JellyFlam3 VoD channel Settings on this Roku (install VoD now or earlier, then save Settings). This screen cannot create those keys. Below: screensaver-only options. Up/Down select · Left/Right or OK change · Back exit."
+    />
+    <Label
+      id="credStatus"
+      width="1600"
+      height="50"
+      translation="[160,240]"
+      wrap="true"
+      font="font:SmallSystemFont"
+      color="0x88FF88FF"
+      text=""
+    />
+    <Rectangle id="row0bg" width="1600" height="72" translation="[160,320]" color="0x1A1A28FF" />
+    <Label id="row0" width="1540" height="40" translation="[188,340]" font="font:MediumSystemFont" color="0xE8E8F0FF" text="" />
+    <Rectangle id="row1bg" width="1600" height="72" translation="[160,410]" color="0x1A1A28FF" />
+    <Label id="row1" width="1540" height="40" translation="[188,430]" font="font:MediumSystemFont" color="0xE8E8F0FF" text="" />
+    <Rectangle id="row2bg" width="1600" height="72" translation="[160,500]" color="0x1A1A28FF" />
+    <Label id="row2" width="1540" height="40" translation="[188,520]" font="font:MediumSystemFont" color="0xE8E8F0FF" text="" />
+    <Label
+      id="hint"
+      width="1600"
+      height="40"
+      translation="[160,600]"
+      font="font:SmallSystemFont"
+      color="0x888888FF"
+      text="Changes save immediately to registry section JellyFlam3 (ssFade / ssDwellSec / ssFadeSec)."
+    />
+  </children>
+</component>

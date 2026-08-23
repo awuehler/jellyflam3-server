@@ -1,0 +1,63 @@
+# Secrets & local config — NEVER commit these
+secrets.env
+secrets.env.*
+!secrets.env.example
+configs/jellyflam3.yaml
+configs/jellyflam3.yaml.*
+!configs/jellyflam3.yaml.example
+!.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Scratch / media (never commit rendered flock)
+.smoke/
+/var/
+*.mp4
+*.png
+*.jpg
+!roku-channel/images/**
+!roku-screensaver/images/**
+!kodi-screensaver/**/*.png
+!kodi-screensaver/**/*.jpg
+!docs/**
+
+# Job runtime
+/tmp/jellyflam3/
+genomes/inbox/*
+!genomes/inbox/.gitkeep
+genomes/quarantine/*
+!genomes/quarantine/.gitkeep
+genomes/done/*
+!genomes/done/.gitkeep
+# Peers runtime (managed .stignore / OPT_IN / Syncthing marker — template is deploy/peering/stignore)
+genomes/peers/inbox/*
+!genomes/peers/inbox/.gitkeep
+genomes/peers/OPT_IN
+genomes/peers/share-out/*
+!genomes/peers/share-out/.gitkeep
+!genomes/samples/**
+!genomes/pedigree/**
+genomes/archive_cache/
+genomes/_tmp_*
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+.cursor/
+
+# Roku / Kodi package artifacts
+roku-channel/*.zip
+roku-channel/registry/jellyflam3-presets.json
+roku-screensaver/registry/jellyflam3-presets.json
+dist/
+kodi-screensaver/**/placeholder.mp4
+pytest_run.log
