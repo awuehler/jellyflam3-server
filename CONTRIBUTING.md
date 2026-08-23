@@ -33,7 +33,7 @@ On a furnace Pi, also run `./scripts/healthcheck.sh` and (when flam3 is installe
 
 ## Reporting issues
 
-Use GitHub Issues. Include Pi hardware class (`16`/`08`/`04`), `git rev-parse --short HEAD`, client versions (Roku manifest / Kodi add-on), and `./scripts/healthcheck.sh` output when reporting runtime problems. See [SECURITY.md](SECURITY.md) for vulnerability reports.
+Use GitHub Issues — choose **Bug report** or **Question** (templates under `.github/ISSUE_TEMPLATE/`). Include Pi hardware class (`16`/`08`/`04`), `git rev-parse --short HEAD`, client versions (Roku manifest / Kodi add-on), and `./scripts/healthcheck.sh` output when reporting runtime problems. See [SECURITY.md](SECURITY.md) for vulnerability reports.
 
 ## License
 

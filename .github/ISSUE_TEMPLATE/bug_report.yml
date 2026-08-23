@@ -1,0 +1,91 @@
+name: Bug report
+description: Something broken on a furnace Pi, client, or in the pipeline
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Include versions and `./scripts/healthcheck.sh` output from the furnace Pi when you can.
+        For **security vulnerabilities**, do not file here — see [SECURITY.md](https://github.com/awuehler/jellyflam3-server/blob/master/SECURITY.md).
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Area
+      options:
+        - Furnace / Pi (worker, idle-gate, Jellyfin)
+        - Roku VoD channel
+        - Roku screensaver
+        - Kodi screensaver
+        - Peering / Syncthing
+        - Docs only
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: hw_profile
+    attributes:
+      label: Pi hardware class (if applicable)
+      options:
+        - 16 GB class (-16a)
+        - 8 GB class (-08a)
+        - 4 GB class (-04a)
+        - Not applicable (client-only / Windows packager)
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Server git version
+      description: "`git rev-parse --short HEAD` on the furnace Pi, or release tag (e.g. v0.3.0)"
+      placeholder: "40c2025"
+    validations:
+      required: true
+
+  - type: input
+    id: client_version
+    attributes:
+      label: Client version (if applicable)
+      description: Roku manifest (e.g. 1.0.26) or Kodi add-on (e.g. 0.2.6)
+      placeholder: "1.0.26"
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: healthcheck
+    attributes:
+      label: healthcheck.sh output (furnace Pi)
+      description: Paste redacted output of `./scripts/healthcheck.sh` from `/opt/jellyflam3-server`
+      render: shell
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Logs / other context
+      render: shell

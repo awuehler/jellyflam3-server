@@ -1,0 +1,42 @@
+name: Question
+description: How-to, triage, or "is this expected?" — not a code defect
+title: "[Question]: "
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Before filing:** [USER_GUIDE Layer 1](https://github.com/awuehler/jellyflam3-server/blob/master/docs/USER_GUIDE_AND_RUNBOOK.md#layer-1--end-user) (viewers) · [Layer 2](https://github.com/awuehler/jellyflam3-server/blob/master/docs/USER_GUIDE_AND_RUNBOOK.md#layer-2--operator-runbook) (operators).
+
+  - type: dropdown
+    id: audience
+    attributes:
+      label: I am a…
+      options:
+        - End user / viewer (Roku or Kodi only)
+        - Operator / homelab (Pi owner)
+        - Contributor / developer
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What are you trying to do, and where are you stuck?
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What you already tried / read
+      placeholder: |
+        e.g. USER_GUIDE Layer 1 triage table, re-sideload zip, jellyfin_id_dump IDs
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or tag (if known)
+      placeholder: "v0.3.0"
