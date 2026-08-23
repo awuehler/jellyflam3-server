@@ -379,7 +379,22 @@ def test_trust_key_enrolls_peer(tmp_path: Path):
     enrolled = share_security.trust_public_key(
         cfg_local, share_security.public_key_path(cfg_peer), name="peer"
     )
-    assert enrolled["ok"] is True
+    assert enrolled["ok"] is True, enrolled.get("error")
     good = share_security.verify_integrity(flam, cfg_local)
     assert good["ok"] is True
     assert good["alg"] == "ed25519"
+
+
+def test_trust_key_enrolls_from_private_when_pub_corrupt(tmp_path: Path):
+    """Regression: invalid .pub must not block trust when sibling .pem is valid."""
+    peer = tmp_path / "peer"
+    local = tmp_path / "local"
+    peer.mkdir()
+    local.mkdir()
+    cfg_peer = _cfg(peer)
+    cfg_local = _cfg(local)
+    share_security.gen_keypair(cfg_peer)
+    pub = share_security.public_key_path(cfg_peer)
+    pub.write_bytes(b"not-a-valid-ed25519-public-key")
+    enrolled = share_security.trust_public_key(cfg_local, pub, name="peer")
+    assert enrolled["ok"] is True, enrolled.get("error")

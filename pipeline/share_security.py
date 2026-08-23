@@ -109,6 +109,28 @@ def _public_key_bytes_from_private(priv_path: Path) -> bytes | None:
         return None
 
 
+def _write_bytes_atomic(path: Path, data: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.tmp")
+    tmp.write_bytes(data)
+    tmp.replace(path)
+
+
+def _ensure_public_key_file(priv_path: Path, pub_path: Path) -> bytes | None:
+    """Ensure ``pub_path`` holds raw 32-byte Ed25519 public key; heal from private if needed."""
+    pub_path.parent.mkdir(parents=True, exist_ok=True)
+    if pub_path.is_file():
+        normalized = _normalize_public_key_bytes(pub_path.read_bytes())
+        if normalized is not None:
+            if pub_path.read_bytes() != normalized:
+                _write_bytes_atomic(pub_path, normalized)
+            return normalized
+    pub_raw = _public_key_bytes_from_private(priv_path)
+    if pub_raw is not None:
+        _write_bytes_atomic(pub_path, pub_raw)
+    return pub_raw
+
+
 def gen_keypair(cfg: dict[str, Any], *, overwrite: bool = False) -> dict[str, Any]:
     """Generate Ed25519 PEM private + raw public key files."""
     from cryptography.hazmat.primitives import serialization
@@ -117,19 +139,13 @@ def gen_keypair(cfg: dict[str, Any], *, overwrite: bool = False) -> dict[str, An
     priv_path = private_key_path(cfg)
     pub_path = public_key_path(cfg)
     if priv_path.is_file() and not overwrite:
-        if not pub_path.is_file():
-            pub_raw = _public_key_bytes_from_private(priv_path)
-            if pub_raw is not None:
-                pub_path.parent.mkdir(parents=True, exist_ok=True)
-                pub_path.write_bytes(pub_raw)
+        pub_raw = _ensure_public_key_file(priv_path, pub_path)
         return {
             "ok": True,
             "created": False,
             "private_key_file": str(priv_path),
             "public_key_file": str(pub_path),
-            "key_id": key_id_from_raw_public(pub_path.read_bytes())
-            if pub_path.is_file()
-            else None,
+            "key_id": key_id_from_raw_public(pub_raw) if pub_raw is not None else None,
             "note": "existing key kept (pass overwrite=True to replace)",
         }
 
@@ -150,7 +166,7 @@ def gen_keypair(cfg: dict[str, Any], *, overwrite: bool = False) -> dict[str, An
         priv_path.chmod(0o600)
     except OSError:
         pass
-    pub_path.write_bytes(pub_raw)
+    _write_bytes_atomic(pub_path, pub_raw)
     kid = key_id_from_raw_public(pub_raw)
     log.info("share_security: generated Ed25519 key_id=%s", kid)
     return {
@@ -182,15 +198,20 @@ def _load_public_key_raw(raw: bytes):
 
 
 def _normalize_public_key_bytes(raw: bytes) -> bytes | None:
+    if not raw:
+        return None
     raw = raw.strip()
     if raw.startswith(b"-----BEGIN"):
-        from cryptography.hazmat.primitives import serialization
+        try:
+            from cryptography.hazmat.primitives import serialization
 
-        pub = serialization.load_pem_public_key(raw)
-        raw = pub.public_bytes(
-            encoding=serialization.Encoding.Raw,
-            format=serialization.PublicFormat.Raw,
-        )
+            pub = serialization.load_pem_public_key(raw)
+            raw = pub.public_bytes(
+                encoding=serialization.Encoding.Raw,
+                format=serialization.PublicFormat.Raw,
+            )
+        except Exception:  # noqa: BLE001
+            return None
     return raw if len(raw) == 32 else None
 
 
@@ -222,14 +243,23 @@ def _load_trusted_keys(cfg: dict[str, Any]) -> dict[str, bytes]:
 
 def trust_public_key(cfg: dict[str, Any], pub_file: Path, *, name: str | None = None) -> dict[str, Any]:
     """Copy a peer public key into the trusted keys directory."""
-    normalized = _normalize_public_key_bytes(Path(pub_file).read_bytes())
+    pub_file = Path(pub_file)
+    normalized: bytes | None = None
+    if pub_file.is_file():
+        normalized = _normalize_public_key_bytes(pub_file.read_bytes())
+    if normalized is None:
+        for priv_guess in (pub_file.with_name("ed25519.pem"), pub_file.parent / "ed25519.pem"):
+            if priv_guess.is_file():
+                normalized = _public_key_bytes_from_private(priv_guess)
+                if normalized is not None:
+                    break
     if normalized is None:
         return {"ok": False, "error": "expected 32-byte Ed25519 public key (raw or PEM)"}
     kid = key_id_from_raw_public(normalized)
     dest_dir = trusted_keys_dir(cfg)
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / f"{name or kid}.pub"
-    dest.write_bytes(normalized)
+    _write_bytes_atomic(dest, normalized)
     return {"ok": True, "key_id": kid, "path": str(dest)}
 
 
