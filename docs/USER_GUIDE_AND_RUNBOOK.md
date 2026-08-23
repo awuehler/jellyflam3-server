@@ -462,11 +462,12 @@ Checklist: [phase3/10_TESTING_AND_ACCEPTANCE.md](phase3/10_TESTING_AND_ACCEPTANC
 |---|---|
 | `pipeline/` | Furnace, curator, peering, refactor — Python CLIs (`python3 -m pipeline.*`) |
 | `scripts/` | Ops shell/Python/PowerShell — health, cron, packaging, lab smoke |
-| `tests/` | Fast pytest suite (~280 tests, ~3s) |
+| `tests/` | Fast pytest suite (~303 tests on Linux CI, ~3s) |
 | `configs/` | Example YAML; live config is gitignored |
 | `docs/phaseN/` | Feature guides (implementer SoT per topic) |
 | `deploy/systemd/` | Unit files |
-| `.github/workflows/tests.yml` | CI: pytest + exec bits |
+| `.github/workflows/tests.yml` | CI: pytest + exec bits on push/PR |
+| `.github/workflows/release.yml` | Tag push: pytest → generic client zips → GitHub Release |
 
 ### Development setup
 
@@ -566,4 +567,4 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 
 ---
 
-*Document version: 2026-08-22 — Kodi screensaver upgrade runbook (package → SMB → install from zip); aligns with fleet tip `b7e81ea` (share_live peering readiness, healthcheck fail-closed on offline Opt In).*
+*Document version: 2026-08-23 — Public launch (`v0.3.0`); fleet tip `2fca790` (post-launch OSS hygiene + share-security trust-key fix in `v0.3.1`).*

@@ -34,15 +34,15 @@ python3 -m pytest tests/ -q
 | Share security fleet | `powershell -File scripts/lab_smoke05_fleet.ps1` | 3-Pi × pathways A–D; exit 1 on any FAIL; unit coverage in `tests/test_peering.py` |
 | Fleet health | `./scripts/healthcheck.sh` | Per-Pi RC sample |
 
-**Status:** **Complete** — Owner OK 2026-08-23 @ `f37758a`. Regression + feature checklists green; SoT synced. **`v0.3.0` tag at public launch** — see [CHANGELOG.md](../../CHANGELOG.md).
+**Status:** **Complete** — Owner OK 2026-08-23. Public launch **`v0.3.0`** (2026-08-23); post-launch maintenance **`v0.3.1`** — see [CHANGELOG.md](../../CHANGELOG.md).
 
 ## Acceptance run log
 
 | Check | Result |
 |---|---|
-| Local `pytest tests/ -q` | **OK** 2026-08-23 — **298 passed**, 5 skipped @ `1169f8f` (Windows; 4× POSIX `media_layout` skipped; CI green) |
+| Local `pytest tests/ -q` | **OK** 2026-08-23 — **303 passed**, 1 skipped @ `2fca790` (Linux CI); **299**+5 skip Windows |
 | Fleet pytest (`16a` / `08a` / `04a`) | **OK** 2026-08-22 — 284 passed, 1 skipped each @ `c14bdb4` (~6s); `python3-pytest` via apt |
-| Fleet `healthcheck.sh` | **OK** 2026-08-22 — exit 0 on 16a / 08a / 04a @ `b7e81ea`; `OK share live` (Syncthing active + Tailscale Running online); units/tools/gate green |
+| Fleet `healthcheck.sh` | **OK** 2026-08-22 — exit 0 on 16a / 08a / 04a @ `b7e81ea`; post-launch fleet @ `2fca790` |
 | Pedigree smoke (`SMOKE_RENDER_OK`) | **OK** 2026-08-23 — `04a` idle furnace @ `97be7e2` (`SMOKE_RENDER_OK`, ~5 min; scratch under `/var/cache/jellyflam3/smoke`) |
 | Open regression (Step 10 checklist) | **OK** 2026-08-23 — `04a` automated + Owner OK: idle-gate open/closed (HLS active → gate closed), ambient MP4 loop acceptable on lab Roku |
 | Guide 06 Owner OK | **OK** 2026-08-14 |
@@ -65,7 +65,7 @@ python3 -m pytest tests/ -q
 | 07 JellyFlam3 Hammer | **Complete** | Owner OK 2026-08-17 — 04a lab dry-run + apply — [07](07_JELLYFLAM3_HAMMER.md) |
 | 08 Jellyfin ID dump | **Complete** | Owner OK 2026-08-14 — [08](08_JELLYFIN_ID_DUMP.md) |
 | 09 Sheep refactor | **Complete** | Owner OK 2026-08-21 — pathways A / P / B / C / D + sidecar history; 16a lab — [09](09_SHEEP_REFACTOR.md) |
-| 10 Testing / acceptance / RC | **Complete** | Owner OK 2026-08-23 @ `f37758a`; `v0.3.0` at public launch |
+| 10 Testing / acceptance / RC | **Complete** | Owner OK 2026-08-23; public launch `v0.3.0`; maintenance `v0.3.1` |
 
 Update statuses as each guide ships; RC may ship a **subset** of 01–09 if Owner defers the rest to a later RC.
 
@@ -98,7 +98,7 @@ Update statuses as each guide ships; RC may ship a **subset** of 01–09 if Owne
 
 ## Regression checklist (Phase 1–2 must stay green)
 
-- [x] Unit tests pass (local + CI on Ubuntu; at least one lab Pi for fleet parity) — includes ops/gate contracts, config load, package zip layouts, display-sink HTTP, refactor module imports — **OK** 2026-08-23 (`1169f8f`: local **298**+5 skip; fleet 16a/08a/04a 284+1 skip @ `c14bdb4`; GitHub Actions pytest job green)
+- [x] Unit tests pass (local + CI on Ubuntu; at least one lab Pi for fleet parity) — **OK** 2026-08-23 (`2fca790`: Linux CI **303**+1 skip; fleet 16a/08a/04a 284+1 skip @ `c14bdb4`)
 - [x] `healthcheck.sh` exit 0 on fleet sample (`16a` / `08a` / `04a` as available); flam3 on PATH (`/usr/local/bin`) — **OK** 2026-08-22 (`b7e81ea`: all three exit 0; Opt In + `share_live` on lab fleet)
 - [x] Idle-gate open when idle; closes on active HLS / JellyFlam3 playback — **OK** 2026-08-23 (`04a`: open when idle; Owner OK gate **closed** with active HLS stream connected to furnace Pi)
 - [x] Worker can still furnace a pedigree smoke or inbox genome — **OK** 2026-08-23 (`04a`: `jellyflam3-worker` active; `./scripts/smoke_render.sh` → `SMOKE_RENDER_OK`)
@@ -156,7 +156,7 @@ git log -1 --oneline
 ### RC exit criteria
 
 - [ ] Tag pushed; notes list **in** / **post-launch** items — apply at public launch (`v0.3.0`; [CHANGELOG.md](../../CHANGELOG.md))
-- [x] Fleet on release tip — re-sync after `v0.3.0` tag (history reset at public launch)
+- [x] Fleet on release tip — **OK** 2026-08-23 (`16a` / `08a` / `04a` @ `2fca790`; tag `v0.3.1` when applied)
 - [x] Owner OK on sign-off table below — **OK** 2026-08-23
 - [x] No secrets in release notes or committed dumps (`--show-secrets` output)
 
@@ -183,7 +183,7 @@ git log -1 --oneline
 
 Phase 3 DoD from [00_OVERVIEW.md](00_OVERVIEW.md) satisfied for this RC scope: [x]
 
-**RC id:** tag **`v0.3.0`** (initial public release)
+**RC id:** tag **`v0.3.1`** (public launch `v0.3.0` 2026-08-23)
 
 ## See also
 

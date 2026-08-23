@@ -14,7 +14,7 @@
 
 Instead:
 
-1. Use [GitHub private vulnerability reporting](https://github.com/awuehler/jellyflam3-server/security/advisories/new) if enabled, **or**
+1. Use [GitHub private vulnerability reporting](https://github.com/awuehler/jellyflam3-server/security/advisories/new), **or**
 2. Open a minimal issue asking for a private contact channel.
 
 Include steps to reproduce, affected component (`pipeline/`, Roku channel, Kodi add-on, scripts), and impact.

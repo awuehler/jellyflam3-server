@@ -141,7 +141,7 @@ Deep dives (same path, split by topic): [hardware](docs/phase1/01_HARDWARE_AND_O
 
 JellyFlam3 Server code is licensed under the MIT License (see [LICENSE](LICENSE)). Third-party components retain their own licenses; see [NOTICE](NOTICE). Electric Sheep **Free** genomes may be CC BY (human) or CC BY-NC (brood/algorithm); robot remixes of human parents stay NC under ES rules — see [docs/phase1/07_LICENSE_AND_METADATA.md](docs/phase1/07_LICENSE_AND_METADATA.md).
 
-**Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md) · **Security:** [SECURITY.md](SECURITY.md) · **Releases:** [CHANGELOG.md](CHANGELOG.md)
+**Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md) · **Code of conduct:** [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) · **Security:** [SECURITY.md](SECURITY.md) · **Releases:** [CHANGELOG.md](CHANGELOG.md)
 
 > [!WARNING]
 > Do not ingest Gold Sheep or Infinidream masters !
@@ -154,4 +154,4 @@ Furthermore, this effort is biased towards "quality over quantity" with each suc
 
 Your local flock of sheep will require months of continuous rendering to build a sizeable herd for sharing, for pedigree breeding, or for other end-points.
 
-_Tokenomics (Token Economics): approximately $20 within each phase listed above_
+_Hardware ballpark (not software cost): a Pi 5 furnace stack (Pi + NVMe + sheep SSD + cooler) is roughly **$150–250 USD** per node; budget extra for lab Roku/Kodi clients._

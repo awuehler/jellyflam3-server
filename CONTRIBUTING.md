@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in JellyFlam3 Server. This project is documentation-heavy and Pi-oriented — read the guides before large changes.
+Thanks for your interest in JellyFlam3 Server. This project is documentation-heavy and Pi-oriented — read the guides before large changes. Be excellent to each other — see [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ## Where to start
 

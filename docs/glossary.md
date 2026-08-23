@@ -317,7 +317,7 @@ Roku screensaver entry point only — separate package from VoD `Main()`. JellyF
 
 ### Kodi ES screensaver
 
-Phase 3 `screensaver.jellyflam3` — Electric Sheep **dogma** (video loops; loop→edge→loop deferred to Phase 4). **Complete** loops-only (Owner OK 2026-08-21). Example pasture host: `rpi-kodi-08a` (LibreELEC). Separate from Roku stills track.
+Phase 3 `screensaver.jellyflam3` — Electric Sheep **dogma** (video loops; loop→edge→loop post-launch). **Complete** loops-only (Owner OK 2026-08-21). Example pasture host: `rpi-kodi-08a` (LibreELEC). Separate from Roku stills track.
 
 ### JSON-RPC (Kodi)
 

@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [v0.3.1] — 2026-08-23
+
+Post-launch maintenance — OSS hygiene, CI hardening, and share-security fix.
+
+### Added
+
+- GitHub issue templates (bug / question), PR template, Dependabot, `CODEOWNERS`, [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
+- Tag-triggered [release workflow](.github/workflows/release.yml) with pytest gate before publishing client zips.
+
+### Fixed
+
+- Ed25519 peer trust enrollment when `.pub` is missing or corrupt — heal from sibling `.pem` (`share_security`).
+
+### Changed
+
+- DeepWiki hints (`.devin/wiki.json`) and doc test counts aligned to public launch (`v0.3.0`+).
+- CI: **303** tests on Linux (1 skipped); **299** passed + 5 skipped on Windows.
+
+---
+
 ## [v0.3.0] — 2026-08-23
 
 First public release — Phase 3 complete.
@@ -14,7 +34,7 @@ First public release — Phase 3 complete.
 - **Pipeline:** Sheep Shears, JellyFlam3 Hammer, sheep refactor (pathways A/P/B/C/D), share security (Ed25519 + SHA-256), stills extract, `jellyfin_id_dump` + `client_pack_presets`.
 - **Peering:** Syncthing over Tailscale for `*.flam3` genomes; Opt In/Out; gated promote.
 - **Docs:** Phases 1–3 guides, layered [USER_GUIDE_AND_RUNBOOK.md](docs/USER_GUIDE_AND_RUNBOOK.md), glossary, architecture SoT.
-- **CI:** GitHub Actions pytest + executable-bit check (~298 tests).
+- **CI:** GitHub Actions pytest + executable-bit check (~303 tests on Linux).
 
 ### Fixed
 

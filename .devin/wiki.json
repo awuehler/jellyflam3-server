@@ -9,11 +9,11 @@
       "author": "Owner"
     },
     {
-      "content": "PHASE STATUS (2026-08-23): Phase 1 complete (Owner OK 2026-07-28). Phase 2 complete (Owner OK 2026-08-08). Phase 3 complete (Owner OK 2026-08-23 @ f37758a; guides 01–10 signed). Phase 4 is synopsis only — not open for implementation. Git tag v0.3.0 deferred until post–public launch; fleet tracks master (5092bcf includes nested-flock client fix).",
+      "content": "PHASE STATUS (2026-08-23): Phase 1 complete (Owner OK 2026-07-28). Phase 2 complete (Owner OK 2026-08-08). Phase 3 complete (Owner OK 2026-08-23). Public launch v0.3.0 (2026-08-23); maintenance v0.3.1 (issue templates, share-security trust-key fix, OSS hygiene). Phase 4 is post-launch synopsis only — not open for implementation. Fleet tracks master @ 2fca790+.",
       "author": "Owner"
     },
     {
-      "content": "REPO LAYOUT PRIORITIES for documentation:\n- pipeline/ — Python render worker, Shears, Hammer, refactor, peering, flock artwork, idle gate, config\n- scripts/ — operator shell/Python tools (healthcheck, smoke, packaging, jellyfin_id_dump, client_pack_presets)\n- roku-channel/ — JellyFlam3 VoD BrightScript channel (manifest 1.0.26)\n- roku-screensaver/ — Roku stills screensaver (manifest 1.0.6)\n- kodi-screensaver/screensaver.jellyflam3/ — Kodi ES-dogma video screensaver add-on (0.2.6)\n- docs/phaseN/ — discrete task guides with Boundary/In/Out/Exit tables\n- configs/ — jellyflam3.yaml + hw profiles 16/08/04\n- tests/ — pytest (~280+ tests; GitHub Actions on push/PR)\n- deploy/ — systemd units, peering templates",
+      "content": "REPO LAYOUT PRIORITIES for documentation:\n- pipeline/ — Python render worker, Shears, Hammer, refactor, peering, flock artwork, idle gate, config\n- scripts/ — operator shell/Python tools (healthcheck, smoke, packaging, jellyfin_id_dump, client_pack_presets)\n- roku-channel/ — JellyFlam3 VoD BrightScript channel (manifest 1.0.26)\n- roku-screensaver/ — Roku stills screensaver (manifest 1.0.6)\n- kodi-screensaver/screensaver.jellyflam3/ — Kodi ES-dogma video screensaver add-on (0.2.6)\n- docs/phaseN/ — discrete task guides with Boundary/In/Out/Exit tables\n- configs/ — jellyflam3.yaml + hw profiles 16/08/04\n- tests/ — pytest (~303 tests on Linux CI; GitHub Actions on push/PR + release)\n- deploy/ — systemd units, peering templates\n- .github/ — issue templates, Dependabot, release workflow",
       "author": "Owner"
     },
     {
@@ -21,7 +21,7 @@
       "author": "Owner"
     },
     {
-      "content": "JELLYFIN FLOCK QUERY QUIRK (critical): Jellyfin 10.x ParentId=Sheep library + Recursive Movie/Video often returns a PARTIAL flock (e.g. 1 of 6) when MP4s live under by-generation/{gen}/ child folders. All clients (Roku VoD JellyfinTask.brs, Roku SS StillsTask.brs, Kodi jellyfin_flock.py, scripts/jellyfin_id_dump.py) MUST walk child Folder items and merge/dedupe — empty-only fallback is insufficient. Fixed in 5092bcf; sideload Roku 1.0.26 / 1.0.6 and Kodi 0.2.6+.",
+      "content": "JELLYFIN FLOCK QUERY QUIRK (critical): Jellyfin 10.x ParentId=Sheep library + Recursive Movie/Video often returns a PARTIAL flock (e.g. 1 of 6) when MP4s live under by-generation/{gen}/ child folders. All clients (Roku VoD JellyfinTask.brs, Roku SS StillsTask.brs, Kodi jellyfin_flock.py, scripts/jellyfin_id_dump.py) MUST walk child Folder items and merge/dedupe — empty-only fallback is insufficient. Sideload Roku 1.0.26 / 1.0.6 and Kodi 0.2.6+.",
       "author": "Owner"
     },
     {
@@ -37,11 +37,11 @@
       "author": "Owner"
     },
     {
-      "content": "DEFERRED / OUT OF SCOPE (do not document as shipped): Continuous live HLS from shuffled MP4s (dropped). Gold Sheep / paid ES masters (never ingest). LLM pedigree, DeepDream, full social flock network (aspirational). Phase 3 guide 04 edges+watermark moved to Phase 4. Kodi loop→edge→loop waits on Phase 4 edges. Channel Store / private Roku publish → Phase 4.",
+      "content": "DEFERRED / OUT OF SCOPE (do not document as shipped): Continuous live HLS from shuffled MP4s (dropped). Gold Sheep / paid ES masters (never ingest). LLM pedigree, DeepDream, full social flock network (aspirational). Kodi loop→edge→loop post-launch (edges not in v0.3.x). Channel Store / private Roku publish post-launch.",
       "author": "Owner"
     },
     {
-      "content": "TESTING: python3 -m pytest tests/ -q (~3s local; fleet uses apt python3-pytest). smoke_render.sh and hls_smoke.sh are Pi/lab scripts not pytest. hls_smoke uses jellyfin_id_dump --smoke-item-id for folder-aware item pick. CI: .github/workflows/tests.yml + ensure_exec_bits.sh --check.",
+      "content": "TESTING: python3 -m pytest tests/ -q (~3s local; ~303 tests Linux CI). Fleet uses apt python3-pytest. smoke_render.sh and hls_smoke.sh are Pi/lab scripts not pytest. CI: .github/workflows/tests.yml + release.yml (tag push). ensure_exec_bits.sh --check on every CI run.",
       "author": "Owner"
     }
   ],
@@ -63,7 +63,7 @@
     },
     {
       "title": "Phase Status",
-      "purpose": "Delivery phases 1–4 completion state, Owner OK dates, RC id f37758a, deferred v0.3.0 tag, and what remains in Phase 4 synopsis.",
+      "purpose": "Delivery phases 1–4 completion state, Owner OK dates, releases v0.3.0/v0.3.1, and post-launch Phase 4 synopsis.",
       "parent": "Architecture Overview"
     },
     {
@@ -82,7 +82,7 @@
       "parent": "Architecture Overview",
       "page_notes": [
         {
-          "content": "Document the Jellyfin 10.x partial ParentId flock bug and merge-via-child-folders fix (5092bcf). Guides: phase1/04, phase2/02, phase2/03, phase3/08."
+          "content": "Document the Jellyfin 10.x partial ParentId flock bug and merge-via-child-folders client fix. Guides: phase1/04, phase2/02, phase2/03, phase3/08."
         }
       ]
     },
@@ -208,16 +208,16 @@
     },
     {
       "title": "Phase 4 Roadmap",
-      "purpose": "Synopsis of parked work: edges/watermark, Roku publish, peer share-path, mesh scripting, library rotate, concurrent clients, viewer feedback, sheep naming — not yet open.",
+      "purpose": "Synopsis of post-launch work: edges/watermark, Roku publish, peer share-path, mesh scripting, library rotate, concurrent clients, viewer feedback, sheep naming — not yet open.",
       "parent": "Phase Status"
     },
     {
       "title": "Known Issues and Limits",
-      "purpose": "Operational limits, open concerns, and workarounds: Jellyfin nested flock query, one Roku sideload slot, render latency on Pi, shuffleFlock vs list size, tag deferred, continuous HLS dropped, Gold Sheep out of scope.",
+      "purpose": "Operational limits, open concerns, and workarounds: Jellyfin nested flock query, one Roku sideload slot, render latency on Pi, shuffleFlock vs list size, continuous HLS dropped, Gold Sheep out of scope.",
       "parent": null,
       "page_notes": [
         {
-          "content": "Include 2026-08-23 confirmation: flat ParentId returned 1/6 sheep; folder walk returned 6; fixed in clients 5092bcf; Roku VoD + screensaver verified after sideload 1.0.26/1.0.6."
+          "content": "Include 2026-08-23 confirmation: flat ParentId returned partial flock; folder walk returns full flock; client merge required. Roku VoD + screensaver verified after sideload 1.0.26/1.0.6."
         },
         {
           "content": "Concerns: Jellyfin API behavior may change; child-folder walk capped at 50 direct folders under library; no server-side proxy yet; multi-Roku household needs Phase 4 publish or manual per-TV sideload; secrets in registry on Roku devices."
