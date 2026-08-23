@@ -1,7 +1,7 @@
 # Runtime + packaging (pipeline, share_security, Kodi store-art builder)
 PyYAML>=6.0
 cryptography>=41.0
-Pillow>=10.0
+Pillow>=12.3.0
 
 # Test / CI
 pytest>=7.0
