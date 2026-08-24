@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 
 from pipeline.peering import (
     assess_peering_readiness,
@@ -380,6 +381,8 @@ def test_trust_key_enrolls_peer(tmp_path: Path):
         cfg_local, share_security.public_key_path(cfg_peer), name="peer"
     )
     assert enrolled["ok"] is True, enrolled.get("error")
+    sidecar = json.loads(share_security.sig_path_for(flam).read_text(encoding="utf-8"))
+    assert enrolled["key_id"] == sidecar["key_id"]
     good = share_security.verify_integrity(flam, cfg_local)
     assert good["ok"] is True
     assert good["alg"] == "ed25519"

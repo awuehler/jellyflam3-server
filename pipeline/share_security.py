@@ -14,6 +14,7 @@ import base64
 import hashlib
 import json
 import logging
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -112,17 +113,42 @@ def _public_key_bytes_from_private(priv_path: Path) -> bytes | None:
 def _write_bytes_atomic(path: Path, data: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(f".{path.name}.tmp")
-    tmp.write_bytes(data)
+    with open(tmp, "wb") as handle:
+        handle.write(data)
+        handle.flush()
+        os.fsync(handle.fileno())
     tmp.replace(path)
+    try:
+        dir_fd = os.open(path.parent, os.O_RDONLY)
+    except OSError:
+        return
+    try:
+        os.fsync(dir_fd)
+    finally:
+        os.close(dir_fd)
+
+
+def _resolve_public_key_bytes(pub_file: Path) -> bytes | None:
+    """Load raw Ed25519 public key bytes; prefer sibling private key when present."""
+    pub_file = Path(pub_file)
+    for priv_guess in (pub_file.with_name("ed25519.pem"), pub_file.parent / "ed25519.pem"):
+        if priv_guess.is_file():
+            normalized = _public_key_bytes_from_private(priv_guess)
+            if normalized is not None:
+                return normalized
+    if pub_file.is_file():
+        return _normalize_public_key_bytes(pub_file.read_bytes())
+    return None
 
 
 def _ensure_public_key_file(priv_path: Path, pub_path: Path) -> bytes | None:
     """Ensure ``pub_path`` holds raw 32-byte Ed25519 public key; heal from private if needed."""
     pub_path.parent.mkdir(parents=True, exist_ok=True)
     if pub_path.is_file():
-        normalized = _normalize_public_key_bytes(pub_path.read_bytes())
+        raw = pub_path.read_bytes()
+        normalized = _normalize_public_key_bytes(raw)
         if normalized is not None:
-            if pub_path.read_bytes() != normalized:
+            if raw != normalized:
                 _write_bytes_atomic(pub_path, normalized)
             return normalized
     pub_raw = _public_key_bytes_from_private(priv_path)
@@ -243,16 +269,7 @@ def _load_trusted_keys(cfg: dict[str, Any]) -> dict[str, bytes]:
 
 def trust_public_key(cfg: dict[str, Any], pub_file: Path, *, name: str | None = None) -> dict[str, Any]:
     """Copy a peer public key into the trusted keys directory."""
-    pub_file = Path(pub_file)
-    normalized: bytes | None = None
-    if pub_file.is_file():
-        normalized = _normalize_public_key_bytes(pub_file.read_bytes())
-    if normalized is None:
-        for priv_guess in (pub_file.with_name("ed25519.pem"), pub_file.parent / "ed25519.pem"):
-            if priv_guess.is_file():
-                normalized = _public_key_bytes_from_private(priv_guess)
-                if normalized is not None:
-                    break
+    normalized = _resolve_public_key_bytes(pub_file)
     if normalized is None:
         return {"ok": False, "error": "expected 32-byte Ed25519 public key (raw or PEM)"}
     kid = key_id_from_raw_public(normalized)
@@ -260,6 +277,14 @@ def trust_public_key(cfg: dict[str, Any], pub_file: Path, *, name: str | None = 
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / f"{name or kid}.pub"
     _write_bytes_atomic(dest, normalized)
+    trusted = _load_trusted_keys(cfg)
+    if kid not in trusted:
+        stored = _normalize_public_key_bytes(dest.read_bytes())
+        if stored is None or key_id_from_raw_public(stored) != kid:
+            return {"ok": False, "error": "trusted key write failed verification"}
+        trusted = _load_trusted_keys(cfg)
+        if kid not in trusted:
+            return {"ok": False, "error": f"trusted key {kid} not visible in trust store"}
     return {"ok": True, "key_id": kid, "path": str(dest)}
 
 
@@ -427,13 +452,14 @@ def _verify_ed25519_sidecar(flam3: Path, cfg: dict[str, Any]) -> dict[str, Any]:
     trusted = _load_trusted_keys(cfg)
     raw_pub = trusted.get(kid)
     if raw_pub is None and body.get("public_key_b64"):
-        # Only accept embedded key if it is already in the trust store under that key_id
         try:
             embedded = base64.b64decode(body["public_key_b64"])
+            emb_kid = key_id_from_raw_public(embedded)
+            raw_pub = trusted.get(emb_kid)
+            if raw_pub is not None:
+                kid = emb_kid
         except Exception:  # noqa: BLE001
-            embedded = b""
-        if kid and key_id_from_raw_public(embedded) == kid and kid in trusted:
-            raw_pub = trusted[kid]
+            pass
 
     if raw_pub is None:
         return {
