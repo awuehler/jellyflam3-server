@@ -33,6 +33,12 @@ Phase 4 scope lock — **synopsis / future**. Not open for implementation until 
 
 Also named (aspirational / TBD): broader social flock, DeepDream/AI backends, LLM-assisted pedigree polish — may gain numbered guides when Phase 4 opens. Guide [08](08_VIEWER_FEEDBACK_LOOP.md) is the household feedback slice of social flock evolution; [09](09_SHEEP_NAMING.md) covers memorable aliases (RNG first; LLM naming later).
 
+### Client polish (parked — not numbered)
+
+| Item | Notes |
+|---|---|
+| **Long-interval flock refresh** | Kodi screensaver (and optionally Roku VoD ambient) fetch Jellyfin once per idle/session and reshuffle that in-memory list until exit. New catalog sheep (e.g. daily archive/breed under a new `by-generation/{gen}/` folder) appear only after the next session. **Phase 4 polish:** optional **long poll / refresh period** (hours-scale, or once per full shuffle wrap) to re-`fetch_flock` between clips so overnight continuous idle picks up ~daily ingest without exit/restart. Not a tight poll — default stays session-scoped. Track against [../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) (+ Roku VoD if desired). |
+
 ## Out of scope
 
 - Phase 3 feature guides still owned under [`docs/phase3/`](../phase3/00_OVERVIEW.md) (01–03, 05–10; stub at former 04)

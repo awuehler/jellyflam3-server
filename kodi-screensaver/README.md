@@ -110,6 +110,8 @@ Stop Kodi before editing `/storage/.kodi/userdata/guisettings.xml` or `Database/
 
 Any remote/keypress (and JSON-RPC) exits the screensaver (Kodi default).
 
+**Flock refresh:** the add-on loads the Jellyfin flock once when a screensaver session starts and only reshuffles that list until exit. New catalog sheep (after Jellyfin has indexed them) appear on the **next** session. Optional mid-session long-interval re-fetch is Phase 4 polish — see [docs/phase4/00_OVERVIEW.md](../docs/phase4/00_OVERVIEW.md#client-polish-parked--not-numbered).
+
 ## Layout
 
 ```
