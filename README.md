@@ -154,4 +154,4 @@ Furthermore, this effort is biased towards "quality over quantity" with each suc
 
 Your local flock of sheep will require months of continuous rendering to build a sizeable herd for sharing, for pedigree breeding, or for other end-points.
 
-_Hardware ballpark (not software cost): a Pi 5 furnace stack (Pi + NVMe + sheep SSD + cooler) is roughly **$150–250 USD** per node; budget extra for lab Roku/Kodi clients._
+_Hardware ballpark (not software cost): a Pi 5 furnace stack (Pi + NVMe + sheep SSD + cooler) is roughly **$250 USD** per entry level node (2x for mid-tier & 4x for top-end HW profile); budget extra for lab Roku/Kodi clients._
