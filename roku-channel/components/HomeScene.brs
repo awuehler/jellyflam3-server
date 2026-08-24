@@ -184,7 +184,7 @@ sub ensureDefaults()
     m.registry.write("streamMode", "mp4")
   end if
   if m.registry.read("shuffleFlock") = invalid
-    m.registry.write("shuffleFlock", "false")
+    m.registry.write("shuffleFlock", "true")
   end if
   m.registry.flush()
 end sub

@@ -324,7 +324,7 @@ def build_report(
         "libraryId": lib,
         "commercialMode": "false",
         "streamMode": "mp4",
-        "shuffleFlock": "false",
+        "shuffleFlock": "true",
     }
 
     notes = [
