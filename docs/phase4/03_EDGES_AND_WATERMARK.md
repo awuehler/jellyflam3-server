@@ -33,6 +33,7 @@ This guide is the **single home** for watermark scope (formerly a standalone wat
 | **Sidecar** | `type: edge`, `from_id`, `to_id`, nframes/fps, watermark metadata |
 | **Playback** | Jellyfin items or playlists that alternate loop → edge → loop; HLS path from Phase 2 guide 03; **Kodi** ES screensaver ([../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md)); Roku stills track ([../phase3/01_SCREENSAVERS_AND_STILLS.md](../phase3/01_SCREENSAVERS_AND_STILLS.md)) |
 | **Shears** | Deleting a loop sheep should cascade orphan edges ([../phase3/03_SHEEP_SHEARS.md](../phase3/03_SHEEP_SHEARS.md)) |
+| **Core client / pipeline impact** | Edges + watermark are not sidecar-only: expect **encode path**, catalog layout, **Roku VoD** (journey / playlist awareness beyond single-loop seek-reloop), **Kodi** loop→edge→loop sequencer, stills/poster bake, Shears cascade, and possibly shuffle/eligibility rules once edges sit beside loops. Coordinate with [08](08_VIEWER_FEEDBACK_LOOP.md) if vote overlays must appear on edge segments vs loops only. |
 
 ### Non-goals (edges)
 
@@ -77,6 +78,7 @@ All watermark notes for the project live here (not scattered across Phase 1/2/3 
 - [ ] Sidecar records `type: edge` + parent IDs
 - [ ] At least one loop→edge→loop playlist or client path documented
 - [ ] **Kodi** screensaver sequencer performs loop→edge→loop when edges exist (deferred from Phase 3 [guide 02](../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md); Owner OK 2026-08-21)
+- [ ] **Roku VoD** documents how edges appear (playlist / deep-link / optional journey mode) vs today’s single-sheep ambient loop
 - [ ] Duration respects hard max 120 s; idle-gate honored during render
 
 ### Watermark
