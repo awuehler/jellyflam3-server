@@ -50,7 +50,7 @@ Full design: [docs/Pi5_Flam3_VoD_Pipeline.md](docs/Pi5_Flam3_VoD_Pipeline.md).
 
 ## Documentation
 
-Phases 1–3 are **complete** (Owner OK 2026-08-23). Post-launch roadmap items live under `[docs/phase4/](docs/phase4/)` (not part of v0.3.0).
+Phases 1–3 are **complete** (Owner OK 2026-08-23). Post-launch roadmap items live under [docs/phase4/](docs/phase4/) (not part of v0.3.0).
 
 - **Phase 1** — [docs/phase1/](docs/phase1/) · [00_OVERVIEW.md](docs/phase1/00_OVERVIEW.md)
 - **Phase 2** — [docs/phase2/](docs/phase2/) · [00_OVERVIEW.md](docs/phase2/00_OVERVIEW.md)
