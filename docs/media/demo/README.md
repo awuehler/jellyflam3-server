@@ -1,6 +1,6 @@
 # Demo media
 
-Shipped flock sample for README and GitHub Release pages. **Do not** use Gold Sheep or paid masters.
+Shipped flock sample for README and GitHub Release pages. Reminder: **Do not** use Gold Sheep or paid masters.
 
 | File | Sheep | Source | License |
 |---|---|---|---|

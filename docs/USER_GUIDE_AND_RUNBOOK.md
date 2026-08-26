@@ -253,6 +253,14 @@ python3 -m pipeline.peering opt-out --config configs/jellyflam3.yaml
 
 **When Opt In is true, background sharing is assumed to work** — both Syncthing and Tailscale must be up. If either is down, you have **offline peering**: the marker says “share,” but nothing syncs.
 
+**Fleet watchdog (recommended on Opt-In hosts):** `scripts/cron_tailscale_watch.sh` every ~5 minutes polls live Tailscale + Syncthing and heals when share is not live (`systemctl restart tailscaled`, `tailscale up` with `TS_AUTHKEY`, restart `jellyflam3-syncthing` if inactive). Opt Out is a no-op. Manual check:
+
+```bash
+python3 -m pipeline.tailscale_watch --json
+# or dry-run:
+./scripts/cron_tailscale_watch.sh --dry-run
+```
+
 `healthcheck.sh` probes **live** unit + Tailscale state (not stale JSON). On Opt In without live share:
 
 ```text

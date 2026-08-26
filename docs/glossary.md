@@ -24,8 +24,7 @@ Terms, keywords, and phrases used across the **jellyflam3-server** project — d
 | [ECP](#ecp-external-control-protocol) | [HLS](#hls) | [Poster / Primary](#poster--primary) | [TV-port](#tv-port) |
 | [Edition (render)](#edition-render) | [HW profile](#hw-profile) | [Pre-share / post-share](#pre-share--post-share) | [Viewer feedback](#viewer-feedback--sheep-vote) |
 | [`.flam3`](#flam3-file) | [Idle breed](#idle-breed) | [RC](#release-candidate-rc) | [Sheep naming / alias](#sheep-naming--alias) |
-| | | | [VoD](#vod) |
-| | | | [Worker](#worker) |
+| | | [VoD](#vod) | [Worker](#worker) |
 
 ---
 

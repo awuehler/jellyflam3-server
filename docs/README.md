@@ -32,7 +32,7 @@ Parallel after guide 02: `03` ∥ `04`. Acceptance (`10`) is last.
 2. [02_JELLYFIN_FLOCK_UX.md](phase2/02_JELLYFIN_FLOCK_UX.md) — posters / metadata
 3. [03_HLS_CLIENT_STREAMING.md](phase2/03_HLS_CLIENT_STREAMING.md) — HLS Jellyfin → Roku / VLC / etc.
 4. [04_ROKU_CHANNEL_POLISH.md](phase2/04_ROKU_CHANNEL_POLISH.md) — JellyFlam3 UX + TV display probe
-5. [05_SYNCTHING_GENOME_PEERING.md](phase2/05_SYNCTHING_GENOME_PEERING.md) — Syncthing over Tailscale (`*.flam3` + optional `*-poster.jpg`; Opt In/Out)
+5. [05_SYNCTHING_GENOME_PEERING.md](phase2/05_SYNCTHING_GENOME_PEERING.md) — Syncthing over Tailscale (`*.flam3`; Opt In/Out)
 6. [06_SHEEP_TAX.md](phase2/06_SHEEP_TAX.md) — genome XML / vocab scan & repair
 7. [07_PEDIGREE_BREEDING.md](phase2/07_PEDIGREE_BREEDING.md) — mutate / cross / blend / interpolate (+ daily idle cron)
 8. [08_DYNAMIC_DURATION.md](phase2/08_DYNAMIC_DURATION.md) — XML signals; profile soft/hard bands; `snap_to_periods` locked true; hard max 120
@@ -46,12 +46,11 @@ Parallel after **02**: `03` (HLS) anytime; `04` once Primary images exist. `05`�
 1. [01_SCREENSAVERS_AND_STILLS.md](phase3/01_SCREENSAVERS_AND_STILLS.md) — stills; Roku Screensaver/Backdrop
 2. [02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) — Kodi ES-dogma screensaver
 3. [03_SHEEP_SHEARS.md](phase3/03_SHEEP_SHEARS.md) — CRUD `.flam3` + downstream cascade
-4. *(former guide 04 — edges + watermark — deferred post-launch)*
-5. [05_SHARED_SHEEP_SECURITY.md](phase3/05_SHARED_SHEEP_SECURITY.md) — pre/post share integrity (anti-tamper)
-6. [06_GIT_PEDIGREE_SHEEP.md](phase3/06_GIT_PEDIGREE_SHEEP.md) — git pedigree smoke/examples
-7. [07_JELLYFLAM3_HAMMER.md](phase3/07_JELLYFLAM3_HAMMER.md) — JellyFlam3 Hammer (purge history / reset worker / wipe render I/O)
-8. [08_JELLYFIN_ID_DUMP.md](phase3/08_JELLYFIN_ID_DUMP.md) — Jellyfin ID dump for JellyFlam3 Roku Settings
-9. [09_SHEEP_REFACTOR.md](phase3/09_SHEEP_REFACTOR.md) — refactor tool (quality / palette / encode; Jellyfin-visible preview)
-10. [10_TESTING_AND_ACCEPTANCE.md](phase3/10_TESTING_AND_ACCEPTANCE.md) — testing, acceptance, and **release candidate**
+4. [05_SHARED_SHEEP_SECURITY.md](phase3/05_SHARED_SHEEP_SECURITY.md) — pre/post share integrity (anti-tamper)
+5. [06_GIT_PEDIGREE_SHEEP.md](phase3/06_GIT_PEDIGREE_SHEEP.md) — git pedigree smoke/examples
+6. [07_JELLYFLAM3_HAMMER.md](phase3/07_JELLYFLAM3_HAMMER.md) — JellyFlam3 Hammer (purge history / reset worker / wipe render I/O)
+7. [08_JELLYFIN_ID_DUMP.md](phase3/08_JELLYFIN_ID_DUMP.md) — Jellyfin ID dump for JellyFlam3 Roku Settings
+8. [09_SHEEP_REFACTOR.md](phase3/09_SHEEP_REFACTOR.md) — refactor tool (quality / palette / encode; Jellyfin-visible preview)
+9. [10_TESTING_AND_ACCEPTANCE.md](phase3/10_TESTING_AND_ACCEPTANCE.md) — testing, acceptance, and first `release candidate`
 
-**NOTE:** Tag **`v0.3.0`** at public launch — see [CHANGELOG.md](../CHANGELOG.md). Post-launch roadmap (edges, Roku publish, etc.) is tracked separately under `docs/phase4/` and is **not** part of the v0.3.0 release.
+**NOTE:** Tag **`v0.3.0`** at public launch — see [CHANGELOG.md](../CHANGELOG.md). Post-launch roadmap (edges, Roku publish, etc.) is tracked separately under `[docs/phase4/](docs/phase4/)` and is **not** part of the v0.3.0 release.

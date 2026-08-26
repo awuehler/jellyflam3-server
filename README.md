@@ -42,20 +42,21 @@ flowchart LR
 
 Full design: [docs/Pi5_Flam3_VoD_Pipeline.md](docs/Pi5_Flam3_VoD_Pipeline.md).
 
-### Demo — `electricsheep.242.03322` (CC BY)
+### Demo Image — `electricsheep.242.03322` (CC BY)
 
-Sample flock still (~20 s loop when played on a client; complementary palette). [License notes](docs/phase1/07_LICENSE_AND_METADATA.md).
+> Sample flock still (~20 s loop when played on a client; complementary palette). [License notes](docs/phase1/07_LICENSE_AND_METADATA.md).
 
 ![electricsheep.242.03322 still](docs/media/demo/electricsheep.242.03322-poster.jpg)
 
 ## Documentation
 
-Phases 1–3 are **complete** (Owner OK 2026-08-23). Post-launch roadmap items live under `docs/phase4/` (not part of v0.3.0).
+Phases 1–3 are **complete** (Owner OK 2026-08-23). Post-launch roadmap items live under `[docs/phase4/](docs/phase4/)` (not part of v0.3.0).
 
 - **Phase 1** — [docs/phase1/](docs/phase1/) · [00_OVERVIEW.md](docs/phase1/00_OVERVIEW.md)
 - **Phase 2** — [docs/phase2/](docs/phase2/) · [00_OVERVIEW.md](docs/phase2/00_OVERVIEW.md)
 - **Phase 3** — [docs/phase3/](docs/phase3/) · [00_OVERVIEW.md](docs/phase3/00_OVERVIEW.md)
-- **Guides index** — [docs/README.md](docs/README.md) · **Users** — [User guide & runbook](docs/USER_GUIDE_AND_RUNBOOK.md)
+
+**Guides index** — [docs/README.md](docs/README.md) · **Users** — [User guide & runbook](docs/USER_GUIDE_AND_RUNBOOK.md)
 
 ## Quick start (Raspberry Pi 5)
 
@@ -136,6 +137,8 @@ Deep dives (same path, split by topic): [hardware](docs/phase1/01_HARDWARE_AND_O
 | ffmpeg | [FFmpeg/FFmpeg](https://github.com/FFmpeg/FFmpeg) · [ffmpeg.org](https://ffmpeg.org/) |
 | Jellyfin | [jellyfin/jellyfin](https://github.com/jellyfin/jellyfin) · [docs](https://jellyfin.org/docs/) |
 | BrightScript / Roku | [developer.roku.com](https://developer.roku.com/) · [jellyfin-roku](https://github.com/jellyfin/jellyfin-roku) |
+| Tailscale | [tailscale/tailscale](https://tailscale.com/) · [docs](https://tailscale.com/docs) |
+| Syncthing | [Syncthing/Syncthing](https://syncthing.net/) · [docs](https://docs.syncthing.net/) |
 
 ## License
 
@@ -154,4 +157,4 @@ Furthermore, this effort is biased towards "quality over quantity" with each suc
 
 Your local flock of sheep will require months of continuous rendering to build a sizeable herd for sharing, for pedigree breeding, or for other end-points.
 
-_Hardware ballpark (not software cost): a Pi 5 furnace stack (Pi + NVMe + sheep SSD + cooler) is roughly **$250 USD** per entry level node (2x for mid-tier & 4x for top-end HW profile); budget extra for lab Roku/Kodi clients._
+_Hardware ballpark (not software cost): a Pi 5 furnace stack (Pi + NVMe + sheep SSD + cooler) is roughly **$250 USD** per entry level node (2x for mid-tier & 4x for top-end HW profile); budget extra for homelab Roku/Kodi clients._
