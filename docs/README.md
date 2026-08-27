@@ -53,4 +53,4 @@ Parallel after **02**: `03` (HLS) anytime; `04` once Primary images exist. `05`�
 8. [09_SHEEP_REFACTOR.md](phase3/09_SHEEP_REFACTOR.md) — refactor tool (quality / palette / encode; Jellyfin-visible preview)
 9. [10_TESTING_AND_ACCEPTANCE.md](phase3/10_TESTING_AND_ACCEPTANCE.md) — testing, acceptance, and first `release candidate`
 
-**NOTE:** Tag **`v0.3.0`** at public launch — see [CHANGELOG.md](../CHANGELOG.md). Post-launch roadmap (edges, Roku publish, etc.) is tracked separately under [docs/phase4/](docs/phase4/) and is **not** part of the v0.3.0 release.
+**NOTE:** Tag **`v0.3.0`** at public launch — see [CHANGELOG.md](../CHANGELOG.md). Post-launch roadmap (edges, Roku publish, etc.) is tracked separately under [docs/phase4/](./phase4) and is **not** part of the v0.3.0 release.

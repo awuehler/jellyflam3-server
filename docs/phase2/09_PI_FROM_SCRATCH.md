@@ -16,6 +16,57 @@ End-user guide to build a **new** Raspberry Pi JellyFlam3 system from zero — a
 
 Hostnames always use a letter suffix (`…-16a`, `…-08a`, `…-04b`, …). Apply the matching class overlay with `python3 -m pipeline.hw_profile apply 08a` (or `16b` / `04a`).
 
+## Bill of materials (BOM)
+
+One **furnace** = one Pi 5 stack that renders, stores the flock, and runs Jellyfin. Pick a profile class above, then buy the matching row sizes. Optional clients (Roku / Kodi) are **not** part of this BOM.
+
+### Prototype (photo)
+
+![Homelab Prototype](../media/hardware/raspberry-pi-furnace_nobg.png)
+
+### Required hardware
+
+| # | Item | Qty | Notes |
+|---|---|---|---|
+| ![RPi 5](../media/hardware/raspberry-pi-5-16gb_nobg.png) | **Raspberry Pi 5** | 1 | **16 GB** / **8 GB** / **4 GB** RAM per profile class (`-16` / `-08` / `-04`) |
+| ![RPi Cooler](../media/hardware/raspberry-pi-5-active-cooler_nobg.png) | **Active Cooler** (RPi official) | 1 | Required for sustained flam3 + NVMe i.e. active airflow for RPi CPU |
+| ![NVMe Hat](../media/hardware/raspberry-pi-5-nvme-hat_nobg.png) | **M.2 HAT+** (PCIe Gen3) | 1 | Official or compatible; holds NVMe for scratch + state |
+| ![X-Fan Hat](../media/hardware/raspberry-pi-5-X-FAN40_nobg.png) | **2nd Fan Board** (recommended: Geekworm X-FAN40 PWM Controlled Fan HAT) | 1 | Active airflow for M.2 HAT |
+| not pictured (brand agnostic) | **NVMe SSD** (M.2) | 1 | **1 TB** / **500 GB** / **250 GB** → `/var/cache/jellyflam3` (+ bind `/var/lib/jellyflam3`) |
+| not pictured (brand agnostic) | **USB 3 SSD** (+ UASP enclosure if bare drive) | 1 | **1 TB** / **500 GB** / **250 GB** → `/media/sheep` flock catalog |
+| not pictured (brand agnostic) | **35 W USB-C PSU** (5 V / 5 A) | 1 | CanaKit PSU kit or equivalent; weak supplies → under-voltage / throttle under render |
+| not pictured (brand agnostic) | **microSD Card** | 1 | **OS only** — **128 GB** (`-16`) / **64 GB** (`-08`) / **32 GB** (`-04`); A2 preferred |
+| not pictured (brand agnostic) | **Misc Accessories** | N | Brass Spacers, Screw Nut Assortment Kit, Acrylic Plate and/or Oversized Acrylic Case, USB 3.0 to 2.5” SATA III Hard Drive Adapter |
+
+**Size matrix (storage):**
+
+| Profile | microSD (OS) | NVMe (scratch / state) | USB SSD (sheep) | Ballpark* |
+|---|---|---|---|---|
+| `-16` | 128 GB | 1 TB | 1 TB | ~4× entry |
+| `-08` | 64 GB | 500 GB | 500 GB | ~2× entry |
+| `-04` | 32 GB | 250 GB | 250 GB | entry (~**$250 USD**) |
+
+\*Hardware only (not software). Prices vary by region / vendor; treat as order-of-magnitude.
+
+### Nice-to-have / lab extras
+
+| Item | Qty | Notes |
+|---|---|---|
+| Short USB-C / HDMI cables | as needed | Bench bring-up; headless once SSH works |
+| USB keyboard (temporary) | 1 | First-boot only if imager SSH fails |
+| Spare microSD | 1 | Rescue / re-flash |
+| Case or stand | 1 | Must not block Active Cooler airflow or HAT+ |
+
+### Not in this BOM (clients)
+
+| Item | Role |
+|---|---|
+| Roku (developer mode) | VoD channel + stills screensaver — see [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) |
+| Kodi / LibreELEC Pi | Video screensaver pasture — separate from the furnace |
+| Second+ furnaces | Same BOM per hostname (`16b`, `08a`, …); Tailscale + Syncthing for peering |
+
+Deep-dive / early Phase 1 list: [../phase1/01_HARDWARE_AND_OS.md](../phase1/01_HARDWARE_AND_OS.md). Architecture context: [../Pi5_Flam3_VoD_Pipeline.md](../Pi5_Flam3_VoD_Pipeline.md).
+
 ### Render presets (locked)
 
 | Knob | `-16` | `-08` | `-04` (compact) |
