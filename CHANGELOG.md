@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. Format loosely follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Fixed
+
+- Ed25519 trust enrollment flake: do not `.strip()` exact 32-byte raw public keys (whitespace bytes are valid key material; broke `test_trust_key_enrolls_peer` intermittently on CI).
+
 ## [v0.3.1] — 2026-08-23
 
 Post-launch maintenance — OSS hygiene, CI hardening, and share-security fix.

@@ -401,3 +401,29 @@ def test_trust_key_enrolls_from_private_when_pub_corrupt(tmp_path: Path):
     pub.write_bytes(b"not-a-valid-ed25519-public-key")
     enrolled = share_security.trust_public_key(cfg_local, pub, name="peer")
     assert enrolled["ok"] is True, enrolled.get("error")
+
+
+def test_normalize_public_key_preserves_whitespace_bytes():
+    """Regression: raw Ed25519 keys may start/end with strip()-able bytes."""
+    raw = bytes([0x20]) + bytes([0x01] * 31)
+    assert len(raw) == 32
+    assert share_security._normalize_public_key_bytes(raw) == raw
+    trailing_nl = bytes([0x01] * 32) + b"\n"
+    assert share_security._normalize_public_key_bytes(trailing_nl) == bytes([0x01] * 32)
+
+
+def test_trust_key_enrolls_pub_with_leading_whitespace_byte(tmp_path: Path):
+    """Regression: trust store must keep keys whose first byte is 0x20."""
+    local = tmp_path / "local"
+    local.mkdir()
+    cfg_local = _cfg(local)
+    share_security.gen_keypair(cfg_local)
+    peer_pub = tmp_path / "odd.pub"
+    raw = bytes([0x20, 0x0A]) + bytes([0x02] * 30)
+    peer_pub.write_bytes(raw)
+    enrolled = share_security.trust_public_key(cfg_local, peer_pub, name="odd")
+    assert enrolled["ok"] is True, enrolled.get("error")
+    assert enrolled["key_id"] == share_security.key_id_from_raw_public(raw)
+    trusted = share_security._load_trusted_keys(cfg_local)
+    assert enrolled["key_id"] in trusted
+    assert trusted[enrolled["key_id"]] == raw

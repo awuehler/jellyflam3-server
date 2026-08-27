@@ -224,21 +224,31 @@ def _load_public_key_raw(raw: bytes):
 
 
 def _normalize_public_key_bytes(raw: bytes) -> bytes | None:
+    """Accept raw 32-byte Ed25519 or PEM. Never strip exact-length raw keys.
+
+    Random public keys can start/end with whitespace bytes (``0x09``/``0x0a``/
+    ``0x0d``/``0x20``, …). Stripping those mutates the key and breaks trust
+    enrollment intermittently (~5% of key pairs).
+    """
     if not raw:
         return None
-    raw = raw.strip()
-    if raw.startswith(b"-----BEGIN"):
+    # Exact raw Ed25519 — whitespace bytes are valid key material.
+    if len(raw) == 32:
+        return raw
+    stripped = raw.strip()
+    if stripped.startswith(b"-----BEGIN"):
         try:
             from cryptography.hazmat.primitives import serialization
 
-            pub = serialization.load_pem_public_key(raw)
-            raw = pub.public_bytes(
+            pub = serialization.load_pem_public_key(stripped)
+            return pub.public_bytes(
                 encoding=serialization.Encoding.Raw,
                 format=serialization.PublicFormat.Raw,
             )
         except Exception:  # noqa: BLE001
             return None
-    return raw if len(raw) == 32 else None
+    # Allow a single trailing newline after raw 32 bytes (text-editor saves).
+    return stripped if len(stripped) == 32 else None
 
 
 def _load_trusted_keys(cfg: dict[str, Any]) -> dict[str, bytes]:
