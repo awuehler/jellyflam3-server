@@ -93,6 +93,10 @@ else
     /etc/systemd/journald.conf.d/jellyflam3-persist.conf
 fi
 systemctl restart systemd-journald
+# Move any runtime journal into /var/log/journal (otherwise Storage=persistent
+# still leaves data under /run until flush).
+systemd-tmpfiles --create --prefix /var/log/journal 2>/dev/null || true
+journalctl --flush 2>/dev/null || true
 log "journald restarted; $(journalctl --disk-usage 2>/dev/null | tr '\n' ' ')"
 
 # --- logrotate configs (dedicated dir — not distro daily /etc/logrotate.d) ---
