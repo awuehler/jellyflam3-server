@@ -138,7 +138,7 @@ Deep dives (same path, split by topic): [hardware](docs/phase1/01_HARDWARE_AND_O
 | Jellyfin | [jellyfin/jellyfin](https://github.com/jellyfin/jellyfin) · [docs](https://jellyfin.org/docs/) |
 | BrightScript / Roku | [developer.roku.com](https://developer.roku.com/) · [jellyfin-roku](https://github.com/jellyfin/jellyfin-roku) |
 | Tailscale | [tailscale/tailscale](https://tailscale.com/) · [docs](https://tailscale.com/docs) |
-| Syncthing | [Syncthing/Syncthing](https://syncthing.net/) · [docs](https://docs.syncthing.net/) |
+| Syncthing | [syncthing/syncthing](https://syncthing.net/) · [docs](https://docs.syncthing.net/) |
 
 ## License
 

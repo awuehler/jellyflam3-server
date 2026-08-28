@@ -1,8 +1,25 @@
-/var/lib/jellyflam3/logs/*.log {
-    weekly
+# JellyFlam3 file-log rotation (invoked every 72h by jellyflam3-logrotate.timer).
+# No daily/weekly/size — rotate whenever this config is run by the timer.
+# Compress-after-11d and purge-after-23d: scripts/log_hygiene_age.sh (same timer).
+
+/var/log/jellyflam3/*.log {
     rotate 8
-    compress
+    maxage 23
     missingok
     notifempty
     copytruncate
+    dateext
+    dateformat -%Y%m%d-%H%M%S
+    create 0640 jellyflam3 jellyflam3
+}
+
+# Legacy path (older drop-in); keep if any service still writes here.
+/var/lib/jellyflam3/logs/*.log {
+    rotate 8
+    maxage 23
+    missingok
+    notifempty
+    copytruncate
+    dateext
+    dateformat -%Y%m%d-%H%M%S
 }

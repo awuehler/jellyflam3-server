@@ -261,6 +261,15 @@ python3 -m pipeline.tailscale_watch --json
 ./scripts/cron_tailscale_watch.sh --dry-run
 ```
 
+**Log hygiene (fleet):** persistent journald + 72h file-log rollover. Apply once per Pi after pull:
+
+```bash
+sudo ./scripts/enable_log_hygiene.sh
+sudo ./scripts/enable_log_hygiene.sh --check
+```
+
+Policy: rotate `/var/log/jellyflam3/*.log` every **72h**; **gzip** backups after **11 days**; **purge** after **23 days** (same ages for Jellyfin dated logs). Details: [phase2/09_PI_FROM_SCRATCH.md](phase2/09_PI_FROM_SCRATCH.md) step 12.
+
 `healthcheck.sh` probes **live** unit + Tailscale state (not stale JSON). On Opt In without live share:
 
 ```text

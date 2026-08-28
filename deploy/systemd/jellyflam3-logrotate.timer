@@ -1,0 +1,13 @@
+[Unit]
+Description=JellyFlam3 logrotate every 72 hours
+Documentation=file:///opt/jellyflam3-server/docs/phase2/09_PI_FROM_SCRATCH.md
+
+[Timer]
+OnBootSec=20min
+OnUnitActiveSec=72h
+AccuracySec=1h
+Persistent=true
+Unit=jellyflam3-logrotate.service
+
+[Install]
+WantedBy=timers.target

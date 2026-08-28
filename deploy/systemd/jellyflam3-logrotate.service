@@ -1,0 +1,11 @@
+[Unit]
+Description=JellyFlam3 logrotate (72h file-log rollover)
+Documentation=file:///opt/jellyflam3-server/docs/phase2/09_PI_FROM_SCRATCH.md
+
+[Service]
+Type=oneshot
+# Rotate jellyflam3 + jellyfin file logs, then compress (≥11d) / purge (≥23d).
+ExecStart=/opt/jellyflam3-server/scripts/log_hygiene.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

@@ -72,7 +72,7 @@ Deep-dive / early Phase 1 list: [../phase1/01_HARDWARE_AND_OS.md](../phase1/01_H
 | Knob | `-16` | `-08` | `-04` (compact) |
 |---|---|---|---|
 | `render.edition` | `gold_sheep_lite` | `gold_sheep_lite` | `compact` |
-| `quality` / `temporal_samples` / `supersample` | 900 / 450 / 2 | same | **same** |
+| `quality` / `temporal_samples` / `supersample` | 900 / 450 / 2 | same | same |
 | `max_cpus` | 3 | 3 | 3 |
 | Soft / hard VoD max (s) | **43 / 113** | **37 / 90** | **31 / 60** |
 | `dynamic.base_sec` / target | **43** | **31** | **23** / target **19** |
@@ -154,7 +154,7 @@ findmnt /media/sheep /var/cache/jellyflam3 /var/lib/jellyflam3
 
 `bootstrap_pi.sh` creates the directory tree, bind-mounts `lib` → `/var/lib/jellyflam3` when NVMe is at cache, sets **775** on cache/lib, **2775** on sheep, and (if `jellyfin` exists) group membership + `transcodes` / `library` ownership so Dashboard path changes do not Axios-fail on temp files.
 
-On **`-04` (32 GB microSD):** enable journald vacuum early (step 12).
+On **`-04` (32 GB microSD):** enable log hygiene early (step 12 — journald 200M cap).
 
 ### 3. Clone repo + config
 
@@ -306,21 +306,30 @@ Guide: [05](05_SYNCTHING_GENOME_PEERING.md) · runbook: [`deploy/peering/README.
 ./scripts/perf_healthcheck.sh --quick
 ```
 
-### 12. `-04` only — journald / microSD hygiene
+### 12. Log hygiene (all classes) — journald + 72h file rotate
 
-32 GB microSD fills quickly with journals:
+**Journald (persistent, sized by class):** keeps prior-boot kernel / NM / Wi‑Fi logs after power cycles.
+
+**File logs:** cron wrappers under `/var/log/jellyflam3/*.log` roll every **72 hours**, gzip backups older than **11 days**, purge older than **23 days**. Jellyfin dated logs get the same compress/purge ages (no mid-day rename).
 
 ```bash
-sudo mkdir -p /etc/systemd/journald.conf.d
-sudo tee /etc/systemd/journald.conf.d/jellyflam3-04.conf >/dev/null <<'EOF'
-[Journal]
-SystemMaxUse=200M
-RuntimeMaxUse=50M
-MaxFileSec=7day
-EOF
-sudo systemctl restart systemd-journald
-journalctl --disk-usage
+# From repo tip (/opt/jellyflam3-server):
+sudo ./scripts/enable_log_hygiene.sh          # auto-detect 16/08/04
+sudo ./scripts/enable_log_hygiene.sh --check
+# Force -04 caps on a compact board:
+sudo ./scripts/enable_log_hygiene.sh --class 04
 ```
+
+What it installs:
+
+| Piece | Role |
+|---|---|
+| `/etc/systemd/journald.conf.d/jellyflam3-persist.conf` | `Storage=persistent`; **512M** (`-16`/`-08`) or **200M** (`-04`); retain **23d** |
+| `/etc/jellyflam3/logrotate.d/jellyflam3` | Rotate `/var/log/jellyflam3/*.log` (not under distro `/etc/logrotate.d/`) |
+| `jellyflam3-logrotate.timer` | `OnUnitActiveSec=72h` → `scripts/log_hygiene.sh` |
+| `scripts/log_hygiene_age.sh` | gzip if age ≥ **11d**; delete if age ≥ **23d** |
+
+Manual one-shot: `sudo ./scripts/log_hygiene.sh`.
 
 Optional: zram on 4 GB boards (see Phase 1 hardware guide).
 
@@ -368,7 +377,7 @@ Using **only** this guide (plus linked appendix guides), a second Pi reaches:
 - [x] Peering still Opt Out unless host-service Opt In — 08a `share_opt_in=false`, syncthing inactive
 - [x] `status_report.sh` runs cleanly — 08a (gate open; units active)
 - [x] `render.hw_profile` matches hostname class — 08a `rpi-jellyflam3-08` / `gold_sheep_lite`; 16a stamped `rpi-jellyflam3-16`
-- [ ] **`-04` compact board** exercised end-to-end (hostname `rpi-jellyflam3-04a`, compact preset, journald vacuum, one archive seed → ingest) — Owner pending
+- [ ] **`-04` compact board** exercised end-to-end (hostname `rpi-jellyflam3-04a`, compact preset, log hygiene step 12, one archive seed → ingest) — Owner pending
 
 ## Exit criteria (this guide)
 
