@@ -142,6 +142,11 @@ palette:
   lightness_bias: asymmetric
   saturation_cap: 0.55
 
+# Sheep refactor Pathway A (scan/report) — optional visual wash-out thresholds
+refactor:
+  desat_mean_max: 0.12   # poster mean sat below this → catalog_desaturated
+  desat_score: 20        # score weight (candidate when score ≥ 1)
+
 tools:
   flam3_genome: flam3-genome
   flam3_animate: flam3-animate

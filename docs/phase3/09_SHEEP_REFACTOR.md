@@ -51,6 +51,7 @@ Build `pipeline/refactor.py` (`python3 -m pipeline.refactor`) by **composing exi
 | Duration band | `pipeline.choose_duration` + sidecar `duration` / ffprobe | Outside soft/hard band → failing |
 | Poster / artwork | `pipeline.poster`, `pipeline.backfill_posters`, `pipeline.flock_artwork` | Missing / black Primary → failing |
 | Encode sanity | ffprobe on catalog MP4 (fps, pix_fmt, bitrate heuristics) | Wrong profile → re-encode candidate |
+| **Desaturation / wash-out** | Poster mean channel-spread saturation + low-chroma harmony poles | `catalog_desaturated` (mean sat &lt; `refactor.desat_mean_max`, default **0.12**); `palette_washed_out` when both poles are dull |
 | Emit report | JSON + human table (`scan` / `report`) | No catalog writes; palette block required per sheep |
 
 **Report palette block (required fields):**

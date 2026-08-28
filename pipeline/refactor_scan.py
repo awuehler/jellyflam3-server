@@ -211,6 +211,101 @@ def _neon_clash(palette: dict[str, Any]) -> bool:
     return False
 
 
+def _hex_chroma(hex_color: str | None) -> float | None:
+    """Return absolute channel spread (max-min)/255 in [0,1] for #RRGGBB."""
+    if not hex_color or not isinstance(hex_color, str):
+        return None
+    hx = hex_color.lstrip("#")
+    if len(hx) != 6:
+        return None
+    try:
+        r, g, b = int(hx[0:2], 16), int(hx[2:4], 16), int(hx[4:6], 16)
+    except ValueError:
+        return None
+    return (max(r, g, b) - min(r, g, b)) / 255.0
+
+
+def _palette_washed_out(palette: dict[str, Any], *, max_chroma: float = 0.40) -> bool:
+    """True when both harmony poles have low absolute chroma (dull/muddy pair)."""
+    s = _hex_chroma(palette.get("seed_hex") if isinstance(palette.get("seed_hex"), str) else None)
+    c = _hex_chroma(
+        palette.get("complement_hex") if isinstance(palette.get("complement_hex"), str) else None
+    )
+    if s is None or c is None:
+        return False
+    return s < max_chroma and c < max_chroma
+
+
+def image_mean_saturation(path: Path, *, sample_w: int = 64) -> float | None:
+    """Mean per-pixel channel-spread saturation in [0, 1] over a downscaled RGB sample.
+
+    Used to catch washed-out / grey catalog sheep that still pass structural checks.
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        return None
+    try:
+        im = Image.open(path).convert("RGB")
+    except OSError:
+        return None
+    w, h = im.size
+    if w < 1 or h < 1:
+        return None
+    tw = max(8, min(sample_w, w))
+    th = max(8, int(tw * h / w))
+    small = im.resize((tw, th), Image.Resampling.BILINEAR)
+    total = 0.0
+    n = 0
+    pixels = getattr(small, "get_flattened_data", None)
+    data = pixels() if callable(pixels) else small.getdata()
+    for r, g, b in data:
+        mx = max(r, g, b)
+        if mx == 0:
+            sat = 0.0
+        else:
+            sat = (mx - min(r, g, b)) / 255.0
+        total += sat
+        n += 1
+    if n == 0:
+        return None
+    return total / n
+
+
+def catalog_saturation(
+    mp4: Path,
+    *,
+    poster: Path | None = None,
+) -> dict[str, Any]:
+    """Measure catalog visual saturation from poster (preferred) or mid-frame grab."""
+    out: dict[str, Any] = {
+        "mean_sat": None,
+        "source": None,
+        "path": None,
+    }
+    candidates: list[tuple[str, Path]] = []
+    if poster is not None and poster.is_file():
+        candidates.append(("poster", poster))
+    elif poster_path_for_mp4(mp4).is_file():
+        candidates.append(("poster", poster_path_for_mp4(mp4)))
+    for source, path in candidates:
+        mean = image_mean_saturation(path)
+        if mean is not None:
+            out["mean_sat"] = round(mean, 4)
+            out["source"] = source
+            out["path"] = str(path)
+            return out
+    return out
+
+
+def _desat_thresholds(cfg: dict[str, Any]) -> tuple[float, float]:
+    """Return (mean_sat_max, score_weight) for washed-out catalog detection."""
+    ref = dict(cfg.get("refactor") or {})
+    mean_max = float(ref.get("desat_mean_max", 0.12))
+    weight = float(ref.get("desat_score", 20.0))
+    return mean_max, weight
+
+
 def score_sheep(
     cfg: dict[str, Any],
     mp4: Path,
@@ -313,6 +408,18 @@ def score_sheep(
         if _neon_clash(palette):
             reasons.append("palette_neon_clash")
             score += 15.0
+        if _palette_washed_out(palette):
+            reasons.append("palette_washed_out")
+            score += 10.0
+
+    # Catalog visual desaturation (poster) — catches grey/muddy sheep structural checks miss.
+    sat_info = catalog_saturation(mp4, poster=poster if poster.is_file() else None)
+    mean_sat = sat_info.get("mean_sat")
+    if isinstance(mean_sat, (int, float)):
+        desat_max, desat_weight = _desat_thresholds(cfg)
+        if mean_sat < desat_max:
+            reasons.append("catalog_desaturated")
+            score += desat_weight
 
     seen: set[str] = set()
     uniq: list[str] = []
@@ -328,7 +435,7 @@ def score_sheep(
     else:
         verdict = "ok"
 
-    return SheepScore(
+    row = SheepScore(
         id=stem,
         mp4=str(mp4),
         verdict=verdict,
@@ -341,6 +448,12 @@ def score_sheep(
         tax_status=tax_status,
         aspect=aspect,
     )
+    if isinstance(mean_sat, (int, float)):
+        # Attach for JSON reports without changing dataclass schema widely.
+        row.palette = dict(palette)
+        row.palette["catalog_mean_sat"] = mean_sat
+        row.palette["catalog_sat_source"] = sat_info.get("source")
+    return row
 
 
 def scan_catalog(
