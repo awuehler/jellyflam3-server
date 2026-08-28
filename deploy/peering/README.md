@@ -47,10 +47,12 @@ python3 -m pipeline.peering status --config configs/jellyflam3.yaml
 python3 -m pipeline.peering opt-in --config configs/jellyflam3.yaml
 python3 -m pipeline.peering status --config configs/jellyflam3.yaml
 
-# Optional fleet watchdog (every 5 min) — heal Tailscale/Syncthing when Opt In but not live:
+# Optional fleet watchdog (every 5 min) — heal Tailscale/Syncthing when Opt In but not live.
+# Also pings the LAN gateway; rate-limited Wi‑Fi bounce (nmcli) when the uplink is dead:
 #   */5 * * * *  /opt/jellyflam3-server/scripts/cron_tailscale_watch.sh \
 #       >>/var/log/jellyflam3/tailscale_watch.log 2>&1
 # Manual: python3 -m pipeline.tailscale_watch --json
+# Config: peering.watchdog.* in jellyflam3.yaml.example
 
 # One-time (per host / new peer): Syncthing folder + device introduce
 # — see “Syncthing first-time mesh introduce” below. Opt In alone does not mesh.

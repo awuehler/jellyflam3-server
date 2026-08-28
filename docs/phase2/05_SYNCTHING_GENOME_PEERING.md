@@ -194,7 +194,7 @@ Smoked on `16a` / `08a` / `04a` (2026-08-11):
 |---|---|---|
 | Tailscale enroll / logout | `pipeline.peering opt-in` / `opt-out` | Every Opt In / Out |
 | `.stignore` write + Syncthing unit start/stop | host service | Every Opt In / Out |
-| Tailscale / Syncthing stay-alive while Opt In | `pipeline.tailscale_watch` + `cron_tailscale_watch.sh` | Poll (~5 min); heal `tailscaled` + `tailscale up` + Syncthing unit |
+| Tailscale / Syncthing stay-alive while Opt In | `pipeline.tailscale_watch` + `cron_tailscale_watch.sh` | Poll (~5 min); if LAN gateway unreachable, rate-limited Wi‑Fi bounce; then heal `tailscaled` + `tailscale up` + Syncthing unit |
 | Folder create + peer introduce + discovery harden | **Operator** (CLI/GUI runbook) | **Once** per host / new peer |
 | Gated promote | Operator (`promote --apply`) | Whenever land should enter the furnace |
 
@@ -213,7 +213,7 @@ Scripting options to shrink the one-time mesh introduce are listed in [`deploy/p
 | Artifact | Kind | Role |
 |---|---|---|
 | `pipeline/peering.py` | pipeline | Host service: status / opt-in / opt-out / promote |
-| `pipeline/tailscale_watch.py` | pipeline | Opt-In watchdog: poll + restart Tailscale / Syncthing when share not live |
+| `pipeline/tailscale_watch.py` | pipeline | Opt-In watchdog: LAN/Wi‑Fi heal + Tailscale / Syncthing restart when share not live |
 | `scripts/cron_tailscale_watch.sh` | cron | Fleet crontab wrapper for the watchdog |
 | `deploy/systemd/jellyflam3-peering.service` | deploy | Peering host-service unit |
 | `deploy/systemd/jellyflam3-syncthing.service` | deploy | Managed Syncthing lifecycle |

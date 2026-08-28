@@ -200,6 +200,13 @@ peering:
     enabled_when_opted_in: true
     tag: tag:jellyflam3
     auth_key_env: TS_AUTHKEY   # pre-auth key in secrets.env — never commit
+  # Opt-In stay-alive (scripts/cron_tailscale_watch.sh). LAN heal for Wi‑Fi blackholes.
+  watchdog:
+    lan_heal_enabled: true
+    lan_ping_timeout_sec: 2
+    lan_heal_cooldown_sec: 900          # min seconds between Wi‑Fi bounces
+    lan_heal_cooldown_file: /var/lib/jellyflam3/lan_heal_cooldown
+    lan_preferred_iface: null           # null = use default-route iface; or "wlan0"
 
 # Sheep tax: XML / vocabulary scan & repair (Phase 2 — docs/phase2/06_SHEEP_TAX.md)
 # Order: tax → TV-port. Peer promote calls pipeline.sheep_tax.scan_file.

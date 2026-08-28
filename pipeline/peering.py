@@ -132,7 +132,14 @@ def is_opted_in(cfg: dict[str, Any]) -> bool:
 
 def _run(cmd: list[str], *, dry_run: bool = False) -> subprocess.CompletedProcess[str]:
     """Run a command (or no-op on dry-run); never raises on non-zero exit."""
-    log.info("%s%s", "DRY-RUN " if dry_run else "", " ".join(cmd))
+    # Never log secrets (e.g. --auth-key=tskey-…).
+    safe = []
+    for part in cmd:
+        if part.startswith("--auth-key="):
+            safe.append("--auth-key=<redacted>")
+        else:
+            safe.append(part)
+    log.info("%s%s", "DRY-RUN " if dry_run else "", " ".join(safe))
     if dry_run:
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
     return subprocess.run(cmd, capture_output=True, text=True, check=False)
