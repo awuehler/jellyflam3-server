@@ -24,7 +24,9 @@ def _cfg(**overrides):
 
 def test_ok_sample_genome():
     root = Path(__file__).resolve().parents[1]
-    sample = root / "genomes" / "samples" / "electricsheep.247.00505.flam3"
+    samples = sorted((root / "genomes" / "samples").glob("electricsheep.*.flam3"))
+    assert samples, "expected genomes/samples feedstock"
+    sample = samples[0]
     result = tax_xml(sample.read_text(encoding="utf-8"), _cfg())
     assert result["ok"] is True
     assert result["status"] in ("ok", "repaired")

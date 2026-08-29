@@ -1,6 +1,7 @@
 from io import StringIO
 from pathlib import Path
 import contextlib
+import re
 
 import pytest
 
@@ -103,7 +104,8 @@ def test_catalog_mp4_exists(tmp_path: Path):
 def test_sample_pool_finds_genomes_samples_only():
     root = Path(__file__).resolve().parents[1]
     pool = sample_pool(root)
-    assert any("electricsheep.247.00505" in p.name for p in pool)
+    assert pool, "expected genomes/samples feedstock"
+    assert any(re.search(r"electricsheep\.\d+\.\d+", p.name) for p in pool)
     assert all("genomes" in str(p).replace("\\", "/") and "/samples/" in str(p).replace("\\", "/") for p in pool)
     assert not any("electricsheep.smoke." in p.name for p in pool)
     assert not any("electricsheep.tv." in p.name for p in pool)
