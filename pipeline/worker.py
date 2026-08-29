@@ -10,6 +10,7 @@ Assumptions: Single-threaded; sheep tax then TV-port before render; successful g
 from __future__ import annotations
 
 import argparse
+import errno
 import json
 import logging
 import os
@@ -87,6 +88,9 @@ def quarantine_genome(src: Path, quarantine: Path, *, remove_src: bool = False) 
 def claim_inbox_genome(src: Path, work: Path, inbox: Path) -> Path:
     """Atomically move an inbox genome into ``work`` so concurrent seeders cannot overwrite it.
 
+    Prefer ``os.replace`` (same filesystem). On ``EXDEV`` (inbox on microSD, jobs on NVMe),
+    fall back to ``shutil.move`` (copy + unlink) so claim still empties the inbox slot.
+
     If ``src`` is not under ``inbox``, return ``src`` unchanged (e.g. ``--once`` paths).
     """
     try:
@@ -100,7 +104,13 @@ def claim_inbox_genome(src: Path, work: Path, inbox: Path) -> Path:
     try:
         os.replace(src_res, claimed)
     except OSError as exc:
-        raise RuntimeError(f"inbox claim failed for {src.name}: {exc}") from exc
+        if getattr(exc, "errno", None) != errno.EXDEV:
+            raise RuntimeError(f"inbox claim failed for {src.name}: {exc}") from exc
+        try:
+            # Cross-device (e.g. microSD inbox → NVMe jobs): copy + unlink.
+            shutil.move(str(src_res), str(claimed))
+        except OSError as move_exc:
+            raise RuntimeError(f"inbox claim failed for {src.name}: {move_exc}") from move_exc
     return claimed
 
 
