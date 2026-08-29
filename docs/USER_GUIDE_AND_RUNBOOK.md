@@ -409,7 +409,17 @@ Map [jellyfin_id_dump.py](../scripts/jellyfin_id_dump.py) output → add-on **Co
 
 See [kodi-screensaver/README.md](../kodi-screensaver/README.md) for setting ids and commercial-safe filter notes.
 
-**Do not** edit `guisettings.xml` or `Addons33.db` while Kodi is running — LibreELEC overwrites on exit.
+### Commercial-mode toggle (CC vs NC)
+
+After the balanced `genomes/samples/` set is rendered and Jellyfin Items Tags include `cc-by` / `cc-by-nc`, confirm clients hide NC when commercial-safe is on. Procedure + expected CC/NC ids: [phase1/07_LICENSE_AND_METADATA.md](phase1/07_LICENSE_AND_METADATA.md#lab-check--commercial-mode-toggle).
+
+| Client | Toggle off | Toggle on |
+|---|---|---|
+| Roku VoD `commercialMode` | CC + NC samples in flock | NC samples gone; CC remain |
+| Kodi SS `commercial_mode` | May play NC | Only CC-safe Tags |
+
+If commercial-on yields an **empty** flock, Items Tags are missing — check sidecar + enrich before blaming the client.
+
 
 ### Stills (screensaver feedstock)
 

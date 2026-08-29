@@ -145,10 +145,51 @@ license:
   default_tags: []
 ```
 
-- **Sidecar** (`{stem}.jellyflam3.json` beside the catalog MP4) is the **sole metadata source of truth** for that sheep (license/tags in Phase 1; later stills index, pedigree hints, viewer votes). Jellyfin Items Tags are best-effort only.
-- **Commercial filter** stays in code for the uncommon venue case; leave `commercial_mode: false` / Roku `commercialMode=false` unless you need it.
-- BrightScript `commercialMode=true` filters on Jellyfin Items `Tags` — with empty API tags it is effectively a no-op until Items tag write is hardened. Private default does not need that path.
+- **Sidecar** (`{stem}.jellyflam3.json` beside the catalog MP4) is the **sole metadata source of truth** for that sheep (license/tags in Phase 1; later stills index, pedigree hints, viewer votes). Jellyfin Items Tags/Overview are derived caches for clients.
+- **Commercial filter** stays in code for the uncommon venue case; leave `license.commercial_mode: false` / client `commercialMode=false` unless you need it.
+- **Client contract (Roku VoD + Kodi SS):** filter is **client-side on Jellyfin Items `Tags` only** (never send `Tags=` query params — that emptied the lab flock). When commercial-safe is **on**:
+  - **Keep** items that carry a safe tag (`cc-by`, `cc-by-sa`, `cc0`, `public-domain`, `pd`) and **do not** carry `by-nc` / `cc-by-nc`.
+  - **Hide** NC items and items with **empty / missing** Tags (empty Tags ≠ “show everything”).
+  - Overview `License:` lines feed browse metadata (`metaLine`) but **do not** drive the commercial allow/deny decision.
 - Optional later: Jellyfin **commercial-safe** collection excluding NC.
+
+## Lab check — commercial-mode toggle
+
+Use the balanced archive feedstock under `genomes/samples/` (commit `6898720+`): **one CC BY + one CC BY-NC** for gens `247, 245, 244, 243, 242`.
+
+| Gen | CC (expect visible when commercial on) | NC (expect hidden when commercial on) |
+|---|---|---|
+| 247 | `electricsheep.247.16653` | `electricsheep.247.34067` |
+| 245 | `electricsheep.245.07903` | `electricsheep.245.08693` |
+| 244 | `electricsheep.244.74503` | `electricsheep.244.51566` |
+| 243 | `electricsheep.243.13770` | `electricsheep.243.17332` |
+| 242 | `electricsheep.242.00483` | `electricsheep.242.02652` |
+
+**Prerequisites**
+
+1. Samples rendered and ingested on the furnace under test (`*.mp4` + sidecar with `"license": "cc-by"` / `"cc-by-nc"`).
+2. Jellyfin Items **Tags** include those license strings (worker enrich / `apply_flock_artwork`). If Tags are empty, commercial-on shows an **empty flock** — fix enrich before judging the client toggle.
+3. Clients point at that furnace’s library (`libraryId` / ParentId).
+
+**Roku VoD (`roku-channel`)**
+
+1. Settings → `commercialMode=false` → flock lists **both** CC and NC samples (plus other catalog sheep).
+2. Settings → `commercialMode=true` → CC samples remain; NC samples **absent**; detail `metaLine` on survivors shows `cc-by` (not NC).
+3. Toggle back to `false` → NC samples reappear without re-sideload.
+
+**Kodi screensaver (`kodi-screensaver`)**
+
+1. Configure → **Commercial-safe (skip NC)** off → screensaver can play NC sample titles.
+2. Toggle **Commercial-safe** on → only CC-safe Tags play; NC sample ids never selected.
+3. Confirm idle-gate still ignores `JellyFlam3-Screensaver` (gate stays open).
+
+**Quick server-side tag sanity** (on the furnace, after ingest — does not print secrets):
+
+```bash
+python3 scripts/jellyfin_id_dump.py --items --limit 50
+# Spot-check that CC/NC sample stems show Tags containing cc-by vs cc-by-nc
+```
+
 
 ## Artifacts
 

@@ -31,7 +31,7 @@ Tasks **1–4** done; **Jellyfin flock client + commercial filter + shuffle sequ
 | **API key** | `api_key` | Jellyfin API key string (Dashboard → API Keys, or furnace `JELLYFIN_API_KEY`). |
 | **User id** | `user_id` | User **Guid** for `/Users/{id}/Items` (not the login name). |
 | **Library (Parent) id** | `library_id` | Sheep library / view **Guid** (`ParentId`). Recommended. Empty = all Movie/Video items the user can see. |
-| **Commercial-safe (skip NC)** | `commercial_mode` | Client-side tag filter only: keep `cc-by` / `cc0` / `public-domain` / `pd` / `cc-by-sa`; hide NC. Does **not** send Jellyfin `Tags=` query params. |
+| **Commercial-safe (skip NC)** | `commercial_mode` | Client-side Items **Tags** filter only: keep `cc-by` / `cc0` / `public-domain` / `pd` / `cc-by-sa`; hide NC and untagged. Does **not** send Jellyfin `Tags=` query params. Lab CC/NC sample pairs: [docs/phase1/07_LICENSE_AND_METADATA.md](../docs/phase1/07_LICENSE_AND_METADATA.md#lab-check--commercial-mode-toggle) |
 | **Max items to fetch** | `flock_limit` | Cap before shuffle (default `200`). |
 
 Do **not** commit API keys or filled `settings.xml` into git.

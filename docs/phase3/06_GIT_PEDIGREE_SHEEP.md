@@ -12,7 +12,7 @@ This is **versioned project feedstock**, not Syncthing peer share ([05](05_SHARE
 
 | Path | Role |
 |---|---|
-| `genomes/samples/*.flam3` | Archive / bootstrap flock seeds (`sample_pool()` / `--samples`) |
+| `genomes/samples/*.flam3` | Archive / bootstrap flock seeds (`sample_pool()` / `--samples`) — **2 per gen** for `247/245/244/243/242` (**one CC BY + one CC BY-NC**) so commercial-mode client toggles can be lab-checked once rendered |
 | `genomes/pedigree/` | **Curated git pedigree** — smoke + examples (`origin: local_pedigree`) |
 | `configs/templates/electricsheep.{smoke.480p,tv.1080p}.flam3` | Encode / sequence **templates** (`paths.template`, `smoke_render.sh`) |
 | `configs/samples/` | **Removed** — do not reintroduce a second sheep pool |
@@ -28,7 +28,7 @@ Wire-up already landed:
 Templates must **never** enter the `--samples` / flock seed pool (`is_template_genome`).
 ## Why pedigree-in-git next
 
-`genomes/samples/` still holds **archive Free Sheep feedstock** (`--samples` / bootstrap) — useful furnace input, but not JellyFlam3 pedigree sheep (`origin: local_pedigree` from Phase 2 [07](../phase2/07_PEDIGREE_BREEDING.md)). Smoke and docs examples use `genomes/pedigree/` so CI/onboarding exercise the same class of genomes operators breed and peer.
+`genomes/samples/` still holds **archive Free Sheep feedstock** (`--samples` / bootstrap) — useful furnace input, but not JellyFlam3 pedigree sheep (`origin: local_pedigree` from Phase 2 [07](../phase2/07_PEDIGREE_BREEDING.md)). The curated set is **ten genomes**: one human (CC BY) and one brood/empty-nick (CC BY-NC) for each of gens `247, 245, 244, 243, 242`. Smoke and docs examples use `genomes/pedigree/` so CI/onboarding exercise the same class of genomes operators breed and peer. Client commercial-mode checks: [../phase1/07_LICENSE_AND_METADATA.md](../phase1/07_LICENSE_AND_METADATA.md#lab-check--commercial-mode-toggle).
 
 ## Locked intent
 

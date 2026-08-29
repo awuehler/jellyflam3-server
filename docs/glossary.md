@@ -382,7 +382,7 @@ Locally bred sheep via mutate/cross/interpolate with lineage **sidecar** (`origi
 
 ### Git pedigree sheep
 
-Curated `genomes/pedigree/` in repo (smoke + examples). Distinct from archive `genomes/samples/` feedstock.
+Curated `genomes/pedigree/` in repo (smoke + examples). Distinct from archive `genomes/samples/` feedstock (**2 sheep per gen** for `247…242`: one CC BY + one CC BY-NC for commercial-mode lab checks — [phase1/07](phase1/07_LICENSE_AND_METADATA.md#lab-check--commercial-mode-toggle)).
 
 ### Sheep Shears
 
