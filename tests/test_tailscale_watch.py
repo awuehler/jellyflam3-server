@@ -53,6 +53,26 @@ def _lan_bad(iface: str = "wlan0") -> dict:
     }
 
 
+def _wan_ok() -> dict:
+    return {
+        "ok": True,
+        "wan_ok": True,
+        "skipped": False,
+        "host": "1.1.1.1",
+        "error": None,
+    }
+
+
+def _wan_bad() -> dict:
+    return {
+        "ok": True,
+        "wan_ok": False,
+        "skipped": False,
+        "host": "1.1.1.1",
+        "error": "no ping reply from 1.1.1.1",
+    }
+
+
 def test_watch_skips_when_opt_out(tmp_path: Path):
     cfg = _cfg(tmp_path, opted_in=False)
     with patch("pipeline.tailscale_watch.check_lan", return_value=_lan_ok()):
@@ -122,6 +142,7 @@ def test_watch_heals_when_not_live(tmp_path: Path, monkeypatch):
             side_effect=[broken, fixed],
         ),
         patch("pipeline.tailscale_watch.check_lan", return_value=_lan_ok()),
+        patch("pipeline.tailscale_watch.check_wan", return_value=_wan_ok()),
         patch("pipeline.tailscale_watch.unit_active", side_effect=["inactive", "inactive"]),
         patch("pipeline.tailscale_watch._systemctl") as sc,
         patch("pipeline.tailscale_watch._tailscale_up") as up,
@@ -172,6 +193,7 @@ def test_lan_heal_bounces_wifi_when_gateway_down(tmp_path: Path, monkeypatch):
             "pipeline.tailscale_watch.check_lan",
             side_effect=[_lan_bad(), _lan_ok(), _lan_ok()],
         ),
+        patch("pipeline.tailscale_watch.check_wan", return_value=_wan_ok()),
         patch("pipeline.tailscale_watch.unit_active", return_value="active"),
         patch("pipeline.tailscale_watch._systemctl"),
         patch("pipeline.tailscale_watch._tailscale_up") as up,
@@ -215,6 +237,7 @@ def test_lan_heal_respects_cooldown(tmp_path: Path, monkeypatch):
             side_effect=[broken, broken],
         ),
         patch("pipeline.tailscale_watch.check_lan", return_value=_lan_bad()),
+        patch("pipeline.tailscale_watch.check_wan", return_value=_wan_ok()),
         patch("pipeline.tailscale_watch.unit_active", return_value="active"),
         patch("pipeline.tailscale_watch._systemctl"),
         patch("pipeline.tailscale_watch._tailscale_up") as up,
@@ -227,6 +250,97 @@ def test_lan_heal_respects_cooldown(tmp_path: Path, monkeypatch):
 
     assert any("cooldown" in s for s in result["steps"])
     run.assert_not_called()  # no nmcli during cooldown
+
+
+def test_wan_heal_bounces_wifi_when_lan_up_wan_down(tmp_path: Path, monkeypatch):
+    cfg = _cfg(tmp_path, opted_in=True)
+    monkeypatch.setenv("TS_AUTHKEY", "tskey-auth-test")
+    broken = {
+        "share_opt_in": True,
+        "share_live": False,
+        "syncthing_unit": "active",
+        "tailscale": {
+            "installed": True,
+            "ok": True,
+            "backend_state": "Running",
+            "online": False,
+        },
+        "issues": ["tailscale not connected (Running)"],
+        "inbox_flam3_count": 0,
+    }
+    fixed = dict(broken)
+    fixed["share_live"] = True
+    fixed["issues"] = []
+    fixed["tailscale"] = {
+        "installed": True,
+        "ok": True,
+        "backend_state": "Running",
+        "online": True,
+    }
+    with (
+        patch(
+            "pipeline.tailscale_watch.assess_peering_readiness",
+            side_effect=[broken, fixed],
+        ),
+        patch("pipeline.tailscale_watch.check_lan", return_value=_lan_ok()),
+        patch(
+            "pipeline.tailscale_watch.check_wan",
+            side_effect=[_wan_bad(), _wan_ok(), _wan_ok()],
+        ),
+        patch("pipeline.tailscale_watch.unit_active", return_value="active"),
+        patch("pipeline.tailscale_watch._systemctl"),
+        patch("pipeline.tailscale_watch._tailscale_up") as up,
+        patch("pipeline.tailscale_watch._have", side_effect=lambda c: c in {"nmcli", "ip", "ping"}),
+        patch("pipeline.tailscale_watch._run") as run,
+        patch("pipeline.tailscale_watch.time.sleep"),
+        patch("pipeline.tailscale_watch.write_status"),
+    ):
+        run.return_value = type("P", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+        up.return_value = {"ok": True, "step": "tailscale up rc=0"}
+        result = tw.heal_opt_in_share(cfg, dry_run=False)
+
+    assert result["ok"] is True
+    assert any("wan down while lan_ok" in s for s in result["steps"])
+    assert any("nmcli device disconnect wlan0" in s for s in result["steps"])
+    up.assert_called_once()
+
+
+def test_tailscale_up_skipped_while_wan_down(tmp_path: Path, monkeypatch):
+    cfg = _cfg(tmp_path, opted_in=True)
+    monkeypatch.setenv("TS_AUTHKEY", "tskey-auth-test")
+    broken = {
+        "share_opt_in": True,
+        "share_live": False,
+        "syncthing_unit": "active",
+        "tailscale": {
+            "installed": True,
+            "ok": True,
+            "backend_state": "Running",
+            "online": False,
+        },
+        "issues": ["tailscale not connected (Running)"],
+        "inbox_flam3_count": 0,
+    }
+    with (
+        patch(
+            "pipeline.tailscale_watch.assess_peering_readiness",
+            side_effect=[broken, broken],
+        ),
+        patch("pipeline.tailscale_watch.check_lan", return_value=_lan_ok()),
+        patch("pipeline.tailscale_watch.check_wan", return_value=_wan_bad()),
+        patch("pipeline.tailscale_watch.unit_active", return_value="active"),
+        patch("pipeline.tailscale_watch._systemctl"),
+        patch("pipeline.tailscale_watch._tailscale_up") as up,
+        patch("pipeline.tailscale_watch._have", side_effect=lambda c: c in {"nmcli", "ip", "ping"}),
+        patch("pipeline.tailscale_watch._run") as run,
+        patch("pipeline.tailscale_watch.time.sleep"),
+        patch("pipeline.tailscale_watch.write_status"),
+    ):
+        run.return_value = type("P", (), {"returncode": 0, "stdout": "", "stderr": ""})()
+        result = tw.heal_opt_in_share(cfg, dry_run=False)
+
+    assert any("tailscale up skipped (wan down)" in s for s in result["steps"])
+    up.assert_not_called()
 
 
 def test_lan_heal_skips_ethernet(tmp_path: Path):

@@ -48,7 +48,9 @@ python3 -m pipeline.peering opt-in --config configs/jellyflam3.yaml
 python3 -m pipeline.peering status --config configs/jellyflam3.yaml
 
 # Optional fleet watchdog (every 5 min) — heal Tailscale/Syncthing when Opt In but not live.
-# Also pings the LAN gateway; rate-limited Wi‑Fi bounce (nmcli) when the uplink is dead:
+# Also pings the LAN gateway and a WAN target (1.1.1.1); rate-limited Wi‑Fi bounce
+# when the STA uplink is dead (including LAN-up / WAN-down). Does not `tailscale up`
+# while WAN is still down:
 #   */5 * * * *  /opt/jellyflam3-server/scripts/cron_tailscale_watch.sh \
 #       >>/var/log/jellyflam3/tailscale_watch.log 2>&1
 # Manual: python3 -m pipeline.tailscale_watch --json

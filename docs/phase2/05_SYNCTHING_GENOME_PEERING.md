@@ -213,7 +213,7 @@ Scripting options to shrink the one-time mesh introduce are listed in [`deploy/p
 | Artifact | Kind | Role |
 |---|---|---|
 | `pipeline/peering.py` | pipeline | Host service: status / opt-in / opt-out / promote |
-| `pipeline/tailscale_watch.py` | pipeline | Opt-In watchdog: LAN/Wi‑Fi heal + Tailscale / Syncthing restart when share not live |
+| `pipeline/tailscale_watch.py` | pipeline | Opt-In watchdog: LAN/WAN Wi‑Fi heal + Tailscale / Syncthing restart when share not live |
 | `scripts/cron_tailscale_watch.sh` | cron | Fleet crontab wrapper for the watchdog |
 | `deploy/systemd/jellyflam3-peering.service` | deploy | Peering host-service unit |
 | `deploy/systemd/jellyflam3-syncthing.service` | deploy | Managed Syncthing lifecycle |

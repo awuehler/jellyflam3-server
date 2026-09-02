@@ -1,8 +1,9 @@
 """Purpose: Watchdog — keep Tailscale (and Opt-In Syncthing) live on fleet Pis.
 
 When peering is Opt In, poll ``tailscale status`` / unit state and heal if share is
-not live. Heal order: LAN/gateway check → optional Wi‑Fi bounce (cooldown) →
-restart ``tailscaled`` → ``tailscale up`` → restart Syncthing if inactive.
+not live. Heal order: LAN/gateway check → WAN ping → optional Wi‑Fi bounce
+(cooldown; also when LAN is up but WAN is dead) → restart ``tailscaled`` →
+``tailscale up`` (skipped while WAN is still down) → restart Syncthing if inactive.
 Opt Out is a no-op.
 
 Requirements: ``pipeline.peering`` helpers; optional systemctl + sudo (same as opt-in);
@@ -47,6 +48,7 @@ SYNCTHING_UNIT = "jellyflam3-syncthing.service"
 
 _DEFAULT_COOLDOWN_SEC = 900
 _DEFAULT_PING_TIMEOUT_SEC = 2
+_DEFAULT_WAN_PING_HOST = "1.1.1.1"
 
 
 def watchdog_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
@@ -132,6 +134,25 @@ def check_lan(cfg: dict[str, Any]) -> dict[str, Any]:
         "gateway": gateway,
         "iface": iface,
         "error": None if ok else f"no ping reply from gateway {gateway}",
+    }
+
+
+def check_wan(cfg: dict[str, Any]) -> dict[str, Any]:
+    """Probe a public IPv4 (default 1.1.1.1). Wi‑Fi can reach the LAN gateway and still have a dead STA uplink."""
+    wc = watchdog_cfg(cfg)
+    if not bool(wc.get("wan_heal_enabled", True)):
+        return {"ok": True, "wan_ok": True, "skipped": True, "host": None, "error": None}
+    host = (wc.get("wan_ping_host") or _DEFAULT_WAN_PING_HOST).strip()
+    timeout = int(wc.get("wan_ping_timeout_sec") or wc.get("lan_ping_timeout_sec") or _DEFAULT_PING_TIMEOUT_SEC)
+    if not host:
+        return {"ok": True, "wan_ok": True, "skipped": True, "host": None, "error": None}
+    ok = ping_host(host, timeout_sec=timeout)
+    return {
+        "ok": True,
+        "wan_ok": ok,
+        "skipped": False,
+        "host": host,
+        "error": None if ok else f"no ping reply from {host}",
     }
 
 
@@ -282,9 +303,23 @@ def heal_opt_in_share(cfg: dict[str, Any], *, dry_run: bool = False) -> dict[str
         f"lan_ok={lan_before.get('lan_ok')} iface={lan_before.get('iface')} "
         f"gw={lan_before.get('gateway')}"
     )
+    wan_before = check_wan(cfg)
+    steps.append(
+        f"wan_ok={wan_before.get('wan_ok')} host={wan_before.get('host')} "
+        f"skipped={wan_before.get('skipped')}"
+    )
 
-    # 0) LAN / Wi‑Fi heal when gateway unreachable (Tailscale-only heal cannot fix this).
-    if not lan_before.get("lan_ok"):
+    # 0) Wi‑Fi bounce when the gateway is unreachable, or LAN is up but WAN is dead
+    # (STA uplink blackhole — Tailscale-only heal cannot fix this, and re-auth while
+    # WAN is down previously logged the node out).
+    wc = watchdog_cfg(cfg)
+    wan_heal_on = bool(wc.get("wan_heal_enabled", True))
+    need_wifi = not lan_before.get("lan_ok")
+    if wan_heal_on and lan_before.get("lan_ok") and not wan_before.get("skipped") and not wan_before.get("wan_ok"):
+        need_wifi = True
+        steps.append("wan down while lan_ok; bouncing wifi")
+
+    if need_wifi:
         lan_heal = heal_lan(cfg, lan_before, dry_run=dry_run)
         steps.append(lan_heal.get("step", "lan heal"))
         for a in lan_heal.get("actions") or []:
@@ -293,6 +328,8 @@ def heal_opt_in_share(cfg: dict[str, Any], *, dry_run: bool = False) -> dict[str
             steps.append(f"cooldown_sec={lan_heal['cooldown_sec']}")
         lan_before = lan_heal.get("lan_after") or check_lan(cfg)
         steps.append(f"lan_after_ok={lan_before.get('lan_ok')}")
+        wan_before = check_wan(cfg)
+        steps.append(f"wan_after_ok={wan_before.get('wan_ok')}")
 
     # 1) Ensure tailscaled daemon is up.
     ts_unit = unit_active(TAILSCALED_UNIT)
@@ -303,18 +340,22 @@ def heal_opt_in_share(cfg: dict[str, Any], *, dry_run: bool = False) -> dict[str
         if not dry_run:
             time.sleep(2)
 
-    # 2) Re-auth / bring interface up when not Running+online.
+    # 2) Re-auth / bring interface up when not Running+online — never while WAN is down.
     ts = before.get("tailscale") or {}
     need_up = True
     if ts.get("backend_state") == "Running" and ts.get("online") is True:
         need_up = False
+    wan_now = wan_before
     if need_up:
-        up = _tailscale_up(cfg, dry_run=dry_run)
-        steps.append(up["step"])
-        if up.get("detail"):
-            steps.append(f"up_detail={up['detail']}")
-        if not dry_run:
-            time.sleep(2)
+        if wan_heal_on and not wan_now.get("skipped") and not wan_now.get("wan_ok"):
+            steps.append("tailscale up skipped (wan down)")
+        else:
+            up = _tailscale_up(cfg, dry_run=dry_run)
+            steps.append(up["step"])
+            if up.get("detail"):
+                steps.append(f"up_detail={up['detail']}")
+            if not dry_run:
+                time.sleep(2)
 
     # 3) Syncthing must be active for share_live.
     st_unit = unit_active(SYNCTHING_UNIT)
@@ -327,6 +368,7 @@ def heal_opt_in_share(cfg: dict[str, Any], *, dry_run: bool = False) -> dict[str
 
     after = assess_peering_readiness(cfg)
     lan_after = check_lan(cfg)
+    wan_after = check_wan(cfg)
     if not dry_run:
         write_status(
             cfg,
@@ -335,6 +377,7 @@ def heal_opt_in_share(cfg: dict[str, Any], *, dry_run: bool = False) -> dict[str
                 "steps": steps,
                 "healed": bool(after.get("share_live")),
                 "lan_ok": bool(lan_after.get("lan_ok")),
+                "wan_ok": bool(wan_after.get("wan_ok")),
             },
         )
 
@@ -347,6 +390,7 @@ def heal_opt_in_share(cfg: dict[str, Any], *, dry_run: bool = False) -> dict[str
         "after": after,
         "steps": steps,
         "lan": lan_after,
+        "wan": wan_after,
     }
 
 
@@ -379,6 +423,7 @@ def main(argv: list[str] | None = None) -> int:
             "lan_ok": lan.get("lan_ok"),
             "lan_iface": lan.get("iface"),
             "lan_gateway": lan.get("gateway"),
+            "wan_ok": (result.get("wan") or {}).get("wan_ok"),
         }
         print(json.dumps(slim, indent=2))
     else:

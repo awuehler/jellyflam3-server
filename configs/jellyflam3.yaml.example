@@ -212,6 +212,9 @@ peering:
     lan_heal_cooldown_sec: 900          # min seconds between Wi‑Fi bounces
     lan_heal_cooldown_file: /var/lib/jellyflam3/lan_heal_cooldown
     lan_preferred_iface: null           # null = use default-route iface; or "wlan0"
+    wan_heal_enabled: true             # bounce Wi‑Fi when LAN gateway pings but WAN is dead
+    wan_ping_host: 1.1.1.1
+    wan_ping_timeout_sec: 2
 
 # Sheep tax: XML / vocabulary scan & repair (Phase 2 — docs/phase2/06_SHEEP_TAX.md)
 # Order: tax → TV-port. Peer promote calls pipeline.sheep_tax.scan_file.
