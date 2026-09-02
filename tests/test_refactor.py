@@ -38,7 +38,7 @@ def _good_xml(*, size: str = "1920 1080", quality: bool = True) -> str:
     if quality:
         attrs += ' quality="900" supersample="2" filter="1"'
     return f"""<flame {attrs}>
-  <xform weight="1" coefs="1 0 0 1 0 0" color="0"/>
+  <xform weight="1" julia="0.95" coefs="1 0 0 1 0 0" color="0"/>
   <color index="0" rgb="180 60 40"/>
   <color index="1" rgb="40 80 200"/>
 </flame>"""

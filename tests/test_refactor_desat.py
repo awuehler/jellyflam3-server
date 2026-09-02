@@ -45,7 +45,7 @@ def test_catalog_desaturated_flags_candidate(tmp_path: Path):
     flam.write_text(
         '<flame size="1920 1080" brightness="4" gamma="4" vibrancy="1" '
         'quality="900" supersample="2" temporal_samples="450">'
-        '<xform weight="1" color="0.6" coefs="1 0 0 1 0 0"/>'
+        '<xform weight="1" color="0.6" julia="0.95" coefs="1 0 0 1 0 0"/>'
         "</flame>",
         encoding="utf-8",
     )

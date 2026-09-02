@@ -394,7 +394,7 @@ Curated `genomes/pedigree/` in repo (smoke + examples). Distinct from archive `g
 
 ### Sheep refactor
 
-Phase 3 guide [09](phase3/09_SHEEP_REFACTOR.md) (**complete** — Owner OK 2026-08-21) — remediate sub-standard sheep (quality / palette / encode) via re-furnace. Pathways: scan/report (includes complementary palette), optional palette override + Jellyfin-visible poster preview under `/media/sheep/_refactor-preview/`, apply/replace, quarantine, batch. Not Shears (CRUD) and not Hammer (wipe).
+Phase 3 guide [09](phase3/09_SHEEP_REFACTOR.md) (**complete** — Owner OK 2026-08-21) — remediate sub-standard sheep (quality / palette / encode) via re-furnace. Pathways: scan/report (includes complementary palette; **hard-quarantine** `genome_linear_only` and `genome_singularity_cloned`), optional palette override + Jellyfin-visible poster preview under `/media/sheep/_refactor-preview/`, apply/replace, quarantine, batch. Not Shears (CRUD) and not Hammer (wipe).
 
 ---
 

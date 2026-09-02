@@ -25,15 +25,17 @@ from pipeline.refactor_preview import (
 )
 from pipeline.refactor_scan import (
     SCORE_CANDIDATE_MIN,
-    SCORE_QUARANTINE_MIN,
     SheepScore,
     _neon_clash,
     _palette_block,
     filter_report,
     find_catalog_mp4,
     find_genome_for_stem,
+    genome_dud_reasons,
+    genome_dud_score,
     scan_catalog,
     score_sheep,
+    verdict_for,
 )
 from pipeline.sheep_names import normalize_stem, stem_of
 from pipeline.sheep_tax import tax_xml
@@ -173,12 +175,10 @@ def run_quarantine(
         if _neon_clash(palette):
             reasons.append("palette_neon_clash")
             score += 30.0
-        if score >= SCORE_QUARANTINE_MIN:
-            verdict = "quarantine"
-        elif score >= SCORE_CANDIDATE_MIN:
-            verdict = "candidate"
-        else:
-            verdict = "ok"
+        for dud in genome_dud_reasons(xml):
+            reasons.append(dud)
+        score += genome_dud_score(cfg, reasons)
+        verdict = verdict_for(score, reasons)
         scored = SheepScore(
             id=stem,
             mp4="",

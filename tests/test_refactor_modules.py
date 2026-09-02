@@ -28,6 +28,7 @@ from pipeline.refactor_history import (
 )
 from pipeline.refactor_preview import PreviewResult, discard_preview, run_preview
 from pipeline.refactor_scan import (
+    HARD_QUARANTINE_REASONS,
     SCORE_CANDIDATE_MIN,
     SCORE_QUARANTINE_MIN,
     SheepScore,
@@ -35,16 +36,22 @@ from pipeline.refactor_scan import (
     find_catalog_mp4,
     find_genome_for_stem,
     format_table,
+    genome_dud_reasons,
     scan_catalog,
     score_sheep,
+    verdict_for,
 )
 
 
 def test_scan_module_public_surface():
     assert SCORE_CANDIDATE_MIN == 1.0
     assert SCORE_QUARANTINE_MIN == 80.0
+    assert "genome_linear_only" in HARD_QUARANTINE_REASONS
+    assert "genome_singularity_cloned" in HARD_QUARANTINE_REASONS
     assert callable(score_sheep)
     assert callable(scan_catalog)
+    assert callable(genome_dud_reasons)
+    assert verdict_for(0.0, ["genome_linear_only"]) == "quarantine"
     assert callable(filter_report)
     assert callable(format_table)
     assert callable(find_genome_for_stem)

@@ -11,6 +11,7 @@ from typing import Any
 
 from pipeline.choose_duration import effective_min_sec, hard_max_sec, soft_max_sec
 from pipeline.config import resolve_path
+from pipeline.genome_signals import is_linear_only_genome, is_singularity_cloned
 from pipeline.palette_harmony import HarmonyResult, apply_palette_harmony
 from pipeline.poster import poster_path_for_mp4
 from pipeline.sheep_names import normalize_stem, stem_of
@@ -22,6 +23,17 @@ log = logging.getLogger("jellyflam3.refactor")
 
 SCORE_CANDIDATE_MIN = 1.0
 SCORE_QUARANTINE_MIN = 80.0
+# Genetics that cannot be remade by TV-port / palette apply — exclude from flock.
+HARD_QUARANTINE_REASONS = frozenset(
+    {
+        "missing_genome",
+        "sheep_tax_fail",
+        "genome_linear_only",
+        "genome_singularity_cloned",
+    }
+)
+LINEAR_ONLY_SCORE_DEFAULT = 80.0
+SINGULARITY_CLONED_SCORE_DEFAULT = 80.0
 
 
 @dataclass
@@ -306,6 +318,36 @@ def _desat_thresholds(cfg: dict[str, Any]) -> tuple[float, float]:
     return mean_max, weight
 
 
+def genome_dud_reasons(xml_text: str) -> list[str]:
+    """Pathway A reasons for linear-only / ES singularities clones (order stable)."""
+    reasons: list[str] = []
+    if is_linear_only_genome(xml_text):
+        reasons.append("genome_linear_only")
+    if is_singularity_cloned(xml_text):
+        reasons.append("genome_singularity_cloned")
+    return reasons
+
+
+def genome_dud_score(cfg: dict[str, Any], reasons: list[str]) -> float:
+    """Score weight for linear-only / singularity-cloned reasons already in ``reasons``."""
+    ref = dict(cfg.get("refactor") or {})
+    score = 0.0
+    if "genome_linear_only" in reasons:
+        score += float(ref.get("linear_only_score", LINEAR_ONLY_SCORE_DEFAULT))
+    if "genome_singularity_cloned" in reasons:
+        score += float(ref.get("singularity_cloned_score", SINGULARITY_CLONED_SCORE_DEFAULT))
+    return score
+
+
+def verdict_for(score: float, reasons: list[str]) -> str:
+    """Map score + hard reasons to ok / candidate / quarantine."""
+    if score >= SCORE_QUARANTINE_MIN or any(r in HARD_QUARANTINE_REASONS for r in reasons):
+        return "quarantine"
+    if score >= SCORE_CANDIDATE_MIN:
+        return "candidate"
+    return "ok"
+
+
 def score_sheep(
     cfg: dict[str, Any],
     mp4: Path,
@@ -412,6 +454,10 @@ def score_sheep(
             reasons.append("palette_washed_out")
             score += 10.0
 
+        for dud in genome_dud_reasons(xml):
+            reasons.append(dud)
+        score += genome_dud_score(cfg, reasons)
+
     # Catalog visual desaturation (poster) — catches grey/muddy sheep structural checks miss.
     sat_info = catalog_saturation(mp4, poster=poster if poster.is_file() else None)
     mean_sat = sat_info.get("mean_sat")
@@ -428,12 +474,7 @@ def score_sheep(
             seen.add(r)
             uniq.append(r)
 
-    if score >= SCORE_QUARANTINE_MIN or "missing_genome" in uniq or "sheep_tax_fail" in uniq:
-        verdict = "quarantine"
-    elif score >= SCORE_CANDIDATE_MIN:
-        verdict = "candidate"
-    else:
-        verdict = "ok"
+    verdict = verdict_for(score, uniq)
 
     row = SheepScore(
         id=stem,

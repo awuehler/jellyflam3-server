@@ -118,16 +118,14 @@ def test_quarantine_rejects_ok_without_force(tmp_path: Path):
     genome = Path(cfg["paths"]["genomes_done"]) / f"{stem}.flam3"
     genome.write_text(
         """<flame name="t" size="1920 1080" quality="900" supersample="2" filter="1">
-  <xform weight="1" coefs="1 0 0 1 0 0" color="0"/>
+  <xform weight="1" julia="0.95" coefs="1 0 0 1 0 0" color="0"/>
   <color index="0" rgb="180 60 40"/>
   <color index="1" rgb="40 80 200"/>
 </flame>""",
         encoding="utf-8",
     )
     row = score_sheep(cfg, mp4)
-    if row.verdict == "quarantine":
-        # Environment may still quarantine; force-path covered elsewhere.
-        return
+    assert row.verdict != "quarantine"
     try:
         run_quarantine(cfg, stem, dry_run=True, force=False, unpublish=False)
         raised = False

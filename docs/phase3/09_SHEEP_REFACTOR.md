@@ -21,7 +21,7 @@ Complements:
 | **Repeatable TV-grade pass** | Re-run TV-port, palette harmony, encode profile, posters |
 | **Operator workflow** | Scan → score → **palette report / optional override → poster preview** → apply/replace |
 
-Sub-standard examples (non-exhaustive): crushed blacks, neon clash on living-room TVs, near-empty frames, extreme vibrancy, broken aspect after bad hand edits, duration that fails band after dynamic snap, watermark-less masters when watermark policy is on (Phase 4 edges guide).
+Sub-standard examples (non-exhaustive): crushed blacks, neon clash on living-room TVs, near-empty frames, **linear-only / `singularity="cloned"` voids**, extreme vibrancy, broken aspect after bad hand edits, duration that fails band after dynamic snap, watermark-less masters when watermark policy is on (Phase 4 edges guide).
 
 ## Implementation pathways (enable set)
 
@@ -52,6 +52,7 @@ Build `pipeline/refactor.py` (`python3 -m pipeline.refactor`) by **composing exi
 | Poster / artwork | `pipeline.poster`, `pipeline.backfill_posters`, `pipeline.flock_artwork` | Missing / black Primary → failing |
 | Encode sanity | ffprobe on catalog MP4 (fps, pix_fmt, bitrate heuristics) | Wrong profile → re-encode candidate |
 | **Desaturation / wash-out** | Poster mean channel-spread saturation + low-chroma harmony poles | `catalog_desaturated` (mean sat &lt; `refactor.desat_mean_max`, default **0.12**); `palette_washed_out` when both poles are dull |
+| **Linear-only / singularities clone** | `pipeline.genome_signals.is_linear_only_genome` / `is_singularity_cloned` | `genome_linear_only` (every xform is implicit or explicit `linear` only — ES void / singularities); `genome_singularity_cloned` (`<flame singularity="cloned">`). Either reason is a **hard quarantine** (not remediable by palette apply). Config: `refactor.linear_only_score` / `singularity_cloned_score` (default **80**) |
 | Emit report | JSON + human table (`scan` / `report`) | No catalog writes; palette block required per sheep |
 
 **Report palette block (required fields):**

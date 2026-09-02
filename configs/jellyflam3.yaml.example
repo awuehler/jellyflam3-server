@@ -142,10 +142,12 @@ palette:
   lightness_bias: asymmetric
   saturation_cap: 0.55
 
-# Sheep refactor Pathway A (scan/report) — optional visual wash-out thresholds
+# Sheep refactor Pathway A (scan/report) — optional visual wash-out + dud-genome gates
 refactor:
   desat_mean_max: 0.12   # poster mean sat below this → catalog_desaturated
   desat_score: 20        # score weight (candidate when score ≥ 1)
+  linear_only_score: 80           # all xforms linear-only → genome_linear_only (quarantine)
+  singularity_cloned_score: 80   # flame singularity="cloned" → genome_singularity_cloned
 
 tools:
   flam3_genome: flam3-genome

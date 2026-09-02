@@ -200,7 +200,7 @@ Cascade removes catalog MP4/sidecar/poster, jobs, edges (best-effort), Jellyfin 
 
 ### Quality repair: Sheep refactor
 
-For sub-standard renders (palette clash, bad encode) — **not** delete/recreate genetics.
+For sub-standard renders (palette clash, bad encode, **linear-only / `singularity="cloned"` voids**) — **not** delete/recreate genetics.
 
 ```bash
 python3 -m pipeline.refactor scan --config configs/jellyflam3.yaml

@@ -3,6 +3,7 @@
 Requirements: Genome XML text (``<flame>`` or ``<flames>`` wrapper).
 
 Usage: ``extract_genome_signals(xml)`` → complexity / period candidates for choose_duration.
+  ``is_linear_only_genome`` / ``is_singularity_cloned`` — Pathway A dud gates.
 
 Assumptions: Periods come from rotate, color_speed, and animated xform weights; malformed XML is wrapped when needed.
 """
@@ -46,6 +47,86 @@ def _f(val: str | None, default: float = 0.0) -> float:
 def _xform_tag(el: ET.Element) -> str:
     """Local tag name without XML namespace prefix."""
     return el.tag.split("}")[-1] if "}" in el.tag else el.tag
+
+
+# Non-variation <xform> / <finalxform> attributes (IFS structural knobs).
+XFORM_STRUCTURAL_ATTRS = frozenset(
+    {
+        "weight",
+        "color",
+        "symmetry",
+        "coefs",
+        "animate",
+        "color_speed",
+        "opacity",
+        "var_color",
+        "chaos",
+        "plotmode",
+        "name",
+    }
+)
+
+
+def _xform_variation_names(el: ET.Element) -> set[str]:
+    """Variation names with |weight| > 0 on an xform (implicit linear if none)."""
+    names: set[str] = set()
+    for attr, val in el.attrib.items():
+        if attr in XFORM_STRUCTURAL_ATTRS:
+            continue
+        try:
+            if abs(float(val)) > 1e-12:
+                names.add(attr)
+        except ValueError:
+            continue
+    return names
+
+
+def _xform_is_linear_only(el: ET.Element) -> bool:
+    """True when the xform is implicit linear or only ``linear`` is non-zero."""
+    names = _xform_variation_names(el)
+    return not names or names <= {"linear"}
+
+
+def _iter_xforms(xml_text: str) -> list[ET.Element] | None:
+    """Return xform/finalxform elements, or None if XML cannot be parsed."""
+    try:
+        root = _parse_root(xml_text)
+    except ET.ParseError:
+        return None
+    out: list[ET.Element] = []
+    for flame in _flames(root):
+        for child in list(flame):
+            if _xform_tag(child) in ("xform", "finalxform"):
+                out.append(child)
+    return out
+
+
+def is_linear_only_genome(xml_text: str) -> bool:
+    """True when every IFS xform is linear-only (Electric Sheep singularities / voids).
+
+    Implicit linear (no variation attrs) counts. A single non-linear variation
+    (julia, spherical, spiral, …) is enough to pass. Unparseable XML is False
+    so sheep_tax can own that failure.
+    """
+    xforms = _iter_xforms(xml_text)
+    if xforms is None:
+        return False
+    if not xforms:
+        return True
+    return all(_xform_is_linear_only(el) for el in xforms)
+
+
+def is_singularity_cloned(xml_text: str) -> bool:
+    """True when any ``<flame singularity="cloned">`` (ES singularities brood clone)."""
+    try:
+        root = _parse_root(xml_text)
+    except ET.ParseError:
+        return False
+    for flame in _flames(root):
+        val = (flame.get("singularity") or "").strip().lower()
+        if val == "cloned":
+            return True
+    return False
 
 
 def extract_genome_signals(xml_text: str) -> dict[str, Any]:
