@@ -40,6 +40,10 @@ Depends on catalog **sidecar** as sole metadata SoT ([../phase1/07_LICENSE_AND_M
 7. **Clients optional** — pasture apps default to today’s filename/title until the user enables “show aliases”; missing alias falls back to filename.
 8. **LLM is aspirational** — vision→alias is a later work item; MVP is deterministic RNG (+ human override). LLM proposals still go through uniqueness + operator accept when `alias_source` would become `llm`.
 
+## Sidecar reservation (pre-open)
+
+Keys **`alias`** and **`alias_source`** (`auto` \| `human` \| `llm`) are reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). No RNG generator, ingest hook, backfill CLI, or client filename/alias toggle in this slice. Load–mutate–write readers keep unknown JSON; worker ingest rebuilds known fields only and would drop these keys on re-encode until Phase 4 preserves them.
+
 ## Work items (when Phase 4 opens)
 
 ### A — Furnace generator
@@ -52,7 +56,7 @@ Depends on catalog **sidecar** as sole metadata SoT ([../phase1/07_LICENSE_AND_M
 
 ### B — Sidecar + Jellyfin
 
-1. Extend sidecar schema + docs (phase1/07 cross-link).
+1. **Reserved 2026-09-03** — `alias` / `alias_source` documented in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Generator, uniqueness, and ingest hook still parked.
 2. Best-effort Jellyfin Overview / custom tag or `SortName` refresh so browse UIs can show the alias without a separate client (optional; clients may read sidecar via furnace API later).
 3. Ensure Shears delete/rename cascades do not leave orphan alias indexes.
 
@@ -86,7 +90,7 @@ Depends on catalog **sidecar** as sole metadata SoT ([../phase1/07_LICENSE_AND_M
 - [ ] New catalog sheep get a unique auto-alias on ingest
 - [ ] Operator can override and reset; sticky against auto/LLM
 - [ ] At least one peer client (Roku or Kodi) offers filename vs alias display toggle
-- [ ] Docs + glossary; sidecar schema documented
+- [ ] Docs + glossary; sidecar schema documented (key names reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema); generator still parked)
 - [ ] LLM path documented as optional / off by default
 
 ## See also

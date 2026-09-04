@@ -32,6 +32,22 @@ from pipeline.tool_lookup import tool as _tool
 
 log = logging.getLogger("jellyflam3.stills")
 
+# Phase 4 reserved sidecar keys (guides 01 / 03 / 08 / 09). Readers must ignore
+# if absent. load/write round-trips them. Worker ingest still rebuilds the
+# sidecar and only merges ``refactor[]`` — a full re-encode drops these until
+# Phase 4 adds a preserve-on-ingest hook. Schema: docs/phase1/07_LICENSE_AND_METADATA.md
+SIDECAR_RESERVED_KEYS = frozenset(
+    {
+        "type",  # loop (default) | edge (guide 03)
+        "from_id",
+        "to_id",
+        "watermark",  # {enabled, style, text} (guide 03)
+        "viewer_feedback",  # likes/loves/votes/share_candidate (guides 01, 08)
+        "alias",  # adjective_surname (guide 09)
+        "alias_source",  # auto | human | llm
+    }
+)
+
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -66,6 +82,7 @@ def sidecar_path_for_mp4(mp4: Path) -> Path:
 
 
 def load_sidecar(mp4: Path) -> dict[str, Any]:
+    """Load ``*.jellyflam3.json`` beside ``mp4``. Extra / reserved keys are kept."""
     path = sidecar_path_for_mp4(mp4)
     if not path.is_file():
         return {"id": mp4.stem}
@@ -80,6 +97,7 @@ def load_sidecar(mp4: Path) -> dict[str, Any]:
 
 
 def write_sidecar(mp4: Path, sidecar: dict[str, Any]) -> None:
+    """Persist sidecar JSON as given (does not strip reserved / unknown keys)."""
     path = sidecar_path_for_mp4(mp4)
     path.write_text(json.dumps(sidecar, indent=2) + "\n", encoding="utf-8")
 

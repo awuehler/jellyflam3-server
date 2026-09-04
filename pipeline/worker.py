@@ -521,6 +521,10 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
 
         tags = infer_tags_from_genome(src)
         # Phase 1 license SoT: sidecar next to MP4 (Items API Tags are best-effort).
+        # Rebuilds known fields + merge refactor[]. Phase 4 reserved keys
+        # (type, watermark, viewer_feedback, alias — see pipeline.stills.SIDECAR_RESERVED_KEYS
+        # and docs/phase1/07) are not generated here and are not copied from a prior
+        # sidecar. Readers ignore unknown JSON.
         sidecar: dict[str, Any] = {
             "id": base,
             "license": "cc-by-nc" if "cc-by-nc" in tags else ("cc-by" if "cc-by" in tags else "unknown"),

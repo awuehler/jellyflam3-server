@@ -145,13 +145,67 @@ license:
   default_tags: []
 ```
 
-- **Sidecar** (`{stem}.jellyflam3.json` beside the catalog MP4) is the **sole metadata source of truth** for that sheep (license/tags in Phase 1; later stills index, pedigree hints, viewer votes). Jellyfin Items Tags/Overview are derived caches for clients.
+- **Sidecar** (`{stem}.jellyflam3.json` beside the catalog MP4) is the **sole metadata source of truth** for that sheep (license/tags in Phase 1; stills index, pedigree hints, viewer votes, aliases). Jellyfin Items Tags/Overview are derived caches for clients. Schema below.
 - **Commercial filter** stays in code for the uncommon venue case; leave `license.commercial_mode: false` / client `commercialMode=false` unless you need it.
 - **Client contract (Roku VoD + Kodi SS):** filter is **client-side on Jellyfin Items `Tags` only** (never send `Tags=` query params — that emptied the lab flock). When commercial-safe is **on**:
   - **Keep** items that carry a safe tag (`cc-by`, `cc-by-sa`, `cc0`, `public-domain`, `pd`) and **do not** carry `by-nc` / `cc-by-nc`.
   - **Hide** NC items and items with **empty / missing** Tags (empty Tags ≠ “show everything”).
   - Overview `License:` lines feed browse metadata (`metaLine`) but **do not** drive the commercial allow/deny decision.
 - Optional later: Jellyfin **commercial-safe** collection excluding NC.
+
+## Catalog sidecar schema
+
+File: `{stem}.jellyflam3.json` next to the catalog MP4. Code list: `pipeline.stills.SIDECAR_RESERVED_KEYS`.
+
+**Readers keep extra keys.** `load_sidecar` / `write_sidecar` (stills, stills-style backfill, refactor history) load–mutate–write and do not strip unknown JSON.
+
+**Worker ingest rebuilds.** `pipeline/worker.py` writes a new dict of known fields and only merges `refactor[]`. A full re-encode **drops** reserved Phase 4 keys until Phase 4 adds a preserve-on-ingest hook. Do not treat a re-ingest as a merge.
+
+### Shipped fields (worker / stills write today)
+
+| Key | Writer | Role |
+|---|---|---|
+| `id` | worker | Catalog stem |
+| `license` | worker | `cc-by` / `cc-by-nc` / `unknown` |
+| `tags` | worker | `cc-by`, `generation-N`, `sheep-ID`, `human` / `brood`, … |
+| `nframes`, `fps`, `duration_sec`, `duration_target_sec` | worker | Encode timing |
+| `edition` | worker | e.g. `gold_sheep_lite` |
+| `signals`, `duration_meta` | worker | Dynamic duration (Phase 2) |
+| `palette` | worker | Optional OkLCh harmony |
+| `jellyfin_image` | flock artwork | Poster / Items image status |
+| `refactor` | worker merge / refactor | Pathway history array |
+| `screensaver_safe`, stills index | stills | Screensaver frames |
+
+### Reserved Phase 4 keys (names locked; writers parked)
+
+| Key | Guide | Shape | Notes |
+|---|---|---|---|
+| `type` | [03](../phase4/03_EDGES_AND_WATERMARK.md) | `"loop"` (default when omitted) or `"edge"` | Guide 01 does not add its own top-level key |
+| `from_id`, `to_id` | [03](../phase4/03_EDGES_AND_WATERMARK.md) | string or `null` | Companions of `type: edge` |
+| `watermark` | [03](../phase4/03_EDGES_AND_WATERMARK.md) | `{ enabled, style, text }` | Provenance mark; do not falsify flam3 XML |
+| `viewer_feedback` | [08](../phase4/08_VIEWER_FEEDBACK_LOOP.md); [01](../phase4/01_PEER_SHARE_PATH.md) reads `share_candidate` | `{ likes, loves, votes, last_voted_at, share_candidate }` | Integers / bool / ISO timestamp or `null` |
+| `alias` | [09](../phase4/09_SHEEP_NAMING.md) | `adjective_surname` | Display name; filename stays canonical |
+| `alias_source` | [09](../phase4/09_SHEEP_NAMING.md) | `auto` \| `human` \| `llm` | Companion of `alias` |
+
+Do **not** implement edge encode, watermark burn-in, vote overlay/sink, or naming RNG until Phase 4 opens those products. Reserving the names here so later writers do not collide.
+
+```json
+{
+  "type": "loop",
+  "from_id": null,
+  "to_id": null,
+  "watermark": { "enabled": false, "style": "corner", "text": "" },
+  "viewer_feedback": {
+    "likes": 0,
+    "loves": 0,
+    "votes": 0,
+    "last_voted_at": null,
+    "share_candidate": false
+  },
+  "alias": "frosty_swirles",
+  "alias_source": "auto"
+}
+```
 
 ## Lab check — commercial-mode toggle
 
@@ -197,7 +251,8 @@ python3 scripts/jellyfin_id_dump.py --items --limit 50
 |---|---|---|
 | `pipeline/license_filter.py` | pipeline | Infer tags; commercial allow / exclude |
 | `pipeline/sheep_names.py` | pipeline | Canonical `electricsheep.<kind>.<id>.flam3` naming |
-| `{stem}.jellyflam3.json` sidecars | config | **Sole metadata SoT** beside catalog MP4 (license / provenance; later stills, votes) |
+| `{stem}.jellyflam3.json` sidecars | config | **Sole metadata SoT** beside catalog MP4 (license / provenance; stills; reserved Phase 4 keys) |
+| `pipeline.stills.SIDECAR_RESERVED_KEYS` | pipeline | Locked names for `type` / `watermark` / `viewer_feedback` / `alias` (+ companions) |
 | `configs/jellyflam3.yaml` (`license`) | config | `commercial_mode`, `exclude_tags` |
 | `NOTICE` | config | Third-party / project attributions |
 
@@ -206,3 +261,4 @@ python3 scripts/jellyfin_id_dump.py --items --limit 50
 - [x] NC genomes tagged `cc-by-nc` (heuristics → **sidecar**; unit-tested)
 - [x] Commercial filter excludes NC when enabled (unit-tested; BrightScript contract retained, default off)
 - [x] Tags persisted for ops — **sidecar-only** Phase 1 (`*.jellyflam3.json`); Items API tags deferred
+- [x] Phase 4 sidecar key names reserved (`type`, `watermark`, `viewer_feedback`, `alias`) — writers parked; readers keep unknown JSON

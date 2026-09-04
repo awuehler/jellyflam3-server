@@ -71,7 +71,7 @@ def load_sidecar(mp4: Path) -> dict[str, Any]:
 
 
 def write_sidecar(mp4: Path, sidecar: dict[str, Any]) -> None:
-    """Persist sidecar JSON next to the catalog MP4."""
+    """Persist sidecar JSON as given (does not strip reserved / unknown keys)."""
     path = sidecar_path_for_mp4(mp4)
     path.write_text(json.dumps(sidecar, indent=2) + "\n", encoding="utf-8")
 

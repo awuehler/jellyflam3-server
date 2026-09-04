@@ -9,15 +9,15 @@ Phase 4 scope lock — **synopsis / future**. Not open for implementation until 
 | Item | State |
 |---|---|
 | Phase 4 | **Synopsis** — not open for implementation (parked 2026-08-16) |
-| Peer share path revisit | Parked — [01](01_PEER_SHARE_PATH.md) |
+| Peer share path revisit | Parked — [01](01_PEER_SHARE_PATH.md); reads reserved `viewer_feedback.share_candidate` |
 | Mesh introduce scripting | Parked — [02](02_MESH_INTRODUCE_SCRIPTING.md) |
-| Edges + watermark | Parked — [03](03_EDGES_AND_WATERMARK.md) (moved from Phase 3 / 04 on 2026-08-16; includes Kodi loop→edge→loop deferred from Phase 3 guide 02) |
+| Edges + watermark | Parked — [03](03_EDGES_AND_WATERMARK.md) (moved from Phase 3 / 04 on 2026-08-16; includes Kodi loop→edge→loop deferred from Phase 3 guide 02); `type` / `watermark` reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) |
 | Roku VoD + screensaver publish | Parked — [04](04_ROKU_PUBLISH.md) (multi-Roku household; added 2026-08-16) |
 | End-user guide (tasks / examples / triage) | **Baseline complete** (Owner OK 2026-09-03) — [05](05_END_USER_GUIDE.md); [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md); fridge card [FRIDGE_CARD.md](../FRIDGE_CARD.md). Remaining 05 expansion (vote/rename recipes) waits on [08](08_VIEWER_FEEDBACK_LOOP.md) / [09](09_SHEEP_NAMING.md) |
 | Sheep library disk check + auto-purge / rotate | **Check slice shipped** 2026-09-03 — [06](06_LIBRARY_DISK_ROTATE.md); healthcheck WARN/BAD; auto-purge / worker refuse parked |
 | Concurrent clients / link-capacity estimate | **Estimator shipped** 2026-09-03 — [07](07_CONCURRENT_CLIENTS.md); `python3 -m pipeline.link_capacity`; Owner OK pending |
-| Viewer feedback loop (vote → share + breed bias) | Parked — [08](08_VIEWER_FEEDBACK_LOOP.md) (added 2026-08-19) |
-| Sheep naming (auto-generated aliases) | Parked — [09](09_SHEEP_NAMING.md) (added 2026-08-20) |
+| Viewer feedback loop (vote → share + breed bias) | Parked — [08](08_VIEWER_FEEDBACK_LOOP.md) (added 2026-08-19); `viewer_feedback` key reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) |
+| Sheep naming (auto-generated aliases) | Parked — [09](09_SHEEP_NAMING.md) (added 2026-08-20); `alias` / `alias_source` reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) |
 
 ## In scope (parked)
 
@@ -32,6 +32,8 @@ Phase 4 scope lock — **synopsis / future**. Not open for implementation until 
 9. [09_SHEEP_NAMING.md](09_SHEEP_NAMING.md) — auto `adjective_surname` aliases (+ human override; optional LLM-from-poster; client filename/alias toggle)
 
 Also named (aspirational / TBD): broader social flock, DeepDream/AI backends, LLM-assisted pedigree polish — may gain numbered guides when Phase 4 opens. Guide [08](08_VIEWER_FEEDBACK_LOOP.md) is the household feedback slice of social flock evolution; [09](09_SHEEP_NAMING.md) covers memorable aliases (RNG first; LLM naming later).
+
+Sidecar key names for [01](01_PEER_SHARE_PATH.md) / [03](03_EDGES_AND_WATERMARK.md) / [08](08_VIEWER_FEEDBACK_LOOP.md) / [09](09_SHEEP_NAMING.md) are reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) (`type`, `watermark`, `viewer_feedback`, `alias`). Encode, vote sink, and naming RNG stay parked.
 
 ### Client polish (parked — not numbered)
 

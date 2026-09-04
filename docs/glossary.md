@@ -134,7 +134,7 @@ Catalog folder layout under `media_library`: one directory per ES generation (e.
 
 ### Sidecar
 
-JSON metadata beside catalog MP4: `{stem}.jellyflam3.json`. **Sole metadata source of truth** for that sheep: license/tags, duration, signals, poster/stills **index**, pedigree hints, (Phase 4) `viewer_feedback` vote tallies, and (Phase 4) **alias** / sheep naming. Jellyfin Items Tags/Overview are derived caches only. Not a substitute for the `.mp4` bytes, `.flam3` genome, or poster/stills files. See [phase1/07](phase1/07_LICENSE_AND_METADATA.md), [phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md), and [phase4/09](phase4/09_SHEEP_NAMING.md).
+JSON metadata beside catalog MP4: `{stem}.jellyflam3.json`. **Sole metadata source of truth** for that sheep: license/tags, duration, signals, poster/stills **index**, pedigree hints, (Phase 4 reserved) `type` / `watermark` / `viewer_feedback` / `alias`. Schema: [phase1/07](phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Jellyfin Items Tags/Overview are derived caches only. Not a substitute for the `.mp4` bytes, `.flam3` genome, or poster/stills files. See also [phase4/03](phase4/03_EDGES_AND_WATERMARK.md), [phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md), and [phase4/09](phase4/09_SHEEP_NAMING.md).
 
 ### Smoke render
 

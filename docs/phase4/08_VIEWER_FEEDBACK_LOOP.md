@@ -39,6 +39,10 @@ Depends on Phase 1–2 Roku VoD playback ([../phase1/08_ROKU_BRIGHTSCRIPT.md](..
 7. **Sidecar is the sole metadata SoT** for a catalog sheep — `{stem}.jellyflam3.json` beside the MP4. License, tags, duration/signals, poster/stills index, pedigree hints, **and viewer vote tallies** live there. **No parallel vote store** under `/var/lib/jellyflam3/` (no `sheep_vote_weights.json` as competing truth). Jellyfin Items Tags / Overview are derived caches only. Binary artifacts stay themselves: `.mp4` (video), `.flam3` (genome), poster/stills **files** (sidecar indexes them). Optional append-only log is debug-only and must not be read for share/breed decisions.
 8. **Shuffle must include pedigree for voting** — Phase 3 VoD `shuffleFlock` allowlists **archive gens only** (`247`…`165`; skips `by-generation/pedigree/`, `misc`, `test`). That keeps ambient ES-archive rotation clean today. **Phase 4 Step 8 changes this:** random shuffle / continuous play loops that invite votes **must include pedigree** (and any other catalog sheep eligible for share/breed bias), so household feedback can reach local pedigree mutates — not only archive seeds. Config should distinguish **ambient archive shuffle** vs **vote-eligible shuffle** (or widen the allowlist when viewer-feedback mode is on).
 
+## Sidecar reservation (pre-open)
+
+Key **`viewer_feedback`** (likes / loves / votes / last_voted_at / share_candidate) is reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Guide [01](01_PEER_SHARE_PATH.md) reads `share_candidate` when share-out is built. No overlay, vote sink, share cron, or breed-weight hook in this slice. Load–mutate–write readers keep unknown JSON; worker ingest rebuilds known fields only and would drop this block on re-encode until Phase 4 preserves it.
+
 ## Work items (when Phase 4 opens)
 
 ### A — Roku VoD overlay
@@ -53,7 +57,7 @@ Depends on Phase 1–2 Roku VoD playback ([../phase1/08_ROKU_BRIGHTSCRIPT.md](..
 ### B — Furnace vote capture
 
 1. **API / sink** — e.g. `POST /v1/sheep-votes` on an existing or new LAN service (pattern after display-profile sink); auth via shared secret or Jellyfin API key policy TBD.
-2. **Store** — atomic rewrite of that sheep’s `{stem}.jellyflam3.json` `viewer_feedback` block (likes / loves / votes / last_voted_at / share_candidate). That sidecar is the **only** place share cron and idle-breed read weights.
+2. **Store** — atomic rewrite of that sheep’s `{stem}.jellyflam3.json` `viewer_feedback` block (likes / loves / votes / last_voted_at / share_candidate). Key **reserved** in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). That sidecar is the **only** place share cron and idle-breed read weights.
 3. **Unlimited re-vote** — each event increments sidecar counts; optional decay / window for breed weights vs raw share threshold (still computed from sidecar).
 4. **Resolve genome** — map voted catalog item → sidecar stem → `.flam3` in `genomes/done` / pedigree for share and breed.
 
@@ -113,4 +117,4 @@ Depends on Phase 1–2 Roku VoD playback ([../phase1/08_ROKU_BRIGHTSCRIPT.md](..
 
 ## See also
 
-[00_OVERVIEW.md](00_OVERVIEW.md) · [01_PEER_SHARE_PATH.md](01_PEER_SHARE_PATH.md) · [04_ROKU_PUBLISH.md](04_ROKU_PUBLISH.md) · [05_END_USER_GUIDE.md](05_END_USER_GUIDE.md) · [../phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_PEERING.md) · [../phase2/07_PEDIGREE_BREEDING.md](../phase2/07_PEDIGREE_BREEDING.md) · [../phase3/05_SHARED_SHEEP_SECURITY.md](../phase3/05_SHARED_SHEEP_SECURITY.md)
+[00_OVERVIEW.md](00_OVERVIEW.md) · [01_PEER_SHARE_PATH.md](01_PEER_SHARE_PATH.md) · [04_ROKU_PUBLISH.md](04_ROKU_PUBLISH.md) · [05_END_USER_GUIDE.md](05_END_USER_GUIDE.md) · [../phase1/07_LICENSE_AND_METADATA.md](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) · [../phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_PEERING.md) · [../phase2/07_PEDIGREE_BREEDING.md](../phase2/07_PEDIGREE_BREEDING.md) · [../phase3/05_SHARED_SHEEP_SECURITY.md](../phase3/05_SHARED_SHEEP_SECURITY.md)

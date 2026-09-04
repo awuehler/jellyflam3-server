@@ -3,10 +3,13 @@ from unittest.mock import MagicMock, patch
 
 from pipeline.idle_gate import should_block_render
 from pipeline.stills import (
+    SIDECAR_RESERVED_KEYS,
     extract_stills_for_mp4,
     frame_path,
+    load_sidecar,
     seek_points_sec,
     stills_dir_for_mp4,
+    write_sidecar,
 )
 
 
@@ -50,6 +53,44 @@ def test_extract_stills_writes_frames(tmp_path: Path):
     side = mp4.with_suffix(".jellyflam3.json")
     assert side.is_file()
     assert "screensaver_safe" in side.read_text(encoding="utf-8")
+
+
+def test_load_write_preserves_phase4_reserved_keys(tmp_path: Path):
+    mp4 = tmp_path / "electricsheep.247.00505.mp4"
+    mp4.write_bytes(b"fake")
+    payload = {
+        "id": mp4.stem,
+        "license": "cc-by",
+        "type": "loop",
+        "from_id": None,
+        "to_id": None,
+        "watermark": {"enabled": False, "style": "corner", "text": ""},
+        "viewer_feedback": {
+            "likes": 0,
+            "loves": 0,
+            "votes": 0,
+            "last_voted_at": None,
+            "share_candidate": False,
+        },
+        "alias": "frosty_swirles",
+        "alias_source": "auto",
+    }
+    write_sidecar(mp4, payload)
+    loaded = load_sidecar(mp4)
+    for key in ("type", "watermark", "viewer_feedback", "alias"):
+        assert key in SIDECAR_RESERVED_KEYS
+        assert loaded[key] == payload[key]
+    assert loaded["alias_source"] == "auto"
+    assert loaded["license"] == "cc-by"
+
+
+def test_worker_does_not_write_reserved_phase4_keys():
+    text = Path(__file__).resolve().parents[1].joinpath("pipeline", "worker.py").read_text(
+        encoding="utf-8"
+    )
+    build = text.split("sidecar: dict[str, Any] = {", 1)[1].split("if harmony is not None", 1)[0]
+    for key in ("type", "watermark", "viewer_feedback", "alias"):
+        assert f'"{key}"' not in build
 
 
 def test_idle_gate_ignores_screensaver_client():

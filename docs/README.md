@@ -20,7 +20,7 @@
 4. [04_JELLYFIN_LIBRARY.md](phase1/04_JELLYFIN_LIBRARY.md) — Jellyfin + Path 1
 5. [05_RENDER_PIPELINE.md](phase1/05_RENDER_PIPELINE.md) — worker
 6. [06_IDLE_GATE.md](phase1/06_IDLE_GATE.md) — CPU isolation
-7. [07_LICENSE_AND_METADATA.md](phase1/07_LICENSE_AND_METADATA.md) — tags / commercial
+7. [07_LICENSE_AND_METADATA.md](phase1/07_LICENSE_AND_METADATA.md) — tags / commercial / sidecar schema
 8. [08_ROKU_BRIGHTSCRIPT.md](phase1/08_ROKU_BRIGHTSCRIPT.md) — custom channel
 9. [09_RUNTIME_AND_OPS.md](phase1/09_RUNTIME_AND_OPS.md) — systemd / backup / health
 10. [10_TESTING_AND_ACCEPTANCE.md](phase1/10_TESTING_AND_ACCEPTANCE.md) — sign-off

@@ -30,7 +30,7 @@ This guide is the **single home** for watermark scope (formerly a standalone wat
 | **Generation** | `flam3-genome` `sequence=` with both parents → render/encode like loops (TV-port, Gold Sheep Lite / profile, idle-gate) |
 | **Duration** | Short edges (e.g. soft band or dedicated `edge_duration_sec`); never exceed Phase 2 hard max **120 s** |
 | **Catalog layout** | e.g. `/media/sheep/by-generation/{gen}/edges/` or `electricsheep.{a}_to_{b}.mp4` + sidecar naming parents |
-| **Sidecar** | `type: edge`, `from_id`, `to_id`, nframes/fps, watermark metadata |
+| **Sidecar** | `type: edge`, `from_id`, `to_id`, nframes/fps, watermark metadata — **names reserved** in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema); omitted `type` means `loop` |
 | **Playback** | Jellyfin items or playlists that alternate loop → edge → loop; HLS path from Phase 2 guide 03; **Kodi** ES screensaver ([../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md)); Roku stills track ([../phase3/01_SCREENSAVERS_AND_STILLS.md](../phase3/01_SCREENSAVERS_AND_STILLS.md)) |
 | **Shears** | Deleting a loop sheep should cascade orphan edges ([../phase3/03_SHEEP_SHEARS.md](../phase3/03_SHEEP_SHEARS.md)) |
 | **Core client / pipeline impact** | Edges + watermark are not sidecar-only: expect **encode path**, catalog layout, **Roku VoD** (journey / playlist awareness beyond single-loop seek-reloop), **Kodi** loop→edge→loop sequencer, stills/poster bake, Shears cascade, and possibly shuffle/eligibility rules once edges sit beside loops. Coordinate with [08](08_VIEWER_FEEDBACK_LOOP.md) if vote overlays must appear on edge segments vs loops only. |
@@ -50,13 +50,17 @@ All watermark notes for the project live here (not scattered across Phase 1/2/3 
 | **Catalog loop MP4** | ffmpeg overlay (corner bug / subtle crawl) and/or burn-in during encode; config: enable, opacity, position, text/logo asset |
 | **Edge MP4** | Same watermark policy as loops (edges are public-facing morphs too) |
 | **Stills / posters** | Same mark on screensaver stills and Primary images for consistency |
-| **Genome / sidecar** | Record `watermark: { enabled, style, text }` in `*.jellyflam3.json`; do not alter Free Sheep XML provenance falsely |
+| **Genome / sidecar** | Record `watermark: { enabled, style, text }` in `*.jellyflam3.json` (key reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema)); do not alter Free Sheep XML provenance falsely |
 | **Opt-out** | Private-only flocks may disable watermark; default policy TBD when Phase 4 opens |
 
 ### Non-goals (watermark)
 
 - DRM or forensic steganography as Phase 4 MVP (optional later)
 - Watermarking third-party Jellyfin libraries unrelated to Sheep
+
+## Sidecar reservation (pre-open)
+
+Keys **`type`**, **`from_id`**, **`to_id`**, **`watermark`** are reserved on `{stem}.jellyflam3.json`. No edge encode, catalog `edges/` layout, ffmpeg overlay, or ingest writers in this slice. Load–mutate–write readers keep unknown JSON; worker ingest rebuilds known fields only and would drop these keys on re-encode until Phase 4 preserves them.
 
 ## Artifacts
 
@@ -90,4 +94,4 @@ All watermark notes for the project live here (not scattered across Phase 1/2/3 
 
 ## See also
 
-[00_OVERVIEW.md](00_OVERVIEW.md) · [../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) · transitions vs loops in [../Pi5_Flam3_VoD_Pipeline.md](../Pi5_Flam3_VoD_Pipeline.md) · encode [../phase1/05_RENDER_PIPELINE.md](../phase1/05_RENDER_PIPELINE.md) · pedigree parents [../phase2/07_PEDIGREE_BREEDING.md](../phase2/07_PEDIGREE_BREEDING.md)
+[00_OVERVIEW.md](00_OVERVIEW.md) · [../phase1/07_LICENSE_AND_METADATA.md](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) · [../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) · transitions vs loops in [../Pi5_Flam3_VoD_Pipeline.md](../Pi5_Flam3_VoD_Pipeline.md) · encode [../phase1/05_RENDER_PIPELINE.md](../phase1/05_RENDER_PIPELINE.md) · pedigree parents [../phase2/07_PEDIGREE_BREEDING.md](../phase2/07_PEDIGREE_BREEDING.md)

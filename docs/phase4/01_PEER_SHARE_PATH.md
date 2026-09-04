@@ -20,6 +20,12 @@ Contract: [phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_
 - Operator UX: CLI only vs host-service action?
 - How do **viewer votes** ([08](08_VIEWER_FEEDBACK_LOOP.md)) auto-stage share-out without silent drain into the furnace inbox?
 
+## Sidecar reservation (pre-open)
+
+Share-out automation (when built) reads **`viewer_feedback.share_candidate`** on `{stem}.jellyflam3.json`. That block is reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) with the rest of `viewer_feedback`. Guide 01 does **not** add its own top-level key.
+
+No vote sink, share cron, or auto-promote in this slice. Worker ingest still rebuilds known fields only (`refactor[]` merge); a re-encode drops reserved keys until Phase 4 preserves them.
+
 ## Non-goals (until opened)
 
 - Silent drain of peers/inbox into the furnace without an explicit gate
@@ -27,4 +33,4 @@ Contract: [phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_
 
 ## See also
 
-[00_OVERVIEW.md](00_OVERVIEW.md) · [02_MESH_INTRODUCE_SCRIPTING.md](02_MESH_INTRODUCE_SCRIPTING.md) · [08_VIEWER_FEEDBACK_LOOP.md](08_VIEWER_FEEDBACK_LOOP.md) · [../phase3/05_SHARED_SHEEP_SECURITY.md](../phase3/05_SHARED_SHEEP_SECURITY.md)
+[00_OVERVIEW.md](00_OVERVIEW.md) · [02_MESH_INTRODUCE_SCRIPTING.md](02_MESH_INTRODUCE_SCRIPTING.md) · [08_VIEWER_FEEDBACK_LOOP.md](08_VIEWER_FEEDBACK_LOOP.md) · [../phase1/07_LICENSE_AND_METADATA.md](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) · [../phase3/05_SHARED_SHEEP_SECURITY.md](../phase3/05_SHARED_SHEEP_SECURITY.md)
