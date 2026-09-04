@@ -909,7 +909,7 @@ stateDiagram-v2
 - **Sheep Shears (Phase 3 — complete, Owner OK 2026-08-16):** add/modify/delete `.flam3` and cascade downstream artifacts (inbox, jobs, scratch, MP4, sidecars, Jellyfin images, stills, peers); `audit` / `sweep` + peering `hygiene`. Guide: [phase3/03_SHEEP_SHEARS.md](phase3/03_SHEEP_SHEARS.md).
 - **Edges + watermark (Phase 4 — parked):** generate transition **edge** crossfade MP4s between loop parents (`flam3-genome` multi-seed sequence); optional baked **watermark** on catalog loops, edges, and stills. Guide: [phase4/03_EDGES_AND_WATERMARK.md](phase4/03_EDGES_AND_WATERMARK.md).
 - **Roku publish (Phase 4 — parked):** Channel Store / private publish of existing VoD + screensaver (icons, settings UX, best-practices) plus **N Rokus on one JellyFlam3-server**. Guide: [phase4/04_ROKU_PUBLISH.md](phase4/04_ROKU_PUBLISH.md).
-- **End-user guide (Phase 4 — parked):** household tasks, examples, and triage cookbook. Guide: [phase4/05_END_USER_GUIDE.md](phase4/05_END_USER_GUIDE.md).
+- **End-user guide (Phase 4 — baseline complete, Owner OK 2026-09-03):** household tasks, four worked examples, and triage cookbook — [USER_GUIDE_AND_RUNBOOK.md](USER_GUIDE_AND_RUNBOOK.md); fridge card [FRIDGE_CARD.md](FRIDGE_CARD.md). Synopsis + remaining vote/rename recipes: [phase4/05_END_USER_GUIDE.md](phase4/05_END_USER_GUIDE.md).
 - **Sheep library disk rotate (Phase 4 — parked):** filesystem full check + auto-purge/rotate of catalog sheep so the media mount does not fill. Guide: [phase4/06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md).
 - **Concurrent clients / link capacity (Phase 4 — parked):** estimate how many endpoint devices one server can Direct Play (or HLS) at once on WiFi vs Ethernet without saturating the link. Guide: [phase4/07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md).
 - **Viewer feedback loop (Phase 4 — parked):** Roku VoD transient like/love/vote overlay (playback continues) → tallies on the catalog **sidecar** (sole metadata SoT) → share cron for Tailscale/Syncthing + weighted daily idle breed. Guide: [phase4/08_VIEWER_FEEDBACK_LOOP.md](phase4/08_VIEWER_FEEDBACK_LOOP.md).
@@ -1685,6 +1685,6 @@ flowchart TD
 
 ### Phase 4 — synopsis (not open)
 
-1. Peer share-path, mesh introduce scripting, **edges + watermark**, **Roku VoD + screensaver publish**, **end-user guide**, **library disk rotate**, **concurrent-client / link-capacity estimate**, **viewer feedback loop** (vote → share + breed bias), and **sheep naming** (auto aliases) parked under [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md).
+1. Peer share-path, mesh introduce scripting, **edges + watermark**, **Roku VoD + screensaver publish**, **library disk rotate**, **concurrent-client / link-capacity estimate**, **viewer feedback loop** (vote → share + breed bias), and **sheep naming** (auto aliases) parked under [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md). End-user guide **05 baseline** (tasks / four examples / triage) is complete (Owner OK 2026-09-03); remaining 05 expansion waits on 08/09.
 2. Do not implement until Owner opens Phase 4.
 

@@ -3,6 +3,7 @@
 | Doc | Purpose |
 |---|---|
 | **[USER_GUIDE_AND_RUNBOOK.md](USER_GUIDE_AND_RUNBOOK.md)** | **Layered user guide + operator runbook** for end users, operators, & contributors |
+| [FRIDGE_CARD.md](FRIDGE_CARD.md) | One-page Layer 1 cheat sheet (print; no API keys) |
 | [Pi5_Flam3_VoD_Pipeline.md](Pi5_Flam3_VoD_Pipeline.md) | Canonical architecture + design source of truth |
 |||
 | [phase1/00_OVERVIEW.md](phase1/00_OVERVIEW.md) | Phase 1 scope, reading order, definition of done — **complete** |

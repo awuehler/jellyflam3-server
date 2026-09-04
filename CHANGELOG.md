@@ -10,6 +10,8 @@ All notable changes to this project are documented here. Format loosely follows 
 - Opt-In watchdog LAN heal: ping default gateway; rate-limited Wi‑Fi bounce (`nmcli`) before Tailscale re-auth (`peering.watchdog.*`).
 - Sheep refactor Pathway A: `catalog_desaturated` + `palette_washed_out` heuristics for grey/muddy catalog sheep.
 - Sheep refactor Pathway A: `genome_linear_only` + `genome_singularity_cloned` hard-quarantine for Electric Sheep singularities / void IFS (e.g. `electricsheep.244.00881`).
+- Printable Layer 1 fridge card (`docs/FRIDGE_CARD.md`) — watch / gate / Settings / triage; no API keys.
+- Phase 4 guide 05 baseline complete: four worked examples in the user guide (first evening, screensaver, two Rokus, peer receive); Owner OK 2026-09-03.
 
 ### Fixed
 

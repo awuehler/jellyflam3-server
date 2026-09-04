@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — author a **household / end-user** guide for day-to-day JellyFlam3 operation: common tasks, worked examples, and problem triage. Audience is the person running one or more Pis + Roku(s), not the Phase 1–3 implementer reading feature guides.
 
-**Status:** Superseded for day-to-day use by **[../USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md)** (Layer 1 end user + Layer 2 operator triage). This Phase 4 synopsis remains for future expansion (viewer feedback, naming, fridge card).
+**Status:** Baseline complete (Owner OK 2026-09-03). Day-to-day use: **[../USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md)** (Layer 1 + [worked examples](../USER_GUIDE_AND_RUNBOOK.md#worked-examples) + Layer 2 triage). Fridge card: **[../FRIDGE_CARD.md](../FRIDGE_CARD.md)**. Remaining expansion (vote/rename recipes) waits on [08](08_VIEWER_FEEDBACK_LOOP.md) / [09](09_SHEEP_NAMING.md).
 
 Complements (does not replace):
 
@@ -48,8 +48,10 @@ Complements (does not replace):
 
 ### C — Worked examples
 
+Shipped in [USER_GUIDE_AND_RUNBOOK.md — Worked examples](../USER_GUIDE_AND_RUNBOOK.md#worked-examples) (Owner OK 2026-09-03):
+
 1. First evening after install: dump IDs → VoD Settings → play one sheep → confirm gate closes → stop play → gate opens.
-2. Screensaver evening: sideload or published SS → Theme select → confirm gate stays open.
+2. Screensaver evening: sideload SS → Theme select → confirm gate stays open.
 3. Two Rokus, one Pi: Fetch TV display on both → two profile files → independent prefs.
 4. Peer receive: land in `peers/inbox` → verify → promote → furnace picks up.
 
@@ -72,7 +74,7 @@ Symptom-oriented table (extend as lab learns):
 
 1. Update triage when Phase 3 sheep refactor ships ([../phase3/09_SHEEP_REFACTOR.md](../phase3/09_SHEEP_REFACTOR.md)); Hammer + Kodi loops-only are already Owner OK.
 2. Cross-link Phase 4 publish, multi-Roku, library rotate ([06](06_LIBRARY_DISK_ROTATE.md)), concurrent-client estimates ([07](07_CONCURRENT_CLIENTS.md)), and viewer feedback ([08](08_VIEWER_FEEDBACK_LOOP.md)) when those ship.
-3. Optional: short printable “fridge card” (health + gate + Settings URLs).
+3. Fridge card (health + gate + Settings URLs): **[../FRIDGE_CARD.md](../FRIDGE_CARD.md)** — print Layer 1; leave API keys off the page.
 
 ## Guidelines
 
@@ -94,20 +96,20 @@ Symptom-oriented table (extend as lab learns):
 |---|---|---|
 | End-user guide markdown | docs | Tasks + examples + triage |
 | Links from README / Phase 4 overview | docs | Discoverability |
-| Optional fridge-card one-pager | docs | Minimal ops cheat sheet |
+| [FRIDGE_CARD.md](../FRIDGE_CARD.md) | docs | Printable Layer 1 cheat sheet (shipped) |
 
 ## Exit criteria (when Phase 4 opens)
 
-- [ ] End-user guide published in-repo with tasks, ≥3 worked examples, triage table
-- [ ] Linked from project README (or docs README) and Phase 4 overview
-- [ ] Lab smoke: a second operator (or Owner) completes “first evening” example from the guide alone
-- [ ] Owner OK
+- [x] End-user guide published in-repo with tasks, ≥3 worked examples, triage table — [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) + [FRIDGE_CARD.md](../FRIDGE_CARD.md)
+- [x] Linked from project README (or docs README) and Phase 4 overview
+- [x] Lab smoke: a second operator (or Owner) completes “first evening” example from the guide alone
+- [x] Owner OK
 
 ### Sign-off
 
 | Role | Name | Date | OK |
 |---|---|---|---|
-| Owner | Project owner | _TBD_ | [ ] |
+| Owner | Project owner | 2026-09-03 | [x] |
 
 ## See also
 

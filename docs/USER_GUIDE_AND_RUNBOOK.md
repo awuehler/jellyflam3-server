@@ -5,6 +5,7 @@ One document, **three layers**. Pick your layer and stay there — you should no
 | Layer | Audience | You want to… |
 |---|---|---|
 | **[Layer 1 — End user](#layer-1--end-user)** | Household / viewer | Watch ambient loops, use Roku or Kodi screensaver, fix “nothing plays” without SSH |
+| **[Worked examples](#worked-examples)** | Viewer + operator | Four first-evening stories (VoD gate, screensaver, two Rokus, peer receive) |
 | **[Layer 2 — Operator](#layer-2--operator-runbook)** | Pi owner / homelab operator | Keep the flock healthy, seed/breed/delete sheep, peering, health gates, fleet updates |
 | **[Layer 3 — Contributor](#layer-3--contributor)** | Developer / maintainer | Run tests, change pipeline code, CI, deploy conventions |
 
@@ -18,7 +19,7 @@ One document, **three layers**. Pick your layer and stay there — you should no
 
 JellyFlam3 is a **home dream engine**: a Raspberry Pi renders flame-fractal “sheep” into MP4 loops, stores them in a **Jellyfin** library, and your **Roku** or **Kodi** device plays them when the TV is idle. Rendering is slow (hours per sheep on a Pi); playback is fast.
 
-You do **not** need the Pi terminal for normal viewing.
+You do **not** need the Pi terminal for normal viewing. Printable one-pager: [FRIDGE_CARD.md](FRIDGE_CARD.md).
 
 ### Watch on Roku (VoD channel)
 
@@ -82,6 +83,101 @@ Video screensaver add-on **JellyFlam3 Dreams** (`screensaver.jellyflam3`) — pl
 | Screensaver “replaced” VoD | Re-sideload VoD channel zip | — |
 | Kodi screensaver black / hint text | Open add-on **Configure**; confirm Jellyfin URL is furnace **LAN IP**, not `127.0.0.1` | Settings correct but no sheep play |
 | Nothing new for days | Normal if gate was closed or inbox empty | Gate open + inbox empty for a week |
+
+Copy-paste evenings (VoD + gate, screensaver, two Rokus, peer receive): [Worked examples](#worked-examples).
+
+---
+
+## Worked examples
+
+Copy-paste stories for a typical one-Pi (or two-Pi) home. Assume Phase 2/3 install is already done. Fill `http://<Pi_LAN_IP>:8096` — never `127.0.0.1` on a TV. Do not paste API keys into chat or the [fridge card](FRIDGE_CARD.md).
+
+Run Pi commands from `/opt/jellyflam3-server` unless noted.
+
+### 1 — First evening (VoD + idle gate)
+
+**Host:** furnace Pi + one Roku on the same LAN.
+
+1. On the Pi, dump Jellyfin IDs (operator keeps the API key off shared notes):
+
+   ```bash
+   cd /opt/jellyflam3-server
+   python3 scripts/jellyfin_id_dump.py
+   ```
+
+2. Sideload `dist/jellyflam3-roku.zip` (furnace-built zip pre-fills Settings). Otherwise open **JellyFlam3 → Settings**, enter `baseUrl` / `apiKey` / `userId` / `libraryId`, save.
+3. Launch JellyFlam3 → pick one sheep → **Play**. Confirm the loop is running.
+4. On the Pi, confirm the furnace paused:
+
+   ```bash
+   python3 -m json.tool /var/lib/jellyflam3/idle_gate_status.json
+   # Expect: "gate": "closed" (Playing / transcode)
+   ```
+
+5. Stop playback on the Roku (Home / Back out of the player). Wait `idle_delay_sec` (default **600** s). Re-check the JSON — `"gate": "open"`.
+
+**Pass:** flock listed, one sheep played, gate closed then opened. **Fail:** empty flock or `"Cannot connect"` → Layer 1 triage (`baseUrl` is LAN IP).
+
+### 2 — Screensaver evening (stills, gate stays open)
+
+**Host:** same furnace Pi + the **same** Roku as example 1 (VoD Settings already saved on this box).
+
+1. Sideload `dist/jellyflam3-screensaver.zip`. Developer mode has **one** sideload slot — this **replaces** VoD until you re-sideload VoD; registry keys survive.
+2. Roku **Settings → Theme → Screensavers → JellyFlam3**. Optional: screensaver Settings for fade/dwell only (no credential editors).
+3. Idle the TV (or use the Theme screensaver preview). You should see **posters/stills**, not video.
+4. On the Pi, while the screensaver is up:
+
+   ```bash
+   python3 -m json.tool /var/lib/jellyflam3/idle_gate_status.json
+   # Expect: "gate": "open"  (Client JellyFlam3-Screensaver is ignored)
+   ```
+
+**Pass:** images on the TV and gate still open (rendering may continue). **Fail:** blank SS → VoD was never configured on **this** Roku (example 1 step 2). Re-sideload VoD when you want the channel tile back.
+
+### 3 — Two Rokus, one Pi
+
+**Host:** one furnace Pi (`jellyflam3-display-sink` active) + two Roku devices. Same Jellyfin URL on both.
+
+1. Confirm the sink:
+
+   ```bash
+   systemctl is-active jellyflam3-display-sink   # expect: active
+   ```
+
+2. On **Roku A**: VoD Settings (same `baseUrl` as the Pi LAN) → **Fetch TV display**. Channel should report **Pi OK** and a `*.json` name.
+3. Repeat **Fetch TV display** on **Roku B**.
+4. On the Pi:
+
+   ```bash
+   python3 -m pipeline.display_profiles list
+   ```
+
+   Expect **two** files under `/var/lib/jellyflam3/display_profiles/` (`JellyFlam3-<deviceId>.json`). Prefs (streamMode, shuffle, fade) stay **per Roku** in that device’s registry.
+
+**Pass:** `list` shows two screens; concurrent **screensaver** on both must not close the gate; **VoD Playing** on either closes it. Profiles are hints only — the furnace does not retarget 4K.
+
+### 4 — Peer receive (second Pi)
+
+**Hosts:** publisher Pi and receiver Pi, both **Opt In** with **share live** (Syncthing + Tailscale). See [`deploy/peering/README.md`](../deploy/peering/README.md). Trust keys exchanged (`peering gen-keys`, `trust-key`).
+
+1. On both Pis: `python3 -m pipeline.peering status` → `share_opt_in: true`, `share_live: true`.
+2. Publisher (already-taxed genome in `genomes/done` or similar):
+
+   ```bash
+   python3 -m pipeline.peering publish path/to/sheep.flam3 --apply
+   ```
+
+3. Wait for Syncthing. On the **receiver**:
+
+   ```bash
+   ls genomes/peers/inbox/*.flam3
+   python3 -m pipeline.peering promote --apply
+   ```
+
+   Integrity runs **before** sheep tax; mismatch → quarantine, not inbox.
+4. Receiver worker picks up `genomes/inbox`. Confirm with `./scripts/status_report.sh` (inbox count) or a later catalog MP4 on that host.
+
+**Pass:** file left `peers/inbox`, `promote --apply` moved a `.flam3` to worker inbox (or quarantine if verify failed). **Fail:** `share_live: false` → healthcheck peering section; do not skip the promote gate.
 
 ---
 
@@ -442,6 +538,17 @@ sudo systemctl restart jellyflam3-idlegate jellyflam3-worker
 ```
 
 Deploy via **`git pull` on the Pi** — not scp of a Windows working tree (LF + exec bits break).
+
+### Pull catalog MP4s to a Windows workstation
+
+Copy flock loops from each furnace (catalog `by-generation` only — not `_refactor-preview`):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/scrape_fleet_sheep.ps1
+# Default dest: %USERPROFILE%\Downloads\jellyflam3-sheep\<host>\...
+```
+
+Override furnace IPs with `JELLYFLAM3_FLEET_IP_16A` / `_08A` / `_04A` if they are not the lab defaults. `-DryRun` lists; `-Force` overwrites.
 
 ### Backup
 

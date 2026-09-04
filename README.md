@@ -8,7 +8,7 @@ JellyFlam3 Server is a self-hosted generative media server that renders flam3-in
 
 ## Who is this for?
 
-Homelab operators and enthusiasts who already run (or will run) **Jellyfin on a Raspberry Pi 5**, accept **Roku developer sideloading** (no Channel Store package in v0.3.0), and want a slow, quality-first generative flock — not a plug-and-play smart-TV app. First sheep can take **hours**; a sizeable herd takes **months**. See [User guide & runbook](docs/USER_GUIDE_AND_RUNBOOK.md) (Layer 1) for viewers; [Pi from scratch](docs/phase2/09_PI_FROM_SCRATCH.md) for install.
+Homelab operators and enthusiasts who already run (or will run) **Jellyfin on a Raspberry Pi 5**, accept **Roku developer sideloading** (no Channel Store package in v0.3.0), and want a slow, quality-first generative flock — not a plug-and-play smart-TV app. First sheep can take **hours**; a sizeable herd takes **months**. See [User guide & runbook](docs/USER_GUIDE_AND_RUNBOOK.md) (Layer 1) for viewers; [fridge card](docs/FRIDGE_CARD.md) to print; [Pi from scratch](docs/phase2/09_PI_FROM_SCRATCH.md) for install.
 
 **Requires:** Pi 5 + NVMe + sheep disk, Jellyfin, flam3/ffmpeg toolchain, optional Kodi pasture box. **Windows packaging** (`*.ps1`) builds client zips but does **not** embed furnace Jellyfin presets — paste IDs manually or build on the Pi.
 
