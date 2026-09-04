@@ -24,7 +24,7 @@ Terms, keywords, and phrases used across the **jellyflam3-server** project — d
 | [ECP](#ecp-external-control-protocol) | [HLS](#hls) | [Poster / Primary](#poster--primary) | [TV-port](#tv-port) |
 | [Edition (render)](#edition-render) | [HW profile](#hw-profile) | [Pre-share / post-share](#pre-share--post-share) | [Viewer feedback](#viewer-feedback--sheep-vote) |
 | [`.flam3`](#flam3-file) | [Idle breed](#idle-breed) | [RC](#release-candidate-rc) | [Sheep naming / alias](#sheep-naming--alias) |
-| [N_max](#n_max-link-capacity) | | [VoD](#vod) | [Worker](#worker) |
+| [N_max](#n_max-link-capacity) | [Library disk check](#library-disk-check) | [VoD](#vod) | [Worker](#worker) |
 
 ---
 
@@ -235,6 +235,10 @@ Client plays the static MP4 bytes without re-encode. URL pattern: `…/Videos/{i
 ### N_max (link capacity)
 
 Integer estimate of concurrent **video** sessions one JellyFlam3-server can carry on a LAN hop: `floor(usable_bps × (1 − headroom) / session_bps)`. CLI: `python3 -m pipeline.link_capacity`. Not a Jellyfin connection cap. Guide: [phase4/07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md).
+
+### Library disk check
+
+Operator check of the sheep mount (`paths.media_library`) used % / free GiB. CLI: `python3 -m pipeline.library_disk check`. Healthcheck WARN (exit 0) vs BAD (exit 1). Auto-purge / rotate still parked. Guide: [phase4/06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md).
 
 ### Direct Stream
 

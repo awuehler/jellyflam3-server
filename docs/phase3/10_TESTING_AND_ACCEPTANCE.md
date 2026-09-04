@@ -166,13 +166,16 @@ git log -1 --oneline
 |---|---|
 | LLM-assisted pedigree | Beyond flam3-genome tooling |
 | DeepDream / AI backends | Aspirational |
-| Channel Store / Roku publish (VoD + screensaver) | Post-launch |
+| Channel Store / Roku publish (VoD + screensaver) | Post-launch ([phase4/04](../phase4/04_ROKU_PUBLISH.md)) |
 | Sheep library disk rotate | Check slice shipped 2026-09-03 (`pipeline.library_disk`); auto-purge parked |
 | Concurrent clients / link capacity | Estimator shipped 2026-09-03 (`pipeline.link_capacity`); Owner OK pending |
+| End-user guide | Baseline complete 2026-09-03 ([phase4/05](../phase4/05_END_USER_GUIDE.md)); vote/rename wait on 08/09 |
+| Sidecar Phase 4 keys | Names reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema); writers parked |
 | Full social flock network | Aspirational |
 | Continuous / live HLS from shuffled MP4s | Dropped |
 | Peer share path + mesh introduce scripting | Post-launch |
-| Edges + watermark | Post-launch |
+| Edges + watermark | Post-launch ([phase4/03](../phase4/03_EDGES_AND_WATERMARK.md); keys reserved) |
+| Sheep naming RNG | Post-launch ([phase4/09](../phase4/09_SHEEP_NAMING.md); keys reserved) |
 
 ## Sign-off
 

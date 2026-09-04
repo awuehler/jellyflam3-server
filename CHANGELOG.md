@@ -21,6 +21,10 @@ All notable changes to this project are documented here. Format loosely follows 
 - Ed25519 trust enrollment flake: do not `.strip()` exact 32-byte raw public keys (whitespace bytes are valid key material; broke `test_trust_key_enrolls_peer` intermittently on CI).
 - Redact `--auth-key=` values in `pipeline.peering` command logs.
 
+### Changed
+
+- Phase 4 overview: pre-open ledger (05/06/07 + sidecar keys) vs parked products; docs/README index; pytest count ~352 (was ~303).
+
 ## [v0.3.1] — 2026-08-23
 
 Post-launch maintenance — OSS hygiene, CI hardening, and share-security fix.

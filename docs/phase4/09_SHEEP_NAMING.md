@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — give every catalog sheep a short, **human-readable alias** (e.g. `frosty_swirles`, `angry_bardeen`) so operators and peer clients can remember and reference sheep without typing `electricsheep.247.00505` or pedigree hashes. Also known as a **random name generator** / **auto-generated names** pattern: typically an **adjective + surname** of a famous person, place, or thing.
 
-**Status:** Parked. Do not implement until Phase 4 opens.
+**Status:** Parked. Do not implement RNG / ingest hook / client filename-vs-alias toggle until Phase 4 opens. Pre-open: `alias` / `alias_source` reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema); household guide [05](05_END_USER_GUIDE.md) baseline does not yet include rename recipes.
 
 Depends on catalog **sidecar** as sole metadata SoT ([../phase1/07_LICENSE_AND_METADATA.md](../phase1/07_LICENSE_AND_METADATA.md), [08_VIEWER_FEEDBACK_LOOP.md](08_VIEWER_FEEDBACK_LOOP.md)), worker ingest, and peer clients (Roku VoD, Kodi screensaver, Shears CLI). Optional later: LLM vision over poster/stills for a broader inferred vocabulary. Distinct from flam3 XML **`nick`** (designer attribution used by license inference) — aliases are **display / operator names**, not Creative Commons credit.
 

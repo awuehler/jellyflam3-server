@@ -1079,7 +1079,7 @@ Review of the plan against **initial setup → implementation → integration �
 | `roku_sideload_play` | Manual | Channel lists item; loop plays ≥1 cycle; Back works |
 | `direct_play_check` | Manual | Jellyfin dashboard shows Direct Play during Roku playback |
 
-**F. Phase boundaries after Phase 1 complete:** Phase 2 = flock UX (posters), **HLS client streaming** (Jellyfin → Roku/VLC/etc., remux preferred), Roku polish + display probe, Syncthing-over-Tailscale peering (host-service Opt In/Out; `*.flam3` only; eventual pedigree-only share), **sheep tax** (XML/vocab scan & repair), pedigree mutate/cross, dynamic duration (hard max 120 s), Pi-from-scratch HW profiles. Phase 3 = Roku stills screensaver, **separate Kodi ES-dogma screensaver**, LLM pedigree, Sheep Shears CRUD, **sheep refactor** (sub-standard quality repair), **shared sheep security**, **git pedigree sheep** (smoke/examples; replace legacy samples), DeepDream/social. **Phase 4** = **edge crossfades + watermark**, peer share-path / mesh scripting revisits. Archive seeder + OkLCh tint + Gold Sheep Lite are **baseline shipped**.
+**F. Phase boundaries after Phase 1 complete:** Phase 2 = flock UX (posters), **HLS client streaming** (Jellyfin → Roku/VLC/etc., remux preferred), Roku polish + display probe, Syncthing-over-Tailscale peering (host-service Opt In/Out; `*.flam3` only; eventual pedigree-only share), **sheep tax** (XML/vocab scan & repair), pedigree mutate/cross, dynamic duration (hard max 120 s), Pi-from-scratch HW profiles. Phase 3 = Roku stills screensaver, **separate Kodi ES-dogma screensaver**, LLM pedigree, Sheep Shears CRUD, **sheep refactor** (sub-standard quality repair), **shared sheep security**, **git pedigree sheep** (smoke/examples; replace legacy samples), DeepDream/social. **Phase 4** = parked products (edge encode + watermark, peering revisits, Roku publish, vote overlay, naming RNG, rotate) plus pre-open slices already shipped (05 user-guide baseline, 06 disk check, 07 `N_max` estimator, sidecar key names). Archive seeder + OkLCh tint + Gold Sheep Lite are **baseline shipped**.
 
 ---
 
@@ -1683,8 +1683,8 @@ flowchart TD
 1. Guides **01–10** complete per [phase3/00_OVERVIEW.md](phase3/00_OVERVIEW.md).
 2. Apply git tag `v0.3.0` + GitHub release at public launch; fleet re-pull to tag when applied.
 
-### Phase 4 — synopsis (not open)
+### Phase 4 — synopsis (products parked; pre-open slices shipped)
 
-1. Peer share-path, mesh introduce scripting, **edges + watermark**, **Roku VoD + screensaver publish**, **viewer feedback loop** (vote → share + breed bias), and **sheep naming** (auto aliases) parked under [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md). End-user guide **05 baseline** (tasks / four examples / triage) is complete (Owner OK 2026-09-03); remaining 05 expansion waits on 08/09. Concurrent-client **07 estimator** shipped 2026-09-03 (Owner OK pending). Library-disk **06 check slice** shipped 2026-09-03 (rotate / worker refuse parked).
-2. Do not implement until Owner opens Phase 4.
+1. Parked products: peer share-path, mesh introduce, **edges + watermark encode**, **Roku publish**, **viewer feedback** overlay/sink, **sheep naming** RNG — [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md).
+2. Pre-open (2026-09-03): end-user guide **05 baseline** (Owner OK); library-disk **06 check slice**; concurrent-client **07 estimator** (Owner OK pending); sidecar keys reserved in [phase1/07](phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Do **not** implement parked products until Owner opens Phase 4.
 

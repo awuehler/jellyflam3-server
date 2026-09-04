@@ -21,13 +21,13 @@ Complements (does not replace):
 | **Examples** | Copy-pasteable commands and Settings values for a typical one-Pi / multi-Roku home |
 | **Triage** | Symptom → check → fix for idle-gate stuck, empty flock, screensaver blank, peering stuck, worker quiet |
 
-## Work items (when Phase 4 opens)
+## Work items
 
-### A — Guide shape
+### A — Guide shape (shipped)
 
-1. Single primary doc (e.g. `docs/end-user/README.md` or `docs/END_USER_GUIDE.md`) linked from project README + Phase 4 overview.
+1. Primary doc is [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) (not a separate `docs/end-user/` tree), linked from project README + Phase 4 overview.
 2. Tone: operator-facing; assume Phase 2/3 baselines already installed.
-3. Keep secrets out of examples (`secrets.env` / live yaml never pasted); use placeholders.
+3. Secrets stay out of examples (`secrets.env` / live yaml never pasted); placeholders only.
 
 ### B — Common tasks (minimum set)
 
@@ -71,11 +71,9 @@ Symptom-oriented table (extend as lab learns):
 | Sheep disk WARN / BAD | `library_disk check`; `df` | Shears delete (no auto-rotate yet) ([06](06_LIBRARY_DISK_ROTATE.md)) |
 | Transcode hammering Pi / several TVs stutter | streamMode / `link_capacity estimate` | Prefer DirectPlay MP4; Ethernet for WiFi STA Pi; stay at/under N_max ([07](07_CONCURRENT_CLIENTS.md)) |
 
-### E — Maintenance
+### E — Remaining (waits on 08 / 09)
 
-1. Update triage when Phase 3 sheep refactor ships ([../phase3/09_SHEEP_REFACTOR.md](../phase3/09_SHEEP_REFACTOR.md)); Hammer + Kodi loops-only are already Owner OK.
-2. Cross-link Phase 4 publish, multi-Roku, library rotate ([06](06_LIBRARY_DISK_ROTATE.md) — check slice shipped 2026-09-03), concurrent-client estimates ([07](07_CONCURRENT_CLIENTS.md) — estimator shipped 2026-09-03), and viewer feedback ([08](08_VIEWER_FEEDBACK_LOOP.md)) when those ship.
-3. Fridge card (health + gate + Settings URLs): **[../FRIDGE_CARD.md](../FRIDGE_CARD.md)** — print Layer 1; leave API keys off the page.
+Vote / like and rename / alias recipes in the user guide when [08](08_VIEWER_FEEDBACK_LOOP.md) / [09](09_SHEEP_NAMING.md) ship. Fridge card and refactor/Hammer/Kodi triage are already in the baseline.
 
 ## Guidelines
 
@@ -99,7 +97,7 @@ Symptom-oriented table (extend as lab learns):
 | Links from README / Phase 4 overview | docs | Discoverability |
 | [FRIDGE_CARD.md](../FRIDGE_CARD.md) | docs | Printable Layer 1 cheat sheet (shipped) |
 
-## Exit criteria (when Phase 4 opens)
+## Exit criteria
 
 - [x] End-user guide published in-repo with tasks, ≥3 worked examples, triage table — [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) + [FRIDGE_CARD.md](../FRIDGE_CARD.md)
 - [x] Linked from project README (or docs README) and Phase 4 overview
@@ -114,4 +112,4 @@ Symptom-oriented table (extend as lab learns):
 
 ## See also
 
-[00_OVERVIEW.md](00_OVERVIEW.md) · [04_ROKU_PUBLISH.md](04_ROKU_PUBLISH.md) · [../phase2/09_PI_FROM_SCRATCH.md](../phase2/09_PI_FROM_SCRATCH.md) · [../phase1/09_RUNTIME_AND_OPS.md](../phase1/09_RUNTIME_AND_OPS.md) · [`deploy/peering/README.md`](../../deploy/peering/README.md)
+[00_OVERVIEW.md](00_OVERVIEW.md) · [04_ROKU_PUBLISH.md](04_ROKU_PUBLISH.md) · [06_LIBRARY_DISK_ROTATE.md](06_LIBRARY_DISK_ROTATE.md) · [07_CONCURRENT_CLIENTS.md](07_CONCURRENT_CLIENTS.md) · [../phase2/09_PI_FROM_SCRATCH.md](../phase2/09_PI_FROM_SCRATCH.md) · [../phase1/09_RUNTIME_AND_OPS.md](../phase1/09_RUNTIME_AND_OPS.md) · [`deploy/peering/README.md`](../../deploy/peering/README.md)

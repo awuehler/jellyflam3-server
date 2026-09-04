@@ -80,10 +80,11 @@ Deferred from Phase 3 (not v0.3.0 scope). Details under `docs/phase4/`:
 - [../phase4/02_MESH_INTRODUCE_SCRIPTING.md](../phase4/02_MESH_INTRODUCE_SCRIPTING.md)
 - [../phase4/03_EDGES_AND_WATERMARK.md](../phase4/03_EDGES_AND_WATERMARK.md) — edges + watermark (was Phase 3 / 04)
 - [../phase4/04_ROKU_PUBLISH.md](../phase4/04_ROKU_PUBLISH.md) — publish VoD + screensaver (assets, settings, Store/private)
-- [../phase4/05_END_USER_GUIDE.md](../phase4/05_END_USER_GUIDE.md) — end-user tasks / examples / triage
-- [../phase4/06_LIBRARY_DISK_ROTATE.md](../phase4/06_LIBRARY_DISK_ROTATE.md) — sheep library disk check + auto-purge / rotate
-- [../phase4/07_CONCURRENT_CLIENTS.md](../phase4/07_CONCURRENT_CLIENTS.md) — concurrent clients / link-capacity estimate
+- [../phase4/05_END_USER_GUIDE.md](../phase4/05_END_USER_GUIDE.md) — end-user tasks / examples / triage (**baseline complete** 2026-09-03)
+- [../phase4/06_LIBRARY_DISK_ROTATE.md](../phase4/06_LIBRARY_DISK_ROTATE.md) — sheep library disk check (**slice shipped**) + auto-purge / rotate (parked)
+- [../phase4/07_CONCURRENT_CLIENTS.md](../phase4/07_CONCURRENT_CLIENTS.md) — concurrent clients / link-capacity estimate (**estimator shipped**)
 - [../phase4/08_VIEWER_FEEDBACK_LOOP.md](../phase4/08_VIEWER_FEEDBACK_LOOP.md) — Roku vote overlay → share cron + weighted idle breed
+- [../phase4/09_SHEEP_NAMING.md](../phase4/09_SHEEP_NAMING.md) — auto aliases (keys reserved; RNG parked)
 
 ## Artifacts
 

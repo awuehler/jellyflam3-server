@@ -9,11 +9,11 @@
       "author": "Owner"
     },
     {
-      "content": "PHASE STATUS (2026-08-23): Phase 1 complete (Owner OK 2026-07-28). Phase 2 complete (Owner OK 2026-08-08). Phase 3 complete (Owner OK 2026-08-23). Public launch v0.3.0 (2026-08-23); maintenance v0.3.1 (issue templates, share-security trust-key fix, OSS hygiene). Phase 4 is post-launch synopsis only — not open for implementation. Fleet tracks master @ 2fca790+.",
+      "content": "PHASE STATUS (2026-09-03): Phase 1 complete (Owner OK 2026-07-28). Phase 2 complete (Owner OK 2026-08-08). Phase 3 complete (Owner OK 2026-08-23). Public launch v0.3.0 (2026-08-23); maintenance v0.3.1. Phase 4 products parked. Pre-open shipped: 05 end-user baseline + fridge card (Owner OK), 06 library_disk check slice, 07 link_capacity estimator (Owner OK pending), sidecar keys type/watermark/viewer_feedback/alias reserved in phase1/07. Fleet tracks master.",
       "author": "Owner"
     },
     {
-      "content": "REPO LAYOUT PRIORITIES for documentation:\n- pipeline/ — Python render worker, Shears, Hammer, refactor, peering, flock artwork, idle gate, config\n- scripts/ — operator shell/Python tools (healthcheck, smoke, packaging, jellyfin_id_dump, client_pack_presets)\n- roku-channel/ — JellyFlam3 VoD BrightScript channel (manifest 1.0.26)\n- roku-screensaver/ — Roku stills screensaver (manifest 1.0.6)\n- kodi-screensaver/screensaver.jellyflam3/ — Kodi ES-dogma video screensaver add-on (0.2.6)\n- docs/phaseN/ — discrete task guides with Boundary/In/Out/Exit tables\n- configs/ — jellyflam3.yaml + hw profiles 16/08/04\n- tests/ — pytest (~303 tests on Linux CI; GitHub Actions on push/PR + release)\n- deploy/ — systemd units, peering templates\n- .github/ — issue templates, Dependabot, release workflow",
+      "content": "REPO LAYOUT PRIORITIES for documentation:\n- pipeline/ — Python render worker, Shears, Hammer, refactor, peering, flock artwork, idle gate, config, link_capacity, library_disk\n- scripts/ — operator shell/Python tools (healthcheck, smoke, packaging, jellyfin_id_dump, client_pack_presets)\n- roku-channel/ — JellyFlam3 VoD BrightScript channel (manifest 1.0.26)\n- roku-screensaver/ — Roku stills screensaver (manifest 1.0.6)\n- kodi-screensaver/screensaver.jellyflam3/ — Kodi ES-dogma video screensaver add-on (0.2.6)\n- docs/phaseN/ — discrete task guides with Boundary/In/Out/Exit tables\n- configs/ — jellyflam3.yaml + hw profiles 16/08/04\n- tests/ — pytest (~352 collected; GitHub Actions on push/PR + release)\n- deploy/ — systemd units, peering templates\n- .github/ — issue templates, Dependabot, release workflow",
       "author": "Owner"
     },
     {
@@ -37,11 +37,11 @@
       "author": "Owner"
     },
     {
-      "content": "DEFERRED / OUT OF SCOPE (do not document as shipped): Continuous live HLS from shuffled MP4s (dropped). Gold Sheep / paid ES masters (never ingest). LLM pedigree, DeepDream, full social flock network (aspirational). Kodi loop→edge→loop post-launch (edges not in v0.3.x). Channel Store / private Roku publish post-launch.",
+      "content": "DEFERRED / OUT OF SCOPE (do not document as shipped): Continuous live HLS from shuffled MP4s (dropped). Gold Sheep / paid ES masters (never ingest). LLM pedigree, DeepDream, full social flock network (aspirational). Kodi loop→edge→loop (edges parked). Channel Store / private Roku publish parked. Auto-promote, mesh introduce, vote overlay, naming RNG, library rotate parked. Pre-open that IS shipped: 05 user-guide baseline, 06 disk check, 07 N_max estimator, sidecar key names.",
       "author": "Owner"
     },
     {
-      "content": "TESTING: python3 -m pytest tests/ -q (~3s local; ~303 tests Linux CI). Fleet uses apt python3-pytest. smoke_render.sh and hls_smoke.sh are Pi/lab scripts not pytest. CI: .github/workflows/tests.yml + release.yml (tag push). ensure_exec_bits.sh --check on every CI run.",
+      "content": "TESTING: python3 -m pytest tests/ -q (~3s local; ~352 tests collected). Fleet uses apt python3-pytest. smoke_render.sh and hls_smoke.sh are Pi/lab scripts not pytest. CI: .github/workflows/tests.yml + release.yml (tag push). ensure_exec_bits.sh --check on every CI run.",
       "author": "Owner"
     }
   ],

@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — take the **existing** JellyFlam3 Roku packages from lab sideload to **publishable** distribution: VoD player (`roku-channel/`) and standalone screensaver (`roku-screensaver/`). Includes Store/private-channel packaging, brand assets, settings UX / input polish, Roku publishing best-practices, and **multi-Roku households on a single JellyFlam3-server**.
 
-**Status:** Parked. Do not implement until Phase 4 opens.
+**Status:** Parked. Do not implement Store/private publish until Phase 4 opens. Pre-open: household guide [05](05_END_USER_GUIDE.md) baseline (Owner OK); concurrent-session **estimate** in [07](07_CONCURRENT_CLIENTS.md) (`N_max`, not a Jellyfin cap).
 
 Depends on Phase 2 VoD polish ([../phase2/04_ROKU_CHANNEL_POLISH.md](../phase2/04_ROKU_CHANNEL_POLISH.md)) and Phase 3 screensaver MVP ([../phase3/01_SCREENSAVERS_AND_STILLS.md](../phase3/01_SCREENSAVERS_AND_STILLS.md)). Does **not** replace those guides; this is the publish + productization + multi-TV track.
 
@@ -56,7 +56,7 @@ Extend Phase 2’s per-screen display-profile sink into a durable **one server �
 |---|---|
 | **Topology** | One Pi (or fleet tip) runs Jellyfin + idle-gate + furnace; many Rokus on the LAN (or Tailscale) point at the same `baseUrl` / library |
 | **Identity** | Stable per-device id (Roku client/device id) → one `display_profiles/{client}-{deviceId}.json` per screen ([Phase 2 / 04](../phase2/04_ROKU_CHANNEL_POLISH.md) piece F); optional human label |
-| **VoD concurrency** | Multiple Rokus may play at once; idle-gate already closes on any matching TV Playing/transcode — confirm behavior is intentional for households (furnace pauses while *any* TV watches). **How many** sessions the LAN/WiFi can carry without stalls: [07](07_CONCURRENT_CLIENTS.md) |
+| **VoD concurrency** | Multiple Rokus may play at once; idle-gate already closes on any matching TV Playing/transcode — confirm behavior is intentional for households (furnace pauses while *any* TV watches). **How many** sessions the LAN/WiFi can carry without stalls: [07](07_CONCURRENT_CLIENTS.md) (**estimator shipped** 2026-09-03; WiFi-STA lab `N_max=6` Direct Play) |
 | **Screensaver concurrency** | Image-only SS on several TVs must **not** close the gate; Client=`JellyFlam3-Screensaver` + ignore patterns remain required |
 | **Per-screen prefs** | Registry is already per-device; document / polish which keys are per-TV (streamMode, shuffle, ssFade/dwell, commercialMode) vs shared secrets |
 | **Ops** | `python3 -m pipeline.display_profiles list` (+ optional status UI later) shows all known screens; sink `:8791` remains multi-upsert safe |
@@ -111,4 +111,4 @@ Baseline already shipped: two live Roku profiles on one Pi (Phase 2 Owner OK). P
 
 ## See also
 
-[00_OVERVIEW.md](00_OVERVIEW.md) · [08_VIEWER_FEEDBACK_LOOP.md](08_VIEWER_FEEDBACK_LOOP.md) · [../phase2/04_ROKU_CHANNEL_POLISH.md](../phase2/04_ROKU_CHANNEL_POLISH.md) · [../phase3/01_SCREENSAVERS_AND_STILLS.md](../phase3/01_SCREENSAVERS_AND_STILLS.md) · [../phase1/06_IDLE_GATE.md](../phase1/06_IDLE_GATE.md) · [../phase1/08_ROKU_BRIGHTSCRIPT.md](../phase1/08_ROKU_BRIGHTSCRIPT.md) · [Roku Screensavers](https://developer.roku.com/docs/developer-program/media-playback/screensavers.md) · [Channel packaging](https://developer.roku.com/docs/developer-program/getting-started/developer-setup.md)
+[00_OVERVIEW.md](00_OVERVIEW.md) · [05_END_USER_GUIDE.md](05_END_USER_GUIDE.md) · [07_CONCURRENT_CLIENTS.md](07_CONCURRENT_CLIENTS.md) · [08_VIEWER_FEEDBACK_LOOP.md](08_VIEWER_FEEDBACK_LOOP.md) · [../phase2/04_ROKU_CHANNEL_POLISH.md](../phase2/04_ROKU_CHANNEL_POLISH.md) · [../phase3/01_SCREENSAVERS_AND_STILLS.md](../phase3/01_SCREENSAVERS_AND_STILLS.md) · [../phase1/06_IDLE_GATE.md](../phase1/06_IDLE_GATE.md) · [../phase1/08_ROKU_BRIGHTSCRIPT.md](../phase1/08_ROKU_BRIGHTSCRIPT.md) · [Roku Screensavers](https://developer.roku.com/docs/developer-program/media-playback/screensavers.md) · [Channel packaging](https://developer.roku.com/docs/developer-program/getting-started/developer-setup.md)

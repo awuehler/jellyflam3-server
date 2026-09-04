@@ -6,7 +6,7 @@ Phase 4 synopsis — decide whether to **keep or change** the locked Phase 2 rec
 
 **stage → `genomes/peers/inbox` → gated `promote --apply`** (land ≠ worker ingest).
 
-**Status:** Parked (moved from end-of-Phase-3 deferral 2026-08-16). Do not implement until Phase 4 opens.
+**Status:** Parked (moved from end-of-Phase-3 deferral 2026-08-16). Auto-promote / path change stay parked. Pre-open: `viewer_feedback.share_candidate` reserved; household **peer receive** example is in [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md#worked-examples) (05 baseline).
 
 ## Locked today (Phase 2)
 

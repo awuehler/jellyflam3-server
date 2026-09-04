@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — reduce one-time Syncthing mesh introduce toil (options A–D), or **stay manual**.
 
-**Status:** Parked (moved from end-of-Phase-3 deferral 2026-08-16). Do not implement until Phase 4 opens.
+**Status:** Parked (moved from end-of-Phase-3 deferral 2026-08-16). Do not implement until Phase 4 opens. Pre-open 05/06/07 slices and sidecar key reservation do **not** change mesh introduce.
 
 ## Options (from deploy runbook)
 

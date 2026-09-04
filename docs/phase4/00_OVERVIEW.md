@@ -2,13 +2,15 @@
 
 ## Boundary
 
-Phase 4 scope lock — **synopsis / future**. Not open for implementation until Owner opens the phase. Holds work deferred from Phase 3 (peering path, mesh introduce scripting, **edges + watermark**) plus room for later aspirational tracks (including **viewer feedback → share + breed bias** and **sheep naming / aliases**).
+Phase 4 **products** stay parked until Owner opens the phase: peer auto-promote, mesh introduce scripting, **edges + watermark encode**, Roku Store/private publish, library **rotate**, vote overlay / share cron / breed bias, and sheep-naming RNG.
+
+**Pre-open slices** already shipped (docs + operator CLIs; not those products): end-user baseline, sheep-disk check, concurrent-client estimator, and catalog sidecar key names.
 
 ## Status
 
 | Item | State |
 |---|---|
-| Phase 4 | **Synopsis** — not open for implementation (parked 2026-08-16) |
+| Phase 4 products | **Parked** (2026-08-16) — do not implement encode / overlay / RNG / rotate / auto-promote until Owner opens the phase |
 | Peer share path revisit | Parked — [01](01_PEER_SHARE_PATH.md); reads reserved `viewer_feedback.share_candidate` |
 | Mesh introduce scripting | Parked — [02](02_MESH_INTRODUCE_SCRIPTING.md) |
 | Edges + watermark | Parked — [03](03_EDGES_AND_WATERMARK.md) (moved from Phase 3 / 04 on 2026-08-16; includes Kodi loop→edge→loop deferred from Phase 3 guide 02); `type` / `watermark` reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) |
@@ -19,21 +21,30 @@ Phase 4 scope lock — **synopsis / future**. Not open for implementation until 
 | Viewer feedback loop (vote → share + breed bias) | Parked — [08](08_VIEWER_FEEDBACK_LOOP.md) (added 2026-08-19); `viewer_feedback` key reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) |
 | Sheep naming (auto-generated aliases) | Parked — [09](09_SHEEP_NAMING.md) (added 2026-08-20); `alias` / `alias_source` reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) |
 
-## In scope (parked)
+## Pre-open shipped (2026-09-03)
+
+| Slice | Guide | What landed | Still parked |
+|---|---|---|---|
+| Household guide + fridge card | [05](05_END_USER_GUIDE.md) | [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) Layer 1 + four worked examples; [FRIDGE_CARD.md](../FRIDGE_CARD.md) | Vote / rename recipes (need 08 / 09) |
+| Sheep disk WARN/BAD | [06](06_LIBRARY_DISK_ROTATE.md) | `python3 -m pipeline.library_disk check`; healthcheck | Auto-purge, worker refuse on sheep mount, rotate cron |
+| Concurrent-client `N_max` | [07](07_CONCURRENT_CLIENTS.md) | `python3 -m pipeline.link_capacity`; WiFi-STA lab note | Enforcing `N_max` as a Jellyfin cap; Ethernet lab (eth0 DOWN) |
+| Sidecar key names | [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) | `type`, `watermark`, `viewer_feedback`, `alias` (+ companions) | Edge encode, watermark burn-in, vote sink, naming RNG; worker ingest still rebuilds known fields only |
+
+## In scope (parked products)
 
 1. [01_PEER_SHARE_PATH.md](01_PEER_SHARE_PATH.md) — keep vs change **stage → `peers/inbox` → gated `promote --apply`** (land ≠ worker ingest)
 2. [02_MESH_INTRODUCE_SCRIPTING.md](02_MESH_INTRODUCE_SCRIPTING.md) — options A–D for first-time Syncthing mesh introduce (or stay manual)
 3. [03_EDGES_AND_WATERMARK.md](03_EDGES_AND_WATERMARK.md) — edge / transition crossfades + sheep watermark (**core** pipeline + Roku/Kodi playback changes, not docs-only)
 4. [04_ROKU_PUBLISH.md](04_ROKU_PUBLISH.md) — publish existing Roku VoD + screensaver (assets, settings UX, private/Store, **multi-Roku on one server**)
-5. [05_END_USER_GUIDE.md](05_END_USER_GUIDE.md) — household end-user guide: common tasks, examples, triage (**baseline complete** 2026-09-03; remaining vote/rename recipes wait on 08/09)
-6. [06_LIBRARY_DISK_ROTATE.md](06_LIBRARY_DISK_ROTATE.md) — filesystem full check + auto-purge / rotate of the sheep library (**check slice shipped** 2026-09-03; rotate parked)
-7. [07_CONCURRENT_CLIENTS.md](07_CONCURRENT_CLIENTS.md) — concurrent Jellyfin clients; WiFi/Ethernet capacity estimate (`N_max`) (**estimator shipped** 2026-09-03; Owner OK pending)
+5. [05_END_USER_GUIDE.md](05_END_USER_GUIDE.md) — remaining vote/rename recipes (baseline already complete)
+6. [06_LIBRARY_DISK_ROTATE.md](06_LIBRARY_DISK_ROTATE.md) — auto-purge / rotate / worker refuse (check slice already shipped)
+7. [07_CONCURRENT_CLIENTS.md](07_CONCURRENT_CLIENTS.md) — Owner OK on the shipped estimator
 8. [08_VIEWER_FEEDBACK_LOOP.md](08_VIEWER_FEEDBACK_LOOP.md) — Roku like/love/vote overlay → share cron + weighted idle breed (**requires shuffle to include pedigree** for voting; Phase 3 archive-only allowlist is temporary)
 9. [09_SHEEP_NAMING.md](09_SHEEP_NAMING.md) — auto `adjective_surname` aliases (+ human override; optional LLM-from-poster; client filename/alias toggle)
 
 Also named (aspirational / TBD): broader social flock, DeepDream/AI backends, LLM-assisted pedigree polish — may gain numbered guides when Phase 4 opens. Guide [08](08_VIEWER_FEEDBACK_LOOP.md) is the household feedback slice of social flock evolution; [09](09_SHEEP_NAMING.md) covers memorable aliases (RNG first; LLM naming later).
 
-Sidecar key names for [01](01_PEER_SHARE_PATH.md) / [03](03_EDGES_AND_WATERMARK.md) / [08](08_VIEWER_FEEDBACK_LOOP.md) / [09](09_SHEEP_NAMING.md) are reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) (`type`, `watermark`, `viewer_feedback`, `alias`). Encode, vote sink, and naming RNG stay parked.
+Sidecar key names for [01](01_PEER_SHARE_PATH.md) / [03](03_EDGES_AND_WATERMARK.md) / [08](08_VIEWER_FEEDBACK_LOOP.md) / [09](09_SHEEP_NAMING.md) are reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Encode, vote sink, and naming RNG stay parked.
 
 ### Client polish (parked — not numbered)
 
@@ -48,7 +59,7 @@ Sidecar key names for [01](01_PEER_SHARE_PATH.md) / [03](03_EDGES_AND_WATERMARK.
 
 ## Prerequisites
 
-Phase 3 RC (or Owner waiver) preferred before opening Phase 4, so Shears, share-security, and screensaver baselines are stable inputs for edges / watermark / peering revisits / Roku publish / end-user guide / library rotate / concurrent-client estimates / viewer feedback loop / sheep naming.
+Phase 3 RC (or Owner waiver) preferred before opening Phase 4 products, so Shears, share-security, and screensaver baselines stay stable inputs for edges / watermark / peering revisits / Roku publish / rotate / viewer feedback / sheep naming.
 
 ## See also
 

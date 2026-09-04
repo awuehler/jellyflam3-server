@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — generate **transition edge** (genetic crossfade) clips between sheep, and bake a **watermark** into sheep masters / edges / stills for attribution and provenance.
 
-**Status:** Parked (moved from Phase 3 guide 04 on 2026-08-16). Do not implement until Phase 4 opens.
+**Status:** Parked (moved from Phase 3 guide 04 on 2026-08-16). Do not implement edge encode or watermark burn-in until Phase 4 opens. Pre-open: sidecar keys `type` / `from_id` / `to_id` / `watermark` reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema).
 
 This guide is the **single home** for watermark scope (formerly a standalone watermark note) and for Electric Sheep–style edge generation.
 

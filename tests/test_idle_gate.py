@@ -134,3 +134,18 @@ def test_ignore_stale_checkin(tmp_path):
     ]
     d = should_block_render(sessions, cfg)
     assert not d.blocked
+
+
+def test_ignore_screensaver_client(tmp_path):
+    """Image SS Client must not close the furnace (defaults in should_block_render)."""
+    cfg = _cfg(tmp_path)
+    sessions = [
+        {
+            "Client": "JellyFlam3-Screensaver",
+            "DeviceName": "Roku",
+            "NowPlayingItem": {"Id": "x"},
+        }
+    ]
+    d = should_block_render(sessions, cfg)
+    assert d.blocked is False
+    assert d.reason == "idle"

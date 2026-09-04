@@ -9,7 +9,7 @@ Thanks for your interest in JellyFlam3 Server. This project is documentation-hea
 | End user / viewer | [docs/USER_GUIDE_AND_RUNBOOK.md](docs/USER_GUIDE_AND_RUNBOOK.md) — Layer 1 · [fridge card](docs/FRIDGE_CARD.md) |
 | Operator / homelab | Same guide — Layer 2; install: [docs/phase2/09_PI_FROM_SCRATCH.md](docs/phase2/09_PI_FROM_SCRATCH.md) |
 | Architecture | [docs/Pi5_Flam3_VoD_Pipeline.md](docs/Pi5_Flam3_VoD_Pipeline.md) (source of truth) |
-| Feature work | [docs/README.md](docs/README.md) — phased guides 1–3 complete |
+| Feature work | [docs/README.md](docs/README.md) — phased guides 1–3 complete; Phase 4 products parked ([docs/phase4/00_OVERVIEW.md](docs/phase4/00_OVERVIEW.md)) |
 | Vocabulary | [docs/glossary.md](docs/glossary.md) |
 
 ## Development setup

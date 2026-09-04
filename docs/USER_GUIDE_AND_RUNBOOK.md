@@ -613,7 +613,7 @@ Checklist: [phase3/10_TESTING_AND_ACCEPTANCE.md](phase3/10_TESTING_AND_ACCEPTANC
 |---|---|
 | `pipeline/` | Furnace, curator, peering, refactor — Python CLIs (`python3 -m pipeline.*`) |
 | `scripts/` | Ops shell/Python/PowerShell — health, cron, packaging, lab smoke |
-| `tests/` | Fast pytest suite (~303 tests on Linux CI, ~3s) |
+| `tests/` | Fast pytest suite (~352 tests collected; ~3s local) |
 | `configs/` | Example YAML; live config is gitignored |
 | `docs/phaseN/` | Feature guides (implementer SoT per topic) |
 | `deploy/systemd/` | Unit files |
