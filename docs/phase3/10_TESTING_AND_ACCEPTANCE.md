@@ -168,7 +168,7 @@ git log -1 --oneline
 | DeepDream / AI backends | Aspirational |
 | Channel Store / Roku publish (VoD + screensaver) | Post-launch |
 | Sheep library disk rotate | Post-launch |
-| Concurrent clients / link capacity | Post-launch |
+| Concurrent clients / link capacity | Estimator shipped 2026-09-03 (`pipeline.link_capacity`); Owner OK pending |
 | Full social flock network | Aspirational |
 | Continuous / live HLS from shuffled MP4s | Dropped |
 | Peer share path + mesh introduce scripting | Post-launch |

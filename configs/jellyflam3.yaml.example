@@ -55,6 +55,16 @@ encode:
   pix_fmt: yuv420p
   audio: aac_silent
 
+# Concurrent clients / LAN capacity (Phase 4 / 07). Estimate only — not a Jellyfin cap.
+#   python3 -m pipeline.link_capacity estimate --profile wifi-pi --mode directplay
+#   python3 -m pipeline.link_capacity probe
+#   python3 -m pipeline.link_capacity bench-serve   # then bench-recv on another host
+# Per-session Direct Play bps comes from encode.video_bitrate or `probe`, not a second guess.
+link_capacity:
+  default_profile: wifi-pi          # wifi-pi | wifi-ap-gigabit-backhaul | eth-gigabit
+  headroom: 0.30                    # leave 30% unused so retries/bursts do not stall players
+  # usable_mbps: 35                 # optional: overwrite after bench-recv on YOUR hop
+
 idle_gate:
   enabled: true
   poll_interval_sec: 20

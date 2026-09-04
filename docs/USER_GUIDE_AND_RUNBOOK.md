@@ -78,7 +78,7 @@ Video screensaver add-on **JellyFlam3 Dreams** (`screensaver.jellyflam3`) — pl
 |---|---|---|
 | VoD Settings blank / flock empty | Re-open VoD Settings; confirm Wi‑Fi; re-enter IDs from a fresh dump | IDs correct but list still empty |
 | “Cannot connect” on Roku | Confirm `baseUrl` is the Pi’s **LAN IP** (`http://192.168.x.x:8096`), not `127.0.0.1` | Jellyfin down on Pi |
-| Playback stutters / buffers | Prefer Direct Play (H.264 MP4); avoid forcing transcode in client | Persistent transcode hammering Pi |
+| Playback stutters / buffers | Prefer Direct Play (H.264 MP4); avoid forcing transcode in client | Persistent transcode hammering Pi, or several TVs on a WiFi Pi (`link_capacity`) |
 | Screensaver blank | VoD was never configured on **this** Roku | After VoD Settings saved, still blank |
 | Screensaver “replaced” VoD | Re-sideload VoD channel zip | — |
 | Kodi screensaver black / hint text | Open add-on **Configure**; confirm Jellyfin URL is furnace **LAN IP**, not `127.0.0.1` | Settings correct but no sheep play |
@@ -550,6 +550,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/scrape_fleet_sheep.p
 
 Override furnace IPs with `JELLYFLAM3_FLEET_IP_16A` / `_08A` / `_04A` if they are not the lab defaults. `-DryRun` lists; `-Force` overwrites.
 
+### How many TVs at once (link capacity)
+
+Several Rokus / Kodi boxes against **one** Pi is a **LAN** problem. A **WiFi-uplinked furnace** is the tight case — plug the Pi into Ethernet when more than one or two TVs play video at once. Roku **image** screensaver does **not** count; **Kodi video** screensaver and VoD **Playing** do.
+
+```bash
+python3 -m pipeline.link_capacity estimate --profile wifi-pi --mode directplay
+python3 -m pipeline.link_capacity estimate --profile eth-gigabit --mode directplay
+python3 -m pipeline.link_capacity probe     # catalog MP4 bit-rate (p50 / p90)
+```
+
+`N_max` is an **estimate**, not a Jellyfin cap. Formula and lab numbers: [phase4/07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md). Prefer Direct Play MP4 (`streamMode=mp4`); transcode uses more of the link **and** the Pi CPU.
+
+To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another host, then `estimate --usable-mbps <printed>`.
+
 ### Backup
 
 ```bash
@@ -571,6 +585,7 @@ Override furnace IPs with `JELLYFLAM3_FLEET_IP_16A` / `_08A` / `_04A` if they ar
 | Offline peering (Opt In, no sync) | `healthcheck`: `BAD share not live`; `peering status` → `share_live: false` | `opt-in` with `TS_AUTHKEY` + Syncthing up, or `opt-out` |
 | Peering stuck (live mesh) | `peering status`; inbox under `peers/inbox` | `promote --apply`; trust keys; share-security verify |
 | Bad palette / encode | `refactor scan` | preview → apply pathway |
+| Playback stutters / several TVs | `python3 -m pipeline.link_capacity estimate`; WiFi STA furnace? | Ethernet for the Pi; Direct Play; stay at/under `N_max` |
 | Wipe everything local | — | `hammer --dry-run` then `--confirm HAMMER` (not Shears) |
 
 ### Owner-OK acceptance gates (RC)
@@ -662,6 +677,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | Render duration bands | `pipeline/choose_duration.py`, `docs/phase2/08_DYNAMIC_DURATION.md` |
 | TV-port / palette | `pipeline/tv_optimize.py`, `pipeline/palette_harmony.py` |
 | Share security | `pipeline/share_security.py`, `docs/phase3/05_SHARED_SHEEP_SECURITY.md` |
+| Link capacity / N_max | `pipeline/link_capacity.py`, `docs/phase4/07_CONCURRENT_CLIENTS.md` |
 | Roku client | `roku-channel/`, `docs/phase1/08_ROKU_BRIGHTSCRIPT.md` |
 | Kodi screensaver | `kodi-screensaver/`, [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) |
 | Architecture | `docs/Pi5_Flam3_VoD_Pipeline.md` |
@@ -694,6 +710,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | Runtime / systemd | [phase1/09_RUNTIME_AND_OPS.md](phase1/09_RUNTIME_AND_OPS.md) |
 | Worker pipeline | [phase1/05_RENDER_PIPELINE.md](phase1/05_RENDER_PIPELINE.md) |
 | HLS streaming | [phase2/03_HLS_CLIENT_STREAMING.md](phase2/03_HLS_CLIENT_STREAMING.md) |
+| Concurrent clients / N_max | [phase4/07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md) |
 | Peering | [phase2/05_SYNCTHING_GENOME_PEERING.md](phase2/05_SYNCTHING_GENOME_PEERING.md) |
 | Phase 3 feature guides | [phase3/00_OVERVIEW.md](phase3/00_OVERVIEW.md) |
 | Kodi screensaver (detail) | [kodi-screensaver/README.md](../kodi-screensaver/README.md) · [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) |

@@ -13,7 +13,7 @@ if __name__ == "__main__":
         "python -m pipeline.seed_inbox | python -m pipeline.job_recovery | "
         "python -m pipeline.backfill_posters | python -m pipeline.shears | "
         "python -m pipeline.hammer | python -m pipeline.breed_idle | "
-        "python -m pipeline.refactor",
+        "python -m pipeline.refactor | python -m pipeline.link_capacity",
         file=sys.stderr,
     )
     sys.exit(2)

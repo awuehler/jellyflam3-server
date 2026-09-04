@@ -68,12 +68,12 @@ Symptom-oriented table (extend as lab learns):
 | Screensaver replaced VoD | One sideload slot | Re-sideload VoD or use private/Store ([04](04_ROKU_PUBLISH.md)) |
 | Peering empty | Opt In? Syncthing? trust keys? | Peering README; share-security verify |
 | Healthcheck mount fail | USB/NVMe | Phase 2 from-scratch mounts |
-| Transcode hammering Pi | streamMode / client | Prefer DirectPlay MP4 ambient; idle-gate |
+| Transcode hammering Pi / several TVs stutter | streamMode / `link_capacity estimate` | Prefer DirectPlay MP4; Ethernet for WiFi STA Pi; stay at/under N_max ([07](07_CONCURRENT_CLIENTS.md)) |
 
 ### E — Maintenance
 
 1. Update triage when Phase 3 sheep refactor ships ([../phase3/09_SHEEP_REFACTOR.md](../phase3/09_SHEEP_REFACTOR.md)); Hammer + Kodi loops-only are already Owner OK.
-2. Cross-link Phase 4 publish, multi-Roku, library rotate ([06](06_LIBRARY_DISK_ROTATE.md)), concurrent-client estimates ([07](07_CONCURRENT_CLIENTS.md)), and viewer feedback ([08](08_VIEWER_FEEDBACK_LOOP.md)) when those ship.
+2. Cross-link Phase 4 publish, multi-Roku, library rotate ([06](06_LIBRARY_DISK_ROTATE.md)), concurrent-client estimates ([07](07_CONCURRENT_CLIENTS.md) — estimator shipped 2026-09-03), and viewer feedback ([08](08_VIEWER_FEEDBACK_LOOP.md)) when those ship.
 3. Fridge card (health + gate + Settings URLs): **[../FRIDGE_CARD.md](../FRIDGE_CARD.md)** — print Layer 1; leave API keys off the page.
 
 ## Guidelines

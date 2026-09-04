@@ -12,6 +12,7 @@ All notable changes to this project are documented here. Format loosely follows 
 - Sheep refactor Pathway A: `genome_linear_only` + `genome_singularity_cloned` hard-quarantine for Electric Sheep singularities / void IFS (e.g. `electricsheep.244.00881`).
 - Printable Layer 1 fridge card (`docs/FRIDGE_CARD.md`) — watch / gate / Settings / triage; no API keys.
 - Phase 4 guide 05 baseline complete: four worked examples in the user guide (first evening, screensaver, two Rokus, peer receive); Owner OK 2026-09-03.
+- Concurrent-client estimator (`python3 -m pipeline.link_capacity`): integer `N_max` from usable hop × headroom ÷ session bps; WiFi-STA lab note in guide 07.
 
 ### Fixed
 
