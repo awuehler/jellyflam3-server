@@ -36,7 +36,9 @@ import os
 import platform
 import shutil
 import subprocess
+import sys
 import time
+from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -45,6 +47,10 @@ import yaml
 CFG = Path(os.environ["JF_CFG"])
 ROOT = Path(os.environ["JF_ROOT"])
 AS_JSON = os.environ.get("JF_JSON") == "1"
+
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from pipeline.library_disk import assess_config, format_check
 
 
 def sh(cmd: list[str] | str, *, timeout: float = 15) -> str:
@@ -355,6 +361,20 @@ def idle_gate(cfg: dict) -> dict | None:
         return {"error": str(exc)}
 
 
+def _library_disk_block(cfg: dict) -> dict:
+    """WARN/BAD classification for sheep (and scratch) mounts — guide 06 slice."""
+    try:
+        report = assess_config(cfg)
+    except Exception as exc:
+        return {"worst": "bad", "error": str(exc), "checks": [], "lines": []}
+    return {
+        "worst": report.worst,
+        "thresholds": report.thresholds,
+        "checks": [asdict(c) for c in report.checks],
+        "lines": [format_check(c) for c in report.checks],
+    }
+
+
 def build_report() -> dict:
     """Collect host, load, thermal, disk, services, sheep, and top CPU into one dict."""
     cfg = load_cfg()
@@ -373,6 +393,7 @@ def build_report() -> dict:
             "cache": df_entry(Path("/var/cache/jellyflam3")),
             "lib": df_entry(Path("/var/lib/jellyflam3")),
         },
+        "library_disk": _library_disk_block(cfg),
         "services": services(),
         "idle_gate": idle_gate(cfg),
         "peering": peering_status(),
@@ -435,6 +456,12 @@ def print_human(r: dict) -> None:
             f"{label}: {d['used_gb']}G/{d['total_gb']}G ({d['used_pct']}%) "
             f"free {d['free_gb']}G  {d['path']}"
         )
+    ld = r.get("library_disk") or {}
+    print()
+    print("== library disk ==")
+    print(f"worst: {ld.get('worst', '?')}")
+    for line in ld.get("lines") or []:
+        print(line)
     print()
     print("== services ==")
     for u, st in (r.get("services") or {}).items():

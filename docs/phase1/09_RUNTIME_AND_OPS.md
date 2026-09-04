@@ -43,7 +43,7 @@ python3 -m pipeline.media_layout --config configs/jellyflam3.yaml
 # Config/secrets only
 ./scripts/backup.sh --config-only
 
-./scripts/healthcheck.sh              # mounts, systemd units, idle-gate, tools
+./scripts/healthcheck.sh              # mounts, library disk WARN/BAD, systemd units, idle-gate, tools
 ./scripts/perf_healthcheck.sh         # layout/thermals + disk microbench
 ./scripts/perf_healthcheck.sh --quick
 ./scripts/status_report.sh            # load, flock/inbox, thermals, top procs snapshot
@@ -65,7 +65,7 @@ Validated on `rpi-jellyflam3-16a` (formerly lab `rpi-jellyflam3-01`; 2026-07-28 
 | `deploy/systemd/jellyflam3-idlegate.service` | deploy | Idle-gate unit |
 | `deploy/systemd/jellyflam3-display-sink.service` | deploy | Per-screen display profile sink (:8791) |
 | `scripts/backup.sh` | script | Config / secrets / genomes / flock tarball |
-| `scripts/healthcheck.sh` | script | Mounts, units, idle-gate, tools |
+| `scripts/healthcheck.sh` | script | Mounts, library disk, units, idle-gate, tools |
 | `scripts/perf_healthcheck.sh` | script | Thermals + disk microbench |
 | `scripts/status_report.sh` | script | Load, flock/inbox, top-procs snapshot |
 | `scripts/ensure_exec_bits.sh` | script | Maintain git `100755` on CLI tools |

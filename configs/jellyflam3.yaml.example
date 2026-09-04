@@ -65,6 +65,17 @@ link_capacity:
   headroom: 0.30                    # leave 30% unused so retries/bursts do not stall players
   # usable_mbps: 35                 # optional: overwrite after bench-recv on YOUR hop
 
+# Sheep library mount capacity (Phase 4 / 06 slice). WARN/BAD in healthcheck only.
+#   python3 -m pipeline.library_disk check
+# No auto-purge and no worker refuse — rotate stays parked. Scratch encode floor is still
+# render.free_space_gb_min (worker). Same-device sheep+scratch is reported once.
+library_disk:
+  warn_used_pct: 80
+  bad_used_pct: 95
+  warn_free_gb: 16
+  bad_free_gb: 4
+  check_scratch: true
+
 idle_gate:
   enabled: true
   poll_interval_sec: 20

@@ -14,7 +14,7 @@ Phase 4 scope lock — **synopsis / future**. Not open for implementation until 
 | Edges + watermark | Parked — [03](03_EDGES_AND_WATERMARK.md) (moved from Phase 3 / 04 on 2026-08-16; includes Kodi loop→edge→loop deferred from Phase 3 guide 02) |
 | Roku VoD + screensaver publish | Parked — [04](04_ROKU_PUBLISH.md) (multi-Roku household; added 2026-08-16) |
 | End-user guide (tasks / examples / triage) | **Baseline complete** (Owner OK 2026-09-03) — [05](05_END_USER_GUIDE.md); [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md); fridge card [FRIDGE_CARD.md](../FRIDGE_CARD.md). Remaining 05 expansion (vote/rename recipes) waits on [08](08_VIEWER_FEEDBACK_LOOP.md) / [09](09_SHEEP_NAMING.md) |
-| Sheep library disk check + auto-purge / rotate | Parked — [06](06_LIBRARY_DISK_ROTATE.md) (added 2026-08-18) |
+| Sheep library disk check + auto-purge / rotate | **Check slice shipped** 2026-09-03 — [06](06_LIBRARY_DISK_ROTATE.md); healthcheck WARN/BAD; auto-purge / worker refuse parked |
 | Concurrent clients / link-capacity estimate | **Estimator shipped** 2026-09-03 — [07](07_CONCURRENT_CLIENTS.md); `python3 -m pipeline.link_capacity`; Owner OK pending |
 | Viewer feedback loop (vote → share + breed bias) | Parked — [08](08_VIEWER_FEEDBACK_LOOP.md) (added 2026-08-19) |
 | Sheep naming (auto-generated aliases) | Parked — [09](09_SHEEP_NAMING.md) (added 2026-08-20) |
@@ -26,7 +26,7 @@ Phase 4 scope lock — **synopsis / future**. Not open for implementation until 
 3. [03_EDGES_AND_WATERMARK.md](03_EDGES_AND_WATERMARK.md) — edge / transition crossfades + sheep watermark (**core** pipeline + Roku/Kodi playback changes, not docs-only)
 4. [04_ROKU_PUBLISH.md](04_ROKU_PUBLISH.md) — publish existing Roku VoD + screensaver (assets, settings UX, private/Store, **multi-Roku on one server**)
 5. [05_END_USER_GUIDE.md](05_END_USER_GUIDE.md) — household end-user guide: common tasks, examples, triage (**baseline complete** 2026-09-03; remaining vote/rename recipes wait on 08/09)
-6. [06_LIBRARY_DISK_ROTATE.md](06_LIBRARY_DISK_ROTATE.md) — filesystem full check + auto-purge / rotate of the sheep library
+6. [06_LIBRARY_DISK_ROTATE.md](06_LIBRARY_DISK_ROTATE.md) — filesystem full check + auto-purge / rotate of the sheep library (**check slice shipped** 2026-09-03; rotate parked)
 7. [07_CONCURRENT_CLIENTS.md](07_CONCURRENT_CLIENTS.md) — concurrent Jellyfin clients; WiFi/Ethernet capacity estimate (`N_max`) (**estimator shipped** 2026-09-03; Owner OK pending)
 8. [08_VIEWER_FEEDBACK_LOOP.md](08_VIEWER_FEEDBACK_LOOP.md) — Roku like/love/vote overlay → share cron + weighted idle breed (**requires shuffle to include pedigree** for voting; Phase 3 archive-only allowlist is temporary)
 9. [09_SHEEP_NAMING.md](09_SHEEP_NAMING.md) — auto `adjective_surname` aliases (+ human override; optional LLM-from-poster; client filename/alias toggle)

@@ -202,7 +202,8 @@ Run on each Pi (or spot-check one representative host):
 ```bash
 cd /opt/jellyflam3-server
 git log -1 --oneline                    # know what rev is live
-./scripts/healthcheck.sh                # exit 0 = healthy; exit 1 = investigate
+./scripts/healthcheck.sh                # exit 0 = healthy; library-disk WARN allowed, BAD fails
+python3 -m pipeline.library_disk check  # sheep/scratch used % + free GiB
 ./scripts/status_report.sh              # flock/inbox/thermals snapshot
 cat /var/lib/jellyflam3/idle_gate_status.json | python3 -m json.tool
 ```
@@ -578,7 +579,8 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 | No new sheep | `healthcheck.sh`; `gate` in status JSON; inbox count | Open gate / fix worker / seed or breed |
 | Gate stuck closed | Jellyfin Sessions; Roku still “Playing”? | Stop playback; wait `idle_delay_sec` |
 | Worker quiet, gate open | `ls genomes/inbox/*.flam3`; journal `-u jellyflam3-worker` | Seed inbox; inspect quarantine |
-| healthcheck exit 1 | Read script sections (units, tools, status file, **peering share_live**) | See [offline peering](#opt-in-vs-share-live-do-not-confuse-them); `opt-in` or `opt-out` |
+| healthcheck exit 1 | Read script sections (units, tools, status file, **peering share_live**, **library disk BAD**) | See [offline peering](#opt-in-vs-share-live-do-not-confuse-them); `opt-in` or `opt-out`; free space on `/media/sheep` |
+| Sheep disk WARN / BAD | `python3 -m pipeline.library_disk check`; `df -h /media/sheep` | Delete with Shears (no auto-rotate yet); do not Hammer unless wiping the factory |
 | Blank Roku SS | VoD Settings ever saved on this device? | Sideload VoD → Settings → re-sideload SS |
 | Kodi SS hint / no video | `server_url` uses LAN IP? flock empty on Jellyfin? | `jellyfin_id_dump.py --items`; re-install zip after client fix |
 | Kodi zip push fails | SMB `\\<Kodi_IP>\Downloads` vs SSH key | Use LibreELEC SMB; or install SSH key for `root@<Kodi_IP_Address>` |
@@ -678,6 +680,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | TV-port / palette | `pipeline/tv_optimize.py`, `pipeline/palette_harmony.py` |
 | Share security | `pipeline/share_security.py`, `docs/phase3/05_SHARED_SHEEP_SECURITY.md` |
 | Link capacity / N_max | `pipeline/link_capacity.py`, `docs/phase4/07_CONCURRENT_CLIENTS.md` |
+| Library disk check | `pipeline/library_disk.py`, `docs/phase4/06_LIBRARY_DISK_ROTATE.md` |
 | Roku client | `roku-channel/`, `docs/phase1/08_ROKU_BRIGHTSCRIPT.md` |
 | Kodi screensaver | `kodi-screensaver/`, [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) |
 | Architecture | `docs/Pi5_Flam3_VoD_Pipeline.md` |
@@ -711,6 +714,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | Worker pipeline | [phase1/05_RENDER_PIPELINE.md](phase1/05_RENDER_PIPELINE.md) |
 | HLS streaming | [phase2/03_HLS_CLIENT_STREAMING.md](phase2/03_HLS_CLIENT_STREAMING.md) |
 | Concurrent clients / N_max | [phase4/07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md) |
+| Library disk check | [phase4/06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md) |
 | Peering | [phase2/05_SYNCTHING_GENOME_PEERING.md](phase2/05_SYNCTHING_GENOME_PEERING.md) |
 | Phase 3 feature guides | [phase3/00_OVERVIEW.md](phase3/00_OVERVIEW.md) |
 | Kodi screensaver (detail) | [kodi-screensaver/README.md](../kodi-screensaver/README.md) · [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) |
