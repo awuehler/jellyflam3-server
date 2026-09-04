@@ -89,6 +89,7 @@ grep -q 'JellyFlam3: Development' ~/.bashrc 2>/dev/null || cat >> ~/.bashrc <<'E
 # JellyFlam3: Deployment
 export PATH="$PATH:/usr/local/bin:/opt/jellyflam3-server/scripts:."
 export PYTHONPATH="/opt/jellyflam3-server"
+cd /opt/jellyflam3-server
 
 EOF
 
