@@ -24,7 +24,7 @@ Path 2 channel is playable (list → play → settings; ambient MP4 / optional H
 | **B** Metadata fields on items | Done (Owner OK 2026-08-02) | Channel 1.0.17: duration/generation/license/pedigree + status `metaLine` on focus |
 | **C** Focus / detail chrome | Done (Owner OK 2026-08-02) | Channel 1.0.18: detail panel + tile meta; sideload focus confirmed |
 | **D** Empty / loading / error UX | Done (Owner OK 2026-08-02) | Channel 1.0.19: Loading/empty/error + Retry; streamMode validate; Focus footer |
-| **D2** Continuous random flock | Done (Owner OK 2026-08-02) | Channel 1.0.20: `shuffleFlock`; archive gens only; EOF advances |
+| **D2** Continuous random flock | Done (Owner OK 2026-08-02) | Channel 1.0.20: `shuffleFlock`; **1.0.28** also allowlists `pedigree` + `tuple` |
 | **E** TV display probe → registry | Done (Owner OK 2026-08-02) | Channel 1.0.21: Settings **Fetch TV display**; registry capture + recall confirmed |
 | **F** Pi sink + version + sideload | Done (Owner OK 2026-08-02) | Channel 1.0.22–23: sink `:8791`; two live Roku POSTs (TV + SmartBar); FormatJson lowercase-key fix |
 
@@ -109,7 +109,7 @@ python3 -m pipeline.display_profiles list
 - [x] Flock list shows posters when Jellyfin has Primary images — Owner OK 2026-08-01 (1.0.16)
 - [x] Metadata row visible on focus/detail — Owner OK 2026-08-02 (1.0.18)
 - [x] Empty / error / loading states acceptable per Roku practices — piece D (1.0.19); Owner OK 2026-08-02
-- [x] Continuous shuffle (`shuffleFlock`) advances archive-gen sheep only — piece D2 (1.0.20); Owner OK 2026-08-02
+- [x] Continuous shuffle (`shuffleFlock`) advances archive-gen sheep — piece D2 (1.0.20); Owner OK 2026-08-02. **1.0.28** also includes `pedigree` and `tuple` folders (Phase 4 / [03](../phase4/03_EDGES_AND_WATERMARK.md)).
 - [x] Fetch TV display writes registry — piece E (1.0.21); Owner OK 2026-08-02
 - [x] Pi `display_profiles/` sink updated — piece F (1.0.22–23); Owner OK 2026-08-02 (`Pi OK` + `display_profiles list`)
 - [x] ≥2 screen identities retained on Pi — Owner OK 2026-08-02 (Roku TV + Roku Soundbar; distinct `deviceId`s)
@@ -123,22 +123,16 @@ Settings `shuffleFlock` (default `false`):
 - **true:** at end-of-clip, advance to another sheep in **random order**. Eligible pool:
   - Only archive generations `[247, 245, 244, 243, 242, 198, 191, 169, 165]` via item `generation` or `Path` under `/by-generation/{N}/` (see [01](01_ARCHIVE_SEED_LIBRARY.md)).
   - **Ignore** `by-generation/misc`, `by-generation/test`, and other non-allowlisted locations.
+  - **Include** `by-generation/pedigree/` and `by-generation/tuple/` (channel 1.0.28).
   - Still respects `commercialMode` on the list fetch.
 - Back exits player and clears the shuffle round.
 - Mid-session **quarantine / Shears delete** can 404 the next shuffle pick; auto re-poll of the flock list is [Phase 4 client polish](../phase4/00_OVERVIEW.md#client-polish-parked--not-numbered) (all pasture endpoints).
 
 ## Future improvements (not pieces E–F)
 
-### Include genomic VoD variations (later)
+### Shuffle filters (optional later)
 
-After pedigree / local breed paths produce catalog MP4s ([07](07_PEDIGREE_BREEDING.md)), widen continuous-shuffle (and optionally browse) eligibility beyond the nine archive folders to **genomic VoD variations**:
-
-- VoDs whose genomes are JellyFlam3-produced (mutate / cross / blend / interpolate / local brood), typically tagged `origin: local_pedigree` (or equivalent path/name `electricsheep.pedigree.*`).
-- Keep excluding `misc` / `test` and other non-flock scratch locations unless an operator explicitly opts in.
-- License filter (`commercialMode`) still applies — NC pedigree offspring stay out when commercial mode is on.
-- Optional Settings refinement later: “archive gens only” vs “archive + genomic variations” vs “genomic only”.
-
-Depends on pedigree ingest being real on the Pi and stable item metadata the channel can filter on.
+Settings refinement: “archive gens only” vs “archive + genomic variations” vs “genomic only”. License filter (`commercialMode`) still applies.
 
 ## See also
 

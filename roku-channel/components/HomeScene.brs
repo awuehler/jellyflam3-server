@@ -196,7 +196,7 @@ function shuffleFlockEnabled() as boolean
   return (tl = "true" or tl = "1" or tl = "yes")
 end function
 
-' Archive seed generations — continuous shuffle ignores misc/test/other.
+' Shuffle allowlist: archive gens + pedigree + tuple. Ignores misc/test/other.
 function archiveGenerationAllowlist() as object
   return {
     "247": true
@@ -208,6 +208,8 @@ function archiveGenerationAllowlist() as object
     "191": true
     "169": true
     "165": true
+    "pedigree": true
+    "tuple": true
   }
 end function
 

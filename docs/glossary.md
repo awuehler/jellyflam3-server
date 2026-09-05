@@ -13,7 +13,7 @@ Terms, keywords, and phrases used across the **jellyflam3-server** project — d
 | [Archive seed](#archive-seed) | [Direct Play](#direct-play) | [Idle gate](#idle-gate) | [Pedigree](#pedigree) |
 | [BrightScript](#brightscript) | [Direct Stream](#direct-stream) | [Inbox](#inbox) | [Peering](#peering) |
 | [Brood](#brood) | [Display profile sink](#display-profile-sink) | [JellyFlam3 Hammer](#jellyflam3-hammer) | [Promote (peering)](#promote-peering) |
-| [Catalog](#catalog) | [Edge](#edge) | [Jellyfin flock](#jellyfin-flock) | [Quarantine](#quarantine) |
+| [Catalog](#catalog) | [Edge](#edge) / [Tuple](#tuple) | [Jellyfin flock](#jellyfin-flock) | [Quarantine](#quarantine) |
 | [Closed loop](#closed-loop) | [Electric Sheep](#electric-sheep) | [Land (peers)](#land-peers) | [Release candidate (RC)](#release-candidate-rc) |
 | [Commercial mode](#commercial-mode) | [Flock](#flock) | [Loop (VoD)](#loop-vod) | [Sheep Shears](#sheep-shears) |
 | [ContentNode](#contentnode) | [flam3](#flam3) | [OkLCh palette](#oklch-palette) | [Sheep tax](#sheep-tax) |
@@ -82,7 +82,7 @@ XML genome describing one or more **flames** (variation sets). Input to TV-port,
 
 ### flam3-genome
 
-Genome factory binary: random, **mutate**, **cross**, **interpolate**, **sequence** (edges), rotate. Used by **breed**, **seed_inbox**, and (Phase 4) edge generation.
+Genome factory binary: random, **mutate**, **cross**, **interpolate**, **sequence** (tuple stages / parked standalone edges), rotate. Used by **breed**, **seed_inbox**, **sheep_tuple**, and the worker.
 
 ### flam3-animate
 
@@ -134,7 +134,7 @@ Catalog folder layout under `media_library`: one directory per ES generation (e.
 
 ### Sidecar
 
-JSON metadata beside catalog MP4: `{stem}.jellyflam3.json`. **Sole metadata source of truth** for that sheep: license/tags, duration, signals, poster/stills **index**, pedigree hints, (Phase 4 reserved) `type` / `watermark` / `viewer_feedback` / `alias`. Schema: [phase1/07](phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Jellyfin Items Tags/Overview are derived caches only. Not a substitute for the `.mp4` bytes, `.flam3` genome, or poster/stills files. See also [phase4/03](phase4/03_EDGES_AND_WATERMARK.md), [phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md), and [phase4/09](phase4/09_SHEEP_NAMING.md).
+JSON metadata beside catalog MP4: `{stem}.jellyflam3.json`. **Sole metadata source of truth** for that sheep: license/tags, duration, signals, poster/stills **index**, pedigree hints, (Phase 4) `type` / `watermark` / `viewer_feedback` / `alias`. Tuples write `type: tuple`. Schema: [phase1/07](phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Jellyfin Items Tags/Overview are derived caches only. Not a substitute for the `.mp4` bytes, `.flam3` genome, or poster/stills files. See also [phase4/03](phase4/03_EDGES_AND_WATERMARK.md), [phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md), and [phase4/09](phase4/09_SHEEP_NAMING.md).
 
 ### Smoke render
 
@@ -210,7 +210,11 @@ Same as loop — one full rotation over `nframes` at chosen fps; period-aware **
 
 ### Edge
 
-Phase 4: **transition** clip between two loops via `flam3-genome sequence=` — morph A→B, not a standalone closed loop. Kodi ES dogma: loop → edge → loop.
+The **middle stage** of a **tuple**: genetic morph A→B via `flam3-genome sequence=`. Not catalogued as its own MP4 in this slice (standalone `type: edge` files remain parked).
+
+### Tuple
+
+Phase 4: one catalog MP4 of **loop A + edge(A→B) + loop B** (`electricsheep.tuple.{from}_to_{to}` under `by-generation/tuple/`). A→B and B→A are distinct. Watermark applies only to the edge stage. Clients shuffle tuples like other sheep.
 
 ### Dynamic duration
 

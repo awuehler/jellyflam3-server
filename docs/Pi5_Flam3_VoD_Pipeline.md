@@ -821,7 +821,7 @@ If a workflow literally requires **byte-identical first and last frames inside t
 - **Loop** — one genome, 360° rotation, periodic → seamless repeat.  
 - **Edge / transition** — genetic crossfade between two sheep; **not** a closed loop by itself (used between sheep in the classic screensaver).  
 
-This plan’s curated Jellyfin flock stores **loop masters** in Phase 1–2. **Phase 4** adds generation of separate **edge** clips (plus watermark on loops/edges/stills) — see [phase4/03_EDGES_AND_WATERMARK.md](phase4/03_EDGES_AND_WATERMARK.md). The **Kodi** screensaver ([phase3/02](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md)) is the primary consumer of loop→edge→loop journeys when edges exist.
+This plan’s curated Jellyfin flock stores **loop masters** in Phase 1–2. **Phase 4** ships **tuples** (one MP4: loop A + watermarked edge A→B + loop B under `by-generation/tuple/`) — see [phase4/03_EDGES_AND_WATERMARK.md](phase4/03_EDGES_AND_WATERMARK.md). Standalone edge clips and a Kodi loop→edge→loop sequencer remain parked; tuples play as a single flock item.
 
 ---
 
@@ -1585,7 +1585,7 @@ flowchart TD
 
 | | |
 |---|---|
-| **Boundary** | Genetic edge/transition clips + watermark on loops/edges/stills — **Phase 4 parked** |
+| **Boundary** | Tuples (loop A + edge + loop B as one MP4) + edge-stage watermark — **shipped**; standalone edge files + loop/stills watermark still parked |
 | **In** | Two single-flame parents; `flam3-genome sequence` |
 | **Tasks** | Edge render/encode; watermark bake; playlist hooks |
 | **Out** | Edge MP4s + watermarked masters policy |

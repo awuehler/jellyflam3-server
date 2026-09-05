@@ -159,7 +159,7 @@ File: `{stem}.jellyflam3.json` next to the catalog MP4. Code list: `pipeline.sti
 
 **Readers keep extra keys.** `load_sidecar` / `write_sidecar` (stills, stills-style backfill, refactor history) load–mutate–write and do not strip unknown JSON.
 
-**Worker ingest rebuilds.** `pipeline/worker.py` writes a new dict of known fields and only merges `refactor[]`. A full re-encode **drops** reserved Phase 4 keys until Phase 4 adds a preserve-on-ingest hook. Do not treat a re-ingest as a merge.
+**Worker ingest rebuilds.** `pipeline/worker.py` writes a new dict of known fields and only merges `refactor[]`. Loop re-encodes **drop** reserved Phase 4 keys (`viewer_feedback`, `alias`, …). **Tuples** write `type`, `from_id`, `to_id`, `watermark`, and `segments` on ingest. Do not treat a loop re-ingest as a merge.
 
 ### Shipped fields (worker / stills write today)
 
@@ -176,13 +176,13 @@ File: `{stem}.jellyflam3.json` next to the catalog MP4. Code list: `pipeline.sti
 | `refactor` | worker merge / refactor | Pathway history array |
 | `screensaver_safe`, stills index | stills | Screensaver frames |
 
-### Reserved Phase 4 keys (names locked; writers parked)
+### Reserved Phase 4 keys (names locked; writers except tuples parked)
 
 | Key | Guide | Shape | Notes |
 |---|---|---|---|
-| `type` | [03](../phase4/03_EDGES_AND_WATERMARK.md) | `"loop"` (default when omitted) or `"edge"` | Guide 01 does not add its own top-level key |
-| `from_id`, `to_id` | [03](../phase4/03_EDGES_AND_WATERMARK.md) | string or `null` | Companions of `type: edge` |
-| `watermark` | [03](../phase4/03_EDGES_AND_WATERMARK.md) | `{ enabled, style, text }` | Provenance mark; do not falsify flam3 XML |
+| `type` | [03](../phase4/03_EDGES_AND_WATERMARK.md) | `"loop"` (default when omitted), `"tuple"` (worker writes), or `"edge"` (reserved, not written) | Guide 01 does not add its own top-level key |
+| `from_id`, `to_id` | [03](../phase4/03_EDGES_AND_WATERMARK.md) | string or `null` | Companions of `type: tuple` (and reserved `type: edge`) |
+| `watermark` | [03](../phase4/03_EDGES_AND_WATERMARK.md) | `{ enabled, style, text }` | Tuple ingest writes this; do not falsify flam3 XML |
 | `viewer_feedback` | [08](../phase4/08_VIEWER_FEEDBACK_LOOP.md); [01](../phase4/01_PEER_SHARE_PATH.md) reads `share_candidate` | `{ likes, loves, votes, last_voted_at, share_candidate }` | Integers / bool / ISO timestamp or `null` |
 | `alias` | [09](../phase4/09_SHEEP_NAMING.md) | `adjective_surname` | Display name; filename stays canonical |
 | `alias_source` | [09](../phase4/09_SHEEP_NAMING.md) | `auto` \| `human` \| `llm` | Companion of `alias` |
@@ -261,4 +261,4 @@ python3 scripts/jellyfin_id_dump.py --items --limit 50
 - [x] NC genomes tagged `cc-by-nc` (heuristics → **sidecar**; unit-tested)
 - [x] Commercial filter excludes NC when enabled (unit-tested; BrightScript contract retained, default off)
 - [x] Tags persisted for ops — **sidecar-only** Phase 1 (`*.jellyflam3.json`); Items API tags deferred
-- [x] Phase 4 sidecar key names reserved (`type`, `watermark`, `viewer_feedback`, `alias`) — writers parked; readers keep unknown JSON
+- [x] Phase 4 sidecar key names reserved (`type`, `watermark`, `viewer_feedback`, `alias`) — readers keep unknown JSON; tuple ingest writes `type` / `from_id` / `to_id` / `watermark`

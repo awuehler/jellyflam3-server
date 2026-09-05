@@ -5,7 +5,8 @@ Requirements: flam3-genome/animate, ffmpeg/ffprobe, configs/jellyflam3.yaml; idl
 Usage: ``python3 -m pipeline.worker [--once GENOME]`` (polls genomes_inbox by default).
 
 Assumptions: Single-threaded; sheep tax then TV-port before render; frozen single-flame
-  genomes still-loop one Lite still (skip sequence/animate); successful genomes archive to genomes_done.
+  genomes still-loop one Lite still (skip sequence/animate); tuple genomes render three
+  sequence stages then watermark the middle edge; successful genomes archive to genomes_done.
 """
 
 from __future__ import annotations
@@ -31,6 +32,15 @@ from pipeline.genome_signals import (
     estimate_queue_pressure,
     extract_genome_signals,
     should_still_loop,
+)
+from pipeline.sheep_tuple import (
+    is_tuple_stem,
+    parse_tuple_ids,
+    segment_times,
+    stage_nframes as tuple_stage_nframes,
+    tuple_cfg,
+    watermark_drawtext_filter,
+    watermark_overlay_filter,
 )
 from pipeline.config import load_config, resolve_path
 from pipeline.cpu_limit import effective_cpus, ffmpeg_thread_args, flam3_nthreads, wrap_cmd
@@ -265,6 +275,88 @@ def render_lite_still(cfg: dict[str, Any], genome: Path, dest_png: Path) -> Path
     return dest_png
 
 
+def apply_edge_watermark(
+    cfg: dict[str, Any],
+    *,
+    ffmpeg: str,
+    src_mp4: Path,
+    dest_mp4: Path,
+) -> Path:
+    """Burn watermark on the tuple edge stage only. On failure, leave the source unmarked."""
+    overlay = watermark_overlay_filter(cfg)
+    draw = watermark_drawtext_filter(cfg)
+    enc = cfg.get("encode") or {}
+    try:
+        if overlay is not None:
+            filt, img = overlay
+            _run(
+                [
+                    ffmpeg,
+                    "-y",
+                    *ffmpeg_thread_args(cfg),
+                    "-i",
+                    str(src_mp4),
+                    "-i",
+                    str(img),
+                    "-filter_complex",
+                    filt,
+                    "-map",
+                    "0:a?",
+                    "-c:v",
+                    "libx264",
+                    "-profile:v",
+                    str(enc.get("profile", "high")),
+                    "-level",
+                    str(enc.get("level", "4.2")),
+                    "-pix_fmt",
+                    str(enc.get("pix_fmt", "yuv420p")),
+                    "-b:v",
+                    str(enc.get("video_bitrate", "4M")),
+                    "-c:a",
+                    "copy",
+                    "-movflags",
+                    "+faststart",
+                    str(dest_mp4),
+                ],
+                cfg=cfg,
+                limit_cpu=True,
+            )
+            return dest_mp4
+        if draw:
+            _run(
+                [
+                    ffmpeg,
+                    "-y",
+                    *ffmpeg_thread_args(cfg),
+                    "-i",
+                    str(src_mp4),
+                    "-vf",
+                    draw,
+                    "-c:v",
+                    "libx264",
+                    "-profile:v",
+                    str(enc.get("profile", "high")),
+                    "-level",
+                    str(enc.get("level", "4.2")),
+                    "-pix_fmt",
+                    str(enc.get("pix_fmt", "yuv420p")),
+                    "-b:v",
+                    str(enc.get("video_bitrate", "4M")),
+                    "-c:a",
+                    "copy",
+                    "-movflags",
+                    "+faststart",
+                    str(dest_mp4),
+                ],
+                cfg=cfg,
+                limit_cpu=True,
+            )
+            return dest_mp4
+    except subprocess.CalledProcessError as exc:
+        log.warning("tuple watermark encode failed; leaving unmarked: %s", exc)
+    return src_mp4
+
+
 def wait_for_gate(cfg: dict[str, Any]) -> None:
     """Block until idle gate is open (no-op if idle_gate disabled)."""
     ig = cfg.get("idle_gate") or {}
@@ -389,14 +481,27 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
             signals["queue_pressure"] = 0.0
 
         job_ctx: dict[str, Any] = {"src": str(src), "signals": signals}
-        nframes = choose_nframes(cfg, job_ctx)
         fps = int(vod.get("fps", 24))
-        duration_target = duration_for_nframes(nframes, fps)
-        still_loop = should_still_loop(genome_xml, cfg)
+        base_name = sheep_basename(src)
+        is_tuple = is_tuple_stem(base_name)
+        if is_tuple:
+            seq_nframes = tuple_stage_nframes(cfg)
+            nframes = seq_nframes * 3
+            duration_target = duration_for_nframes(nframes, fps)
+            still_loop = False
+        else:
+            seq_nframes = choose_nframes(cfg, job_ctx)
+            nframes = seq_nframes
+            duration_target = duration_for_nframes(nframes, fps)
+            still_loop = should_still_loop(genome_xml, cfg)
         duration_meta = dict(job_ctx.get("duration_meta") or {})
         if still_loop:
             duration_meta["still_loop"] = True
             duration_meta["render_mode"] = "still_loop"
+        if is_tuple:
+            duration_meta["render_mode"] = "tuple"
+            duration_meta["stage_nframes"] = seq_nframes
+            duration_meta["segments"] = segment_times(cfg)
         state.update(
             {
                 "state": "rendering",
@@ -470,7 +575,7 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
             sequenced = work / "sequenced.flam3"
             env = os.environ.copy()
             env["sequence"] = str(seed_for_sequence)
-            env["nframes"] = str(nframes)
+            env["nframes"] = str(seq_nframes)
             if template.is_file():
                 env["template"] = str(template)
             genome_bin = _tool(cfg, "flam3_genome")
@@ -547,6 +652,18 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
                 if not encoded or not out_tmp.is_file():
                     raise RuntimeError("ffmpeg encode failed for all frame patterns")
 
+        if is_tuple:
+            wm_out = work / "out.watermark.mp4"
+            marked = apply_edge_watermark(
+                cfg, ffmpeg=ffmpeg, src_mp4=out_tmp, dest_mp4=wm_out
+            )
+            if marked != out_tmp and marked.is_file():
+                out_tmp = marked
+                duration_meta["watermark_applied"] = True
+            else:
+                duration_meta["watermark_applied"] = False
+            state["duration_meta"] = duration_meta
+
         state["state"] = "gating"
         _write_job_state(work, state)
         ffprobe = _tool(cfg, "ffprobe")
@@ -563,11 +680,12 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
         install_catalog_mp4(out_tmp, dest)
 
         tags = infer_tags_from_genome(src)
+        if is_tuple and "tuple" not in tags:
+            tags = sorted(set(list(tags) + ["tuple"]))
         # Phase 1 license SoT: sidecar next to MP4 (Items API Tags are best-effort).
         # Rebuilds known fields + merge refactor[]. Phase 4 reserved keys
         # (type, watermark, viewer_feedback, alias — see pipeline.stills.SIDECAR_RESERVED_KEYS
-        # and docs/phase1/07) are not generated here and are not copied from a prior
-        # sidecar. Readers ignore unknown JSON.
+        # and docs/phase1/07) are written here for tuples; loops omit them (type defaults to loop).
         sidecar: dict[str, Any] = {
             "id": base,
             "license": "cc-by-nc" if "cc-by-nc" in tags else ("cc-by" if "cc-by" in tags else "unknown"),
@@ -580,6 +698,18 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
             "signals": state.get("signals"),
             "duration_meta": state.get("duration_meta"),
         }
+        if is_tuple:
+            ids = parse_tuple_ids(base)
+            wm = tuple_cfg(cfg)["watermark"]
+            sidecar["type"] = "tuple"
+            sidecar["from_id"] = ids[0] if ids else None
+            sidecar["to_id"] = ids[1] if ids else None
+            sidecar["watermark"] = {
+                "enabled": bool(wm.get("enabled") and tuple_cfg(cfg)["watermark_on_edge"]),
+                "style": wm.get("style") or "text",
+                "text": wm.get("text") or "Electric Sheep",
+            }
+            sidecar["segments"] = duration_meta.get("segments") or segment_times(cfg)
         if harmony is not None:
             sidecar["palette"] = {
                 "mode": harmony.mode,

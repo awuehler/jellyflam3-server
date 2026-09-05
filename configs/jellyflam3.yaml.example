@@ -281,3 +281,20 @@ breed:
     min_hours_before_archive: 1.0
     include_samples: true
     include_pedigree: true
+
+# Phase 4 tuples — one MP4: loop A + watermarked edge(A→B) + loop B
+# Catalog: /media/sheep/by-generation/tuple/electricsheep.tuple.{from}_to_{to}.mp4
+# Idle cron may pick "tuple" as a random mode alongside pedigree breeding.
+tuple:
+  enabled: true
+  stage_duration_sec: 13   # per flam3-genome sequence stage; total ≈ 3× (clamped to vod hard max)
+  watermark_on_edge: true
+
+watermark:
+  enabled: true
+  style: text              # text | image
+  text: "Electric Sheep"
+  font: ""                 # empty → DejaVu / Liberation / FreeSans if present
+  opacity: 0.45
+  position: lower_right    # lower_right | lower_left | upper_right | upper_left
+  image: ""                # PNG path when style: image

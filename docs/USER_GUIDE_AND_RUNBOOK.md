@@ -614,7 +614,7 @@ Checklist: [phase3/10_TESTING_AND_ACCEPTANCE.md](phase3/10_TESTING_AND_ACCEPTANC
 |---|---|
 | `pipeline/` | Furnace, curator, peering, refactor — Python CLIs (`python3 -m pipeline.*`) |
 | `scripts/` | Ops shell/Python/PowerShell — health, cron, packaging, lab smoke |
-| `tests/` | Fast pytest suite (~362 tests collected; ~3s local) |
+| `tests/` | Fast pytest suite (~372 tests collected; ~3s local) |
 | `configs/` | Example YAML; live config is gitignored |
 | `docs/phaseN/` | Feature guides (implementer SoT per topic) |
 | `deploy/systemd/` | Unit files |
@@ -640,7 +640,8 @@ python3 -m pipeline.worker          # furnace (poll inbox or --once)
 python3 -m pipeline.idle_gate       # gate supervisor
 python3 -m pipeline.seed_inbox      # archive / random / mutate feedstock
 python3 -m pipeline.breed           # pedigree mutate/cross/blend/interpolate
-python3 -m pipeline.breed_idle      # daily idle breed logic
+python3 -m pipeline.breed_idle      # daily idle breed (incl. tuple mode)
+python3 -m pipeline.sheep_tuple     # stage loop A + edge + loop B genome
 python3 -m pipeline.shears          # add/modify/delete/audit/sweep
 python3 -m pipeline.hammer         # nuclear local reset
 python3 -m pipeline.refactor        # quality scan/preview/apply/quarantine/batch

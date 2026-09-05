@@ -13,6 +13,7 @@ from pipeline.sheep_names import (
     reclaim_filename,
     template_smoke_480p,
     template_tv_1080p,
+    tuple_filename,
 )
 
 
@@ -44,6 +45,7 @@ def test_catalog_generation():
     assert catalog_generation("electricsheep.247.00505") == "247"
     assert catalog_generation("electricsheep.pedigree.mutate.abc") == "pedigree"
     assert catalog_generation("electricsheep.random.20260101.deadbeef") == "random"
+    assert catalog_generation("electricsheep.tuple.247.00505_to_245.09797") == "tuple"
     assert catalog_generation("plain") == "misc"
 
 
@@ -62,6 +64,13 @@ def test_generated_names():
     assert mutate_filename("deadbeef") == "electricsheep.mutate.deadbeef.flam3"
     assert reclaim_filename("34f3d01c592b") == (
         "electricsheep.reclaim.34f3d01c592b.flam3"
+    )
+    assert tuple_filename("electricsheep.247.00505", "electricsheep.245.09797") == (
+        "electricsheep.tuple.247.00505_to_245.09797.flam3"
+    )
+    assert (
+        normalize_filename("electricsheep.tuple.247.00505_to_245.09797.flam3")
+        == "electricsheep.tuple.247.00505_to_245.09797.flam3"
     )
     r = random_filename()
     assert r.startswith("electricsheep.random.")

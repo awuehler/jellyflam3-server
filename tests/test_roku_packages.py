@@ -65,8 +65,11 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=27" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.27""' in text
+    assert "build_version=28" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.28""' in text
+    home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
+    assert '"pedigree": true' in home
+    assert '"tuple": true' in home
 
 
 def test_roku_screensaver_expands_nested_library_folders():

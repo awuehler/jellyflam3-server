@@ -55,13 +55,13 @@ Parallel after **02**: `03` (HLS) anytime; `04` once Primary images exist. `05`�
 8. [09_SHEEP_REFACTOR.md](phase3/09_SHEEP_REFACTOR.md) — refactor tool (quality / palette / encode; Jellyfin-visible preview)
 9. [10_TESTING_AND_ACCEPTANCE.md](phase3/10_TESTING_AND_ACCEPTANCE.md) — testing, acceptance, and first `release candidate`
 
-**NOTE:** Tag **`v0.3.0`** at public launch — see [CHANGELOG.md](../CHANGELOG.md). Post-launch roadmap is [docs/phase4/](./phase4) (not part of v0.3.0). Pre-open slices: 05 baseline, 06 disk check, 07 `N_max` estimator, sidecar key reservation — products (edges, publish, vote, naming RNG, rotate) stay parked.
+**NOTE:** Tag **`v0.3.0`** at public launch — see [CHANGELOG.md](../CHANGELOG.md). Post-launch roadmap is [docs/phase4/](./phase4) (not part of v0.3.0). Tuples ([03](phase4/03_EDGES_AND_WATERMARK.md)) shipped 2026-09-05. Other products (publish, vote, naming RNG, rotate) stay parked.
 
 ## Phase 4 guides (synopsis — products parked; pre-open slices noted)
 
 1. [01_PEER_SHARE_PATH.md](phase4/01_PEER_SHARE_PATH.md) — gated promote vs auto-promote (parked)
 2. [02_MESH_INTRODUCE_SCRIPTING.md](phase4/02_MESH_INTRODUCE_SCRIPTING.md) — Syncthing introduce options (parked)
-3. [03_EDGES_AND_WATERMARK.md](phase4/03_EDGES_AND_WATERMARK.md) — edge encode + watermark (parked; keys reserved)
+3. [03_EDGES_AND_WATERMARK.md](phase4/03_EDGES_AND_WATERMARK.md) — **tuples shipped** 2026-09-05 (standalone edges / loop watermark parked)
 4. [04_ROKU_PUBLISH.md](phase4/04_ROKU_PUBLISH.md) — Channel Store / private / multi-Roku (parked)
 5. [05_END_USER_GUIDE.md](phase4/05_END_USER_GUIDE.md) — household guide (**baseline complete** 2026-09-03)
 6. [06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md) — disk check (**slice shipped**); rotate parked

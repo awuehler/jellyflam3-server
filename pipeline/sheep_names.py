@@ -20,6 +20,7 @@ pedigree electricsheep.pedigree.smoke.0001.flam3 / .mutate.<id>.flam3
 random  electricsheep.random.20260807120000.deadbeef.flam3
 mutate  electricsheep.mutate.deadbeef.flam3
 reclaim electricsheep.reclaim.34f3d01c592b.flam3
+tuple   electricsheep.tuple.247.00505_to_245.09797.flam3
 ======= =====================================
 """
 
@@ -147,6 +148,16 @@ def mutate_filename(short_id: str | None = None) -> str:
     """Basename for a flam3-genome mutate child."""
     sid = short_id or uuid.uuid4().hex[:8]
     return f"{SHEEP_PREFIX}.mutate.{sid}.flam3"
+
+
+def tuple_filename(from_stem: str, to_stem: str) -> str:
+    """Basename for a loop-A / edge / loop-B tuple genome."""
+    def _bare(stem: str) -> str:
+        s = normalize_stem(stem)
+        prefix = f"{SHEEP_PREFIX}."
+        return s[len(prefix) :] if s.lower().startswith(prefix) else s
+
+    return f"{SHEEP_PREFIX}.tuple.{_bare(from_stem)}_to_{_bare(to_stem)}.flam3"
 
 
 def reclaim_filename(job_id: str) -> str:

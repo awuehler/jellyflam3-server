@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Purpose: Daily cron — breed one pedigree sheep when inbox is empty and worker is idle
+# Purpose: Daily cron — breed one pedigree sheep or tuple when inbox is empty and worker is idle
 #          so the furnace keeps working between ~10-day archive fills (Phase 2 guide 07).
 # Requirements: bash, python3, flock; pipeline.breed_idle; flam3-genome on PATH
 #          (/usr/local/bin — this wrapper prepends it; cron PATH is often /usr/bin:/bin).
@@ -20,6 +20,7 @@
 #
 # Assumptions: Inbox must be empty; idle gate open; no live render jobs; parent pool
 # from genomes_done + genomes/samples + genomes/pedigree; dedup vs recent history.
+# Random mode may be mutate/cross/blend/interpolate or tuple (Phase 4 guide 03).
 #
 # ---------------------------------------------------------------------------
 # Lab crontab (user jellyflam3) — 05:11 local daily on 16a / 08a / 04a:

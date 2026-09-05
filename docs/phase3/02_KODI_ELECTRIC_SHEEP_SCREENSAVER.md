@@ -78,7 +78,7 @@ The extension should feel like Electric Sheep’s idle canvas, not a VoD browser
 
 **Complete** for Phase 3 loops-only scope — Owner OK 2026-08-21.
 
-**Deferred to Phase 4:** when edges exist, sequencer performs **loop→edge→loop** (documented config). Tracked under [../phase4/03_EDGES_AND_WATERMARK.md](../phase4/03_EDGES_AND_WATERMARK.md) (Kodi client path). Loops-only shuffle flock is the Phase 3 DoD.
+**Deferred to Phase 4 (standalone edges):** a client sequencer that plays loop MP4 → edge MP4 → loop MP4. **Tuples** ([03](../phase4/03_EDGES_AND_WATERMARK.md)) already bake that journey into one catalog file; Kodi’s recursive `by-generation/` walk plays them as ordinary flock items. Loops-only shuffle remains the Phase 3 DoD.
 
 **Deferred polish (Phase 4):** flock list is loaded once per screensaver session (`default.py` → `_load_flock`); mid-session wrap only reshuffles that list. New Jellyfin items (e.g. a new gen folder after daily seed) need a new idle session today. Optional **long-interval re-fetch** (hours / wrap) is parked under [../phase4/00_OVERVIEW.md](../phase4/00_OVERVIEW.md#client-polish-parked--not-numbered) — not required for ~daily ingest. Separate parked item: if a sheep is **quarantined** (or Shears-deleted) mid-session, a file-not-found / 404 on the next loop should **re-poll** the flock index and continue — same contract on Roku VoD and Roku SS.
 
@@ -86,7 +86,7 @@ The extension should feel like Electric Sheep’s idle canvas, not a VoD browser
 
 - [x] Add-on installs and appears under Kodi Screensaver settings — Owner OK 2026-08-21
 - [x] Idle start plays Sheep loops fullscreen without interactive chrome — Owner OK 2026-08-21
-- [x] ~~When edges exist, sequencer performs loop→edge→loop~~ — **deferred to Phase 4** ([03_EDGES_AND_WATERMARK](../phase4/03_EDGES_AND_WATERMARK.md)); Owner OK 2026-08-21
+- [x] ~~When edges exist, sequencer performs loop→edge→loop~~ — **deferred** for standalone edge files; **tuples** play as one item (Phase 4 / [03](../phase4/03_EDGES_AND_WATERMARK.md)); Owner OK 2026-08-21 (loops-only Phase 3)
 - [x] License filter honored (e.g. hide NC in commercial-safe mode) — Owner OK 2026-08-21 (0.2.1 client-side filter)
 - [x] Does not trigger Pi furnace renders (idle-gate / Sessions behavior verified) — Owner OK 2026-08-21
 - [x] Install + dogma notes in this guide (or linked README under `kodi-screensaver/`) — README documents Jellyfin URL/API key/user/library IDs + dump/manual collection

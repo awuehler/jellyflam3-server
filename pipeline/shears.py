@@ -262,13 +262,90 @@ def _peer_paths(cfg: dict[str, Any], base: str) -> list[Path]:
     return found
 
 
+def _catalog_file_stem(path: Path) -> str:
+    """Stem for catalog MP4 / sidecar / poster filenames."""
+    name = path.name
+    lower = name.lower()
+    if lower.endswith(".jellyflam3.json"):
+        return name[: -len(".jellyflam3.json")]
+    if lower.endswith("-poster.jpg") or lower.endswith("-poster.jpeg"):
+        return name[: lower.rfind("-poster")]
+    return path.stem
+
+
+def _tuple_involves_base(stem: str, base: str) -> bool:
+    from pipeline.sheep_tuple import parse_tuple_ids
+
+    ids = parse_tuple_ids(stem)
+    if not ids:
+        return False
+    return any(_id_equals_base(x, base) for x in ids)
+
+
+def _tuple_related_paths(
+    cfg: dict[str, Any], base: str
+) -> tuple[list[Path], list[Path], list[Path]]:
+    """Tuple genomes / catalog files / stills that name ``base`` as from or to."""
+    from pipeline.stills import stills_dir_for_mp4
+
+    genomes: list[Path] = []
+    catalog: list[Path] = []
+    stills: list[Path] = []
+
+    for d in _runtime_genome_dirs(cfg):
+        if not d.is_dir():
+            continue
+        for p in d.iterdir():
+            if not p.is_file():
+                continue
+            stem = _catalog_file_stem(p)
+            if p.suffix.lower() in {".flam3", ".flame"}:
+                if _tuple_involves_base(stem, base):
+                    genomes.append(p)
+                continue
+            if p.name.lower().endswith(".jellyflam3.json") and _tuple_involves_base(
+                stem, base
+            ):
+                genomes.append(p)
+
+    media = resolve_path(cfg, "media_library")
+    tuple_dir = media / "by-generation" / "tuple"
+    if tuple_dir.is_dir():
+        for p in tuple_dir.iterdir():
+            if not p.is_file():
+                continue
+            stem = _catalog_file_stem(p)
+            hit = _tuple_involves_base(stem, base)
+            if not hit and p.suffix.lower() == ".json":
+                data = _load_json(p)
+                if data:
+                    from_id = str(data.get("from_id") or "")
+                    to_id = str(data.get("to_id") or "")
+                    hit = _id_equals_base(from_id, base) or _id_equals_base(to_id, base)
+            if not hit:
+                continue
+            catalog.append(p)
+            if p.suffix.lower() == ".mp4":
+                poster = p.with_name(f"{p.stem}-poster.jpg")
+                if poster.is_file() and poster not in catalog:
+                    catalog.append(poster)
+                sd = stills_dir_for_mp4(media, p)
+                if sd.is_dir():
+                    stills.append(sd)
+            if p.name.lower().endswith(".jellyflam3.json"):
+                mp4 = tuple_dir / f"{stem}.mp4"
+                if mp4.is_file() and mp4 not in catalog:
+                    catalog.append(mp4)
+    return genomes, catalog, stills
+
+
 def _edge_paths(cfg: dict[str, Any], base: str) -> list[Path]:
-    """Best-effort edge MP4s / sidecars that name this sheep (Phase 4 edges layout)."""
+    """Best-effort edge/tuple MP4s / sidecars that name this sheep."""
     media = resolve_path(cfg, "media_library")
     if not media.is_dir():
         return []
     found: list[Path] = []
-    # …/by-generation/*/edges/*
+    # Legacy …/by-generation/*/edges/*
     for edges_dir in media.glob("by-generation/*/edges"):
         if not edges_dir.is_dir():
             continue
@@ -404,10 +481,14 @@ def discover_cascade(cfg: dict[str, Any], target: str | Path) -> CascadeReport:
     report.peers = _peer_paths(cfg, base)
     report.edges = _edge_paths(cfg, base)
     report.stills = _stills_paths(cfg, base)
+    t_genomes, t_catalog, t_stills = _tuple_related_paths(cfg, base)
+    report.genomes.extend(t_genomes)
+    report.edges.extend(t_catalog)
+    report.stills.extend(t_stills)
     report.orphan_warnings = find_pedigree_orphan_warnings(cfg, base)
 
     if not report.edges:
-        report.notes.append("edges: none matched (Phase 4 edges layout optional)")
+        report.notes.append("edges: none matched (Phase 4 tuple/edges layout optional)")
     if not report.stills:
         report.notes.append("stills: none matched (guide 01 layout optional)")
 

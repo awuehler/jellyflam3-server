@@ -163,7 +163,7 @@ python3 -m pipeline.breed --config configs/jellyflam3.yaml --mutate path/to/pare
 
 ## Downstream (channel)
 
-Once pedigree VoDs land in the catalog, JellyFlam3 continuous shuffle may later include those **genomic VoD variations** (not only the nine archive generation folders) — see [04 — Future improvements](04_ROKU_CHANNEL_POLISH.md#include-genomic-vod-variations-later).
+Once pedigree / tuple VoDs land in the catalog, JellyFlam3 continuous shuffle includes those folders (`pedigree`, `tuple`) as well as the nine archive generation folders — see [04](04_ROKU_CHANNEL_POLISH.md) (channel 1.0.28).
 
 ## Daily idle breed cron
 
@@ -190,7 +190,7 @@ The wrapper prepends `/usr/local/bin` to `PATH`. Cron’s default `PATH` is ofte
 
 Behavior:
 
-- Random **mutate** / **cross** (`method=union`) / **blend** (`method=alternate`) / **interpolate** from `genomes_done` + `genomes/samples` + `genomes/pedigree`. **One child per cron run.**
+- Random **mutate** / **cross** (`method=union`) / **blend** (`method=alternate`) / **interpolate** / **tuple** (loop A + edge A→B + loop B) from `genomes_done` + `genomes/samples` + `genomes/pedigree`. **One child per cron run.** Disable tuples with `tuple.enabled: false`.
 - Dedup fingerprint vs the last **1** outcome when the parent pool is small (≤ `small_flock_threshold`); last **2** when larger. Re-roll up to `max_rerolls`, then accept a repeat if unavoidable.
 - History: `breed.idle_breed.history_file` (default `/var/lib/jellyflam3/breed_idle_history.json`).
 - Skip `archive_cron_imminent` uses `breed.idle_breed.archive_cron_*` — **must match this host’s archive crontab**. Per-host values live in `configs/profiles/rpi-jellyflam3-{16,08,04}.yaml`; merge with `python3 -m pipeline.hw_profile apply 16a|08a|04a`. JSON includes `hours_until_archive` (2 decimal places) and `next_archive_at` (ISO local). See [01](01_ARCHIVE_SEED_LIBRARY.md).

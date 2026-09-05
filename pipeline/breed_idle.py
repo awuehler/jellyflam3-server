@@ -9,7 +9,7 @@ Usage:
 
 Assumptions: Archive seed cron schedule is configured via breed.idle_breed or env;
 breed only when inbox is empty, idle gate is open, and no live render jobs exist.
-Random modes: mutate, cross (union), blend (alternate), interpolate — exactly one child per run.
+Random modes: mutate, cross (union), blend (alternate), interpolate, tuple — exactly one child per run.
 flam3-genome may emit "warning: reached maximum attempts, giving up." on stderr during
 mutate/cross; benign when the run still stages a child (see docs/phase2/07_PEDIGREE_BREEDING.md).
 """
@@ -34,7 +34,7 @@ from pipeline.worker import genomes_done_dir
 
 log = logging.getLogger("jellyflam3.breed_idle")
 
-BREED_MODES = ("mutate", "cross", "blend", "interpolate")
+BREED_MODES = ("mutate", "cross", "blend", "interpolate", "tuple")
 _FLAM3_SUFFIXES = {".flam3", ".flame"}
 
 
@@ -48,6 +48,10 @@ class BreedPlan:
 
     def fingerprint(self) -> tuple[Any, ...]:
         """Stable key for dedup against recent history."""
+        if self.method == "tuple":
+            # A→B and B→A are distinct edges; do not sort parents.
+            keys = tuple(p.resolve().as_posix() for p in self.parents)
+            return ("tuple", keys)
         keys = tuple(sorted(p.resolve().as_posix() for p in self.parents))
         if self.method == "mutate":
             return ("mutate", keys[0])
@@ -282,21 +286,78 @@ def recent_fingerprints(cfg: dict[str, Any], pool_size: int) -> set[tuple[Any, .
     return fps
 
 
-def pick_random_plan(pool: list[Path], rng: random.Random | None = None) -> BreedPlan | None:
+def _idle_breed_modes(cfg: dict[str, Any] | None) -> tuple[str, ...]:
+    """Idle cron modes; omit ``tuple`` when that product is disabled."""
+    if cfg is None:
+        return BREED_MODES
+    from pipeline.sheep_tuple import tuple_cfg
+
+    if not tuple_cfg(cfg).get("enabled", True):
+        return tuple(m for m in BREED_MODES if m != "tuple")
+    return BREED_MODES
+
+
+def _tuple_parent_ok(path: Path) -> bool:
+    from pipeline.sheep_names import stem_of
+    from pipeline.sheep_tuple import is_tuple_stem, parent_eligible
+
+    if is_tuple_stem(stem_of(path)):
+        return False
+    try:
+        return parent_eligible(path.read_text(encoding="utf-8", errors="replace"))
+    except OSError:
+        return False
+
+
+def pick_random_plan(
+    pool: list[Path],
+    rng: random.Random | None = None,
+    cfg: dict[str, Any] | None = None,
+) -> BreedPlan | None:
     rng = rng or random.Random()
     if not pool:
         return None
-    method = rng.choice(BREED_MODES)
+    method = rng.choice(_idle_breed_modes(cfg))
     if method == "mutate":
         return BreedPlan(method="mutate", parents=(rng.choice(pool),))
     if len(pool) < 2:
         return BreedPlan(method="mutate", parents=(rng.choice(pool),))
+    if method == "tuple":
+        return _pick_tuple_plan(pool, rng, cfg)
     a, b = rng.sample(pool, 2)
     if method == "blend":
         return BreedPlan(method="blend", parents=(a, b), cross_method="alternate")
     if method == "interpolate":
         return BreedPlan(method="interpolate", parents=(a, b), cross_method="interpolate")
     return BreedPlan(method="cross", parents=(a, b), cross_method="union")
+
+
+def _pick_tuple_plan(
+    pool: list[Path],
+    rng: random.Random,
+    cfg: dict[str, Any] | None,
+) -> BreedPlan:
+    """Order-sensitive A→B pair; fall back to mutate when no eligible parents."""
+    from pipeline.sheep_names import stem_of
+    from pipeline.sheep_tuple import tuple_exists
+
+    eligible = [p for p in pool if _tuple_parent_ok(p)]
+    if len(eligible) < 2:
+        return BreedPlan(method="mutate", parents=(rng.choice(pool),))
+    for _ in range(16):
+        a, b = rng.sample(eligible, 2)
+        if rng.random() < 0.5:
+            a, b = b, a
+        if a.resolve() == b.resolve():
+            continue
+        if cfg is not None:
+            try:
+                if tuple_exists(cfg, stem_of(a), stem_of(b)):
+                    continue
+            except (KeyError, TypeError):
+                pass
+        return BreedPlan(method="tuple", parents=(a, b))
+    return BreedPlan(method="mutate", parents=(rng.choice(pool),))
 
 
 def pick_unique_plan(
@@ -309,12 +370,12 @@ def pick_unique_plan(
     avoid = recent_fingerprints(cfg, len(pool))
     max_rerolls = max(1, int(ib.get("max_rerolls", 24)))
     for _ in range(max_rerolls):
-        plan = pick_random_plan(pool, rng)
+        plan = pick_random_plan(pool, rng, cfg)
         if plan is None:
             return None
         if plan.fingerprint() not in avoid:
             return plan
-    return pick_random_plan(pool, rng)
+    return pick_random_plan(pool, rng, cfg)
 
 
 def worker_is_idle(cfg: dict[str, Any]) -> tuple[bool, str]:
@@ -407,6 +468,13 @@ def evaluate_idle_breed(cfg: dict[str, Any], *, now: datetime | None = None) -> 
 def execute_plan(cfg: dict[str, Any], plan: BreedPlan, *, dry_run: bool = False) -> list[Path]:
     if plan.method == "mutate":
         return breed_mutate(cfg, plan.parents[0], count=1, dry_run=dry_run)
+    if plan.method == "tuple":
+        from pipeline.sheep_tuple import stage_tuple_inbox
+
+        dest = stage_tuple_inbox(
+            cfg, plan.parents[0], plan.parents[1], dry_run=dry_run
+        )
+        return [dest]
     if plan.method == "interpolate":
         dest = breed_cross(
             cfg,

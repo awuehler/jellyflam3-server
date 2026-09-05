@@ -14,7 +14,8 @@ All notable changes to this project are documented here. Format loosely follows 
 - Phase 4 guide 05 baseline complete: four worked examples in the user guide (first evening, screensaver, two Rokus, peer receive); Owner OK 2026-09-03.
 - Concurrent-client estimator (`python3 -m pipeline.link_capacity`): integer `N_max` from usable hop × headroom ÷ session bps; WiFi-STA lab note in guide 07.
 - Sheep-library disk check slice (`python3 -m pipeline.library_disk`): healthcheck WARN/BAD on mount used % / free GiB; no auto-purge, no worker refuse.
-- Catalog sidecar schema: Phase 4 keys `type`, `watermark`, `viewer_feedback`, `alias` reserved in [phase1/07](docs/phase1/07_LICENSE_AND_METADATA.md); `pipeline.stills.SIDECAR_RESERVED_KEYS`. No encode / vote / naming writers.
+- Catalog sidecar schema: Phase 4 keys `type`, `watermark`, `viewer_feedback`, `alias` reserved in [phase1/07](docs/phase1/07_LICENSE_AND_METADATA.md); `pipeline.stills.SIDECAR_RESERVED_KEYS`. Tuple ingest writes `type` / `from_id` / `to_id` / `watermark`.
+- Phase 4 tuples: one MP4 (loop A + watermarked edge A→B + loop B) under `by-generation/tuple/`; idle-cron mode; Roku shuffle includes `pedigree` and `tuple` (channel 1.0.28).
 - Phase 4 client polish (parked): re-poll flock index on file-not-found when a sheep is quarantined mid-session — Roku VoD, Roku SS, Kodi SS.
 
 ### Fixed
@@ -24,7 +25,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
-- Phase 4 overview: pre-open ledger (05/06/07 + sidecar keys) vs parked products; docs/README index; pytest count ~362.
+- Phase 4 overview: tuples (03) shipped; pytest **366** passed + 6 skipped.
 
 ## [v0.3.1] — 2026-08-23
 

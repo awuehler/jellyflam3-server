@@ -33,12 +33,12 @@ from pipeline.tool_lookup import tool as _tool
 log = logging.getLogger("jellyflam3.stills")
 
 # Phase 4 reserved sidecar keys (guides 01 / 03 / 08 / 09). Readers must ignore
-# if absent. load/write round-trips them. Worker ingest still rebuilds the
-# sidecar and only merges ``refactor[]`` — a full re-encode drops these until
-# Phase 4 adds a preserve-on-ingest hook. Schema: docs/phase1/07_LICENSE_AND_METADATA.md
+# if absent. load/write round-trips them. Worker ingest rebuilds the sidecar and
+# only merges ``refactor[]``, except tuples which write ``type`` / ``from_id`` /
+# ``to_id`` / ``watermark``. Schema: docs/phase1/07_LICENSE_AND_METADATA.md
 SIDECAR_RESERVED_KEYS = frozenset(
     {
-        "type",  # loop (default) | edge (guide 03)
+        "type",  # loop (default) | edge | tuple (guide 03)
         "from_id",
         "to_id",
         "watermark",  # {enabled, style, text} (guide 03)
@@ -105,7 +105,8 @@ def write_sidecar(mp4: Path, sidecar: dict[str, Any]) -> None:
 def iter_catalog_mp4s(media_root: Path) -> list[Path]:
     if not media_root.is_dir():
         return []
-    # Prefer by-generation tree; skip edges if present
+    # Prefer by-generation tree; skip standalone /edges/ clips if present.
+    # Tuples live under by-generation/tuple/ and are catalog sheep (include them).
     root = media_root / "by-generation"
     if root.is_dir():
         return sorted(

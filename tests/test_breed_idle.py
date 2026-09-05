@@ -49,6 +49,7 @@ def _cfg(tmp_path: Path, **idle_overrides) -> dict:
             "status_file": str(tmp_path / "idle_gate_status.json"),
             "jobs_dir": str(tmp_path / "jobs"),
             "frames_scratch": str(tmp_path / "frames"),
+            "media_library": str(tmp_path / "media"),
         },
         "breed": {"idle_breed": idle},
         "idle_gate": {"enabled": False},
@@ -69,6 +70,11 @@ def test_fingerprint_mutate_and_blend(tmp_path: Path):
         tuple(sorted([a.resolve().as_posix(), b.resolve().as_posix()])),
         "interpolate",
     )
+    ab = BreedPlan("tuple", (a, b)).fingerprint()
+    ba = BreedPlan("tuple", (b, a)).fingerprint()
+    assert ab == ("tuple", (a.resolve().as_posix(), b.resolve().as_posix()))
+    assert ba == ("tuple", (b.resolve().as_posix(), a.resolve().as_posix()))
+    assert ab != ba
 
 
 def test_collect_parent_pool_done_samples_pedigree(tmp_path: Path):
@@ -196,6 +202,27 @@ def test_execute_plan_interpolate(tmp_path: Path, monkeypatch: pytest.MonkeyPatc
     paths = execute_plan(cfg, plan, dry_run=True)
     assert len(paths) == 1
     assert seen == {"method": "interpolate", "mode_label": "interpolate"}
+
+
+def test_execute_plan_tuple(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    cfg = _cfg(tmp_path)
+    a = tmp_path / "genomes" / "done" / "a.flam3"
+    b = tmp_path / "genomes" / "done" / "b.flam3"
+    a.write_text("<flame/>", encoding="utf-8")
+    b.write_text("<flame/>", encoding="utf-8")
+    seen: list[str] = []
+
+    def fake_stage(cfg, pa, pb, *, dry_run=False):
+        seen.extend([pa.name, pb.name, str(dry_run)])
+        return tmp_path / "genomes" / "inbox" / "electricsheep.tuple.a_to_b.flam3"
+
+    monkeypatch.setattr("pipeline.sheep_tuple.stage_tuple_inbox", fake_stage)
+    from pipeline.breed_idle import execute_plan
+
+    plan = BreedPlan("tuple", (a, b))
+    paths = execute_plan(cfg, plan, dry_run=True)
+    assert len(paths) == 1
+    assert seen == ["a.flam3", "b.flam3", "True"]
 
 
 def test_run_idle_breed_dry_run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
