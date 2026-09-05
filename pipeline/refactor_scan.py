@@ -11,7 +11,11 @@ from typing import Any
 
 from pipeline.choose_duration import effective_min_sec, hard_max_sec, soft_max_sec
 from pipeline.config import resolve_path
-from pipeline.genome_signals import is_linear_only_genome, is_singularity_cloned
+from pipeline.genome_signals import (
+    is_linear_only_genome,
+    is_orbit_frozen,
+    is_singularity_cloned,
+)
 from pipeline.palette_harmony import HarmonyResult, apply_palette_harmony
 from pipeline.poster import poster_path_for_mp4
 from pipeline.sheep_names import normalize_stem, stem_of
@@ -34,6 +38,7 @@ HARD_QUARANTINE_REASONS = frozenset(
 )
 LINEAR_ONLY_SCORE_DEFAULT = 80.0
 SINGULARITY_CLONED_SCORE_DEFAULT = 80.0
+ORBIT_FROZEN_SCORE_DEFAULT = 25.0
 
 
 @dataclass
@@ -457,6 +462,11 @@ def score_sheep(
         for dud in genome_dud_reasons(xml):
             reasons.append(dud)
         score += genome_dud_score(cfg, reasons)
+
+        if is_orbit_frozen(xml):
+            reasons.append("genome_orbit_frozen")
+            ref = dict(cfg.get("refactor") or {})
+            score += float(ref.get("orbit_frozen_score", ORBIT_FROZEN_SCORE_DEFAULT))
 
     # Catalog visual desaturation (poster) — catches grey/muddy sheep structural checks miss.
     sat_info = catalog_saturation(mp4, poster=poster if poster.is_file() else None)

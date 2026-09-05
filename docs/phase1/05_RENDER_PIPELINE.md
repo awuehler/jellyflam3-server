@@ -48,13 +48,14 @@ python3 -m pipeline.seed_inbox --config configs/jellyflam3.yaml --mutate genomes
 
 1. Take `.flam3` from inbox or `--once`
 2. TV-optimize: 16:9 + Gold Sheep Lite quality + OkLCh palette
-3. Choose duration / nframes (fixed **23 s** default → **552** frames @ 24 fps)
-4. `flam3-genome sequence=` with `configs/templates/electricsheep.tv.1080p.flam3` template
-5. `flam3-animate` → scratch frames
-6. `ffmpeg` H.264 High 4.2 + silent AAC
-7. `ffprobe` duration + codec gates
-8. Move to library; Jellyfin refresh + tags / sidecar (incl. palette + edition)
-9. Cleanup scratch; on success **archive** inbox `.flam3` → `paths.genomes_done` (pedigree parent pool); quarantine failures
+3. Choose duration / nframes (fixed **23 s** default → **552** frames @ 24 fps). Frozen single-flame genomes skip rotate period-snap.
+4. If `is_orbit_frozen` and one `<flame>` and `render.still_loop_if_orbit_frozen` (default **true**): one Lite `flam3-render` still + ffmpeg loop of the chosen duration (no `sequence=` / `flam3-animate`). Else:
+5. `flam3-genome sequence=` with `configs/templates/electricsheep.tv.1080p.flam3` template
+6. `flam3-animate` → scratch frames
+7. `ffmpeg` H.264 High 4.2 + silent AAC
+8. `ffprobe` duration + codec gates
+9. Move to library; Jellyfin refresh + tags / sidecar (incl. palette + edition; `signals.orbit_frozen` / `duration_meta.still_loop` when the shortcut ran)
+10. Cleanup scratch; on success **archive** inbox `.flam3` → `paths.genomes_done` (pedigree parent pool); quarantine failures
 
 Smoke: `JELLYFLAM3_SMOKE=1` uses `smoke_duration_sec: 13` (312 frames @ 24 fps).
 

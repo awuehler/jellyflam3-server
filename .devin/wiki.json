@@ -13,7 +13,7 @@
       "author": "Owner"
     },
     {
-      "content": "REPO LAYOUT PRIORITIES for documentation:\n- pipeline/ — Python render worker, Shears, Hammer, refactor, peering, flock artwork, idle gate, config, link_capacity, library_disk\n- scripts/ — operator shell/Python tools (healthcheck, smoke, packaging, jellyfin_id_dump, client_pack_presets)\n- roku-channel/ — JellyFlam3 VoD BrightScript channel (manifest 1.0.26)\n- roku-screensaver/ — Roku stills screensaver (manifest 1.0.6)\n- kodi-screensaver/screensaver.jellyflam3/ — Kodi ES-dogma video screensaver add-on (0.2.6)\n- docs/phaseN/ — discrete task guides with Boundary/In/Out/Exit tables\n- configs/ — jellyflam3.yaml + hw profiles 16/08/04\n- tests/ — pytest (~352 collected; GitHub Actions on push/PR + release)\n- deploy/ — systemd units, peering templates\n- .github/ — issue templates, Dependabot, release workflow",
+      "content": "REPO LAYOUT PRIORITIES for documentation:\n- pipeline/ — Python render worker, Shears, Hammer, refactor, peering, flock artwork, idle gate, config, link_capacity, library_disk\n- scripts/ — operator shell/Python tools (healthcheck, smoke, packaging, jellyfin_id_dump, client_pack_presets)\n- roku-channel/ — JellyFlam3 VoD BrightScript channel (manifest 1.0.26)\n- roku-screensaver/ — Roku stills screensaver (manifest 1.0.6)\n- kodi-screensaver/screensaver.jellyflam3/ — Kodi ES-dogma video screensaver add-on (0.2.6)\n- docs/phaseN/ — discrete task guides with Boundary/In/Out/Exit tables\n- configs/ — jellyflam3.yaml + hw profiles 16/08/04\n- tests/ — pytest (~362 collected; GitHub Actions on push/PR + release)\n- deploy/ — systemd units, peering templates\n- .github/ — issue templates, Dependabot, release workflow",
       "author": "Owner"
     },
     {
@@ -41,7 +41,7 @@
       "author": "Owner"
     },
     {
-      "content": "TESTING: python3 -m pytest tests/ -q (~3s local; ~352 tests collected). Fleet uses apt python3-pytest. smoke_render.sh and hls_smoke.sh are Pi/lab scripts not pytest. CI: .github/workflows/tests.yml + release.yml (tag push). ensure_exec_bits.sh --check on every CI run.",
+      "content": "TESTING: python3 -m pytest tests/ -q (~3s local; ~362 tests collected). Fleet uses apt python3-pytest. smoke_render.sh and hls_smoke.sh are Pi/lab scripts not pytest. CI: .github/workflows/tests.yml + release.yml (tag push). ensure_exec_bits.sh --check on every CI run.",
       "author": "Owner"
     }
   ],

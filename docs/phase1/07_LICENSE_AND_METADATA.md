@@ -170,7 +170,7 @@ File: `{stem}.jellyflam3.json` next to the catalog MP4. Code list: `pipeline.sti
 | `tags` | worker | `cc-by`, `generation-N`, `sheep-ID`, `human` / `brood`, … |
 | `nframes`, `fps`, `duration_sec`, `duration_target_sec` | worker | Encode timing |
 | `edition` | worker | e.g. `gold_sheep_lite` |
-| `signals`, `duration_meta` | worker | Dynamic duration (Phase 2) |
+| `signals`, `duration_meta` | worker | Dynamic duration (Phase 2). Nested: `signals.orbit_frozen`, `signals.effective_animate_count`; `duration_meta.still_loop` when the worker skipped animate |
 | `palette` | worker | Optional OkLCh harmony |
 | `jellyfin_image` | flock artwork | Poster / Items image status |
 | `refactor` | worker merge / refactor | Pathway history array |

@@ -48,10 +48,12 @@ def test_scan_module_public_surface():
     assert SCORE_QUARANTINE_MIN == 80.0
     assert "genome_linear_only" in HARD_QUARANTINE_REASONS
     assert "genome_singularity_cloned" in HARD_QUARANTINE_REASONS
+    assert "genome_orbit_frozen" not in HARD_QUARANTINE_REASONS
     assert callable(score_sheep)
     assert callable(scan_catalog)
     assert callable(genome_dud_reasons)
     assert verdict_for(0.0, ["genome_linear_only"]) == "quarantine"
+    assert verdict_for(25.0, ["genome_orbit_frozen"]) == "candidate"
     assert callable(filter_report)
     assert callable(format_table)
     assert callable(find_genome_for_stem)

@@ -4,8 +4,11 @@ Requirements: Genome XML text (``<flame>`` or ``<flames>`` wrapper).
 
 Usage: ``extract_genome_signals(xml)`` → complexity / period candidates for choose_duration.
   ``is_linear_only_genome`` / ``is_singularity_cloned`` — Pathway A dud gates.
+  ``is_orbit_frozen`` / ``should_still_loop`` — static ``sequence=`` predictor (worker still-loop).
 
 Assumptions: Periods come from rotate, color_speed, and animated xform weights; malformed XML is wrapped when needed.
+  Flam3 ``symmetry>0`` on an xform implies ``animate=0`` (frozen orbit). Frozen single-flame
+  genomes skip period snap and may still-loop instead of a 360° Lite animate.
 """
 
 from __future__ import annotations
@@ -129,6 +132,82 @@ def is_singularity_cloned(xml_text: str) -> bool:
     return False
 
 
+def _has_motion_child(el: ET.Element) -> bool:
+    """True when the xform has a flam3 ``<motion>`` child (cyclic param animation)."""
+    return any(_xform_tag(child) == "motion" for child in list(el))
+
+
+def effective_xform_animate(el: ET.Element) -> float:
+    """Flam3-effective ``animate`` for one ``<xform>`` (explicit attr wins).
+
+    Parser rules from flam3 ``parser.c``:
+
+    - ``animate`` present → that value
+    - else deprecated ``symmetry`` present → ``0`` if ``symmetry > 0``, else ``1``
+    - else omitted → ``1`` (flam3 default; xforms orbit during ``sequence=``)
+    """
+    raw_animate = el.get("animate")
+    if raw_animate is not None and str(raw_animate).strip() != "":
+        return _f(raw_animate, 0.0)
+    raw_sym = el.get("symmetry")
+    if raw_sym is not None and str(raw_sym).strip() != "":
+        return 0.0 if _f(raw_sym, 0.0) > 0.0 else 1.0
+    return 1.0
+
+
+def _iter_orbit_xforms(xml_text: str) -> list[ET.Element] | None:
+    """Non-final ``<xform>`` elements, or None if XML cannot be parsed.
+
+    ``<finalxform>`` is ignored: flam3 never rotates finals during ``sequence=``.
+    """
+    try:
+        root = _parse_root(xml_text)
+    except ET.ParseError:
+        return None
+    out: list[ET.Element] = []
+    for flame in _flames(root):
+        for child in list(flame):
+            if _xform_tag(child) == "xform":
+                out.append(child)
+    return out
+
+
+def is_orbit_frozen(xml_text: str) -> bool:
+    """True when ``flam3-genome sequence=`` cannot 360°-orbit any IFS xform.
+
+    Every non-final xform is stationary (effective ``animate == 0``) and none
+    carry a ``<motion>`` child. A single flame with this shape encodes as a
+    still (lab: ``electricsheep.245.09797``). Unparseable XML is False.
+    """
+    xforms = _iter_orbit_xforms(xml_text)
+    if xforms is None:
+        return False
+    if not xforms:
+        return True
+    if any(_has_motion_child(el) for el in xforms):
+        return False
+    return all(abs(effective_xform_animate(el)) < 1e-12 for el in xforms)
+
+
+def should_still_loop(xml_text: str, cfg: dict[str, Any] | None = None) -> bool:
+    """True when the worker should skip sequence/animate and encode a still-loop.
+
+    Requires a frozen orbit, fewer than two ``<flame>`` control points (two-flame
+    files can still morph on the transition stage), and
+    ``render.still_loop_if_orbit_frozen`` (default **true**).
+    """
+    render = (cfg or {}).get("render") or {}
+    if not bool(render.get("still_loop_if_orbit_frozen", True)):
+        return False
+    try:
+        root = _parse_root(xml_text)
+    except ET.ParseError:
+        return False
+    if len(_flames(root)) >= 2:
+        return False
+    return is_orbit_frozen(xml_text)
+
+
 def extract_genome_signals(xml_text: str) -> dict[str, Any]:
     """Parse genome XML into numeric signals for duration choice.
 
@@ -142,6 +221,7 @@ def extract_genome_signals(xml_text: str) -> dict[str, Any]:
 
     xform_count = 0
     animate_count = 0
+    effective_animate_count = 0
     finalxform_count = 0
     variation_hits = 0
     color_speeds: list[float] = []
@@ -208,6 +288,8 @@ def extract_genome_signals(xml_text: str) -> dict[str, Any]:
                 finalxform_count += 1
             else:
                 xform_count += 1
+                if abs(effective_xform_animate(child)) >= 1e-12:
+                    effective_animate_count += 1
             if _f(child.get("animate"), 0.0) != 0.0:
                 animate_count += 1
             cs = child.get("color_speed")
@@ -237,17 +319,24 @@ def extract_genome_signals(xml_text: str) -> dict[str, Any]:
     rotate_turns = abs(primary_rotate) / 360.0 if abs(primary_rotate) > 1e-9 else 0.0
     rotate_closed = rotate_turns == 0.0 or abs(rotate_turns - round(rotate_turns)) < 1e-3
 
-    periods = _period_candidates_sec(
-        rotate_deg=primary_rotate,
-        color_speeds=color_speeds,
-        weights=weights,
-        animate_count=animate_count,
-    )
+    orbit_frozen = is_orbit_frozen(xml_text)
+    if orbit_frozen:
+        # Static sequence: rotate= is a camera pose, not a loop period.
+        periods: list[float] = []
+    else:
+        periods = _period_candidates_sec(
+            rotate_deg=primary_rotate,
+            color_speeds=color_speeds,
+            weights=weights,
+            animate_count=animate_count,
+        )
 
     return {
         "flame_count": flame_count,
         "xform_count": xform_count,
         "animate_count": animate_count,
+        "effective_animate_count": effective_animate_count,
+        "orbit_frozen": orbit_frozen,
         "finalxform_count": finalxform_count,
         "variation_hits": variation_hits,
         "complexity": round(complexity, 4),

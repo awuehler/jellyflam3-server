@@ -211,6 +211,21 @@ def test_smoke_duration(monkeypatch):
     assert choose_nframes(_cfg()) == 312
 
 
+def test_dynamic_orbit_frozen_ignores_injected_periods():
+    cfg = _dyn_cfg()
+    dur = choose_duration_sec(
+        cfg,
+        {
+            "signals": {
+                "orbit_frozen": True,
+                "complexity": 0.0,
+                "period_candidates_sec": [0.274595],
+            }
+        },
+    )
+    assert abs(dur - 23.0) < 1e-9
+
+
 def test_dynamic_uses_complexity():
     cfg = _dyn_cfg()
     low = choose_duration_sec(cfg, {"signals": {"complexity": 0.0, "period_candidates_sec": []}})

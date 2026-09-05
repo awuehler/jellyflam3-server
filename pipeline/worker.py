@@ -4,7 +4,8 @@ Requirements: flam3-genome/animate, ffmpeg/ffprobe, configs/jellyflam3.yaml; idl
 
 Usage: ``python3 -m pipeline.worker [--once GENOME]`` (polls genomes_inbox by default).
 
-Assumptions: Single-threaded; sheep tax then TV-port before render; successful genomes archive to genomes_done.
+Assumptions: Single-threaded; sheep tax then TV-port before render; frozen single-flame
+  genomes still-loop one Lite still (skip sequence/animate); successful genomes archive to genomes_done.
 """
 
 from __future__ import annotations
@@ -26,7 +27,11 @@ from pipeline.choose_duration import (
     choose_nframes,
     duration_for_nframes,
 )
-from pipeline.genome_signals import estimate_queue_pressure, extract_genome_signals
+from pipeline.genome_signals import (
+    estimate_queue_pressure,
+    extract_genome_signals,
+    should_still_loop,
+)
 from pipeline.config import load_config, resolve_path
 from pipeline.cpu_limit import effective_cpus, ffmpeg_thread_args, flam3_nthreads, wrap_cmd
 from pipeline.flock_artwork import apply_flock_artwork
@@ -193,6 +198,73 @@ def ffprobe_video_ok(ffprobe: str, media: Path, cfg: dict[str, Any]) -> None:
         raise ValueError(f"expected pix_fmt {want_pix}, got {s.get('pix_fmt')}")
 
 
+def catalog_ffmpeg_cmd(
+    cfg: dict[str, Any],
+    *,
+    ffmpeg: str,
+    video_args: list[str],
+    nframes: int,
+    out_tmp: Path,
+    extra_output: list[str] | None = None,
+) -> list[str]:
+    """H.264 High + silent AAC catalog encode (image sequence or still-loop)."""
+    enc = cfg.get("encode") or {}
+    return [
+        ffmpeg,
+        "-y",
+        *ffmpeg_thread_args(cfg),
+        *video_args,
+        "-f",
+        "lavfi",
+        "-i",
+        "anullsrc=channel_layout=stereo:sample_rate=48000",
+        *(extra_output or []),
+        "-c:v",
+        "libx264",
+        "-profile:v",
+        str(enc.get("profile", "high")),
+        "-level",
+        str(enc.get("level", "4.2")),
+        "-pix_fmt",
+        str(enc.get("pix_fmt", "yuv420p")),
+        "-b:v",
+        str(enc.get("video_bitrate", "4M")),
+        "-maxrate",
+        str(enc.get("maxrate", "6M")),
+        "-bufsize",
+        str(enc.get("bufsize", "8M")),
+        "-g",
+        str(nframes),
+        "-c:a",
+        "aac",
+        "-shortest",
+        "-map",
+        "0:v:0",
+        "-map",
+        "1:a:0",
+        "-movflags",
+        "+faststart",
+        str(out_tmp),
+    ]
+
+
+def render_lite_still(cfg: dict[str, Any], genome: Path, dest_png: Path) -> Path:
+    """One Gold Sheep Lite still via ``flam3-render`` (genome quality/size, no preview qs)."""
+    dest_png = Path(dest_png)
+    dest_png.parent.mkdir(parents=True, exist_ok=True)
+    env = {**os.environ, "in": str(genome), "out": str(dest_png)}
+    _run([_tool(cfg, "flam3_render")], env=env, cfg=cfg, limit_cpu=True)
+    if dest_png.is_file():
+        return dest_png
+    siblings = sorted(dest_png.parent.glob(f"{dest_png.stem}*"))
+    pngs = [p for p in siblings if p.suffix.lower() in (".png", ".jpg", ".jpeg")]
+    if not pngs:
+        raise RuntimeError(f"flam3-render produced no image for {genome}")
+    if pngs[0] != dest_png:
+        shutil.copy2(pngs[0], dest_png)
+    return dest_png
+
+
 def wait_for_gate(cfg: dict[str, Any]) -> None:
     """Block until idle gate is open (no-op if idle_gate disabled)."""
     ig = cfg.get("idle_gate") or {}
@@ -234,14 +306,12 @@ def archive_rendered_genome(cfg: dict[str, Any], src: Path) -> Path:
 
 
 def process_genome(cfg: dict[str, Any], src: Path) -> Path:
-    """Render one genome through tax → TV-port → animate → encode → catalog.
+    """Render one genome through tax → TV-port → sequence/still-loop → encode → catalog.
 
     Returns destination MP4 path. On failure updates job.json, copies to quarantine, re-raises.
     """
     render = cfg.get("render") or {}
     vod = cfg.get("vod") or {}
-    enc = cfg.get("encode") or {}
-    tools = cfg.get("tools") or {}
 
     frames_root = resolve_path(cfg, "frames_scratch")
     media_root = resolve_path(cfg, "media_library")
@@ -322,6 +392,11 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
         nframes = choose_nframes(cfg, job_ctx)
         fps = int(vod.get("fps", 24))
         duration_target = duration_for_nframes(nframes, fps)
+        still_loop = should_still_loop(genome_xml, cfg)
+        duration_meta = dict(job_ctx.get("duration_meta") or {})
+        if still_loop:
+            duration_meta["still_loop"] = True
+            duration_meta["render_mode"] = "still_loop"
         state.update(
             {
                 "state": "rendering",
@@ -334,6 +409,8 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
                         "complexity",
                         "xform_count",
                         "animate_count",
+                        "effective_animate_count",
+                        "orbit_frozen",
                         "flame_count",
                         "multi_flame_risk",
                         "rotate_deg",
@@ -345,7 +422,7 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
                     )
                     if k in signals
                 },
-                "duration_meta": job_ctx.get("duration_meta"),
+                "duration_meta": duration_meta or None,
             }
         )
         if harmony is not None:
@@ -356,153 +433,119 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
             }
         _write_job_state(work, state)
 
-        sequenced = work / "sequenced.flam3"
-        env = os.environ.copy()
-        env["sequence"] = str(seed_for_sequence)
-        env["nframes"] = str(nframes)
-        if template.is_file():
-            env["template"] = str(template)
-        genome_bin = _tool(cfg, "flam3_genome")
-        with sequenced.open("w", encoding="utf-8") as out:
-            subprocess.run([genome_bin], check=True, env=env, stdout=out)
-
-        wait_for_gate(cfg)
-        animate_bin = _tool(cfg, "flam3_animate")
-        prefix = str(frame_dir / "f")
-        env_a = os.environ.copy()
-        env_a["in"] = str(sequenced)
-        env_a["prefix"] = prefix
-        env_a["format"] = "png"
-        nthreads = flam3_nthreads(cfg)
-        if nthreads > 0:
-            env_a["nthreads"] = str(nthreads)
-        cpus = effective_cpus(cfg)
-        log.info("cpu limit: max_cpus=%s flam3_nthreads=%s", cpus, nthreads or "auto")
-        _run([animate_bin], env=env_a, cfg=cfg, limit_cpu=True)
-
-        state["state"] = "encoding"
-        _write_job_state(work, state)
-        wait_for_gate(cfg)
-
-        # Discover first frame pattern
-        frames = sorted(frame_dir.glob("*.png"))
-        if not frames:
-            frames = sorted(frame_dir.glob("f*.png"))
-        if not frames:
-            raise RuntimeError(f"no frames produced in {frame_dir}")
-
-        # flam3-animate naming varies; build concat-friendly pattern if possible
-        sample = frames[0].name
-        # Prefer %05d style if numeric suffix
-        pattern = str(frame_dir / "f%05d.png")
-        if not (frame_dir / "f00000.png").exists() and not (frame_dir / "f0000.png").exists():
-            # fallback: use first file's glob via concat demuxer
-            concat = work / "concat.txt"
-            with concat.open("w", encoding="utf-8") as fh:
-                for f in frames:
-                    fh.write(f"file '{f.resolve().as_posix()}'\n")
-                    fh.write(f"duration {1/fps}\n")
-            ffmpeg = _tool(cfg, "ffmpeg")
-            out_tmp = work / "out.mp4"
+        ffmpeg = _tool(cfg, "ffmpeg")
+        out_tmp = work / "out.mp4"
+        if still_loop:
+            log.info(
+                "orbit frozen; still-loop %ss (skip sequence/animate nframes=%s)",
+                duration_target,
+                nframes,
+            )
+            wait_for_gate(cfg)
+            still_png = work / "still.png"
+            render_lite_still(cfg, seed_for_sequence, still_png)
+            state["state"] = "encoding"
+            _write_job_state(work, state)
+            wait_for_gate(cfg)
             _run(
-                [
-                    ffmpeg,
-                    "-y",
-                    *ffmpeg_thread_args(cfg),
-                    "-f",
-                    "concat",
-                    "-safe",
-                    "0",
-                    "-i",
-                    str(concat),
-                    "-f",
-                    "lavfi",
-                    "-i",
-                    "anullsrc=channel_layout=stereo:sample_rate=48000",
-                    "-c:v",
-                    "libx264",
-                    "-profile:v",
-                    str(enc.get("profile", "high")),
-                    "-level",
-                    str(enc.get("level", "4.2")),
-                    "-pix_fmt",
-                    str(enc.get("pix_fmt", "yuv420p")),
-                    "-b:v",
-                    str(enc.get("video_bitrate", "4M")),
-                    "-maxrate",
-                    str(enc.get("maxrate", "6M")),
-                    "-bufsize",
-                    str(enc.get("bufsize", "8M")),
-                    "-g",
-                    str(nframes),
-                    "-c:a",
-                    "aac",
-                    "-shortest",
-                    "-map",
-                    "0:v:0",
-                    "-map",
-                    "1:a:0",
-                    "-movflags",
-                    "+faststart",
-                    str(out_tmp),
-                ],
+                catalog_ffmpeg_cmd(
+                    cfg,
+                    ffmpeg=ffmpeg,
+                    video_args=[
+                        "-loop",
+                        "1",
+                        "-framerate",
+                        str(fps),
+                        "-i",
+                        str(still_png),
+                    ],
+                    nframes=nframes,
+                    out_tmp=out_tmp,
+                    extra_output=["-t", str(duration_target)],
+                ),
                 cfg=cfg,
                 limit_cpu=True,
             )
         else:
-            ffmpeg = _tool(cfg, "ffmpeg")
-            out_tmp = work / "out.mp4"
-            # try 5-digit then 4-digit
-            for pat in (str(frame_dir / "f%05d.png"), str(frame_dir / "f%04d.png"), pattern):
-                try:
-                    _run(
-                        [
-                            ffmpeg,
-                            "-y",
-                            *ffmpeg_thread_args(cfg),
-                            "-framerate",
-                            str(fps),
-                            "-i",
-                            pat,
-                            "-f",
-                            "lavfi",
-                            "-i",
-                            "anullsrc=channel_layout=stereo:sample_rate=48000",
-                            "-c:v",
-                            "libx264",
-                            "-profile:v",
-                            str(enc.get("profile", "high")),
-                            "-level",
-                            str(enc.get("level", "4.2")),
-                            "-pix_fmt",
-                            str(enc.get("pix_fmt", "yuv420p")),
-                            "-b:v",
-                            str(enc.get("video_bitrate", "4M")),
-                            "-maxrate",
-                            str(enc.get("maxrate", "6M")),
-                            "-bufsize",
-                            str(enc.get("bufsize", "8M")),
-                            "-g",
-                            str(nframes),
-                            "-c:a",
-                            "aac",
-                            "-shortest",
-                            "-map",
-                            "0:v:0",
-                            "-map",
-                            "1:a:0",
-                            "-movflags",
-                            "+faststart",
-                            str(out_tmp),
-                        ],
-                        cfg=cfg,
-                        limit_cpu=True,
-                    )
-                    break
-                except subprocess.CalledProcessError:
-                    continue
-            if not out_tmp.is_file():
-                raise RuntimeError("ffmpeg encode failed for all frame patterns")
+            sequenced = work / "sequenced.flam3"
+            env = os.environ.copy()
+            env["sequence"] = str(seed_for_sequence)
+            env["nframes"] = str(nframes)
+            if template.is_file():
+                env["template"] = str(template)
+            genome_bin = _tool(cfg, "flam3_genome")
+            with sequenced.open("w", encoding="utf-8") as out:
+                subprocess.run([genome_bin], check=True, env=env, stdout=out)
+
+            wait_for_gate(cfg)
+            animate_bin = _tool(cfg, "flam3_animate")
+            prefix = str(frame_dir / "f")
+            env_a = os.environ.copy()
+            env_a["in"] = str(sequenced)
+            env_a["prefix"] = prefix
+            env_a["format"] = "png"
+            nthreads = flam3_nthreads(cfg)
+            if nthreads > 0:
+                env_a["nthreads"] = str(nthreads)
+            cpus = effective_cpus(cfg)
+            log.info("cpu limit: max_cpus=%s flam3_nthreads=%s", cpus, nthreads or "auto")
+            _run([animate_bin], env=env_a, cfg=cfg, limit_cpu=True)
+
+            state["state"] = "encoding"
+            _write_job_state(work, state)
+            wait_for_gate(cfg)
+
+            frames = sorted(frame_dir.glob("*.png"))
+            if not frames:
+                frames = sorted(frame_dir.glob("f*.png"))
+            if not frames:
+                raise RuntimeError(f"no frames produced in {frame_dir}")
+
+            pattern = str(frame_dir / "f%05d.png")
+            if not (frame_dir / "f00000.png").exists() and not (
+                frame_dir / "f0000.png"
+            ).exists():
+                concat = work / "concat.txt"
+                with concat.open("w", encoding="utf-8") as fh:
+                    for f in frames:
+                        fh.write(f"file '{f.resolve().as_posix()}'\n")
+                        fh.write(f"duration {1/fps}\n")
+                _run(
+                    catalog_ffmpeg_cmd(
+                        cfg,
+                        ffmpeg=ffmpeg,
+                        video_args=["-f", "concat", "-safe", "0", "-i", str(concat)],
+                        nframes=nframes,
+                        out_tmp=out_tmp,
+                    ),
+                    cfg=cfg,
+                    limit_cpu=True,
+                )
+            else:
+                encoded = False
+                for pat in (
+                    str(frame_dir / "f%05d.png"),
+                    str(frame_dir / "f%04d.png"),
+                    pattern,
+                ):
+                    try:
+                        _run(
+                            catalog_ffmpeg_cmd(
+                                cfg,
+                                ffmpeg=ffmpeg,
+                                video_args=["-framerate", str(fps), "-i", pat],
+                                nframes=nframes,
+                                out_tmp=out_tmp,
+                            ),
+                            cfg=cfg,
+                            limit_cpu=True,
+                        )
+                        encoded = True
+                        break
+                    except subprocess.CalledProcessError:
+                        continue
+                if not encoded or not out_tmp.is_file():
+                    raise RuntimeError("ffmpeg encode failed for all frame patterns")
 
         state["state"] = "gating"
         _write_job_state(work, state)

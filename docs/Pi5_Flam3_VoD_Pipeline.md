@@ -812,7 +812,7 @@ If a workflow literally requires **byte-identical first and last frames inside t
 1. **One sheep per file** for loop VoD: `sequence=one_seed.flam3` (avoid multi-sheep edges unless you want a non-periodic journey).
 2. **`nframes` sized for 7–37 s** at the encode fps (default **552 @ 24 fps ≈ 23 s**; optional dynamic chooser still clamped to this band); verify with ffprobe after encode.
 3. **Template** with high `temporal_samples` so motion blur matches ES and hides inter-frame gaps.
-4. **Only rotating xforms** contribute to the orbit; confirm seeds aren’t all `animate` frozen if you expect motion.
+4. **Only rotating xforms** contribute to the orbit; confirm seeds aren’t all `animate` frozen if you expect motion. Frozen single-flame genomes (`is_orbit_frozen`) skip `sequence=`/`flam3-animate` and still-loop one Lite frame for the dynamic-band duration.
 5. **ffmpeg:** `-framerate` equals configured `fps`; constant frame rate; no intro/outro fades; optional GOP aligned to loop length.
 6. **Roku:** `m.video.loop = true` for ambient flock playback; disable loop only when auto-advancing to the next sheep.
 

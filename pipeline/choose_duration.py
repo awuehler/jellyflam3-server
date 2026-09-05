@@ -232,8 +232,11 @@ def choose_duration_sec(cfg: dict[str, Any], job: dict[str, Any] | None = None) 
     # Soft max may be exceeded only when bypass enabled (hi already reflects that)
     total = clamp(total, lo, hi)
 
-    # Period-aware loop closure
+    # Period-aware loop closure. Frozen orbits have no 360° motion — do not
+    # treat flame rotate= as a loop period (would snap a still to a fake length).
     periods = list(signals.get("period_candidates_sec") or [])
+    if signals.get("orbit_frozen"):
+        periods = []
     snap_enabled = bool(dyn.get("snap_to_periods", True))
     if snap_enabled and periods:
         snapped, meta = snap_duration_to_periods(total, periods, lo=lo, hi=hi, fps=fps)

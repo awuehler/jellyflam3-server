@@ -218,7 +218,7 @@ Phase 4: **transition** clip between two loops via `flam3-genome sequence=` — 
 
 ### Period snap
 
-`snap_to_periods: true` (fleet default): LCM-align `nframes` to rotation/color/animate periods for seamless loops. May blow up toward soft max (accepted cost).
+`snap_to_periods: true` (fleet default): LCM-align `nframes` to rotation/color/animate periods for seamless loops. May blow up toward soft max (accepted cost). Skipped when `orbit_frozen` (static `sequence=`).
 
 ### nframes
 

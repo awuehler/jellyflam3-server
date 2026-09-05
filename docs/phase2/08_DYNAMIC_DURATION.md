@@ -38,6 +38,8 @@ Detected periods (seconds) from genome XML:
 
 `snap_to_periods: true` (default) LCM-snaps `nframes` to those periods inside the effective band so the VoD lands on a seamless loop boundary. Camera orbit from `flam3-genome sequence=` remains one 360° pass over `nframes`.
 
+**Frozen orbit:** when every non-final xform is stationary (`is_orbit_frozen` — explicit `animate=0` or deprecated `symmetry>0`), `period_candidates_sec` is empty. Do **not** treat flame `rotate=` as a loop period (that snapped `electricsheep.245.09797` to a false 0.27 s fundamental). Duration stays on the normal dynamic band; the worker still-loops one Lite still for that length instead of hundreds of identical animate frames.
+
 ### Warning — period-snap LCM blow-up
 
 When several period candidates are present, `lcm_many` can produce a **fundamental frame count near the soft max**, so a modest dynamic target (e.g. ~19–31 s) snaps to the **full soft-max length** (e.g. **43 s / 1032 frames**). Observed on pedigree mutates of `electricsheep.247.14181` where candidates included `43.0` s: target ≈ 19–31 s → snapped `duration_sec: 43.0`.

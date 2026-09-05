@@ -141,6 +141,9 @@ render:
   max_cpus: 3
   flam3_nthreads: 0   # 0 = follow max_cpus; >0 overrides animate thread count
   free_space_gb_min: 8
+  # Frozen single-flame genomes (no 360° orbit): one Lite still + ffmpeg loop.
+  # Default true in code if omitted. No per-job confirm.
+  still_loop_if_orbit_frozen: true
   # gold_sheep_lite (-16/-08) or compact (-04, same knobs); below full Gold ss4/q2000
   edition: gold_sheep_lite
   quality: 900
@@ -169,6 +172,7 @@ refactor:
   desat_score: 20        # score weight (candidate when score ≥ 1)
   linear_only_score: 80           # all xforms linear-only → genome_linear_only (quarantine)
   singularity_cloned_score: 80   # flame singularity="cloned" → genome_singularity_cloned
+  orbit_frozen_score: 25         # sequence= cannot orbit (candidate, not quarantine)
 
 tools:
   flam3_genome: flam3-genome

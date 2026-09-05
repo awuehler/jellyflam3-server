@@ -9,7 +9,7 @@ All notable changes to this project are documented here. Format loosely follows 
 - Fleet log hygiene: persistent journald (class-sized) + 72h `jellyflam3-logrotate.timer`; compress file-log backups after 11 days; purge after 23 days (`scripts/enable_log_hygiene.sh`).
 - Opt-In watchdog LAN heal: ping default gateway; rate-limited Wi‑Fi bounce (`nmcli`) before Tailscale re-auth (`peering.watchdog.*`).
 - Sheep refactor Pathway A: `catalog_desaturated` + `palette_washed_out` heuristics for grey/muddy catalog sheep.
-- Sheep refactor Pathway A: `genome_linear_only` + `genome_singularity_cloned` hard-quarantine for Electric Sheep singularities / void IFS (e.g. `electricsheep.244.00881`).
+- Sheep refactor Pathway A: `genome_orbit_frozen` candidate (score 25) when `flam3-genome sequence=` cannot 360°-orbit; worker still-loops one Lite still (`render.still_loop_if_orbit_frozen`, default on). Duration does not snap frozen `rotate=` as a loop period.
 - Printable Layer 1 fridge card (`docs/FRIDGE_CARD.md`) — watch / gate / Settings / triage; no API keys.
 - Phase 4 guide 05 baseline complete: four worked examples in the user guide (first evening, screensaver, two Rokus, peer receive); Owner OK 2026-09-03.
 - Concurrent-client estimator (`python3 -m pipeline.link_capacity`): integer `N_max` from usable hop × headroom ÷ session bps; WiFi-STA lab note in guide 07.
@@ -24,7 +24,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
-- Phase 4 overview: pre-open ledger (05/06/07 + sidecar keys) vs parked products; docs/README index; pytest count ~352 (was ~303).
+- Phase 4 overview: pre-open ledger (05/06/07 + sidecar keys) vs parked products; docs/README index; pytest count ~362.
 
 ## [v0.3.1] — 2026-08-23
 
