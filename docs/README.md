@@ -9,10 +9,11 @@
 | [phase1/00_OVERVIEW.md](phase1/00_OVERVIEW.md) | Phase 1 scope, reading order, definition of done — **complete** |
 | [phase2/00_OVERVIEW.md](phase2/00_OVERVIEW.md) | Phase 2 scope, reading order, definition of done — **complete** |
 | [phase3/00_OVERVIEW.md](phase3/00_OVERVIEW.md) | Phase 3 scope, reading order, definition of done — **complete** |
+| [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md) | Phase 4 synopsis, future features to be determined — **parked** |
 |||
 | [glossary.md](glossary.md) | Terms, keywords, and definitions for project + collateral vocabulary |
 
-## Phase 1 guides (execute in order of foundation setup) — complete
+## Phase 1 guides (execute in order of furnace setup) — complete
 
 1. [01_HARDWARE_AND_OS.md](phase1/01_HARDWARE_AND_OS.md) — Pi hardware + OS mounts
 2. [02_REPO_AND_CONFIG.md](phase1/02_REPO_AND_CONFIG.md) — repo + config
