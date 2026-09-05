@@ -156,7 +156,7 @@ Hard-fail gate: stage duds without destroying genetics. Default is **dry-run**; 
 |---|---|---|
 | Score gate | Pathway A `score_sheep` | Requires `verdict=quarantine` unless `--force` |
 | Move genetics | `paths.genomes_quarantine` (+ integrity companions) | Shears-compatible; **no delete** |
-| Optional unpublish | park MP4/sidecar/poster under `/media/sheep/_refactor-quarantine/<id>/` + soft Jellyfin `delete_item` | Holding area is not the live Sheep library path |
+| Optional unpublish | park MP4/sidecar/poster under `/media/sheep/_refactor-quarantine/<id>/` + soft Jellyfin `delete_item` | Holding area is not the live Sheep library path. Pasture clients that already cached the item id will **404** until they re-fetch — parked [Phase 4 client polish](../phase4/00_OVERVIEW.md#client-polish-parked--not-numbered) (re-poll on file-not-found, all endpoints). |
 | Report | JSON: score, reasons, genome_src/dest, catalog_moved, jellyfin | Operator may later Shears delete |
 
 ```bash

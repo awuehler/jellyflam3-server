@@ -15,6 +15,7 @@ All notable changes to this project are documented here. Format loosely follows 
 - Concurrent-client estimator (`python3 -m pipeline.link_capacity`): integer `N_max` from usable hop × headroom ÷ session bps; WiFi-STA lab note in guide 07.
 - Sheep-library disk check slice (`python3 -m pipeline.library_disk`): healthcheck WARN/BAD on mount used % / free GiB; no auto-purge, no worker refuse.
 - Catalog sidecar schema: Phase 4 keys `type`, `watermark`, `viewer_feedback`, `alias` reserved in [phase1/07](docs/phase1/07_LICENSE_AND_METADATA.md); `pipeline.stills.SIDECAR_RESERVED_KEYS`. No encode / vote / naming writers.
+- Phase 4 client polish (parked): re-poll flock index on file-not-found when a sheep is quarantined mid-session — Roku VoD, Roku SS, Kodi SS.
 
 ### Fixed
 

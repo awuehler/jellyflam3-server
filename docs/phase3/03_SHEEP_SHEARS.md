@@ -55,6 +55,7 @@ python3 -m pipeline.backfill_posters --config configs/jellyflam3.yaml
 - Catalog MP4 + `*.jellyflam3.json` + `*-poster.jpg`
 - Edge / transition MP4s that reference the sheep as parent ([Phase 4 / 03](../phase4/03_EDGES_AND_WATERMARK.md)) — best-effort name/sidecar match when present
 - Jellyfin item delete + library refresh (soft-fail if API unavailable)
+- Pasture clients that already hold the item in an in-memory flock **404** until they re-fetch — parked [Phase 4 client polish](../phase4/00_OVERVIEW.md#client-polish-parked--not-numbered)
 - Stills strips (Phase 3 screensaver assets) — best-effort when layout exists
 - Syncthing peer copies under local `peers/inbox`, `share-out`, `quarantine` (**only if Opt In**)
 - Pedigree child/parent link notes (warn; do **not** auto-delete living children)

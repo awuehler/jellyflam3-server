@@ -125,6 +125,7 @@ Settings `shuffleFlock` (default `false`):
   - **Ignore** `by-generation/misc`, `by-generation/test`, and other non-allowlisted locations.
   - Still respects `commercialMode` on the list fetch.
 - Back exits player and clears the shuffle round.
+- Mid-session **quarantine / Shears delete** can 404 the next shuffle pick; auto re-poll of the flock list is [Phase 4 client polish](../phase4/00_OVERVIEW.md#client-polish-parked--not-numbered) (all pasture endpoints).
 
 ## Future improvements (not pieces E–F)
 

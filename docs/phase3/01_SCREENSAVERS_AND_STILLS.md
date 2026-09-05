@@ -52,6 +52,7 @@ Optional AI guidance for parent selection / aesthetic briefs atop Phase 2 `flam3
 - Kodi add-on (guide [02](02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md))
 - Video / edge playback inside the Roku screensaver
 - Channel Store / private-channel publish of VoD + screensaver → [Phase 4 / 04](../phase4/04_ROKU_PUBLISH.md)
+- Mid-session flock **re-poll on 404** when a sheep is quarantined while SS is cycling Primaries → [Phase 4 client polish](../phase4/00_OVERVIEW.md#client-polish-parked--not-numbered)
 - LLM pedigree MVP
 
 ## Artifacts
