@@ -6,7 +6,7 @@ One document, **three layers**. Pick your layer and stay there — you should no
 |---|---|---|
 | **[Layer 1 — End user](#layer-1--end-user)** | Household / viewer | Watch ambient loops, use Roku or Kodi screensaver, fix “nothing plays” without SSH |
 | **[Worked examples](#worked-examples)** | Viewer + operator | Four first-evening stories (VoD gate, screensaver, two Rokus, peer receive) |
-| **[Layer 2 — Operator](#layer-2--operator-runbook)** | Pi owner / homelab operator | Keep the flock healthy, seed/breed/delete sheep, peering, health gates, fleet updates |
+| **[Layer 2 — Operator](#layer-2--operator-runbook)** | Pi owner / homelab operator | Keep the flock healthy, seed/breed/delete sheep, peering, health gates, fleet updates, **private ↔ public** |
 | **[Layer 3 — Contributor](#layer-3--contributor)** | Developer / maintainer | Run tests, change pipeline code, CI, deploy conventions |
 
 **Terms:** [glossary.md](glossary.md) · **Architecture (SoT):** [Pi5_Flam3_VoD_Pipeline.md](Pi5_Flam3_VoD_Pipeline.md) · **Install from zero:** [phase2/09_PI_FROM_SCRATCH.md](phase2/09_PI_FROM_SCRATCH.md)
@@ -29,7 +29,7 @@ You do **not** need the Pi terminal for normal viewing. Printable one-pager: [FR
 2. **Furnace-built zips are pre-configured:** when packaged on a Pi with `secrets.env`, the zip includes that furnace’s Jellyfin URL, API key, user id, and library id. Launch the channel — credentials apply on first run if the registry is empty; the flock list should load without manual paste.
 3. **Otherwise** (Windows packaging host or empty registry): open the channel → **Settings** → enter Jellyfin connection values. An operator runs `python3 scripts/jellyfin_id_dump.py` on the Pi and gives you `baseUrl`, `apiKey`, `userId`, `libraryId` (never share the API key in chat/email — paste on the TV only) → save Settings.
 
-**Everyday use:** launch JellyFlam3 → pick a sheep → ambient loop plays. With **shuffle** on (channel 1.0.28+), the mix includes archive gens plus **pedigree** and **tuple** folders. A **tuple** is one longer clip: sheep A, then a morph into sheep B. During that middle morph only, a quiet mark sits in the lower-right corner (the Electric Sheep logo PNG on the default private furnace; the credit “artwork by Scott Draves and the Electric Sheep” if that Pi is in commercial-safe `commercial_mode`). Loops A and B have no mark. That mark is **not** a license to post the clip as official Electric Sheep — operators, see [Layer 2](#tuple-watermark-and-cesari-logo). When you press **Play**, the Pi **stops rendering** new sheep until the TV has been idle for several minutes (see [idle gate](#idle-gate-behavior) below).
+**Everyday use:** launch JellyFlam3 → pick a sheep → ambient loop plays. With **shuffle** on (channel 1.0.28+), the mix includes archive gens plus **pedigree** and **tuple** folders. A **tuple** is one longer clip: sheep A, then a morph into sheep B. During that middle morph only, a quiet mark sits in the lower-right corner (the Electric Sheep logo PNG on the default private furnace; the credit “artwork by Scott Draves and the Electric Sheep” if that Pi is in commercial-safe `commercial_mode`). Loops A and B have no mark. That mark is **not** a license to post the clip as official Electric Sheep — operators, see [Private vs public furnace](#private-vs-public-furnace). When you press **Play**, the Pi **stops rendering** new sheep until the TV has been idle for several minutes (see [idle gate](#idle-gate-behavior) below).
 
 **Deep link smoke (optional):** after an operator dumps item Guids (`jellyfin_id_dump.py --items`), a specific sheep can be launched with `contentId=<Guid>` via the Roku ECP port (developer mode).
 
@@ -506,27 +506,93 @@ Map [jellyfin_id_dump.py](../scripts/jellyfin_id_dump.py) output → add-on **Co
 
 See [kodi-screensaver/README.md](../kodi-screensaver/README.md) for setting ids and commercial-safe filter notes.
 
-### Commercial-mode toggle (CC vs NC)
+### Private vs public furnace
 
-After the balanced `genomes/samples/` set is rendered and Jellyfin Items Tags include `cc-by` / `cc-by-nc`, confirm clients hide NC when commercial-safe is on. Procedure + expected CC/NC ids: [phase1/07_LICENSE_AND_METADATA.md](phase1/07_LICENSE_AND_METADATA.md#lab-check--commercial-mode-toggle).
+Default install is a **private mixed** flock (BY + BY-NC, household). **Public** here means the **commercial-safe / venue / published-playback** path — not Roku Channel Store (still parked). JellyFlam3 is not affiliated with Spotworks LLC.
+
+These knobs are **independent**. `git pull` does **not** flip them (`configs/jellyflam3.yaml` is gitignored).
+
+| Surface | Private mixed (default) | Public / commercial-safe |
+|---|---|---|
+| Furnace `license.commercial_mode` | `false` | `true` |
+| New **tuple** edge mark | Cesari PNG (or short `Electric Sheep` if the PNG is missing) | **Never** the Cesari logo — `artwork by Scott Draves and the Electric Sheep` |
+| Already-catalogued tuples | Keep whatever was burned in | Keep the Cesari PNG until you **re-furnace** those stems |
+| Worker render of NC genomes | Renders | **Still renders** — yaml does not cull NC |
+| On-disk NC MP4s | In `/media/sheep/by-generation/` | **Stay on disk** |
+| Roku VoD `commercialMode` | `false` | `true` (hides NC **in this channel only**) |
+| Kodi SS `commercial_mode` | off | on (hides NC **in this add-on only**) |
+| Jellyfin web / jellyfin-roku | Shows the whole library | **Still shows NC** unless you lock the library down yourself |
+
+Cesari PNG files are **not** MIT and **not** Free Sheep CC ([NOTICE](../NOTICE), [watermark README](media/watermark/README.md)). Do not republish marked MP4s as official Electric Sheep, and do not use those PNGs as a channel icon. Peering shares `.flam3` only; copying `by-generation/tuple/*.mp4` **does** export the mark.
+
+#### Take a private furnace public
+
+Do this **in order**. Skipping tags or the client toggles is how you get an empty flock or Cesari-marked CC clips on a “public” TV.
+
+1. **Decide you are actually going public.** Venue, guest TVs, or packing files for others. Household-only → stay on the private defaults.
+2. **Confirm Jellyfin Items Tags exist** (commercial-safe clients hide untagged items, which looks like an empty flock):
+   ```bash
+   python3 scripts/jellyfin_id_dump.py --items --limit 50
+   ```
+   Spot-check `cc-by` vs `cc-by-nc` on Tags. If Tags are empty, enrich then re-check:
+   ```bash
+   python3 -m pipeline.backfill_posters --config configs/jellyflam3.yaml
+   ```
+   Lab CC/NC sample ids: [phase1/07](phase1/07_LICENSE_AND_METADATA.md#lab-check--commercial-mode-toggle).
+3. **Edit live yaml** (not the example; not a git commit):
+   ```bash
+   nano /opt/jellyflam3-server/configs/jellyflam3.yaml
+   ```
+   Set `license.commercial_mode: true`. Leave `watermark.style: image` — the worker ignores the Cesari PNG on this path. Do **not** run `hw_profile apply` unless you intend to rewrite the whole yaml.
+4. **Restart the worker** so it reloads yaml (idle-gate can stay up):
+   ```bash
+   sudo systemctl restart jellyflam3-worker
+   systemctl is-active jellyflam3-worker
+   ```
+5. **Re-furnace existing tuples** if any Cesari-marked MP4 must not appear on the public path. New tuples after step 4 pick up the attribution sentence; old files do not.
+   ```bash
+   ls genomes/done/electricsheep.tuple.*.flam3
+   for f in genomes/done/electricsheep.tuple.*.flam3; do
+     [ -f "$f" ] || continue
+     python3 -m pipeline.shears modify "$f"
+   done
+   ```
+   Each restage is a full 3-stage encode (hours). Gate must be **open**. Worker rotates the old MP4 to `*.mp4.prev`. Confirm a sidecar `"style": "text"` and the Scott Draves sentence after ingest.
+6. **Turn commercial-safe on at every pasture client** (furnace yaml does not do this). Existing Roku registry survives sideload; furnace-built zips still preset `commercialMode=false`.
+   - **Roku VoD:** Settings → `commercialMode` → **true** → save. Repeat on each stick.
+   - **Kodi:** Add-ons → JellyFlam3 Dreams → Configure → **Commercial-safe (skip NC)** on.
+   - **Roku screensaver** has no NC filter of its own; it shows stills of whatever the library lists.
+7. **Do not expose Jellyfin as the public player.** Guests on `:8096` or jellyfin-roku still see NC. Restrict the library (LAN-only, auth, or do not share the URL).
+8. **Verify on the TV:** CC samples remain; NC samples gone; a **new** tuple (or a restamped one) shows the attribution sentence, not the sheep mascot. Toggle Roku `commercialMode` back to false in a test if you need to prove NC files are still on disk — then set it true again.
+
+Optional: stop packing Cesari-marked `tuple/` MP4s off-box (`scrape_fleet_sheep.ps1`, USB). Gold Sheep / HiFi still stay out of the furnace.
+
+#### Take a public furnace private
+
+Playback of NC returns as soon as **clients** turn commercial-safe off. The Cesari PNG returns on **new** tuples only after yaml + worker restart (and on old tuples only if you re-furnace them).
+
+1. **Edit live yaml:** `license.commercial_mode: false`.
+2. **Restart the worker:**
+   ```bash
+   sudo systemctl restart jellyflam3-worker
+   systemctl is-active jellyflam3-worker
+   ```
+3. **Turn commercial-safe off on every client:**
+   - Roku VoD Settings → `commercialMode` → **false** → save (each stick).
+   - Kodi Configure → **Commercial-safe (skip NC)** off.
+4. **Verify:** NC titles reappear in VoD / Kodi shuffle (they were never deleted). A **new** tuple may show the Cesari PNG again.
+5. **Optional — restore the PNG on tuples encoded while public:** same `shears modify` loop as step 5 above. Until you do, those files keep the attribution sentence (fine for household).
+
+#### Lab check (CC vs NC playback only)
+
+After Tags exist, confirm the **client** filter — this does not flip furnace yaml:
 
 | Client | Toggle off | Toggle on |
 |---|---|---|
-| Roku VoD `commercialMode` | CC + NC samples in flock | NC samples gone; CC remain |
+| Roku VoD `commercialMode` | CC + NC in flock | NC gone; CC remain |
 | Kodi SS `commercial_mode` | May play NC | Only CC-safe Tags |
 
-If commercial-on yields an **empty** flock, Items Tags are missing — check sidecar + enrich before blaming the client.
-
-**Two knobs:** furnace `license.commercial_mode` does **not** stop the worker from rendering NC sheep. Roku/Kodi toggles only hide NC at playback. They default **off** independently. Turning commercial-safe **on the TV only** still plays CC tuples that already have the Cesari logo burned in.
-
-### Tuple watermark and Cesari logo
-
-Default private mixed furnaces (`license.commercial_mode: false`) burn Laura Cesari’s Electric Sheep mascot on the **tuple edge** only. That PNG is **not** MIT and **not** Free Sheep CC ([NOTICE](../NOTICE), [watermark README](media/watermark/README.md)).
-
-- **Do not** republish those MP4s (USB dump, Discord, web, Channel Store, a friend’s furnace) as official Electric Sheep, and **do not** use the watermark files as a Roku/Kodi channel icon.
-- Peering today shares `.flam3` genomes, not marked MP4s. Copying `by-generation/tuple/*.mp4` **does** export the mark.
-- Venue / public / CC-only path: set furnace `license.commercial_mode: true`, turn client commercial-safe **on**, and **re-encode** old tuples if they must not carry the logo. New encodes then use “artwork by Scott Draves and the Electric Sheep” instead of the mascot.
-- JellyFlam3 is not affiliated with Spotworks LLC.
+Expected sample ids: [phase1/07](phase1/07_LICENSE_AND_METADATA.md#lab-check--commercial-mode-toggle). Empty flock with commercial-on → fix enrich (step 2), not the channel.
 
 ### Stills (screensaver feedstock)
 
@@ -552,7 +618,7 @@ Deploy via **`git pull` on the Pi** — not scp of a Windows working tree (LF + 
 
 ### Pull catalog MP4s to a Windows workstation
 
-Copy flock loops from each furnace (catalog `by-generation` only — not `_refactor-preview`). Tuple MP4s from a private mixed furnace may carry the Cesari edge mark — household-only; see [Tuple watermark and Cesari logo](#tuple-watermark-and-cesari-logo).
+Copy flock loops from each furnace (catalog `by-generation` only — not `_refactor-preview`). Tuple MP4s from a private mixed furnace may carry the Cesari edge mark — household-only; see [Private vs public furnace](#private-vs-public-furnace).
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/scrape_fleet_sheep.ps1
@@ -591,6 +657,7 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 | Worker quiet, gate open | `ls genomes/inbox/*.flam3`; journal `-u jellyflam3-worker` | Seed inbox; inspect quarantine |
 | healthcheck exit 1 | Read script sections (units, tools, status file, **peering share_live**, **library disk BAD**) | See [offline peering](#opt-in-vs-share-live-do-not-confuse-them); `opt-in` or `opt-out`; free space on `/media/sheep` |
 | Sheep disk WARN / BAD | `python3 -m pipeline.library_disk check`; `df -h /media/sheep` | Delete with Shears (no auto-rotate yet); do not Hammer unless wiping the factory |
+| Empty flock with commercial-safe on | Items Tags missing | `jellyfin_id_dump.py --items`; [private vs public](#private-vs-public-furnace) step 2 |
 | Blank Roku SS | VoD Settings ever saved on this device? | Sideload VoD → Settings → re-sideload SS |
 | Kodi SS hint / no video | `server_url` uses LAN IP? flock empty on Jellyfin? | `jellyfin_id_dump.py --items`; re-install zip after client fix |
 | Kodi zip push fails | SMB `\\<Kodi_IP>\Downloads` vs SSH key | Use LibreELEC SMB; or install SSH key for `root@<Kodi_IP_Address>` |
@@ -693,7 +760,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | Share security | `pipeline/share_security.py`, `docs/phase3/05_SHARED_SHEEP_SECURITY.md` |
 | Link capacity / N_max | `pipeline/link_capacity.py`, `docs/phase4/07_CONCURRENT_CLIENTS.md` |
 | Library disk check | `pipeline/library_disk.py`, `docs/phase4/06_LIBRARY_DISK_ROTATE.md` |
-| License / Cesari watermark | [NOTICE](../NOTICE), [phase1/07](phase1/07_LICENSE_AND_METADATA.md), [watermark README](media/watermark/README.md), [Layer 2](#tuple-watermark-and-cesari-logo) |
+| License / Cesari watermark | [NOTICE](../NOTICE), [phase1/07](phase1/07_LICENSE_AND_METADATA.md), [watermark README](media/watermark/README.md), [Private vs public](#private-vs-public-furnace) |
 | Roku client | `roku-channel/`, `docs/phase1/08_ROKU_BRIGHTSCRIPT.md` |
 | Kodi screensaver | `kodi-screensaver/`, [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) |
 | Architecture | `docs/Pi5_Flam3_VoD_Pipeline.md` |
