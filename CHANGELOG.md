@@ -27,6 +27,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 - Phase 4 overview: tuples (03) shipped; pytest **366** passed + 6 skipped.
 - Commercial-safe furnaces skip the Cesari Electric Sheep logo on tuple edges and burn the ES attribution sentence instead (`license.commercial_mode: true`). Private flock may still overlay the PNG pending permission.
+- NOTICE / LICENSE carve-out for Cesari watermark assets; Layer 2 operator warning; furnace `commercial_mode` no longer documented as culling NC at render.
 
 ## [v0.3.1] — 2026-08-23
 

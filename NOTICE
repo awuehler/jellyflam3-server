@@ -20,6 +20,20 @@ do not ingest into JellyFlam3. See https://electricsheep.org/termsofservice/
 Infinidream (https://infinidream.ai/) is a separate platform descendant — not
 Phase 1 furnace feedstock.
 
+JellyFlam3 is **not** the official Electric Sheep client, screensaver, or
+network, and is **not affiliated with** Spotworks LLC. Product name: JellyFlam3.
+
+=== Electric Sheep brand artwork (not MIT, not Free Sheep CC) ===
+Laura Cesari (aka Caballera) designed the Electric Sheep mascot and logo in 2008
+for Scott Draves / the Electric Sheep project
+(https://draves.org/blog/archives/000607). Files under docs/media/watermark/
+(Electric-Sheep-Icon*.png, Electric-Sheep-Logo.svg) and any recolor (including
+Electric-Sheep-Icon-7A8B99.png) remain that brand identity. Creative Commons on
+Free Sheep genomes does **not** license them. Do not treat the MIT LICENSE as a
+grant to redistribute, rebrand, or burn those marks into public or commercial
+works. Encode policy (private mixed vs commercial-safe / public):
+docs/media/watermark/README.md. Contact: info@spotworks.com.
+
 === FFmpeg ===
 https://github.com/FFmpeg/FFmpeg — LGPL/GPL depending on build configuration
 https://ffmpeg.org/

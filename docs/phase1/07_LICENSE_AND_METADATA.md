@@ -53,7 +53,7 @@ ingest → infer_tags_from_genome → write sidecar (required)
 | `sheep-ID` | Sheep serial (from filename) |
 | `human` / `brood` | Provenance (designer vs algorithm) |
 
-When `license.commercial_mode: true`, exclude `cc-by-nc` (and any `exclude_tags`). BrightScript honors the same contract.
+When `license.commercial_mode: true` on the **furnace**, the worker does **not** skip NC genomes. That flag currently (1) selects the tuple **watermark** (no Cesari logo; ES attribution sentence — [watermark README](../media/watermark/README.md)) and (2) is the same *name* as the **client** playback filter. Roku `commercialMode` / Kodi `commercial_mode` hide `cc-by-nc` at the TV (Items Tags). Turn both on for a venue path; they are independent knobs. BrightScript honors the client contract below.
 
 ## `.flam3` filename convention
 
@@ -96,7 +96,8 @@ Filename `electricsheep.{gen}.{id}.flam3` → tags `generation-{gen}`, `sheep-{i
 3. If human designer nick (≠ brood) → human + cc-by
    Else → brood (if seen) + cc-by-nc   ← default when unsure
 4. Write **sidecar** (required); try Jellyfin Items tags (optional)
-5. If commercial_mode: drop items with exclude_tags (cc-by-nc)
+5. Client commercial-safe **playback** filter (Roku/Kodi): drop items with exclude_tags (cc-by-nc)
+   Furnace yaml `license.commercial_mode` does **not** refuse NC at render/ingest
 ```
 
 ## Genomic inheritance and commercial licensing
@@ -138,15 +139,16 @@ Gold / Infinidream / paid masters?
 
 ```yaml
 license:
-  commercial_mode: false    # default: private flock shows BY + BY-NC
-                            # true → exclude cc-by-nc from commercial-safe paths
+  commercial_mode: false    # default: private mixed flock; worker still renders BY + BY-NC
+                            # true → tuple watermark skips Cesari PNG (does not cull NC from the furnace)
   exclude_tags:
     - cc-by-nc
   default_tags: []
 ```
 
 - **Sidecar** (`{stem}.jellyflam3.json` beside the catalog MP4) is the **sole metadata source of truth** for that sheep (license/tags in Phase 1; stills index, pedigree hints, viewer votes, aliases). Jellyfin Items Tags/Overview are derived caches for clients. Schema below.
-- **Commercial filter** stays in code for the uncommon venue case; leave `license.commercial_mode: false` / client `commercialMode=false` unless you need it.
+- **Furnace `license.commercial_mode` vs client `commercialMode`:** two knobs. Clients hide NC when their toggle is on. The furnace flag does **not** stop NC renders; it does change the tuple edge watermark (Cesari PNG only on the private mixed default). See [watermark README](../media/watermark/README.md).
+- **Commercial filter** stays in **client** code for the uncommon venue case; leave furnace `license.commercial_mode: false` / client `commercialMode=false` unless you need that path. Flipping only the TV filter does **not** restamp Cesari-marked tuples already on disk.
 - **Client contract (Roku VoD + Kodi SS):** filter is **client-side on Jellyfin Items `Tags` only** (never send `Tags=` query params — that emptied the lab flock). When commercial-safe is **on**:
   - **Keep** items that carry a safe tag (`cc-by`, `cc-by-sa`, `cc0`, `public-domain`, `pd`) and **do not** carry `by-nc` / `cc-by-nc`.
   - **Hide** NC items and items with **empty / missing** Tags (empty Tags ≠ “show everything”).
@@ -187,14 +189,14 @@ File: `{stem}.jellyflam3.json` next to the catalog MP4. Code list: `pipeline.sti
 | `alias` | [09](../phase4/09_SHEEP_NAMING.md) | `adjective_surname` | Display name; filename stays canonical |
 | `alias_source` | [09](../phase4/09_SHEEP_NAMING.md) | `auto` \| `human` \| `llm` | Companion of `alias` |
 
-Do **not** implement edge encode, watermark burn-in, vote overlay/sink, or naming RNG until Phase 4 opens those products. Reserving the names here so later writers do not collide.
+Vote sink and naming RNG stay parked until those Phase 4 products open. Tuple edge watermark is **shipped**.
 
 ```json
 {
   "type": "loop",
   "from_id": null,
   "to_id": null,
-  "watermark": { "enabled": false, "style": "corner", "text": "" },
+  "watermark": { "enabled": false, "style": "image", "text": "" },
   "viewer_feedback": {
     "likes": 0,
     "loves": 0,

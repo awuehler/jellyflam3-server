@@ -21,7 +21,7 @@ Complements:
 | **Repeatable TV-grade pass** | Re-run TV-port, palette harmony, encode profile, posters |
 | **Operator workflow** | Scan → score → **palette report / optional override → poster preview** → apply/replace |
 
-Sub-standard examples (non-exhaustive): crushed blacks, neon clash on living-room TVs, near-empty frames, **linear-only / `singularity="cloned"` voids**, **frozen `sequence=` orbits** (still encoded as a long Lite animate), extreme vibrancy, broken aspect after bad hand edits, duration that fails band after dynamic snap, watermark-less masters when watermark policy is on (Phase 4 edges guide).
+Sub-standard examples (non-exhaustive): crushed blacks, neon clash on living-room TVs, near-empty frames, **linear-only / `singularity="cloned"` voids**, **frozen `sequence=` orbits** (still encoded as a long Lite animate), extreme vibrancy, broken aspect after bad hand edits, duration that fails band after dynamic snap. Loop masters are **unmarked by design**; tuple edge watermark is a Phase 4 encode policy, not a refactor score.
 
 ## Implementation pathways (enable set)
 

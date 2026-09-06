@@ -2,6 +2,15 @@ MIT License
 
 Copyright (c) 2026 JellyFlam3 Server contributors
 
+The MIT License below applies to JellyFlam3 Server **source code**, **documentation**,
+and **original project assets**.
+
+It does **not** apply to third-party Electric Sheep **brand artwork** under
+`docs/media/watermark/` (sheep mascot and wordmark by Laura Cesari, 2008, for the
+Electric Sheep project). Those files are not Creative Commons Free Sheep genomes
+and are not licensed by this MIT grant. See NOTICE and
+docs/media/watermark/README.md.
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights

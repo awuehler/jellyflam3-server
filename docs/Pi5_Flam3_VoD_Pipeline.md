@@ -28,7 +28,7 @@
 
 - **Phase 1 (complete):** flam3-style flame fractals → seamless loop MP4s → Jellyfin-backed flock → Roku BrightScript (+ jellyfin-roku for ops). Owner signed 2026-07-28. Guides: [`docs/phase1/`](phase1/00_OVERVIEW.md).
 - **Phase 2 (complete — Owner OK 2026-08-08):** Jellyfin flock UX + **HLS** client streaming + Roku polish/display probe; Syncthing/`*.flam3` peering over Tailscale; sheep tax; pedigree breed; dynamic duration (period-aware, hard max **120 s**); Pi-from-scratch profiles **16 / 08 / 04**. Baseline: archive seeder, TV-port, Gold Sheep Lite, OkLCh. Guides: [`docs/phase2/`](phase2/00_OVERVIEW.md) · acceptance [10](phase2/10_TESTING_AND_ACCEPTANCE.md).
-- **Phase 3 (guides 01–10 complete — Owner OK 2026-08-23):** Roku stills screensaver (**01**); Kodi ES-dogma screensaver (**02** loops-only; loop→edge→loop post-launch); Sheep Shears (**03**); shared sheep security (**05**); git pedigree sheep (**06**); Hammer (**07**); Jellyfin ID dump + furnace client zip presets (**08**); **sheep refactor** (**09** — pathways A/P/B/C/D); acceptance (**10**). Git tag **`v0.3.0` at public launch**. LLM pedigree / DeepDream/social aspirational. Guides: [`docs/phase3/`](phase3/00_OVERVIEW.md). Post-launch roadmap (edges + watermark, peer share-path, mesh scripting, **Roku VoD + screensaver publish**, **viewer feedback loop**, **sheep naming**): [`docs/phase4/`](phase4/00_OVERVIEW.md) (synopsis).
+- **Phase 3 (guides 01–10 complete — Owner OK 2026-08-23):** Roku stills screensaver (**01**); Kodi ES-dogma screensaver (**02** loops-only; loop→edge→loop post-launch); Sheep Shears (**03**); shared sheep security (**05**); git pedigree sheep (**06**); Hammer (**07**); Jellyfin ID dump + furnace client zip presets (**08**); **sheep refactor** (**09** — pathways A/P/B/C/D); acceptance (**10**). Git tag **`v0.3.0` at public launch**. LLM pedigree / DeepDream/social aspirational. Guides: [`docs/phase3/`](phase3/00_OVERVIEW.md). Post-launch roadmap (**tuples + edge watermark shipped**; remaining: standalone edges / loop watermark, peer share-path, mesh scripting, **Roku VoD + screensaver publish**, **viewer feedback loop**, **sheep naming**): [`docs/phase4/`](phase4/00_OVERVIEW.md) (synopsis).
 
 DeepDream and multi-backend “visual furnace” language stays in the **product story**. Complementary ambient-TV palettes and archive seeding are **baseline shipped**. Phase boundary detail and per-guide tables: [Phase 1](#phase-1-guideline-documents-discrete-task-boundaries) · [Phase 2](#phase-2-guideline-documents-discrete-task-boundaries) · [Phase 3](#phase-3-guideline-documents-synopsis-boundaries) below.
 
@@ -894,7 +894,7 @@ stateDiagram-v2
 - **Looping:** each single-sheep render is a **360° closed orbit**; encode `n` frames on `[0°, 360°)` with no duplicate last frame; seamlessness comes from periodicity + player wrap.
 - **Resolution:** 1080p 16:9 via TV-port size/scale rewrite + template. Display-probe hints must **not** auto-escalate to 4K on Pi 5 / 3 cores in Phase 2.
 - **Quality edition:** **Gold Sheep Lite** (≈ quality 900 / temporal_samples 450 / supersample 2, `max_cpus: 3`) on all Pi classes. Profile **`-04`** uses edition **`compact`** (same knobs) with shorter dynamic duration + leaner encode bitrates for smaller disks — not a quality cut.
-- **Licensing:** Free Sheep only as archive seeds — tag `cc-by` vs `cc-by-nc`, `human`/`brood`, generation; filter BY-NC when `commercial_mode` is on. **Algorithm/robot offspring of human parents stay NC under ES rules**; mutation % does not flip license. **Do not ingest Gold Sheep / Infinidream / paid Spotworks masters.** Catalog sidecar schema (shipped fields + Phase 4 reserved keys) in [docs/phase1/07_LICENSE_AND_METADATA.md](phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema).
+- **Licensing:** Free Sheep only as archive seeds — tag `cc-by` vs `cc-by-nc`, `human`/`brood`, generation. **Client** commercial-safe toggles hide BY-NC at playback; furnace `license.commercial_mode` does **not** refuse NC at render (it does change the tuple watermark). **Algorithm/robot offspring of human parents stay NC under ES rules**; mutation % does not flip license. **Do not ingest Gold Sheep / Infinidream / paid Spotworks masters.** Cesari mascot files are not MIT / not genome CC — [NOTICE](../NOTICE), [watermark README](media/watermark/README.md). Catalog sidecar schema in [docs/phase1/07_LICENSE_AND_METADATA.md](phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema).
 - **CPU isolation (required):** render supervisor **must** block flam3/ffmpeg work while any **active Jellyfin TV client** is playing (and while any session shows active **transcoding**); **gracefully resume** only after configurable **`idle_delay`** with no such activity.
 - **Storage (Pi 5):** USB SSD = `/media/sheep` flock; PCIe NVMe = scratch + `/var/lib/jellyflam3` state; microSD = OS. Profiles: **16** (128 GB SD / 1 TB NVMe / 1 TB SSD), **08** (64 / 500 / 500), **04** (32 / 250 / 250). Hostnames: `rpi-jellyflam3-16a|16b…`, `-08a|08b…`, `-04a|04b…`.
 - **Posters (Phase 2):** mid-loop frame via ffmpeg → filesystem beside MP4 **and** Jellyfin Images API with retry; backfill existing flock.
@@ -907,7 +907,7 @@ stateDiagram-v2
 - **Roku Screensaver / stills (Phase 3 — complete):** standalone `RunScreenSaver` (images only) + stills extraction — [phase3/01_SCREENSAVERS_AND_STILLS.md](phase3/01_SCREENSAVERS_AND_STILLS.md) (Owner OK 2026-08-16).
 - **Kodi Electric Sheep screensaver (Phase 3 — complete loops-only):** **separate** add-on adhering to ES dogma (continuous loops; loop→edge→loop deferred to Phase 4 when edges exist; furnace stays on Pi) — [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md).
 - **Sheep Shears (Phase 3 — complete, Owner OK 2026-08-16):** add/modify/delete `.flam3` and cascade downstream artifacts (inbox, jobs, scratch, MP4, sidecars, Jellyfin images, stills, peers); `audit` / `sweep` + peering `hygiene`. Guide: [phase3/03_SHEEP_SHEARS.md](phase3/03_SHEEP_SHEARS.md).
-- **Edges + watermark (Phase 4 — parked):** generate transition **edge** crossfade MP4s between loop parents (`flam3-genome` multi-seed sequence); optional baked **watermark** on catalog loops, edges, and stills. Sidecar keys `type` / `watermark` reserved in phase1/07; encode still parked. Guide: [phase4/03_EDGES_AND_WATERMARK.md](phase4/03_EDGES_AND_WATERMARK.md).
+- **Edges + watermark (Phase 4 — tuples shipped 2026-09-05):** one catalog MP4 (loop A + edge A→B + loop B) with edge-stage watermark. **Private mixed** furnaces may overlay the Cesari PNG; **commercial-safe / public** furnaces burn ES attribution text (no mascot). Standalone `type: edge` files and watermark on loops/stills remain parked. Guide: [phase4/03_EDGES_AND_WATERMARK.md](phase4/03_EDGES_AND_WATERMARK.md). Policy: [docs/media/watermark/README.md](media/watermark/README.md).
 - **Roku publish (Phase 4 — parked):** Channel Store / private publish of existing VoD + screensaver (icons, settings UX, best-practices) plus **N Rokus on one JellyFlam3-server**. Guide: [phase4/04_ROKU_PUBLISH.md](phase4/04_ROKU_PUBLISH.md).
 - **End-user guide (Phase 4 — baseline complete, Owner OK 2026-09-03):** household tasks, four worked examples, and triage cookbook — [USER_GUIDE_AND_RUNBOOK.md](USER_GUIDE_AND_RUNBOOK.md); fridge card [FRIDGE_CARD.md](FRIDGE_CARD.md). Synopsis + remaining vote/rename recipes: [phase4/05_END_USER_GUIDE.md](phase4/05_END_USER_GUIDE.md).
 - **Sheep library disk rotate (Phase 4 — check slice 2026-09-03):** healthcheck WARN/BAD on the sheep mount (`pipeline.library_disk`); auto-purge and worker refuse parked. Guide: [phase4/06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md).
@@ -1079,7 +1079,7 @@ Review of the plan against **initial setup → implementation → integration �
 | `roku_sideload_play` | Manual | Channel lists item; loop plays ≥1 cycle; Back works |
 | `direct_play_check` | Manual | Jellyfin dashboard shows Direct Play during Roku playback |
 
-**F. Phase boundaries after Phase 1 complete:** Phase 2 = flock UX (posters), **HLS client streaming** (Jellyfin → Roku/VLC/etc., remux preferred), Roku polish + display probe, Syncthing-over-Tailscale peering (host-service Opt In/Out; `*.flam3` only; eventual pedigree-only share), **sheep tax** (XML/vocab scan & repair), pedigree mutate/cross, dynamic duration (hard max 120 s), Pi-from-scratch HW profiles. Phase 3 = Roku stills screensaver, **separate Kodi ES-dogma screensaver**, LLM pedigree, Sheep Shears CRUD, **sheep refactor** (sub-standard quality repair), **shared sheep security**, **git pedigree sheep** (smoke/examples; replace legacy samples), DeepDream/social. **Phase 4** = parked products (edge encode + watermark, peering revisits, Roku publish, vote overlay, naming RNG, rotate) plus pre-open slices already shipped (05 user-guide baseline, 06 disk check, 07 `N_max` estimator, sidecar key names). Archive seeder + OkLCh tint + Gold Sheep Lite are **baseline shipped**.
+**F. Phase boundaries after Phase 1 complete:** Phase 2 = flock UX (posters), **HLS client streaming** (Jellyfin → Roku/VLC/etc., remux preferred), Roku polish + display probe, Syncthing-over-Tailscale peering (host-service Opt In/Out; `*.flam3` only; eventual pedigree-only share), **sheep tax** (XML/vocab scan & repair), pedigree mutate/cross, dynamic duration (hard max 120 s), Pi-from-scratch HW profiles. Phase 3 = Roku stills screensaver, **separate Kodi ES-dogma screensaver**, LLM pedigree, Sheep Shears CRUD, **sheep refactor** (sub-standard quality repair), **shared sheep security**, **git pedigree sheep** (smoke/examples; replace legacy samples), DeepDream/social. **Phase 4** = parked products (standalone edges + loop/stills watermark, peering revisits, Roku publish, vote overlay, naming RNG, rotate) plus shipped slices (tuples + edge watermark, 05 user-guide baseline, 06 disk check, 07 `N_max` estimator, sidecar key names). Archive seeder + OkLCh tint + Gold Sheep Lite are **baseline shipped**.
 
 ---
 
@@ -1487,7 +1487,7 @@ flowchart TD
 
 ## Phase 3 guideline documents (complete)
 
-Phase 3 guides **01–10** are **complete** (Owner OK 2026-08-23 @ `f37758a`). Git tag **`v0.3.0` at public launch**. **Edges + watermark** post-launch ([phase4/03](phase4/03_EDGES_AND_WATERMARK.md)); Roku publish post-launch ([phase4/04](phase4/04_ROKU_PUBLISH.md)). Continuous HLS from random MP4s was **dropped**. Peer share-path + mesh introduce scripting are post-launch ([phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md) synopsis).
+Phase 3 guides **01–10** are **complete** (Owner OK 2026-08-23 @ `f37758a`). Git tag **`v0.3.0` at public launch**. **Tuples + edge watermark shipped** ([phase4/03](phase4/03_EDGES_AND_WATERMARK.md)); standalone edges / loop watermark and Roku publish remain post-launch ([phase4/04](phase4/04_ROKU_PUBLISH.md)). Continuous HLS from random MP4s was **dropped**. Peer share-path + mesh introduce scripting are post-launch ([phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md) synopsis).
 
 ### Doc map
 
@@ -1587,9 +1587,9 @@ flowchart TD
 |---|---|
 | **Boundary** | Tuples (loop A + edge + loop B as one MP4) + edge-stage watermark — **shipped**; standalone edge files + loop/stills watermark still parked |
 | **In** | Two single-flame parents; `flam3-genome sequence` |
-| **Tasks** | Edge render/encode; watermark bake; playlist hooks |
-| **Out** | Edge MP4s + watermarked masters policy |
-| **Exit** | When Phase 4 opens: edge between two sheep; watermark visible; Kodi can consume |
+| **Tasks** | Tuple encode + edge-stage watermark (shipped); standalone edges / loop watermark parked |
+| **Out** | Tuple MP4s under `by-generation/tuple/`; Cesari PNG vs ES attribution per `license.commercial_mode` |
+| **Exit** | Tuple slice shipped 2026-09-05; Kodi plays tuples as one item (dedicated edge sequencer still parked) |
 
 ---
 
@@ -1685,6 +1685,6 @@ flowchart TD
 
 ### Phase 4 — synopsis (products parked; pre-open slices shipped)
 
-1. Parked products: peer share-path, mesh introduce, **edges + watermark encode**, **Roku publish**, **viewer feedback** overlay/sink, **sheep naming** RNG — [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md).
+1. Parked products: peer share-path, mesh introduce, **standalone edge files + loop/stills watermark**, **Roku publish**, **viewer feedback** overlay/sink, **sheep naming** RNG — [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md). Tuples + edge-stage watermark are **shipped**.
 2. Pre-open (2026-09-03): end-user guide **05 baseline** (Owner OK); library-disk **06 check slice**; concurrent-client **07 estimator** (Owner OK pending); sidecar keys reserved in [phase1/07](phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Do **not** implement parked products until Owner opens Phase 4.
 

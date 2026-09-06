@@ -69,4 +69,4 @@ python3 -m json.tool /var/lib/jellyflam3/idle_gate_status.json
 # gate: open = rendering allowed; closed = a TV is Playing
 ```
 
-Layer 2 runbook: [USER_GUIDE_AND_RUNBOOK.md](USER_GUIDE_AND_RUNBOOK.md#layer-2--operator-runbook).
+Layer 2 runbook: [USER_GUIDE_AND_RUNBOOK.md](USER_GUIDE_AND_RUNBOOK.md#layer-2--operator-runbook). Do not post Cesari-logo tuples as official Electric Sheep.

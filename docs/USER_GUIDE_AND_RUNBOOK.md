@@ -29,7 +29,7 @@ You do **not** need the Pi terminal for normal viewing. Printable one-pager: [FR
 2. **Furnace-built zips are pre-configured:** when packaged on a Pi with `secrets.env`, the zip includes that furnace’s Jellyfin URL, API key, user id, and library id. Launch the channel — credentials apply on first run if the registry is empty; the flock list should load without manual paste.
 3. **Otherwise** (Windows packaging host or empty registry): open the channel → **Settings** → enter Jellyfin connection values. An operator runs `python3 scripts/jellyfin_id_dump.py` on the Pi and gives you `baseUrl`, `apiKey`, `userId`, `libraryId` (never share the API key in chat/email — paste on the TV only) → save Settings.
 
-**Everyday use:** launch JellyFlam3 → pick a sheep → ambient loop plays. With **shuffle** on (channel 1.0.28+), the mix includes archive gens plus **pedigree** and **tuple** folders. A **tuple** is one longer clip: sheep A, then a morph into sheep B. During that middle morph only, a quiet mark sits in the lower-right corner (the Electric Sheep logo PNG on the default private furnace; the credit “artwork by Scott Draves and the Electric Sheep” if that Pi is in commercial-safe `commercial_mode`). Loops A and B have no mark. When you press **Play**, the Pi **stops rendering** new sheep until the TV has been idle for several minutes (see [idle gate](#idle-gate-behavior) below).
+**Everyday use:** launch JellyFlam3 → pick a sheep → ambient loop plays. With **shuffle** on (channel 1.0.28+), the mix includes archive gens plus **pedigree** and **tuple** folders. A **tuple** is one longer clip: sheep A, then a morph into sheep B. During that middle morph only, a quiet mark sits in the lower-right corner (the Electric Sheep logo PNG on the default private furnace; the credit “artwork by Scott Draves and the Electric Sheep” if that Pi is in commercial-safe `commercial_mode`). Loops A and B have no mark. That mark is **not** a license to post the clip as official Electric Sheep — operators, see [Layer 2](#tuple-watermark-and-cesari-logo). When you press **Play**, the Pi **stops rendering** new sheep until the TV has been idle for several minutes (see [idle gate](#idle-gate-behavior) below).
 
 **Deep link smoke (optional):** after an operator dumps item Guids (`jellyfin_id_dump.py --items`), a specific sheep can be launched with `contentId=<Guid>` via the Roku ECP port (developer mode).
 
@@ -517,6 +517,16 @@ After the balanced `genomes/samples/` set is rendered and Jellyfin Items Tags in
 
 If commercial-on yields an **empty** flock, Items Tags are missing — check sidecar + enrich before blaming the client.
 
+**Two knobs:** furnace `license.commercial_mode` does **not** stop the worker from rendering NC sheep. Roku/Kodi toggles only hide NC at playback. They default **off** independently. Turning commercial-safe **on the TV only** still plays CC tuples that already have the Cesari logo burned in.
+
+### Tuple watermark and Cesari logo
+
+Default private mixed furnaces (`license.commercial_mode: false`) burn Laura Cesari’s Electric Sheep mascot on the **tuple edge** only. That PNG is **not** MIT and **not** Free Sheep CC ([NOTICE](../NOTICE), [watermark README](media/watermark/README.md)).
+
+- **Do not** republish those MP4s (USB dump, Discord, web, Channel Store, a friend’s furnace) as official Electric Sheep, and **do not** use the watermark files as a Roku/Kodi channel icon.
+- Peering today shares `.flam3` genomes, not marked MP4s. Copying `by-generation/tuple/*.mp4` **does** export the mark.
+- Venue / public / CC-only path: set furnace `license.commercial_mode: true`, turn client commercial-safe **on**, and **re-encode** old tuples if they must not carry the logo. New encodes then use “artwork by Scott Draves and the Electric Sheep” instead of the mascot.
+- JellyFlam3 is not affiliated with Spotworks LLC.
 
 ### Stills (screensaver feedstock)
 
@@ -542,7 +552,7 @@ Deploy via **`git pull` on the Pi** — not scp of a Windows working tree (LF + 
 
 ### Pull catalog MP4s to a Windows workstation
 
-Copy flock loops from each furnace (catalog `by-generation` only — not `_refactor-preview`):
+Copy flock loops from each furnace (catalog `by-generation` only — not `_refactor-preview`). Tuple MP4s from a private mixed furnace may carry the Cesari edge mark — household-only; see [Tuple watermark and Cesari logo](#tuple-watermark-and-cesari-logo).
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/scrape_fleet_sheep.ps1
@@ -683,6 +693,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | Share security | `pipeline/share_security.py`, `docs/phase3/05_SHARED_SHEEP_SECURITY.md` |
 | Link capacity / N_max | `pipeline/link_capacity.py`, `docs/phase4/07_CONCURRENT_CLIENTS.md` |
 | Library disk check | `pipeline/library_disk.py`, `docs/phase4/06_LIBRARY_DISK_ROTATE.md` |
+| License / Cesari watermark | [NOTICE](../NOTICE), [phase1/07](phase1/07_LICENSE_AND_METADATA.md), [watermark README](media/watermark/README.md), [Layer 2](#tuple-watermark-and-cesari-logo) |
 | Roku client | `roku-channel/`, `docs/phase1/08_ROKU_BRIGHTSCRIPT.md` |
 | Kodi screensaver | `kodi-screensaver/`, [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) |
 | Architecture | `docs/Pi5_Flam3_VoD_Pipeline.md` |
