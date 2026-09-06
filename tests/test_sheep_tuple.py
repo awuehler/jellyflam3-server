@@ -11,6 +11,7 @@ from pipeline.sheep_tuple import (
     combine_parent_genomes,
     effective_watermark_style,
     effective_watermark_text,
+    is_cesari_watermark_image,
     is_tuple_stem,
     parent_eligible,
     parse_tuple_ids,
@@ -185,6 +186,44 @@ def test_omitted_commercial_mode_allows_private_logo():
     }
     assert effective_watermark_style(cfg) == "image"
     assert watermark_overlay_filter(cfg) is not None
+
+
+def test_operator_png_overlays_on_private_and_public(tmp_path: Path):
+    """Custom (non-Cesari) PNG is allowed on both flock modes."""
+    png = tmp_path / "my-bug.png"
+    png.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 16)
+    cfg = {
+        "_repo_root": str(tmp_path),
+        "vod": {"fps": 24, "max_duration_sec_hard": 60, "allow_bypass_max": True},
+        "tuple": {"stage_duration_sec": 13, "watermark_on_edge": True},
+        "watermark": {"style": "image", "image": str(png)},
+    }
+    assert not is_cesari_watermark_image(png)
+    cfg["license"] = {"commercial_mode": False}
+    assert effective_watermark_style(cfg) == "image"
+    priv = watermark_overlay_filter(cfg)
+    assert priv is not None and priv[1] == png
+    cfg["license"] = {"commercial_mode": True}
+    assert effective_watermark_style(cfg) == "image"
+    pub = watermark_overlay_filter(cfg)
+    assert pub is not None and pub[1] == png
+    assert watermark_drawtext_filter(cfg) is None
+
+
+def test_cesari_filename_still_skipped_on_public_even_outside_docs(tmp_path: Path):
+    """Renaming is not enough — Electric-Sheep-Icon* stays public-blocked."""
+    png = tmp_path / "Electric-Sheep-Icon-7A8B99.png"
+    png.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 16)
+    cfg = {
+        "_repo_root": str(tmp_path),
+        "license": {"commercial_mode": True},
+        "vod": {"fps": 24, "max_duration_sec_hard": 60, "allow_bypass_max": True},
+        "tuple": {"watermark_on_edge": True},
+        "watermark": {"style": "image", "image": str(png)},
+    }
+    assert is_cesari_watermark_image(png)
+    assert effective_watermark_style(cfg) == "text"
+    assert watermark_overlay_filter(cfg) is None
 
 
 def test_watermark_image_missing_falls_back_to_text(

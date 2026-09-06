@@ -32,7 +32,7 @@ This guide is the **single home** for tuple encode, edge-stage watermark, and ca
 | **Duration** | `tuple.stage_duration_sec` default **13**; clamp so `3 × stage` stays at or under the host **hard** max (04a 60 s; never above 120 s) |
 | **Catalog layout** | `/media/sheep/by-generation/tuple/electricsheep.tuple.{from}_to_{to}.mp4` |
 | **Sidecar** | `type: tuple`, `from_id`, `to_id`, `watermark`, `segments` (loop_a / edge / loop_b times) |
-| **Watermark** | Edge stage only. **Private furnace** (`license.commercial_mode: false`, default) may overlay the Cesari PNG when `style: image`. **Commercial-safe / public furnace** (`commercial_mode: true`) never burns that logo pending Spotworks / Draves / Cesari permission — it draws **“artwork by Scott Draves and the Electric Sheep”**. Missing PNG or `style: text` → drawtext. |
+| **Watermark** | Edge stage only. **Private furnace** may overlay the Cesari PNG when `style: image`. **Commercial-safe / public** never burns that logo pending permission — ES attribution sentence instead. An **operator PNG** (`watermark.image`, not a Cesari filename) overlays on **both**. Missing PNG or `style: text` → drawtext. |
 | **Playback** | Roku `shuffleFlock` allowlists **`tuple`** and **`pedigree`** (plus archive gens). Kodi already walks all `by-generation/` children |
 | **Shears** | Deleting a parent cascades matching tuple MP4s, sidecars, stills, and inbox/done genomes |
 | **Idle cron** | `pipeline.breed_idle` may pick **`tuple`** as a random mode beside mutate / cross / blend / interpolate |
@@ -78,9 +78,13 @@ Household / mixed flock only. Provisional until Spotworks, Scott Draves, or Laur
 - ffmpeg overlays the PNG at **45% opacity**. At 1920×1080 the bug is about 17% of frame height — a corner mark, not a title card.
 - If the PNG is missing on the furnace, the worker logs a warning and falls back to the text string (below).
 
+### Operator PNG (private and public)
+
+Set `watermark.image` to a PNG you own (RGBA, ~180×180, transparent padding). Do **not** use `Electric-Sheep-Icon*` or `Electric-Sheep-Logo*`. Same overlay geometry as the default (lower right, 45% opacity, edge stage only). Works with `license.commercial_mode` **false or true**. Restart the worker; re-furnace tuples. Paths: [watermark README](../media/watermark/README.md#operator-png-both-flocks).
+
 ### Commercial-safe / public furnace — attribution text
 
-When `license.commercial_mode: true` (venue / CC-only / published path) the Cesari mascot is **never** burned in, even if `style: image` and the PNG is on disk. Also used when `style: text`, or when the PNG is missing on a private furnace.
+When `license.commercial_mode: true` (venue / CC-only / published path) the Cesari mascot is **never** burned in. Also used when `style: text`, or when the PNG is missing. An operator PNG still overlays on this path.
 
 - Commercial-safe copy: **`artwork by Scott Draves and the Electric Sheep`** (ES’s prescribed credit; used when yaml left the short default).
 - Private fallback / explicit `style: text`: **`Electric Sheep`**
@@ -125,6 +129,7 @@ See `tuple:` and `watermark:` in [`configs/jellyflam3.yaml.example`](../../confi
 - [x] Sidecar records watermark metadata
 - [x] Disable via `watermark.enabled` / `tuple.watermark_on_edge` (skip overlay)
 - [x] Commercial-safe flock (`commercial_mode: true`) skips Cesari logo PNG → ES attribution sentence
+- [x] Operator PNG (`watermark.image` not a Cesari filename) overlays on private and public flocks
 - [ ] Watermark on loop MP4s and stills — parked
 
 ## See also

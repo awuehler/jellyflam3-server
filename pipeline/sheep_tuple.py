@@ -34,11 +34,28 @@ _TO = "_to_"
 DEFAULT_WATERMARK_IMAGE = "docs/media/watermark/Electric-Sheep-Icon-7A8B99.png"
 DEFAULT_WATERMARK_TEXT = "Electric Sheep"
 PUBLIC_ATTRIBUTION_TEXT = "artwork by Scott Draves and the Electric Sheep"
+_CESARI_WATERMARK_NAMES = frozenset(
+    {
+        "electric-sheep-icon.png",
+        "electric-sheep-icon-sm.png",
+        "electric-sheep-icon-7a8b99.png",
+        "electric-sheep-logo.svg",
+        "electric-sheep-logo.png",
+    }
+)
 
 
 def flock_is_commercial_safe(cfg: dict[str, Any]) -> bool:
     """True when ``license.commercial_mode`` is on (CC-only / venue / public-safe paths)."""
     return bool((cfg.get("license") or {}).get("commercial_mode", False))
+
+
+def is_cesari_watermark_image(path: Path | str) -> bool:
+    """True for shipped Electric Sheep mascot/wordmark files (not operator art)."""
+    name = Path(path).name.lower()
+    if name in _CESARI_WATERMARK_NAMES:
+        return True
+    return name.startswith("electric-sheep-icon") or name.startswith("electric-sheep-logo")
 
 
 def cesari_logo_allowed(cfg: dict[str, Any]) -> bool:
@@ -47,11 +64,14 @@ def cesari_logo_allowed(cfg: dict[str, Any]) -> bool:
 
 
 def effective_watermark_style(cfg: dict[str, Any]) -> str:
-    """Configured style, except commercial-safe furnaces never burn the Cesari logo PNG."""
+    """Configured style. Commercial-safe furnaces skip Cesari PNGs only; operator art still overlays."""
     style = str(tuple_cfg(cfg)["watermark"].get("style") or "image").lower()
-    if style == "image" and not cesari_logo_allowed(cfg):
+    if style != "image":
+        return style
+    raw = str(tuple_cfg(cfg)["watermark"].get("image") or DEFAULT_WATERMARK_IMAGE)
+    if is_cesari_watermark_image(raw) and not cesari_logo_allowed(cfg):
         return "text"
-    return style
+    return "image"
 
 
 def effective_watermark_text(cfg: dict[str, Any]) -> str:
@@ -277,6 +297,7 @@ def watermark_overlay_filter(cfg: dict[str, Any]) -> tuple[str, Path] | None:
         if (
             flock_is_commercial_safe(cfg)
             and str(wm.get("style") or "image").lower() == "image"
+            and is_cesari_watermark_image(str(wm.get("image") or DEFAULT_WATERMARK_IMAGE))
         ):
             log.info(
                 "commercial-safe flock (license.commercial_mode=true); "

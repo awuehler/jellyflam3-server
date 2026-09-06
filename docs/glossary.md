@@ -214,7 +214,7 @@ The **middle stage** of a **tuple**: genetic morph A→B via `flam3-genome seque
 
 ### Tuple
 
-Phase 4: one catalog MP4 of **loop A + edge(A→B) + loop B** (`electricsheep.tuple.{from}_to_{to}` under `by-generation/tuple/`). A→B and B→A are distinct. The mark appears **only on the edge**, lower right, ~45% opacity, hard cut on/off: Cesari PNG on private furnaces (`commercial_mode: false`); ES attribution sentence on commercial-safe furnaces. Clients shuffle tuples like other sheep.
+Phase 4: one catalog MP4 of **loop A + edge(A→B) + loop B** (`electricsheep.tuple.{from}_to_{to}` under `by-generation/tuple/`). A→B and B→A are distinct. The mark appears **only on the edge**, lower right, ~45% opacity, hard cut on/off: Cesari PNG on private furnaces (`commercial_mode: false`); ES attribution sentence on commercial-safe furnaces unless `watermark.image` is an operator PNG (then that bug is used on **both**). Clients shuffle tuples like other sheep.
 
 ### Dynamic duration
 

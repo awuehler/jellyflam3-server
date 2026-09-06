@@ -29,6 +29,7 @@ All notable changes to this project are documented here. Format loosely follows 
 - Commercial-safe furnaces skip the Cesari Electric Sheep logo on tuple edges and burn the ES attribution sentence instead (`license.commercial_mode: true`). Private flock may still overlay the PNG pending permission.
 - NOTICE / LICENSE carve-out for Cesari watermark assets; Layer 2 operator warning; furnace `commercial_mode` no longer documented as culling NC at render.
 - User guide: full private → public and public → private furnace sequences (yaml, worker, tags, tuple re-furnace, client toggles).
+- Operator PNG (`watermark.image`) overlays on private mixed **and** commercial-safe furnaces; Cesari filenames stay public-blocked.
 
 ## [v0.3.1] — 2026-08-23
 

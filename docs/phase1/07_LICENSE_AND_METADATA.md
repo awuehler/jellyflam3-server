@@ -53,7 +53,7 @@ ingest → infer_tags_from_genome → write sidecar (required)
 | `sheep-ID` | Sheep serial (from filename) |
 | `human` / `brood` | Provenance (designer vs algorithm) |
 
-When `license.commercial_mode: true` on the **furnace**, the worker does **not** skip NC genomes. That flag currently (1) selects the tuple **watermark** (no Cesari logo; ES attribution sentence — [watermark README](../media/watermark/README.md)) and (2) is the same *name* as the **client** playback filter. Roku `commercialMode` / Kodi `commercial_mode` hide `cc-by-nc` at the TV (Items Tags). Turn both on for a venue path; they are independent knobs. BrightScript honors the client contract below.
+When `license.commercial_mode: true` on the **furnace**, the worker does **not** skip NC genomes. That flag currently (1) selects the tuple **watermark** (no Cesari logo; ES attribution sentence unless `watermark.image` is an operator PNG — [watermark README](../media/watermark/README.md)) and (2) is the same *name* as the **client** playback filter. Roku `commercialMode` / Kodi `commercial_mode` hide `cc-by-nc` at the TV (Items Tags). Turn both on for a venue path; they are independent knobs. BrightScript honors the client contract below.
 
 ## `.flam3` filename convention
 
@@ -140,14 +140,14 @@ Gold / Infinidream / paid masters?
 ```yaml
 license:
   commercial_mode: false    # default: private mixed flock; worker still renders BY + BY-NC
-                            # true → tuple watermark skips Cesari PNG (does not cull NC from the furnace)
+                            # true → skip Cesari PNG (operator PNG still overlays; does not cull NC)
   exclude_tags:
     - cc-by-nc
   default_tags: []
 ```
 
 - **Sidecar** (`{stem}.jellyflam3.json` beside the catalog MP4) is the **sole metadata source of truth** for that sheep (license/tags in Phase 1; stills index, pedigree hints, viewer votes, aliases). Jellyfin Items Tags/Overview are derived caches for clients. Schema below.
-- **Furnace `license.commercial_mode` vs client `commercialMode`:** two knobs. Clients hide NC when their toggle is on. The furnace flag does **not** stop NC renders; it does change the tuple edge watermark (Cesari PNG only on the private mixed default). See [watermark README](../media/watermark/README.md).
+- **Furnace `license.commercial_mode` vs client `commercialMode`:** two knobs. Clients hide NC when their toggle is on. The furnace flag does **not** stop NC renders; it does change the tuple edge watermark (Cesari PNG only on the private mixed default; an operator PNG in `watermark.image` overlays on both). See [watermark README](../media/watermark/README.md).
 - **Commercial filter** stays in **client** code for the uncommon venue case; leave furnace `license.commercial_mode: false` / client `commercialMode=false` unless you need that path. Flipping only the TV filter does **not** restamp Cesari-marked tuples already on disk.
 - **Client contract (Roku VoD + Kodi SS):** filter is **client-side on Jellyfin Items `Tags` only** (never send `Tags=` query params — that emptied the lab flock). When commercial-safe is **on**:
   - **Keep** items that carry a safe tag (`cc-by`, `cc-by-sa`, `cc0`, `public-domain`, `pd`) and **do not** carry `by-nc` / `cc-by-nc`.

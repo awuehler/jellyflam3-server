@@ -121,8 +121,10 @@ stills:
 license:
   # Phase 1 SoT = on-disk sidecar *.jellyflam3.json (Items API Tags best-effort).
   # Worker still renders BY and BY-NC either way — this flag does not cull NC genomes.
-  # false = private mixed flock. Tuple edge may overlay Cesari PNG (household-only, provisional).
-  # true  = tuple edge never burns the Cesari logo; uses ES attribution sentence.
+  # false = private mixed flock. Tuple edge may overlay Cesari PNG (household-only, provisional)
+  #         or an operator PNG (watermark.image) on both private and public.
+  # true  = never burns the Cesari logo (ES attribution sentence instead).
+  #         Operator PNG in watermark.image still overlays.
   # Client Roku commercialMode / Kodi commercial_mode hide NC at playback (separate knobs).
   # See docs/phase1/07_LICENSE_AND_METADATA.md and docs/media/watermark/README.md
   commercial_mode: false
@@ -294,9 +296,9 @@ tuple:
 
 watermark:
   enabled: true
-  style: image             # image | text. commercial_mode true always uses attribution text (no Cesari PNG).
-  text: "Electric Sheep"   # private fallback; commercial-safe upgrades the default to the ES credit sentence
+  style: image             # image | text. Cesari default PNG is private-only; operator PNG overlays on both.
+  text: "Electric Sheep"   # private fallback; commercial-safe + Cesari image upgrades the default to the ES credit
   font: ""                 # empty → DejaVu / Liberation / FreeSans if present
   opacity: 0.45            # quiet corner bug (PNG or text)
   position: lower_right    # 48px from right, 36px from bottom; PNG overlay is always this corner
-  image: docs/media/watermark/Electric-Sheep-Icon-7A8B99.png  # private flock only; 180×180 white + #7A8B99
+  image: docs/media/watermark/Electric-Sheep-Icon-7A8B99.png  # Cesari default (private-only). Operator PNG: /var/lib/jellyflam3/watermark.png (both flocks)
