@@ -706,8 +706,9 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
             sidecar["to_id"] = ids[1] if ids else None
             sidecar["watermark"] = {
                 "enabled": bool(wm.get("enabled") and tuple_cfg(cfg)["watermark_on_edge"]),
-                "style": wm.get("style") or "text",
+                "style": wm.get("style") or "image",
                 "text": wm.get("text") or "Electric Sheep",
+                "image": wm.get("image") or "",
             }
             sidecar["segments"] = duration_meta.get("segments") or segment_times(cfg)
         if harmony is not None:

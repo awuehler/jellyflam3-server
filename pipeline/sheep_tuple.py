@@ -31,6 +31,7 @@ log = logging.getLogger("jellyflam3.tuple")
 
 TUPLE_KIND = "tuple"
 _TO = "_to_"
+DEFAULT_WATERMARK_IMAGE = "docs/media/watermark/Electric-Sheep-Icon-7A8B99.png"
 
 
 def tuple_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
@@ -43,12 +44,12 @@ def tuple_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
         "watermark_on_edge": bool(raw.get("watermark_on_edge", True)),
         "watermark": {
             "enabled": bool(wm.get("enabled", True)),
-            "style": str(wm.get("style") or "text"),
+            "style": str(wm.get("style") or "image"),
             "text": str(wm.get("text") or "Electric Sheep"),
             "font": str(wm.get("font") or ""),
             "opacity": float(wm.get("opacity", 0.45)),
             "position": str(wm.get("position") or "lower_right"),
-            "image": str(wm.get("image") or ""),
+            "image": str(wm.get("image") or DEFAULT_WATERMARK_IMAGE),
         },
     }
 
@@ -192,13 +193,27 @@ def resolve_watermark_font(cfg: dict[str, Any]) -> Path | None:
     return None
 
 
+def resolve_watermark_image(cfg: dict[str, Any]) -> Path | None:
+    """PNG path for ``style: image``, resolved against ``_repo_root`` when relative."""
+    raw = str(tuple_cfg(cfg)["watermark"].get("image") or "").strip()
+    if not raw:
+        return None
+    img = Path(raw)
+    if not img.is_absolute():
+        img = Path(cfg.get("_repo_root") or ".") / img
+    if img.is_file():
+        return img
+    return None
+
+
 def watermark_drawtext_filter(cfg: dict[str, Any]) -> str | None:
     """ffmpeg ``drawtext`` filter enabled only on the edge stage, or None if unavailable."""
     tc = tuple_cfg(cfg)
     wm = tc["watermark"]
     if not tc["watermark_on_edge"] or not wm["enabled"]:
         return None
-    if str(wm.get("style") or "text").lower() == "image":
+    style = str(wm.get("style") or "image").lower()
+    if style == "image" and resolve_watermark_image(cfg) is not None:
         return None
     font = resolve_watermark_font(cfg)
     if font is None:
@@ -231,13 +246,14 @@ def watermark_overlay_filter(cfg: dict[str, Any]) -> tuple[str, Path] | None:
     wm = tc["watermark"]
     if not tc["watermark_on_edge"] or not wm["enabled"]:
         return None
-    if str(wm.get("style") or "").lower() != "image":
+    if str(wm.get("style") or "image").lower() != "image":
         return None
-    raw = str(wm.get("image") or "").strip()
-    if not raw:
-        return None
-    img = Path(raw)
-    if not img.is_file():
+    img = resolve_watermark_image(cfg)
+    if img is None:
+        log.warning(
+            "watermark.style=image but PNG missing (%s); falling back to text if a font exists",
+            wm.get("image"),
+        )
         return None
     segs = segment_times(cfg)
     start = segs["edge"]["start_sec"]

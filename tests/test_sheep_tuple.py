@@ -15,9 +15,11 @@ from pipeline.sheep_tuple import (
     segment_times,
     stage_nframes,
     stage_tuple_inbox,
+    tuple_cfg,
     tuple_duration_sec,
     tuple_stem,
     watermark_drawtext_filter,
+    watermark_overlay_filter,
 )
 
 ORBITABLE = """<flame name="t" size="1920 1080" rotate="90">
@@ -124,6 +126,50 @@ def test_watermark_filter_enabled_on_edge_only(tmp_path: Path, monkeypatch: pyte
     assert "enable='between(t," in filt
     segs = segment_times(cfg)
     assert f"{segs['edge']['start_sec']:.3f}" in filt
+
+
+def test_watermark_default_is_repo_png():
+    repo = Path(__file__).resolve().parents[1]
+    cfg = {
+        "_repo_root": str(repo),
+        "vod": {"fps": 24, "max_duration_sec_hard": 60, "allow_bypass_max": True},
+        "tuple": {"stage_duration_sec": 13, "watermark_on_edge": True},
+        "watermark": {},
+    }
+    wm = tuple_cfg(cfg)["watermark"]
+    assert wm["style"] == "image"
+    assert wm["image"].endswith("Electric-Sheep-Icon-7A8B99.png")
+    overlay = watermark_overlay_filter(cfg)
+    assert overlay is not None
+    filt, img = overlay
+    assert img.name == "Electric-Sheep-Icon-7A8B99.png"
+    assert img.is_file()
+    assert "overlay=" in filt
+    assert "enable='between(t," in filt
+    assert watermark_drawtext_filter(cfg) is None
+
+
+def test_watermark_image_missing_falls_back_to_text(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    cfg = _cfg(tmp_path)
+    cfg["watermark"] = {
+        "enabled": True,
+        "style": "image",
+        "text": "Electric Sheep",
+        "image": "docs/media/watermark/no-such.png",
+        "opacity": 0.45,
+        "position": "lower_right",
+    }
+    assert watermark_overlay_filter(cfg) is None
+    font = tmp_path / "DejaVuSans.ttf"
+    font.write_bytes(b"fake")
+    monkeypatch.setattr(
+        "pipeline.sheep_tuple.resolve_watermark_font", lambda _cfg: font
+    )
+    filt = watermark_drawtext_filter(cfg)
+    assert filt is not None
+    assert "Electric Sheep" in filt
 
 
 def test_stage_tuple_inbox_and_refuse_duplicate(tmp_path: Path):

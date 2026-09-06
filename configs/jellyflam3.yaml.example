@@ -292,9 +292,9 @@ tuple:
 
 watermark:
   enabled: true
-  style: text              # text | image
-  text: "Electric Sheep"
+  style: image             # image | text (image missing → drawtext fallback)
+  text: "Electric Sheep"   # fallback: white 28px, 45% opacity, lower right, edge stage only
   font: ""                 # empty → DejaVu / Liberation / FreeSans if present
-  opacity: 0.45
-  position: lower_right    # lower_right | lower_left | upper_right | upper_left
-  image: ""                # PNG path when style: image
+  opacity: 0.45            # quiet corner bug (PNG or text)
+  position: lower_right    # 48px from right, 36px from bottom; PNG overlay is always this corner
+  image: docs/media/watermark/Electric-Sheep-Icon-7A8B99.png  # 180×180 white + #7A8B99

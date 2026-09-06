@@ -41,7 +41,7 @@ SIDECAR_RESERVED_KEYS = frozenset(
         "type",  # loop (default) | edge | tuple (guide 03)
         "from_id",
         "to_id",
-        "watermark",  # {enabled, style, text} (guide 03)
+        "watermark",  # {enabled, style, text, image} (guide 03)
         "viewer_feedback",  # likes/loves/votes/share_candidate (guides 01, 08)
         "alias",  # adjective_surname (guide 09)
         "alias_source",  # auto | human | llm
