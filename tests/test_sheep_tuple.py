@@ -9,6 +9,8 @@ import pytest
 from pipeline.sheep_tuple import (
     catalog_tuple_mp4,
     combine_parent_genomes,
+    effective_watermark_style,
+    effective_watermark_text,
     is_tuple_stem,
     parent_eligible,
     parse_tuple_ids,
@@ -132,6 +134,7 @@ def test_watermark_default_is_repo_png():
     repo = Path(__file__).resolve().parents[1]
     cfg = {
         "_repo_root": str(repo),
+        "license": {"commercial_mode": False},
         "vod": {"fps": 24, "max_duration_sec_hard": 60, "allow_bypass_max": True},
         "tuple": {"stage_duration_sec": 13, "watermark_on_edge": True},
         "watermark": {},
@@ -139,6 +142,7 @@ def test_watermark_default_is_repo_png():
     wm = tuple_cfg(cfg)["watermark"]
     assert wm["style"] == "image"
     assert wm["image"].endswith("Electric-Sheep-Icon-7A8B99.png")
+    assert effective_watermark_style(cfg) == "image"
     overlay = watermark_overlay_filter(cfg)
     assert overlay is not None
     filt, img = overlay
@@ -147,6 +151,40 @@ def test_watermark_default_is_repo_png():
     assert "overlay=" in filt
     assert "enable='between(t," in filt
     assert watermark_drawtext_filter(cfg) is None
+
+
+def test_commercial_safe_flock_skips_cesari_logo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """license.commercial_mode true → ES attribution text, not the Cesari mascot."""
+    repo = Path(__file__).resolve().parents[1]
+    cfg = {
+        "_repo_root": str(repo),
+        "license": {"commercial_mode": True},
+        "vod": {"fps": 24, "max_duration_sec_hard": 60, "allow_bypass_max": True},
+        "tuple": {"stage_duration_sec": 13, "watermark_on_edge": True},
+        "watermark": {},
+    }
+    assert tuple_cfg(cfg)["watermark"]["style"] == "image"
+    assert effective_watermark_style(cfg) == "text"
+    assert effective_watermark_text(cfg) == "artwork by Scott Draves and the Electric Sheep"
+    assert watermark_overlay_filter(cfg) is None
+    font = tmp_path / "DejaVuSans.ttf"
+    font.write_bytes(b"fake")
+    monkeypatch.setattr("pipeline.sheep_tuple.resolve_watermark_font", lambda _cfg: font)
+    filt = watermark_drawtext_filter(cfg)
+    assert filt is not None
+    assert "artwork by Scott Draves and the Electric Sheep" in filt
+
+
+def test_omitted_commercial_mode_allows_private_logo():
+    repo = Path(__file__).resolve().parents[1]
+    cfg = {
+        "_repo_root": str(repo),
+        "vod": {"fps": 24, "max_duration_sec_hard": 60, "allow_bypass_max": True},
+        "tuple": {"watermark_on_edge": True},
+        "watermark": {},
+    }
+    assert effective_watermark_style(cfg) == "image"
+    assert watermark_overlay_filter(cfg) is not None
 
 
 def test_watermark_image_missing_falls_back_to_text(

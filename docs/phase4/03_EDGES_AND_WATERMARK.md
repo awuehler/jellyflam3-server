@@ -32,7 +32,7 @@ This guide is the **single home** for tuple encode, edge-stage watermark, and ca
 | **Duration** | `tuple.stage_duration_sec` default **13**; clamp so `3 × stage` stays at or under the host **hard** max (04a 60 s; never above 120 s) |
 | **Catalog layout** | `/media/sheep/by-generation/tuple/electricsheep.tuple.{from}_to_{to}.mp4` |
 | **Sidecar** | `type: tuple`, `from_id`, `to_id`, `watermark`, `segments` (loop_a / edge / loop_b times) |
-| **Watermark** | Default: PNG overlay `docs/media/watermark/Electric-Sheep-Icon-7A8B99.png` (`style: image`) on the edge stage only. `style: text` still burns `Electric Sheep`. Missing PNG falls back to drawtext. |
+| **Watermark** | Edge stage only. **Private furnace** (`license.commercial_mode: false`, default) may overlay the Cesari PNG when `style: image`. **Commercial-safe / public furnace** (`commercial_mode: true`) never burns that logo pending Spotworks / Draves / Cesari permission — it draws **“artwork by Scott Draves and the Electric Sheep”**. Missing PNG or `style: text` → drawtext. |
 | **Playback** | Roku `shuffleFlock` allowlists **`tuple`** and **`pedigree`** (plus archive gens). Kodi already walks all `by-generation/` children |
 | **Shears** | Deleting a parent cascades matching tuple MP4s, sidecars, stills, and inbox/done genomes |
 | **Idle cron** | `pipeline.breed_idle` may pick **`tuple`** as a random mode beside mutate / cross / blend / interpolate |
@@ -69,18 +69,21 @@ A tuple is **one MP4** (~39 s when each stage is 13 s). The morph between stages
 
 Placement is the lower-right corner, inset **48 px** from the right and **36 px** from the bottom.
 
-### Default — PNG logo (`watermark.style: image`)
+### Private furnace — PNG logo (`license.commercial_mode: false` + `watermark.style: image`)
 
-Asset: [`docs/media/watermark/Electric-Sheep-Icon-7A8B99.png`](../media/watermark/Electric-Sheep-Icon-7A8B99.png) (180×180 RGBA).
+Household / mixed flock only. Provisional until Spotworks, Scott Draves, or Laura Cesari say otherwise. Asset: [`docs/media/watermark/Electric-Sheep-Icon-7A8B99.png`](../media/watermark/Electric-Sheep-Icon-7A8B99.png) (180×180 RGBA).
 
 - White Electric Sheep silhouette; former black spiral/gaps filled **`#7A8B99`** (cool slate) so the swirl still reads on dark fractals without punching a black hole on bright ones.
 - Canvas around the glyph is **transparent** (not a black plate).
 - ffmpeg overlays the PNG at **45% opacity**. At 1920×1080 the bug is about 17% of frame height — a corner mark, not a title card.
 - If the PNG is missing on the furnace, the worker logs a warning and falls back to the text string (below).
 
-### Fallback — text string (`watermark.style: text`, or missing PNG)
+### Commercial-safe / public furnace — attribution text
 
-- Copy: **`Electric Sheep`**
+When `license.commercial_mode: true` (venue / CC-only / published path) the Cesari mascot is **never** burned in, even if `style: image` and the PNG is on disk. Also used when `style: text`, or when the PNG is missing on a private furnace.
+
+- Commercial-safe copy: **`artwork by Scott Draves and the Electric Sheep`** (ES’s prescribed credit; used when yaml left the short default).
+- Private fallback / explicit `style: text`: **`Electric Sheep`**
 - White, 28 px, DejaVu / Liberation / FreeSans if present; **45% opacity**; same lower-right inset.
 - Same edge-only window and hard cut. No font → no text overlay (tuple still catalogs, unmarked).
 
@@ -95,7 +98,7 @@ See `tuple:` and `watermark:` in [`configs/jellyflam3.yaml.example`](../../confi
 | Artifact | Kind | Role |
 |---|---|---|
 | `pipeline/sheep_tuple.py` | pipeline | Naming, combine genomes, duration, watermark filter, inbox stage |
-| `docs/media/watermark/Electric-Sheep-Icon-7A8B99.png` | media | Default edge-stage logo (180×180, white + `#7A8B99`) |
+| `docs/media/watermark/Electric-Sheep-Icon-7A8B99.png` | media | Private-flock edge-stage logo (180×180, white + `#7A8B99`; not used when commercial_mode) |
 | `pipeline/worker.py` | pipeline | 3-stage sequence, edge watermark, sidecar `type: tuple` |
 | `/media/sheep/by-generation/tuple/` | media | Catalog folder (`catalog_generation` → `tuple`) |
 | `*.jellyflam3.json` (`type: tuple`, `from_id`, `to_id`) | sidecar | Parent linkage for playback + Shears |
@@ -121,6 +124,7 @@ See `tuple:` and `watermark:` in [`configs/jellyflam3.yaml.example`](../../confi
 - [x] New tuple ingests burn watermark on the **edge stage only**
 - [x] Sidecar records watermark metadata
 - [x] Disable via `watermark.enabled` / `tuple.watermark_on_edge` (skip overlay)
+- [x] Commercial-safe flock (`commercial_mode: true`) skips Cesari logo PNG → ES attribution sentence
 - [ ] Watermark on loop MP4s and stills — parked
 
 ## See also

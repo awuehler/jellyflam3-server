@@ -32,6 +32,34 @@ log = logging.getLogger("jellyflam3.tuple")
 TUPLE_KIND = "tuple"
 _TO = "_to_"
 DEFAULT_WATERMARK_IMAGE = "docs/media/watermark/Electric-Sheep-Icon-7A8B99.png"
+DEFAULT_WATERMARK_TEXT = "Electric Sheep"
+PUBLIC_ATTRIBUTION_TEXT = "artwork by Scott Draves and the Electric Sheep"
+
+
+def flock_is_commercial_safe(cfg: dict[str, Any]) -> bool:
+    """True when ``license.commercial_mode`` is on (CC-only / venue / public-safe paths)."""
+    return bool((cfg.get("license") or {}).get("commercial_mode", False))
+
+
+def cesari_logo_allowed(cfg: dict[str, Any]) -> bool:
+    """Private household flock only, pending Spotworks / Draves / Cesari permission."""
+    return not flock_is_commercial_safe(cfg)
+
+
+def effective_watermark_style(cfg: dict[str, Any]) -> str:
+    """Configured style, except commercial-safe furnaces never burn the Cesari logo PNG."""
+    style = str(tuple_cfg(cfg)["watermark"].get("style") or "image").lower()
+    if style == "image" and not cesari_logo_allowed(cfg):
+        return "text"
+    return style
+
+
+def effective_watermark_text(cfg: dict[str, Any]) -> str:
+    """Corner credit. Commercial-safe furnaces use ES's prescribed attribution if yaml left the short default."""
+    configured = str(tuple_cfg(cfg)["watermark"].get("text") or DEFAULT_WATERMARK_TEXT)
+    if flock_is_commercial_safe(cfg) and configured.strip() in ("", DEFAULT_WATERMARK_TEXT):
+        return PUBLIC_ATTRIBUTION_TEXT
+    return configured
 
 
 def tuple_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
@@ -45,7 +73,7 @@ def tuple_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
         "watermark": {
             "enabled": bool(wm.get("enabled", True)),
             "style": str(wm.get("style") or "image"),
-            "text": str(wm.get("text") or "Electric Sheep"),
+            "text": str(wm.get("text") or DEFAULT_WATERMARK_TEXT),
             "font": str(wm.get("font") or ""),
             "opacity": float(wm.get("opacity", 0.45)),
             "position": str(wm.get("position") or "lower_right"),
@@ -212,8 +240,7 @@ def watermark_drawtext_filter(cfg: dict[str, Any]) -> str | None:
     wm = tc["watermark"]
     if not tc["watermark_on_edge"] or not wm["enabled"]:
         return None
-    style = str(wm.get("style") or "image").lower()
-    if style == "image" and resolve_watermark_image(cfg) is not None:
+    if effective_watermark_style(cfg) == "image" and resolve_watermark_image(cfg) is not None:
         return None
     font = resolve_watermark_font(cfg)
     if font is None:
@@ -221,7 +248,7 @@ def watermark_drawtext_filter(cfg: dict[str, Any]) -> str | None:
     segs = segment_times(cfg)
     start = segs["edge"]["start_sec"]
     end = segs["edge"]["end_sec"]
-    text = str(wm.get("text") or "Electric Sheep").replace(":", "\\:").replace("'", "\\'")
+    text = effective_watermark_text(cfg).replace(":", "\\:").replace("'", "\\'")
     opacity = max(0.05, min(1.0, float(wm.get("opacity", 0.45))))
     pos = str(wm.get("position") or "lower_right").lower()
     if pos in ("upper_left", "top_left"):
@@ -246,7 +273,15 @@ def watermark_overlay_filter(cfg: dict[str, Any]) -> tuple[str, Path] | None:
     wm = tc["watermark"]
     if not tc["watermark_on_edge"] or not wm["enabled"]:
         return None
-    if str(wm.get("style") or "image").lower() != "image":
+    if effective_watermark_style(cfg) != "image":
+        if (
+            flock_is_commercial_safe(cfg)
+            and str(wm.get("style") or "image").lower() == "image"
+        ):
+            log.info(
+                "commercial-safe flock (license.commercial_mode=true); "
+                "skipping Cesari logo PNG pending permission, using attribution text"
+            )
         return None
     img = resolve_watermark_image(cfg)
     if img is None:

@@ -1,10 +1,21 @@
 # Tuple edge watermark assets
 
-Default encode overlay is **`Electric-Sheep-Icon-7A8B99.png`**. Look and timing: [docs/phase4/03_EDGES_AND_WATERMARK.md](../../phase4/03_EDGES_AND_WATERMARK.md#look-and-feel-what-the-viewer-sees).
+Look and timing: [docs/phase4/03_EDGES_AND_WATERMARK.md](../../phase4/03_EDGES_AND_WATERMARK.md#look-and-feel-what-the-viewer-sees).
+
+## Private mixed vs commercial-safe / public
+
+This is the encode boundary until Spotworks, Scott Draves, or Laura Cesari say otherwise. It is **not** the CC-vs-NC genome tag split (that was the inverted rule). Knob: `license.commercial_mode`.
+
+| Flock | `license.commercial_mode` | Edge-stage mark |
+|---|---|---|
+| **Private mixed** (default household: BY + BY-NC) | `false` | Cesari PNG (`Electric-Sheep-Icon-7A8B99.png`) when `watermark.style: image`. Missing PNG or `style: text` → short `Electric Sheep` drawtext. |
+| **Commercial-safe / public** (venue, CC-only, Channel Store, published) | `true` | **Never** the Cesari logo — even if `style: image` and the PNG is on disk. Burns **“artwork by Scott Draves and the Electric Sheep”**. |
+
+Sidecars record the **effective** style (`text` on commercial-safe furnaces even when yaml still says `image`). Already-catalogued tuples keep whatever was burned in until they are re-rendered.
 
 | File | Role |
 |---|---|
-| `Electric-Sheep-Icon-7A8B99.png` | **Shipped default** — 180×180 RGBA; white sheep, `#7A8B99` spiral; transparent padding |
+| `Electric-Sheep-Icon-7A8B99.png` | Private-mixed-flock edge-stage logo — 180×180 RGBA; white sheep, `#7A8B99` spiral; transparent padding |
 | `Electric-Sheep-Icon.png` | Source 1024×1024 (too large to overlay without scale; keep as art) |
 | `Electric-Sheep-Logo.svg` | Wordmark lockup (ffmpeg on the Pis does not decode SVG) |
 
@@ -14,7 +25,7 @@ Do not point `watermark.image` at the 1024 icon or the SVG.
 
 Not legal advice. Project genome policy: [docs/phase1/07_LICENSE_AND_METADATA.md](../../phase1/07_LICENSE_AND_METADATA.md). ES reuse text: [electricsheep.org/license](https://electricsheep.org/license/).
 
-**Bottom line:** Tuple **content** (Free Sheep A/B + flam3 `sequence=`) is still within this repo’s Electric Sheep guidelines. The **default Cesari-style logo overlay is the piece that is not clearly covered** by those guidelines. Safer if you want a tight match: keep the edge mark, but use **original JellyFlam3 art**, or the **full attribution sentence** (“artwork by Scott Draves and the Electric Sheep”), and keep electricsheep.org / Scott Draves in the sidecar or Overview. Treat the current PNG as **provisional** until Spotworks says otherwise (`info@spotworks.com`), especially before any public or Channel Store build.
+**Bottom line:** Tuple **content** (Free Sheep A/B + flam3 `sequence=`) is still within this repo’s Electric Sheep guidelines. The **Cesari-style logo overlay is the piece that is not clearly covered** by those guidelines. **Encode policy (trademark-safer, pending correspondence):** **private mixed** flocks (`license.commercial_mode: false`) may overlay the PNG. **Commercial-safe / public** flocks (`commercial_mode: true`) **never** burn that mascot; they draw **“artwork by Scott Draves and the Electric Sheep”**. Treat the PNG as **provisional** until Spotworks, Scott Draves, or Laura Cesari say otherwise (`info@spotworks.com`). Do not use it on a Channel Store or other public build.
 
 ### Provenance (Laura Cesari)
 
@@ -26,19 +37,19 @@ Creative Commons on Free Sheep **animations and parameters** does **not** licens
 
 | ES reuse recipe | This watermark |
 |---|---|
-| Credit **“artwork by Scott Draves and the Electric Sheep”** | Logo bug, or the words `Electric Sheep` only |
-| Web: legible text + link to electricsheep.org | No on-screen Scott Draves or electricsheep.org |
+| Credit **“artwork by Scott Draves and the Electric Sheep”** | **Commercial-safe / public** flocks. **Private mixed** flocks use the Cesari PNG or the short `Electric Sheep` fallback |
+| Web: legible text + link to electricsheep.org | No on-screen electricsheep.org link (Scott Draves is named on the public path) |
 | Corner watermark OK for TV/wall as **attribution** | Edge-only, 45% opacity, ~13 s of ~39 s |
 | Redistributed files: `electricsheep.{gen}.{id}` | Tuples: `electricsheep.tuple.{from}_to_{to}` (parent IDs present; not the archive form) |
 
-A corner mark is closer to their **attribution method** than a title card, but the prescribed **credit string** is missing. Nominative fair use covers **naming** Electric Sheep in docs; it is a weak fit for a **source-identifying mark on our own product**. The Roku channel is still named JellyFlam3, which helps; an official-looking sheep bug on the morph can still read as official Electric Sheep.
+Nominative fair use covers **naming** Electric Sheep in docs; it is a weak fit for a **source-identifying mark on our own product**. The Roku channel is still named JellyFlam3. The Cesari bug is **private mixed flock only** until permission; the **commercial-safe / public** path uses their written credit string instead of their logo.
 
 ### Practical heat
 
 | Context | Genome CC | Logo / wordmark |
 |---|---|---|
-| Private house flock, Opt-Out | Consistent with existing policy | Low practical heat; still not the credit string they asked for |
+| **Private mixed** flock, Opt-Out (`commercial_mode: false`) | Consistent with existing policy | Cesari PNG allowed (provisional household use) |
 | Peering / packing files for others | Filenames + sidecar help; tuple names are imperfect | Distributing the PNG in git is extra |
-| Venue / `commercial_mode` / Channel Store | NC still filtered if you turn that on | Logo on a published channel is the hot case |
+| **Commercial-safe / public** (`commercial_mode: true`) / Channel Store | NC still filtered | **No Cesari logo** — ES attribution sentence; leftover PNG-marked files remain the hot case if they leak onto this path |
 
 Gold Sheep / HiFi / paid masters stay out of the furnace. Household / private viewing of Free Sheep remains the lane ES describes as free with attribution.

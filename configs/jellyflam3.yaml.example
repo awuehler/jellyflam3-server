@@ -120,8 +120,8 @@ stills:
 
 license:
   # Phase 1 SoT = on-disk sidecar *.jellyflam3.json (Items API Tags best-effort).
-  # false = private flock shows BY + BY-NC (default; venue use uncommon)
-  # true = exclude cc-by-nc from commercial-safe paths
+  # false = private mixed flock (BY + BY-NC); Cesari PNG overlay allowed (household-only, provisional)
+  # true  = exclude cc-by-nc; no Cesari logo — burn “artwork by Scott Draves and the Electric Sheep”
   # See docs/phase1/07_LICENSE_AND_METADATA.md — brood/robot remix → NC; % change does not flip
   commercial_mode: false
   exclude_tags:
@@ -292,9 +292,9 @@ tuple:
 
 watermark:
   enabled: true
-  style: image             # image | text (image missing → drawtext fallback)
-  text: "Electric Sheep"   # fallback: white 28px, 45% opacity, lower right, edge stage only
+  style: image             # image | text. commercial_mode true always uses attribution text (no Cesari PNG).
+  text: "Electric Sheep"   # private fallback; commercial-safe upgrades the default to the ES credit sentence
   font: ""                 # empty → DejaVu / Liberation / FreeSans if present
   opacity: 0.45            # quiet corner bug (PNG or text)
   position: lower_right    # 48px from right, 36px from bottom; PNG overlay is always this corner
-  image: docs/media/watermark/Electric-Sheep-Icon-7A8B99.png  # 180×180 white + #7A8B99
+  image: docs/media/watermark/Electric-Sheep-Icon-7A8B99.png  # private flock only; 180×180 white + #7A8B99

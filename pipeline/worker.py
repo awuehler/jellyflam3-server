@@ -34,6 +34,8 @@ from pipeline.genome_signals import (
     should_still_loop,
 )
 from pipeline.sheep_tuple import (
+    effective_watermark_style,
+    effective_watermark_text,
     is_tuple_stem,
     parse_tuple_ids,
     segment_times,
@@ -701,14 +703,15 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
         if is_tuple:
             ids = parse_tuple_ids(base)
             wm = tuple_cfg(cfg)["watermark"]
+            style = effective_watermark_style(cfg)
             sidecar["type"] = "tuple"
             sidecar["from_id"] = ids[0] if ids else None
             sidecar["to_id"] = ids[1] if ids else None
             sidecar["watermark"] = {
                 "enabled": bool(wm.get("enabled") and tuple_cfg(cfg)["watermark_on_edge"]),
-                "style": wm.get("style") or "image",
-                "text": wm.get("text") or "Electric Sheep",
-                "image": wm.get("image") or "",
+                "style": style,
+                "text": effective_watermark_text(cfg),
+                "image": (wm.get("image") or "") if style == "image" else "",
             }
             sidecar["segments"] = duration_meta.get("segments") or segment_times(cfg)
         if harmony is not None:
