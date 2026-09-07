@@ -3,8 +3,10 @@ from unittest.mock import MagicMock, patch
 
 from pipeline.flock_artwork import (
     apply_flock_artwork,
+    attach_posters_mode,
     attach_primary_after_refresh,
     extract_poster_for_mp4,
+    posters_ingest_state,
 )
 from pipeline.jellyfin_client import ImageAttachResult, MetadataEnrichResult
 
@@ -25,6 +27,17 @@ def _cfg(attach: bool = True, api_key: str = "k") -> dict:
             "commercial_collection_name": "commercial-safe",
         },
     }
+
+
+def test_attach_posters_mode_values():
+    assert attach_posters_mode({"jellyfin": {}}) == "auto"
+    assert attach_posters_mode({"jellyfin": {"attach_posters": True}}) == "always"
+    assert attach_posters_mode({"jellyfin": {"attach_posters": False}}) == "never"
+    assert attach_posters_mode({"jellyfin": {"attach_posters": "auto"}}) == "auto"
+    assert posters_ingest_state({"jellyfin": {"attach_posters": True}})["ingest_enabled"]
+    assert not posters_ingest_state({"jellyfin": {"attach_posters": False}})[
+        "ingest_enabled"
+    ]
 
 
 def test_extract_poster_writes_sidecar_fields(tmp_path: Path):
@@ -49,6 +62,60 @@ def test_extract_skipped_when_disabled(tmp_path: Path):
     mp4 = tmp_path / "x.mp4"
     mp4.write_bytes(b"x")
     info = extract_poster_for_mp4(_cfg(attach=False), mp4, duration_sec=1.0)
+    assert info["status"] == "skipped"
+
+
+def test_extract_skipped_when_auto_standalone(tmp_path: Path, monkeypatch):
+    mp4 = tmp_path / "x.mp4"
+    mp4.write_bytes(b"x")
+    cfg = _cfg()
+    cfg["jellyfin"]["attach_posters"] = "auto"
+    monkeypatch.setattr("pipeline.peering.furnace_mesh_size", lambda _cfg, live=None: 1)
+    info = extract_poster_for_mp4(cfg, mp4, duration_sec=1.0)
+    assert info["status"] == "skipped"
+    assert "mesh=1" in info["error"]
+
+
+def test_extract_when_auto_mesh_has_peer(tmp_path: Path, monkeypatch):
+    mp4 = tmp_path / "electricsheep.247.00505.mp4"
+    mp4.write_bytes(b"fake")
+    poster = tmp_path / "electricsheep.247.00505-poster.jpg"
+    cfg = _cfg()
+    cfg["jellyfin"]["attach_posters"] = "auto"
+    monkeypatch.setattr("pipeline.peering.furnace_mesh_size", lambda _cfg, live=None: 2)
+    with patch(
+        "pipeline.flock_artwork.extract_mid_loop_poster",
+        return_value=poster,
+    ) as ext:
+        poster.write_bytes(b"\xff\xd8\xff")
+        info = extract_poster_for_mp4(cfg, mp4, duration_sec=13.0)
+    assert info["ok"] is True
+    ext.assert_called_once()
+
+
+def test_extract_force_ignores_never(tmp_path: Path):
+    mp4 = tmp_path / "electricsheep.247.00505.mp4"
+    mp4.write_bytes(b"fake")
+    poster = tmp_path / "electricsheep.247.00505-poster.jpg"
+    with patch(
+        "pipeline.flock_artwork.extract_mid_loop_poster",
+        return_value=poster,
+    ) as ext:
+        poster.write_bytes(b"\xff\xd8\xff")
+        info = extract_poster_for_mp4(
+            _cfg(attach=False), mp4, duration_sec=13.0, force=True
+        )
+    assert info["ok"] is True
+    ext.assert_called_once()
+
+
+def test_omitted_attach_posters_is_auto_off_standalone(tmp_path: Path, monkeypatch):
+    mp4 = tmp_path / "x.mp4"
+    mp4.write_bytes(b"x")
+    cfg = _cfg()
+    del cfg["jellyfin"]["attach_posters"]
+    monkeypatch.setattr("pipeline.peering.furnace_mesh_size", lambda _cfg, live=None: 1)
+    info = extract_poster_for_mp4(cfg, mp4, duration_sec=1.0)
     assert info["status"] == "skipped"
 
 

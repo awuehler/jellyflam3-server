@@ -4,7 +4,9 @@ Requirements: ffmpeg; optional Jellyfin api_key / attach_posters / refresh setti
 
 Usage: ``apply_flock_artwork`` after ingest, or ``extract_poster_for_mp4`` / ``attach_primary_after_refresh`` separately.
 
-Assumptions: Soft-fail dicts for sidecars; metadata enrich still runs when poster upload is skipped.
+Assumptions: Soft-fail dicts for sidecars; metadata enrich still runs when poster
+upload is skipped. Ingest default is ``attach_posters: auto`` (standalone off,
+2+ live mesh furnaces on). Operator backfill passes ``force=True``.
 """
 
 from __future__ import annotations
@@ -21,16 +23,65 @@ from pipeline.tool_lookup import tool as _tool
 log = logging.getLogger("jellyflam3.flock_artwork")
 
 
+def attach_posters_mode(cfg: dict[str, Any]) -> str:
+    """``always`` / ``never`` / ``auto`` from ``jellyfin.attach_posters`` (default auto)."""
+    raw = (cfg.get("jellyfin") or {}).get("attach_posters", "auto")
+    if isinstance(raw, bool):
+        return "always" if raw else "never"
+    s = str(raw).strip().lower()
+    if s in ("true", "yes", "on", "always", "1"):
+        return "always"
+    if s in ("false", "no", "off", "never", "0"):
+        return "never"
+    return "auto"
+
+
+def posters_ingest_state(
+    cfg: dict[str, Any],
+    *,
+    mesh_size: int | None = None,
+) -> dict[str, Any]:
+    """Ingest poster policy: standalone auto=off; 2+ live mesh furnaces auto=on."""
+    mode = attach_posters_mode(cfg)
+    if mode == "always":
+        mesh = 1 if mesh_size is None else int(mesh_size)
+        return {"mode": mode, "mesh_size": mesh, "ingest_enabled": True}
+    if mode == "never":
+        mesh = 1 if mesh_size is None else int(mesh_size)
+        return {"mode": mode, "mesh_size": mesh, "ingest_enabled": False}
+    from pipeline.peering import furnace_mesh_size
+
+    mesh = furnace_mesh_size(cfg) if mesh_size is None else int(mesh_size)
+    return {"mode": mode, "mesh_size": mesh, "ingest_enabled": mesh >= 2}
+
+
+def posters_enabled_for_ingest(cfg: dict[str, Any]) -> bool:
+    """True when the worker should extract a mid-loop poster after encode."""
+    return bool(posters_ingest_state(cfg)["ingest_enabled"])
+
+
 def extract_poster_for_mp4(
     cfg: dict[str, Any],
     mp4: Path,
     *,
     duration_sec: float,
+    force: bool = False,
 ) -> dict[str, Any]:
-    """Write ``{stem}-poster.jpg`` beside ``mp4``. Soft-fail dict for sidecar."""
-    jf = cfg.get("jellyfin") or {}
-    if not jf.get("attach_posters", True):
-        return {"ok": False, "status": "skipped", "error": "attach_posters disabled"}
+    """Write ``{stem}-poster.jpg`` beside ``mp4``. Soft-fail dict for sidecar.
+
+    ``force=True`` is for operator backfill (ignores ingest auto/never).
+    """
+    if not force:
+        state = posters_ingest_state(cfg)
+        if not state["ingest_enabled"]:
+            return {
+                "ok": False,
+                "status": "skipped",
+                "error": (
+                    f"attach_posters {state['mode']} "
+                    f"(mesh={state['mesh_size']}, ingest_enabled=false)"
+                ),
+            }
 
     dest = poster_path_for_mp4(mp4)
     try:
@@ -65,11 +116,13 @@ def attach_primary_after_refresh(
     client: JellyfinClient | None = None,
     sleep: Any = time.sleep,
     refresh: bool = True,
+    force: bool = False,
 ) -> dict[str, Any]:
     """Resolve item, metadata enrich + optional Primary upload.
 
     Soft-fail dict. Metadata (Overview/SortName/Tags) still runs when
-    ``attach_posters`` is false; only the Images API upload is skipped then.
+    ingest posters are off; only the Images API upload is skipped then.
+    ``force=True`` uploads a Primary when an operator backfill extracted a poster.
 
     When ``refresh`` is true (default ingest path), calls Library/Refresh and
     waits ``refresh_settle_sec``. Backfill should pass ``refresh=False`` and
@@ -85,7 +138,7 @@ def attach_primary_after_refresh(
     settle = float(jf.get("refresh_settle_sec", 2))
     retries = int(jf.get("image_upload_retries", 5))
     backoff = float(jf.get("image_upload_backoff_sec", 1.0))
-    want_poster = bool(jf.get("attach_posters", True))
+    want_poster = bool(force or posters_enabled_for_ingest(cfg))
     side = sidecar or {}
 
     try:

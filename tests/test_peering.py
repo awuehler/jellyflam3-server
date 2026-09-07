@@ -3,7 +3,9 @@ import json
 
 from pipeline.peering import (
     assess_peering_readiness,
+    count_online_furnace_peers_from_status,
     ensure_layout,
+    furnace_mesh_size,
     hygiene,
     is_opted_in,
     list_inbox_flam3,
@@ -95,6 +97,59 @@ def _live_share_mocks(monkeypatch):
             "dns_name": "pi.test.ts.net",
         },
     )
+
+
+def test_count_online_furnace_peers_from_status():
+    data = {
+        "Self": {"Online": True, "HostName": "rpi-jellyflam3-16a"},
+        "Peer": {
+            "k1": {
+                "Online": True,
+                "HostName": "rpi-jellyflam3-08a",
+                "Tags": ["tag:jellyflam3"],
+            },
+            "k2": {
+                "Online": True,
+                "HostName": "rpi-kodi-08a",
+                "Tags": [],
+            },
+            "k3": {
+                "Online": False,
+                "HostName": "rpi-jellyflam3-04a",
+                "Tags": ["tag:jellyflam3"],
+            },
+            "k4": {
+                "Online": True,
+                "DNSName": "rpi-jellyflam3-04a.tailnet.ts.net",
+                "Tags": [],
+            },
+        },
+    }
+    assert count_online_furnace_peers_from_status(data) == 2
+
+
+def test_furnace_mesh_size_opt_out_is_standalone(tmp_path: Path):
+    cfg = _cfg(tmp_path)
+    assert furnace_mesh_size(cfg) == 1
+
+
+def test_furnace_mesh_size_live_with_peer(tmp_path: Path, monkeypatch):
+    cfg = _cfg(tmp_path)
+    ack = tmp_path / "genomes" / "peers" / "OPT_IN"
+    ack.parent.mkdir(parents=True)
+    ack.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr("pipeline.peering.unit_active", lambda _u: "active")
+    monkeypatch.setattr(
+        "pipeline.peering._tailscale_status_brief",
+        lambda: {
+            "installed": True,
+            "ok": True,
+            "backend_state": "Running",
+            "online": True,
+            "online_furnace_peers": 1,
+        },
+    )
+    assert furnace_mesh_size(cfg) == 2
 
 
 def test_tailscale_ready_requires_running_online():

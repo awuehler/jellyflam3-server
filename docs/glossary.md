@@ -110,7 +110,7 @@ Electric Sheep flock epoch (e.g. **247**). Archive URLs: `…/generation-{N}/bes
 
 ### Worker
 
-`pipeline/worker.py` / `jellyflam3-worker.service`. Polls **`genomes/inbox`**, runs tax → TV-optimize → animate → ffmpeg → ingest to **catalog**, writes **sidecar**, optional Jellyfin poster/metadata.
+`pipeline/worker.py` / `jellyflam3-worker.service`. Polls **`genomes/inbox`**, runs tax → TV-optimize → animate → ffmpeg → ingest to **catalog**, writes **sidecar**, optional Jellyfin poster/metadata (`jellyfin.attach_posters`: auto / true / false).
 
 ### Inbox
 
@@ -274,7 +274,7 @@ The Sheep **library** in Jellyfin — curated MP4s, posters, metadata, tags. Sin
 
 ### Poster / Primary
 
-Mid-loop JPEG beside MP4 and/or Jellyfin **Primary** image via Images API. Phase 2 flock UX (`pipeline/flock_artwork.py`, `backfill_posters.py`).
+Mid-loop JPEG beside MP4 and/or Jellyfin **Primary** image via Images API. After encode, **auto** (default): skip on a standalone furnace; create when **2+** furnaces are live on Tailscale/Syncthing. Override with `jellyfin.attach_posters: true` / `false`. Operator backfill always extracts. Phase 2 flock UX (`pipeline/flock_artwork.py`, `backfill_posters.py`). Layer 2: [Catalog posters](USER_GUIDE_AND_RUNBOOK.md#catalog-posters-after-render).
 
 ### Commercial mode
 

@@ -30,6 +30,7 @@ All notable changes to this project are documented here. Format loosely follows 
 - NOTICE / LICENSE carve-out for Cesari watermark assets; Layer 2 operator warning; furnace `commercial_mode` no longer documented as culling NC at render.
 - User guide: full private → public and public → private furnace sequences (yaml, worker, tags, tuple re-furnace, client toggles).
 - Operator PNG (`watermark.image`) overlays on private mixed **and** commercial-safe furnaces; Cesari filenames stay public-blocked.
+- Ingest posters default to `jellyfin.attach_posters: auto` — skip on a standalone furnace; create when 2+ furnaces are live on Tailscale/Syncthing. `true` / `false` override; `backfill_posters` always extracts.
 
 ## [v0.3.1] — 2026-08-23
 

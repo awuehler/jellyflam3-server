@@ -112,11 +112,12 @@ def test_backfill_one_poster_only(tmp_path: Path):
     with patch(
         "pipeline.backfill_posters.extract_poster_for_mp4",
         return_value={"ok": True, "status": "extracted", "poster_path": str(poster)},
-    ):
+    ) as ext:
         poster.write_bytes(b"\xff\xd8\xff")
         result = backfill_one(cfg, mp4, skip_jellyfin=True)
 
     assert result["status"] == "poster_only"
+    assert ext.call_args.kwargs.get("force") is True
     side = json.loads(mp4.with_suffix(".jellyflam3.json").read_text(encoding="utf-8"))
     assert side["poster"]["ok"] is True
 

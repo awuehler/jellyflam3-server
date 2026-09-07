@@ -175,6 +175,59 @@ def tailscale_ready(ts: dict[str, Any]) -> bool:
     return ts.get("online") is True
 
 
+def _peer_is_furnace(peer: dict[str, Any], *, tag: str) -> bool:
+    """True when a Tailscale Peer looks like a JellyFlam3 furnace (tag or hostname)."""
+    want = str(tag or "tag:jellyflam3").lower()
+    if not want.startswith("tag:"):
+        want = f"tag:{want}"
+    for t in peer.get("Tags") or []:
+        raw = str(t).lower()
+        tagged = raw if raw.startswith("tag:") else f"tag:{raw}"
+        if tagged == want:
+            return True
+    host = f"{peer.get('HostName') or ''} {peer.get('DNSName') or ''}".lower()
+    return "jellyflam3" in host
+
+
+def count_online_furnace_peers_from_status(
+    data: dict[str, Any],
+    *,
+    tag: str = "tag:jellyflam3",
+) -> int:
+    """Count online Tailscale peers that look like furnaces (excludes Self)."""
+    peers = data.get("Peer") or {}
+    if not isinstance(peers, dict):
+        return 0
+    n = 0
+    for peer in peers.values():
+        if not isinstance(peer, dict):
+            continue
+        if not peer.get("Online"):
+            continue
+        if _peer_is_furnace(peer, tag=tag):
+            n += 1
+    return n
+
+
+def furnace_mesh_size(
+    cfg: dict[str, Any],
+    live: dict[str, Any] | None = None,
+) -> int:
+    """This furnace plus online jellyflam3 Tailscale peers.
+
+    Opt Out, or Opt In that is not share-live, counts as **1** (standalone).
+    Two or more means another furnace is actually on the mesh.
+    """
+    if not is_opted_in(cfg):
+        return 1
+    if live is None:
+        live = assess_peering_readiness(cfg)
+    if not live.get("share_live"):
+        return 1
+    others = int((live.get("tailscale") or {}).get("online_furnace_peers") or 0)
+    return 1 + max(0, others)
+
+
 def assess_peering_readiness(cfg: dict[str, Any]) -> dict[str, Any]:
     """Live Opt In / Syncthing / Tailscale readiness (never stale JSON)."""
     opted_in = is_opted_in(cfg)
@@ -222,9 +275,18 @@ def write_status(cfg: dict[str, Any], extra: dict[str, Any] | None = None) -> Pa
         },
         "tailscale": live["tailscale"],
         "inbox_flam3_count": live["inbox_flam3_count"],
+        "furnace_mesh_size": furnace_mesh_size(cfg, live=live),
     }
     if extra:
         body.update(extra)
+    try:
+        from pipeline.flock_artwork import posters_ingest_state
+
+        body["posters"] = posters_ingest_state(
+            cfg, mesh_size=body["furnace_mesh_size"]
+        )
+    except Exception as exc:  # noqa: BLE001
+        body["posters"] = {"error": str(exc)}
     path.write_text(json.dumps(body, indent=2) + "\n", encoding="utf-8")
     return path
 
@@ -249,6 +311,7 @@ def _tailscale_status_brief() -> dict[str, Any]:
         "backend_state": data.get("BackendState"),
         "dns_name": self.get("DNSName"),
         "online": self.get("Online"),
+        "online_furnace_peers": count_online_furnace_peers_from_status(data),
     }
 
 

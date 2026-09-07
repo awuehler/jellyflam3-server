@@ -150,7 +150,9 @@ def backfill_one(
     sidecar.setdefault("duration_sec", duration_sec)
 
     if skip_jellyfin:
-        poster_info = extract_poster_for_mp4(cfg, mp4, duration_sec=duration_sec)
+        poster_info = extract_poster_for_mp4(
+            cfg, mp4, duration_sec=duration_sec, force=True
+        )
         sidecar["poster"] = poster_info
         if poster_info.get("poster_path"):
             sidecar["poster_path"] = poster_info["poster_path"]
@@ -163,7 +165,10 @@ def backfill_one(
         }
 
     # Reuse ingest orchestration but without per-item Library/Refresh.
-    poster_info = extract_poster_for_mp4(cfg, mp4, duration_sec=duration_sec)
+    # Operator backfill always extracts, even when ingest attach_posters is auto/never.
+    poster_info = extract_poster_for_mp4(
+        cfg, mp4, duration_sec=duration_sec, force=True
+    )
     sidecar["poster"] = poster_info
     if poster_info.get("poster_path"):
         sidecar["poster_path"] = poster_info["poster_path"]
@@ -187,6 +192,7 @@ def backfill_one(
         client=client,
         sleep=sleep,
         refresh=False,
+        force=True,
     )
     sidecar["jellyfin_image"] = attach
     if isinstance(attach.get("metadata"), dict):

@@ -10,7 +10,7 @@ Ingested MP4s often lack useful Primary images; Jellyfin and jellyfin-roku show 
 
 ## Guidelines (locked)
 
-1. After successful encode in `pipeline/worker.py`, extract a **mid-loop** frame with `ffmpeg`.
+1. After successful encode in `pipeline/worker.py`, extract a **mid-loop** frame with `ffmpeg` when posters are in effect (`jellyfin.attach_posters`: **auto** skips a standalone furnace; **auto** creates when 2+ furnaces are live on Tailscale/Syncthing; `true` / `false` override).
 2. Write a poster file beside the MP4 under `/media/sheep/by-generation/…` (Jellyfin-friendly naming) **and** upload via Jellyfin Images API (`POST .../Items/{id}/Images/Primary`) with **retry/backoff** after `refresh_library` (item Id race).
 3. Enrich `*.jellyflam3.json` sidecar; best-effort Items Overview / SortName / tags.
 4. Provide a **backfill** path for existing catalog MP4s (one-shot script or worker flag).
@@ -29,7 +29,7 @@ Ingested MP4s often lack useful Primary images; Jellyfin and jellyfin-roku show 
 | **A** Mid-loop poster extract | Done | [`pipeline/poster.py`](../../pipeline/poster.py) — `{stem}-poster.jpg` beside MP4 |
 | **B** Safer item lookup | Done | `JellyfinClient.find_item_for_media` — library-scoped Path/Name scoring; `find_item_by_path_name` delegates |
 | **C** Images API upload + retry | Done | `JellyfinClient.upload_primary_image` — binary `POST .../Images/Primary`, retry/backoff on 404/race, soft-fail `ImageAttachResult` |
-| **D** Wire into new ingest | Done | [`pipeline/flock_artwork.py`](../../pipeline/flock_artwork.py) via `worker.process_genome` — extract → refresh → resolve → Primary; sidecar `poster` / `poster_path` / `jellyfin_image` |
+| **D** Wire into new ingest | Done | [`pipeline/flock_artwork.py`](../../pipeline/flock_artwork.py) via `worker.process_genome` — extract → refresh → resolve → Primary; sidecar `poster` / `poster_path` / `jellyfin_image`. Default **auto**: no poster on standalone; poster when 2+ mesh furnaces. |
 | **E** Metadata enrich | Done | `enrich_item_metadata` — Overview / SortName / Tags via Item GET+POST; tags-only fallback; sidecar `jellyfin_metadata` |
 | **F** Backfill flock | Done | `python -m pipeline.backfill_posters` — scan catalog MP4s; idle-gate aware; rate-limited; `--dry-run` / `--limit` / `--force` / `--poster-only` |
 | **G** Lab acceptance | Done | Owner confirmed Primary thumbnails in Jellyfin web, jellyfin-roku, JellyFlam3 Roku app, and `/media/sheep/by-generation` (2026-07-31) |
@@ -45,7 +45,7 @@ python -m pipeline.backfill_posters --config configs/jellyflam3.yaml --limit 10 
 python -m pipeline.backfill_posters --config configs/jellyflam3.yaml --interval-sec 1
 ```
 
-Skips sheep whose sidecar already shows poster + Primary (`uploaded` / `local_primary`) + metadata enrich (use `--force` to redo). One Library/Refresh at batch start (not per item).
+Skips sheep whose sidecar already shows poster + Primary (`uploaded` / `local_primary`) + metadata enrich (use `--force` to redo). One Library/Refresh at batch start (not per item). Backfill **always extracts** even when ingest `attach_posters` is `auto` or `false`.
 
 **Ops note (lab):** Jellyfin must be able to write media folders and `MetadataPath` (`/var/lib/jellyflam3` on the Pi). Add `jellyfin` to the `jellyflam3` group and `g+rwX` (setgid) on `/media/sheep/by-generation` + MetadataPath, then restart Jellyfin. Client prefers user-scoped Item GET and treats FS `{stem}-poster.jpg` + `ImageTags.Primary` as success (`local_primary`) before Images API upload.
 

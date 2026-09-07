@@ -105,8 +105,12 @@ jellyfin:
   library_id: "${JELLYFIN_LIBRARY_ID}"
   commercial_collection_name: commercial-safe
   refresh_after_ingest: true
-  # Phase 2 flock UX: mid-loop poster beside MP4 + Images API Primary upload
-  attach_posters: true
+  # Phase 2 flock UX: mid-loop poster beside MP4 + Images API Primary upload.
+  # auto  = standalone (Opt Out / lone furnace) skip posters after render;
+  #         2+ furnaces live on Tailscale+Syncthing → create posters.
+  # true  = always create after render (override).
+  # false = never create after render (override). Operator backfill still works.
+  attach_posters: auto
   refresh_settle_sec: 2
   image_upload_retries: 5
   image_upload_backoff_sec: 1.0

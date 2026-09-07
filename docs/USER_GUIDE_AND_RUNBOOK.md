@@ -278,6 +278,62 @@ export JELLYFLAM3_SMOKE=1
 # Success token: SMOKE_RENDER_OK
 ```
 
+### Catalog posters (after render)
+
+Default is `jellyfin.attach_posters: auto` in the example yaml. Live `configs/jellyflam3.yaml` is gitignored — `git pull` does **not** change it. Older yaml with `attach_posters: true` always creates posters until you edit it.
+
+| Setup | Default after encode | Why |
+|---|---|---|
+| **Standalone** furnace (Opt Out, or Opt In with no other furnace online) | **No** poster | Mesh size 1 |
+| **2+ furnaces** Opt In, Syncthing active, Tailscale online, ≥1 other `jellyflam3` peer | **Yes** — `{stem}-poster.jpg` beside the MP4 + Jellyfin Primary | Mesh size ≥ 2 |
+
+Check what this furnace will do on the **next** ingest (no worker restart needed for the check):
+
+```bash
+python3 -m pipeline.peering status
+# posters.mode / posters.ingest_enabled / posters.mesh_size
+```
+
+`python3 -m pipeline.backfill_posters` always extracts (operator one-shot). It does not follow ingest auto/never.
+
+#### Standalone — turn posters **on**
+
+1. Edit live yaml (`nano /opt/jellyflam3-server/configs/jellyflam3.yaml`):
+   ```yaml
+   jellyfin:
+     attach_posters: true
+   ```
+2. Restart the worker:
+   ```bash
+   sudo systemctl restart jellyflam3-worker
+   systemctl is-active jellyflam3-worker
+   ```
+3. New renders get a poster. Existing catalog MP4s do not — backfill them:
+   ```bash
+   python3 -m pipeline.backfill_posters --config configs/jellyflam3.yaml
+   ```
+
+To return to the default: `attach_posters: auto`, restart the worker.
+
+#### Standalone — keep posters **off** (default)
+
+Leave `attach_posters: auto` (or set `false`). Confirm `peering status` shows `ingest_enabled: false`. Do not run backfill unless you want FS posters anyway.
+
+#### Mesh (2+ furnaces) — keep posters **on** (default)
+
+Leave `attach_posters: auto`. After Opt In + another furnace online, `mesh_size` ≥ 2 and new renders get posters. Restart the worker once after you first Opt In (or after changing yaml) so the running process reloads config.
+
+#### Mesh — turn posters **off**
+
+1. Edit live yaml:
+   ```yaml
+   jellyfin:
+     attach_posters: false
+   ```
+2. Restart the worker. New renders skip extract/upload. Existing `{stem}-poster.jpg` files stay on disk (Shears delete still removes them with the sheep).
+
+Do **not** run `hw_profile apply` just to flip this flag (it rewrites the whole yaml).
+
 ### Curator: Sheep Shears (per-sheep)
 
 Always **dry-run first**. Confirm token is exactly `DELETE`.
@@ -795,6 +851,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | Link capacity / N_max | `pipeline/link_capacity.py`, `docs/phase4/07_CONCURRENT_CLIENTS.md` |
 | Library disk check | `pipeline/library_disk.py`, `docs/phase4/06_LIBRARY_DISK_ROTATE.md` |
 | License / Cesari watermark | [NOTICE](../NOTICE), [phase1/07](phase1/07_LICENSE_AND_METADATA.md), [watermark README](media/watermark/README.md), [Private vs public](#private-vs-public-furnace), [Use your own PNG](#use-your-own-png-private-and-public) |
+| Catalog posters after render | [Catalog posters](#catalog-posters-after-render) — `jellyfin.attach_posters` auto / true / false |
 | Roku client | `roku-channel/`, `docs/phase1/08_ROKU_BRIGHTSCRIPT.md` |
 | Kodi screensaver | `kodi-screensaver/`, [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) |
 | Architecture | `docs/Pi5_Flam3_VoD_Pipeline.md` |
