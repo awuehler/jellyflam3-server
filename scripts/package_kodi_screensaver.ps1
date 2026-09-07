@@ -32,6 +32,7 @@ New-Item -ItemType Directory -Force -Path $Stage | Out-Null
 Get-ChildItem -Path $Src -Recurse -File | Where-Object {
   $_.Name -ne ".gitkeep" -and
   $_.Extension -ne ".pyc" -and
+  $_.Name -notmatch '-(00|01)\.png$' -and
   ($_.FullName -notmatch '[\\/]__pycache__[\\/]') -and
   ($_.FullName -notmatch '[\\/]posters[\\/]')
 } | ForEach-Object {

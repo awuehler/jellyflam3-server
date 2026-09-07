@@ -40,7 +40,9 @@ if (Test-Path (Join-Path $Channel "registry\jellyflam3-presets.json")) {
 foreach ($folder in $folders) {
   $dir = Join-Path $Channel $folder
   if (-not (Test-Path $dir)) { continue }
-  Get-ChildItem -Path $dir -Recurse -File | Where-Object { $_.Name -ne ".gitkeep" } | ForEach-Object {
+  Get-ChildItem -Path $dir -Recurse -File | Where-Object {
+    $_.Name -ne ".gitkeep" -and $_.Name -notmatch '-(00|01)\.png$'
+  } | ForEach-Object {
     $rel = $_.FullName.Substring($Channel.Length + 1).Replace("\", "/")
     Add-File $_.FullName $rel
   }

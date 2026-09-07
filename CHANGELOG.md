@@ -31,6 +31,7 @@ All notable changes to this project are documented here. Format loosely follows 
 - User guide: full private → public and public → private furnace sequences (yaml, worker, tags, tuple re-furnace, client toggles).
 - Operator PNG (`watermark.image`) overlays on private mixed **and** commercial-safe furnaces; Cesari filenames stay public-blocked.
 - Ingest posters default to `jellyfin.attach_posters: auto` — skip on a standalone furnace; create when 2+ furnaces are live on Tailscale/Syncthing. `true` / `false` override; `backfill_posters` always extracts.
+- Kodi / Roku client icon and splash PNGs replaced (numbered `-00`/`-01` kept as source; packages ship the unnumbered files).
 
 ## [v0.3.1] — 2026-08-23
 

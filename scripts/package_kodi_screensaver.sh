@@ -32,7 +32,8 @@ rm -rf "$STAGE"
 mkdir -p "$STAGE"
 
 if command -v rsync >/dev/null 2>&1; then
-  rsync -a --exclude '.gitkeep' --exclude '__pycache__' --exclude '*.pyc' --exclude 'posters' "$SRC/" "$STAGE/"
+  rsync -a --exclude '.gitkeep' --exclude '__pycache__' --exclude '*.pyc' --exclude 'posters' \
+    --exclude '*-00.png' --exclude '*-01.png' "$SRC/" "$STAGE/"
 else
   python3 - <<PY
 import shutil
@@ -44,6 +45,8 @@ for p in src.rglob("*"):
     if not p.is_file():
         continue
     if p.name in skip_names or p.suffix == ".pyc":
+        continue
+    if p.name.endswith("-00.png") or p.name.endswith("-01.png"):
         continue
     if "__pycache__" in p.parts or "posters" in p.parts:
         continue

@@ -30,7 +30,8 @@ fi
   cd "$CHANNEL"
   if command -v zip >/dev/null 2>&1; then
     zip -r -9 "$OUT" "${ZIP_DIRS[@]}" \
-      -x "*.git*" -x "*__MACOSX*" -x "*.DS_Store" -x "images/.gitkeep" -x "registry/.gitkeep"
+      -x "*.git*" -x "*__MACOSX*" -x "*.DS_Store" -x "images/.gitkeep" -x "registry/.gitkeep" \
+      -x "images/*-00.png" -x "images/*-01.png"
   else
     python3 - <<PY
 import zipfile
@@ -46,6 +47,8 @@ with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
             continue
         for p in d.rglob("*"):
             if p.is_file() and p.name not in skip and p.name != ".gitkeep":
+                if p.name.endswith("-00.png") or p.name.endswith("-01.png"):
+                    continue
                 zf.write(p, p.relative_to(channel).as_posix())
 print(out)
 PY
