@@ -75,6 +75,15 @@ def _set_repeat(mode: str):
     xbmc.executebuiltin("PlayerControl(%s)" % builtin)
 
 
+def _shuffle_enabled() -> bool:
+    """Rotate through the flock in random order. Default on if the setting is unset."""
+    return (ADDON.getSetting("shuffle") or "true").lower() not in (
+        "false",
+        "0",
+        "no",
+    )
+
+
 def _load_flock():
     """Fetch + shuffle Jellyfin items; return list of {id,title,url} or []."""
     base = (ADDON.getSetting("server_url") or "").strip()
@@ -86,6 +95,7 @@ def _load_flock():
         "1",
         "yes",
     )
+    shuffle = _shuffle_enabled()
     try:
         limit = int(ADDON.getSetting("flock_limit") or "200")
     except ValueError:
@@ -111,9 +121,10 @@ def _load_flock():
         xbmc.log("%s: flock fetch failed: %s" % (ADDON_ID, exc), xbmc.LOGERROR)
         return []
 
-    items = jellyfin_flock.shuffle_copy(items)
+    if shuffle:
+        items = jellyfin_flock.shuffle_copy(items)
     xbmc.log(
-        "%s: flock loaded %s item(s)" % (ADDON_ID, len(items)),
+        "%s: flock loaded %s item(s) shuffle=%s" % (ADDON_ID, len(items), shuffle),
         xbmc.LOGINFO,
     )
     return items
@@ -205,9 +216,10 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
             return
         self._index += 1
         if self._index >= len(self._flock):
-            self._flock = jellyfin_flock.shuffle_copy(self._flock)
+            if _shuffle_enabled():
+                self._flock = jellyfin_flock.shuffle_copy(self._flock)
+                xbmc.log("%s: flock reshuffled" % ADDON_ID, xbmc.LOGINFO)
             self._index = 0
-            xbmc.log("%s: flock reshuffled" % ADDON_ID, xbmc.LOGINFO)
         self._play_current()
 
     def _watch_loop(self):

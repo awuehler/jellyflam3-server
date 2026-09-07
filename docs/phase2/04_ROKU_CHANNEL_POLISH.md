@@ -117,7 +117,7 @@ python3 -m pipeline.display_profiles list
 
 ### Continuous random flock playback (piece D2 — channel 1.0.20)
 
-Settings `shuffleFlock` (default `false`):
+Settings `shuffleFlock` (default `true`):
 
 - **false:** ambient seek-reloop of the selected sheep (unchanged).
 - **true:** at end-of-clip, advance to another sheep in **random order**. Eligible pool:

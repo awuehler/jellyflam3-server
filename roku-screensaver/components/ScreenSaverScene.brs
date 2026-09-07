@@ -15,6 +15,12 @@ sub init()
 
   m.reg = CreateObject("roRegistrySection", "JellyFlam3")
   applyJellyFlam3PackPresets(m.reg)
+  sf = m.reg.read("shuffleFlock")
+  if sf = invalid then sf = ""
+  if sf.Trim() = ""
+    m.reg.write("shuffleFlock", "true")
+    m.reg.flush()
+  end if
   m.baseUrl = m.reg.read("baseUrl")
   m.apiKey = m.reg.read("apiKey")
   m.userId = m.reg.read("userId")

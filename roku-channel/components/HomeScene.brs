@@ -183,7 +183,9 @@ sub ensureDefaults()
   if sm <> "mp4" and sm <> "hls"
     m.registry.write("streamMode", "mp4")
   end if
-  if m.registry.read("shuffleFlock") = invalid
+  sf = m.registry.read("shuffleFlock")
+  if sf = invalid then sf = ""
+  if sf.Trim() = ""
     m.registry.write("shuffleFlock", "true")
   end if
   m.registry.flush()
@@ -191,8 +193,9 @@ end sub
 
 function shuffleFlockEnabled() as boolean
   v = m.registry.read("shuffleFlock")
-  if v = invalid then return false
+  if v = invalid then return true
   tl = LCase(v.Trim())
+  if tl = "" then return true
   return (tl = "true" or tl = "1" or tl = "yes")
 end function
 

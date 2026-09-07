@@ -27,7 +27,7 @@ Section `JellyFlam3` (edit in-channel via **Settings** button, **\* Options**, o
 | `libraryId` | Sheep library ParentId (recommended) |
 | `commercialMode` | `true` / `false` — client-side filter on Items **Tags** only: keep `cc-by` / `cc0` / PD / `cc-by-sa`; hide NC and untagged items. Do **not** use Jellyfin `Tags=` query params. Overview `License:` is display-only |
 | `streamMode` | `mp4` (ambient loop default) or `hls` (remux compare) |
-| `shuffleFlock` | `true` / `false` — when true, play archive gens (`247…165`) in random order at EOF (skips `misc`/`test`); when false, seek-reloop one sheep |
+| `shuffleFlock` | `true` (default) / `false` — when true, play archive gens (`247…165`) in random order at EOF (skips `misc`/`test`); when false, seek-reloop one sheep |
 | `displayWidth` / `displayHeight` | From Settings **Fetch TV display** (`roDeviceInfo`) |
 | `uiResolution` / `uiWidth` / `uiHeight` | UI resolution name + pixels |
 | `videoMode` | e.g. `1080p`, `2160p60` |

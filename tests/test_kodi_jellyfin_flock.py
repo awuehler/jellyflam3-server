@@ -159,3 +159,7 @@ def test_screensaver_package_mentions_flock():
     ).read_text(encoding="utf-8")
     assert 'id="server_url"' in settings
     assert 'id="api_key"' in settings
+    assert 'id="shuffle"' in settings
+    assert 'default="true"' in settings
+    assert "_shuffle_enabled" in text
+    assert 'getSetting("shuffle")' in text

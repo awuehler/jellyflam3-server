@@ -77,7 +77,7 @@ function normalizeStreamMode(raw as string) as string
   return "mp4"
 end function
 
-function normalizeBool(raw as string, defaultFalse as boolean) as string
+function normalizeBool(raw as string, defaultVal as boolean) as string
   if raw = invalid then raw = ""
   tl = LCase(raw.Trim())
   if tl = "true" or tl = "1" or tl = "yes"
@@ -85,8 +85,12 @@ function normalizeBool(raw as string, defaultFalse as boolean) as string
   else if tl = "false" or tl = "0" or tl = "no"
     return "false"
   end if
-  if defaultFalse = true then return "false"
+  if defaultVal = true then return "true"
   return "false"
+end function
+
+function shuffleFlockDefault() as boolean
+  return true
 end function
 
 function flagStr(v) as string
@@ -128,8 +132,10 @@ sub openSettings()
       if m.streamModeCorrected = true
         m.streamModeNotice = "streamMode was invalid - using mp4"
       end if
-    else if name = "commercialMode" or name = "shuffleFlock"
-      val = normalizeBool(val, true)
+    else if name = "commercialMode"
+      val = normalizeBool(val, false)
+    else if name = "shuffleFlock"
+      val = normalizeBool(val, shuffleFlockDefault())
     end if
     m.values[name] = val
     refreshRowLabel(name)
@@ -149,8 +155,10 @@ sub refreshRowLabel(name as string)
   else if name = "streamMode"
     if val = "" then val = "mp4"
     shown = val
-  else if name = "commercialMode" or name = "shuffleFlock"
+  else if name = "commercialMode"
     if val = "" then shown = "false"
+  else if name = "shuffleFlock"
+    if val = "" then shown = "true"
   else if val = ""
     shown = "(empty)"
   end if
@@ -479,8 +487,10 @@ sub onKeyboardButton()
       else
         m.streamModeNotice = ""
       end if
-    else if name = "commercialMode" or name = "shuffleFlock"
-      text = normalizeBool(text, true)
+    else if name = "commercialMode"
+      text = normalizeBool(text, false)
+    else if name = "shuffleFlock"
+      text = normalizeBool(text, shuffleFlockDefault())
     end if
     m.values[name] = text
     refreshRowLabel(name)
@@ -501,8 +511,10 @@ sub saveAndClose()
       end while
     else if name = "streamMode"
       val = normalizeStreamMode(val)
-    else if name = "commercialMode" or name = "shuffleFlock"
-      val = normalizeBool(val, true)
+    else if name = "commercialMode"
+      val = normalizeBool(val, false)
+    else if name = "shuffleFlock"
+      val = normalizeBool(val, shuffleFlockDefault())
     end if
     m.registry.write(name, val)
   end for

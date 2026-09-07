@@ -70,6 +70,14 @@ def test_roku_commercial_mode_does_not_query_tags():
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
+    assert 'm.registry.write("shuffleFlock", "true")' in home
+    assert "if tl = \"\" then return true" in home
+    settings = (VOD / "components" / "SettingsScreen.brs").read_text(encoding="utf-8")
+    assert "function shuffleFlockDefault() as boolean" in settings
+    assert "return true" in settings
+    assert 'if val = "" then shown = "true"' in settings
+    ss = (SS / "components" / "ScreenSaverScene.brs").read_text(encoding="utf-8")
+    assert 'm.reg.write("shuffleFlock", "true")' in ss
 
 
 def test_roku_screensaver_expands_nested_library_folders():
