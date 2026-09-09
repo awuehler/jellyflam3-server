@@ -6,7 +6,8 @@ Usage: ``apply_flock_artwork`` after ingest, or ``extract_poster_for_mp4`` / ``a
 
 Assumptions: Soft-fail dicts for sidecars; metadata enrich still runs when poster
 upload is skipped. Ingest default is ``attach_posters: auto`` (standalone off,
-2+ live mesh furnaces on). Operator backfill passes ``force=True``.
+2+ live mesh furnaces on). Operator backfill passes ``force=True``. Screensaver
+stills (non-tuple) extract + Jellyfin Backdrop upload ride the same ingest path.
 """
 
 from __future__ import annotations
@@ -18,6 +19,8 @@ from typing import Any
 
 from pipeline.jellyfin_client import ImageAttachResult, JellyfinClient
 from pipeline.poster import extract_mid_loop_poster, poster_path_for_mp4
+from pipeline.sheep_names import is_tuple_catalog
+from pipeline.stills import extract_stills_for_mp4, stills_cfg, stills_dir_for_mp4
 from pipeline.tool_lookup import tool as _tool
 
 log = logging.getLogger("jellyflam3.flock_artwork")
@@ -58,6 +61,94 @@ def posters_ingest_state(
 def posters_enabled_for_ingest(cfg: dict[str, Any]) -> bool:
     """True when the worker should extract a mid-loop poster after encode."""
     return bool(posters_ingest_state(cfg)["ingest_enabled"])
+
+
+def stills_enabled_for_ingest(
+    cfg: dict[str, Any],
+    mp4: Path,
+    sidecar: dict[str, Any] | None = None,
+    *,
+    force: bool = False,
+) -> bool:
+    """True when ingest should extract screensaver stills (never for tuples)."""
+    if is_tuple_catalog(mp4, sidecar):
+        return False
+    if not bool(stills_cfg(cfg).get("enabled", True)):
+        return False
+    if force:
+        return True
+    return posters_enabled_for_ingest(cfg)
+
+
+def attach_stills_backdrops(
+    cfg: dict[str, Any],
+    mp4: Path,
+    stills_info: dict[str, Any],
+    *,
+    client: JellyfinClient,
+    item_id: str,
+    sleep: Any = time.sleep,
+    replace: bool = False,
+) -> dict[str, Any]:
+    """Upload ``stills/{stem}/frame_*.jpg`` as Jellyfin Backdrop images. Soft-fail."""
+    if not item_id:
+        return {"ok": False, "status": "missing_item_id"}
+    if stills_info.get("status") == "skipped_tuple":
+        return {"ok": True, "status": "skipped_tuple", "uploaded": 0}
+
+    jf = cfg.get("jellyfin") or {}
+    retries = int(jf.get("image_upload_retries", 5))
+    backoff = float(jf.get("image_upload_backoff_sec", 1.0))
+    media_root = None
+    try:
+        from pipeline.config import resolve_path
+
+        media_root = resolve_path(cfg, "media_library")
+    except Exception:  # noqa: BLE001
+        media_root = None
+    dest_dir = Path(stills_info["dir"]) if stills_info.get("dir") else None
+    if dest_dir is None and media_root is not None:
+        dest_dir = stills_dir_for_mp4(media_root, mp4)
+    if dest_dir is None or not dest_dir.is_dir():
+        return {"ok": False, "status": "missing_stills_dir", "uploaded": 0}
+
+    frames = sorted(
+        p for p in dest_dir.glob("frame_*.jpg") if p.is_file() and p.stat().st_size > 0
+    )
+    if not frames:
+        return {"ok": False, "status": "no_frames", "uploaded": 0}
+
+    if replace:
+        try:
+            client.clear_backdrop_images(item_id)
+        except Exception as exc:  # noqa: BLE001
+            log.info("clear backdrops for %s: %s", item_id, exc)
+
+    uploaded = 0
+    errors: list[str] = []
+    for i, frame in enumerate(frames):
+        result = client.upload_item_image(
+            item_id,
+            frame,
+            image_type="Backdrop",
+            index=i,
+            retries=retries,
+            backoff_sec=backoff,
+            sleep=sleep,
+        )
+        if result.ok:
+            uploaded += 1
+        elif result.error:
+            errors.append(result.error)
+
+    return {
+        "ok": uploaded > 0,
+        "status": "uploaded" if uploaded else "failed",
+        "item_id": item_id,
+        "uploaded": uploaded,
+        "count": len(frames),
+        "error": errors[0] if errors and uploaded == 0 else None,
+    }
 
 
 def extract_poster_for_mp4(
@@ -264,4 +355,40 @@ def apply_flock_artwork(
     sidecar["jellyfin_image"] = attach
     if isinstance(attach.get("metadata"), dict):
         sidecar["jellyfin_metadata"] = attach["metadata"]
+
+    stills_info: dict[str, Any] = {"ok": True, "status": "skipped"}
+    if stills_enabled_for_ingest(cfg, mp4, sidecar, force=False):
+        try:
+            stills_info = extract_stills_for_mp4(cfg, mp4, force=False)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("stills extract failed for %s: %s", mp4, exc)
+            stills_info = {"ok": False, "status": "extract_failed", "error": str(exc)}
+        sidecar["stills"] = {
+            k: stills_info.get(k)
+            for k in ("ok", "status", "count", "dir", "screensaver_safe", "error")
+            if k in stills_info or k in ("ok", "status")
+        }
+        item_id = str(attach.get("item_id") or "")
+        if item_id and stills_info.get("status") not in {"skipped_tuple", "skipped"}:
+            try:
+                jf_stills = attach_stills_backdrops(
+                    cfg,
+                    mp4,
+                    stills_info,
+                    client=client or JellyfinClient.from_config(cfg),
+                    item_id=item_id,
+                    sleep=sleep,
+                    replace=False,
+                )
+                sidecar["jellyfin_stills"] = jf_stills
+            except Exception as exc:  # noqa: BLE001
+                log.warning("stills Backdrop upload failed for %s: %s", mp4, exc)
+                sidecar["jellyfin_stills"] = {
+                    "ok": False,
+                    "status": "failed",
+                    "error": str(exc),
+                }
+    elif is_tuple_catalog(mp4, sidecar):
+        sidecar["stills"] = {"ok": True, "status": "skipped_tuple", "screensaver_safe": False}
+
     return sidecar

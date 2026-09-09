@@ -61,7 +61,7 @@ The extension should feel like Electric Sheep’s idle canvas, not a VoD browser
 ## Dependencies
 
 - Phase 2: Jellyfin flock + HLS/Direct Play path
-- Phase 3 [01](01_SCREENSAVERS_AND_STILLS.md): stills optional for poster fallback only — **not** required for Kodi video path
+- Phase 3 [01](01_SCREENSAVERS_AND_STILLS.md): Roku stills/Backdrop path — **not** required for Kodi video loops
 - Phase 4 [03](../phase4/03_EDGES_AND_WATERMARK.md): edges strongly preferred for dogma-complete journeys (parked; loops-only OK in Phase 3)
 
 ## Artifacts

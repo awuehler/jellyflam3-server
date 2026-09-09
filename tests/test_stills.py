@@ -6,6 +6,7 @@ from pipeline.stills import (
     SIDECAR_RESERVED_KEYS,
     extract_stills_for_mp4,
     frame_path,
+    iter_catalog_mp4s,
     load_sidecar,
     seek_points_sec,
     stills_dir_for_mp4,
@@ -35,6 +36,49 @@ def test_stills_dir_layout():
     media = Path("/media/sheep")
     mp4 = media / "by-generation" / "247" / "electricsheep.247.00505.mp4"
     assert stills_dir_for_mp4(media, mp4) == media / "by-generation" / "247" / "stills" / "electricsheep.247.00505"
+
+
+def test_iter_catalog_mp4s_skips_tuples_and_edges(tmp_path: Path):
+    media = tmp_path / "media"
+    gen = media / "by-generation" / "247"
+    gen.mkdir(parents=True)
+    (media / "by-generation" / "tuple").mkdir(parents=True)
+    (gen / "edges").mkdir(parents=True)
+    loop = gen / "electricsheep.247.00505.mp4"
+    ped = media / "by-generation" / "pedigree"
+    ped.mkdir(parents=True)
+    pedigree = ped / "electricsheep.pedigree.mutate.abc.mp4"
+    tup = media / "by-generation" / "tuple" / "electricsheep.tuple.a_to_b.mp4"
+    edge = gen / "edges" / "edge.mp4"
+    for p in (loop, pedigree, tup, edge):
+        p.write_bytes(b"x")
+    names = {p.name for p in iter_catalog_mp4s(media, skip_tuples=True)}
+    assert names == {
+        "electricsheep.247.00505.mp4",
+        "electricsheep.pedigree.mutate.abc.mp4",
+    }
+
+
+def test_extract_stills_skips_tuple(tmp_path: Path):
+    media = tmp_path / "media"
+    tup_dir = media / "by-generation" / "tuple"
+    tup_dir.mkdir(parents=True)
+    mp4 = tup_dir / "electricsheep.tuple.a_to_b.mp4"
+    mp4.write_bytes(b"fake-mp4")
+    write_sidecar(mp4, {"id": mp4.stem, "type": "tuple"})
+    cfg = {
+        "_repo_root": str(tmp_path),
+        "paths": {"media_library": str(media), "status_file": str(tmp_path / "status.json")},
+        "stills": {"enabled": True, "count": 4, "jpeg_quality": 2, "respect_idle_gate": False},
+        "tools": {"ffmpeg": "ffmpeg", "ffprobe": "ffprobe"},
+    }
+    with patch("pipeline.stills.subprocess.run") as run:
+        out = extract_stills_for_mp4(cfg, mp4, force=True)
+    run.assert_not_called()
+    assert out["status"] == "skipped_tuple"
+    assert out["screensaver_safe"] is False
+    dest = stills_dir_for_mp4(media, mp4)
+    assert not dest.exists()
 
 
 def test_extract_stills_writes_frames(tmp_path: Path):

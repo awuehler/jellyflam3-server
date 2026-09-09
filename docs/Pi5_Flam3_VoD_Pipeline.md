@@ -316,7 +316,7 @@ flowchart TB
   SS[JellyFlam3 Screensaver channel]
   DeepLink[External deep link contentId]
   JF -->|MP4 + Items API| VoD
-  JF -->|Primary images / still frames API| SS
+  JF -->|Primary + Backdrop image API| SS
   DeepLink -->|launch VoD PlayerScreen| VoD
   SS -->|RunScreenSaverSettings registry| JF
 ```
@@ -324,10 +324,10 @@ flowchart TB
 1. **VoD channel** — full BrightScript SceneGraph app; Video loops; deep links; catalog.
 2. **Screensaver channel** — `RunScreenSaver()` draws a non-interactive ambient scene:
    - Fetch flock metadata from the same Jellyfin base URL stored in `roRegistrySection` (“JellyFlam3”).
-   - Cycle **Primary** posters and/or dedicated **screensaver stills** (extra pipeline artifact: e.g. `flam3-render` frames or sampled PNG strips uploaded beside each MP4).
+   - Cycle Jellyfin **Primary** (poster) and **Backdrop** (poster-pipeline stills) from all library folders except `tuple`. Always rotate; honor `commercialMode`. Never sample tuple MP4s (watermarked edge mid-file).
    - Crossfade / Ken-Burns on `roScreen` / `roImageCanvas` or a non-interactive SceneGraph scene (**no** `Video` node).
    - Advance on a timer (e.g. every 30–60s) through curated “ambient” collection / tags.
-3. **Shared settings** — screensaver settings write `baseUrl`, `apiKey`, `libraryId`, `licenseFilter` to registry; VoD channel can read the same section so users configure once.
+3. **Shared settings** — VoD Settings (or a furnace-built zip) writes `baseUrl`, `apiKey`, `userId`, `libraryId`, `commercialMode` to registry section `JellyFlam3`. Screensaver **reads** those keys; SS Settings is fade/dwell only and does **not** write `shuffleFlock`.
 4. **Optional bridge the other way** — VoD channel settings screen offers “Install / open screensaver instructions” (cannot deep-link *into* the screensaver; point users to Settings → Theme → Screensavers).
 
 **Screensaver package layout (shipped — `roku-screensaver/`):**
@@ -344,7 +344,7 @@ roku-screensaver/
 
 **Server-side support (shipped):**
 
-- `pipeline.stills` — frame extract beside catalog MP4s; Primaries feed MVP screensaver.
+- Poster ingest extracts screensaver stills (non-tuple) and uploads them as Jellyfin Backdrops; Primaries + Backdrops feed the Roku screensaver.
 - Sidecar tag `screensaver-safe`; idle-gate ignores `JellyFlam3-Screensaver` client pattern.
 - Furnace `package_roku_*` + `client_pack_presets.py` bake Jellyfin IDs into sideload zips.
 
@@ -763,7 +763,7 @@ palette:
 
 - [x] Complementary OkLCh dual-pole path exists in TV-optimize (baseline).
 - [ ] Split-complementary / curator hex polish + living-room A/B spot-check (Phase 2 polish).
-- [x] Stills consumers (Phase 3 Roku screensaver) use Primaries / stills pipeline — Owner OK 2026-08-16.
+- [x] Stills consumers (Phase 3 Roku screensaver) use Jellyfin Primary + Backdrop (poster pipeline; never tuples) — Owner OK 2026-08-16; Backdrop merge 2026-09-08.
 
 ---
 
@@ -897,14 +897,14 @@ stateDiagram-v2
 - **Licensing:** Free Sheep only as archive seeds — tag `cc-by` vs `cc-by-nc`, `human`/`brood`, generation. **Client** commercial-safe toggles hide BY-NC at playback; furnace `license.commercial_mode` does **not** refuse NC at render (it does change the tuple watermark: no Cesari logo on public; operator PNG still overlays). **Algorithm/robot offspring of human parents stay NC under ES rules**; mutation % does not flip license. **Do not ingest Gold Sheep / Infinidream / paid Spotworks masters.** Cesari mascot files are not MIT / not genome CC — [NOTICE](../NOTICE), [watermark README](media/watermark/README.md). Catalog sidecar schema in [docs/phase1/07_LICENSE_AND_METADATA.md](phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema).
 - **CPU isolation (required):** render supervisor **must** block flam3/ffmpeg work while any **active Jellyfin TV client** is playing (and while any session shows active **transcoding**); **gracefully resume** only after configurable **`idle_delay`** with no such activity.
 - **Storage (Pi 5):** USB SSD = `/media/sheep` flock; PCIe NVMe = scratch + `/var/lib/jellyflam3` state; microSD = OS. Profiles: **16** (128 GB SD / 1 TB NVMe / 1 TB SSD), **08** (64 / 500 / 500), **04** (32 / 250 / 250). Hostnames: `rpi-jellyflam3-16a|16b…`, `-08a|08b…`, `-04a|04b…`.
-- **Posters (Phase 2):** mid-loop frame via ffmpeg → filesystem beside MP4 **and** Jellyfin Images API with retry; **auto** ingest (standalone skip; 2+ live mesh furnaces create); backfill existing flock.
+- **Posters (Phase 2):** mid-loop frame via ffmpeg → filesystem beside MP4 **and** Jellyfin Images API with retry; **auto** ingest (standalone skip; 2+ live mesh furnaces create); backfill existing flock. Screensaver stills (non-tuple) extract and upload as Jellyfin Backdrops on the same path.
 - **Deep linking (Phase 1):** VoD channel handles `contentId` launch/input → `PlayerScreen`.
 - **Archive seed library (baseline shipped):** random pick from gens **247…165** `1.html`/`2.html`/`3.html` (manifest ≈6380 IDs; 404 pages skipped); TV-port + Gold Sheep Lite + OkLCh; default fetch **3–7**.
 - **Complementary ambient-TV palettes (baseline shipped):** server-side OkLCh dual-pole tint in TV-optimize path.
 - **Syncthing genome peering over Tailscale (Phase 2):** sync **`*.flam3` + optional `*-poster.jpg`** (no MP4 / sidecars / secrets); **eventually** only pedigree-generated sheep unique to that server (not archive Free Sheep re-shares). **Opt Out** by default. **Host service** is the only user-facing touch point: **Opt In** = Tailscale auth → enroll → tags/ACLs → start Syncthing with managed config; **Opt Out** = stop Syncthing → remove/revoke tailnet node → clean credentials/state → disable persistent services. Peer files **land** in `genomes/peers/inbox` and are **not** auto-picked by the render worker; operator **gated promote** (+ sheep tax) moves them to `genomes/inbox`. Guide: [phase2/05_SYNCTHING_GENOME_PEERING.md](phase2/05_SYNCTHING_GENOME_PEERING.md).
 - **Sheep tax (Phase 2):** **shipped** — `pipeline/sheep_tax.py` scan/repair (archive → tax → TV-port; peer promote; worker ingest). Guide: [phase2/06_SHEEP_TAX.md](phase2/06_SHEEP_TAX.md).
 - **Pedigree breeding (Phase 2):** flam3-genome mutate / **cross (= blend)** / interpolate; single-flame parents only; lineage sidecar. Daily idle cron: [`scripts/cron_breed_idle.sh`](../scripts/cron_breed_idle.sh) (one child when inbox empty). **LLM-assisted pedigree → Phase 3.**
-- **Roku Screensaver / stills (Phase 3 — complete):** standalone `RunScreenSaver` (images only) + stills extraction — [phase3/01_SCREENSAVERS_AND_STILLS.md](phase3/01_SCREENSAVERS_AND_STILLS.md) (Owner OK 2026-08-16).
+- **Roku Screensaver / stills (Phase 3 — complete):** standalone `RunScreenSaver` (images only); Primary + Backdrop from poster ingest; skip tuple; always rotate — [phase3/01_SCREENSAVERS_AND_STILLS.md](phase3/01_SCREENSAVERS_AND_STILLS.md) (Owner OK 2026-08-16; Backdrop merge 2026-09-08).
 - **Kodi Electric Sheep screensaver (Phase 3 — complete loops-only):** **separate** add-on adhering to ES dogma (continuous loops; loop→edge→loop deferred to Phase 4 when edges exist; furnace stays on Pi) — [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md).
 - **Sheep Shears (Phase 3 — complete, Owner OK 2026-08-16):** add/modify/delete `.flam3` and cascade downstream artifacts (inbox, jobs, scratch, MP4, sidecars, Jellyfin images, stills, peers); `audit` / `sweep` + peering `hygiene`. Guide: [phase3/03_SHEEP_SHEARS.md](phase3/03_SHEEP_SHEARS.md).
 - **Edges + watermark (Phase 4 — tuples shipped 2026-09-05):** one catalog MP4 (loop A + edge A→B + loop B) with edge-stage watermark. **Private mixed** furnaces may overlay the Cesari PNG; **commercial-safe / public** furnaces never burn that mascot (ES attribution text). An **operator PNG** in `watermark.image` overlays on **both**. Standalone `type: edge` files and watermark on loops/stills remain parked. Guide: [phase4/03_EDGES_AND_WATERMARK.md](phase4/03_EDGES_AND_WATERMARK.md). Policy: [docs/media/watermark/README.md](media/watermark/README.md).

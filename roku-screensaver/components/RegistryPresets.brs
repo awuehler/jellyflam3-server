@@ -1,5 +1,5 @@
 ' Apply furnace-built pkg:/registry/jellyflam3-presets.json when registry keys are empty.
-' shuffleFlock is always synced from the package when present (furnace ambient policy).
+' Screensaver always rotates stills; do not write shuffleFlock (VoD owns that key).
 
 function applyJellyFlam3PackPresets(reg as object) as boolean
   raw = ReadAsciiFile("pkg:/registry/jellyflam3-presets.json")
@@ -20,14 +20,6 @@ function applyJellyFlam3PackPresets(reg as object) as boolean
       end if
     end if
   end for
-  ' Force package shuffle policy onto device so re-sideload can flip ambient vs multi-sheep.
-  sf = data.lookup("shuffleFlock")
-  if sf <> invalid and sf <> ""
-    if reg.read("shuffleFlock") <> sf
-      reg.write("shuffleFlock", sf)
-      wrote = true
-    end if
-  end if
   if wrote then reg.flush()
   return wrote
 end function

@@ -5,8 +5,10 @@ from pipeline.flock_artwork import (
     apply_flock_artwork,
     attach_posters_mode,
     attach_primary_after_refresh,
+    attach_stills_backdrops,
     extract_poster_for_mp4,
     posters_ingest_state,
+    stills_enabled_for_ingest,
 )
 from pipeline.jellyfin_client import ImageAttachResult, MetadataEnrichResult
 
@@ -285,6 +287,12 @@ def test_apply_flock_artwork_updates_sidecar(tmp_path: Path):
     with patch(
         "pipeline.flock_artwork.extract_mid_loop_poster",
         return_value=poster,
+    ), patch(
+        "pipeline.flock_artwork.extract_stills_for_mp4",
+        return_value={"ok": True, "status": "already_complete", "dir": str(tmp_path)},
+    ), patch(
+        "pipeline.flock_artwork.attach_stills_backdrops",
+        return_value={"ok": True, "status": "uploaded", "uploaded": 4},
     ):
         apply_flock_artwork(
             _cfg(),
@@ -301,6 +309,8 @@ def test_apply_flock_artwork_updates_sidecar(tmp_path: Path):
     assert sidecar["jellyfin_image"]["ok"] is True
     assert sidecar["jellyfin_image"]["item_id"] == "i1"
     assert sidecar["jellyfin_metadata"]["status"] == "enriched"
+    assert sidecar["stills"]["status"] == "already_complete"
+    assert sidecar["jellyfin_stills"]["status"] == "uploaded"
 
 
 def test_apply_does_not_raise_when_client_explodes(tmp_path: Path):
@@ -315,6 +325,9 @@ def test_apply_does_not_raise_when_client_explodes(tmp_path: Path):
     with patch(
         "pipeline.flock_artwork.extract_mid_loop_poster",
         return_value=poster,
+    ), patch(
+        "pipeline.flock_artwork.extract_stills_for_mp4",
+        return_value={"ok": True, "status": "already_complete", "dir": str(tmp_path)},
     ):
         apply_flock_artwork(
             _cfg(),
@@ -329,3 +342,86 @@ def test_apply_does_not_raise_when_client_explodes(tmp_path: Path):
     assert sidecar["poster"]["ok"] is True
     assert sidecar["jellyfin_image"]["ok"] is False
     assert sidecar["jellyfin_image"]["status"] == "failed"
+
+
+def test_stills_enabled_follows_poster_ingest_and_skips_tuples(tmp_path: Path):
+    loop = tmp_path / "electricsheep.247.00505.mp4"
+    tup = tmp_path / "by-generation" / "tuple" / "electricsheep.tuple.a_to_b.mp4"
+    tup.parent.mkdir(parents=True)
+    loop.write_bytes(b"x")
+    tup.write_bytes(b"x")
+    assert stills_enabled_for_ingest(_cfg(attach=True), loop)
+    assert not stills_enabled_for_ingest(_cfg(attach=False), loop)
+    assert not stills_enabled_for_ingest(_cfg(attach=True), tup)
+    assert not stills_enabled_for_ingest(_cfg(attach=True), loop, {"type": "tuple"})
+
+
+def test_attach_stills_backdrops_uploads_frames(tmp_path: Path):
+    media = tmp_path / "media"
+    dest = media / "by-generation" / "247" / "stills" / "electricsheep.247.00505"
+    dest.mkdir(parents=True)
+    frames = []
+    for i in range(2):
+        p = dest / f"frame_{i:02d}.jpg"
+        p.write_bytes(b"\xff\xd8\xff")
+        frames.append(p)
+    mp4 = media / "by-generation" / "247" / "electricsheep.247.00505.mp4"
+    mp4.write_bytes(b"x")
+    client = MagicMock()
+    client.upload_item_image.return_value = ImageAttachResult(
+        ok=True, item_id="i1", attempts=1, status="uploaded", http_status=204
+    )
+    cfg = _cfg()
+    cfg["_repo_root"] = str(tmp_path)
+    cfg["paths"] = {"media_library": str(media)}
+    out = attach_stills_backdrops(
+        cfg,
+        mp4,
+        {"ok": True, "status": "extracted", "dir": str(dest)},
+        client=client,
+        item_id="i1",
+        sleep=lambda _s: None,
+        replace=True,
+    )
+    assert out["ok"] is True
+    assert out["uploaded"] == 2
+    client.clear_backdrop_images.assert_called_once_with("i1")
+    assert client.upload_item_image.call_count == 2
+
+
+def test_apply_tuple_skips_stills(tmp_path: Path):
+    mp4 = tmp_path / "by-generation" / "tuple" / "electricsheep.tuple.a_to_b.mp4"
+    mp4.parent.mkdir(parents=True)
+    mp4.write_bytes(b"fake")
+    poster = tmp_path / "electricsheep.tuple.a_to_b-poster.jpg"
+    poster.write_bytes(b"\xff\xd8\xff")
+    sidecar: dict = {"id": mp4.stem, "type": "tuple"}
+    client = MagicMock()
+    client.find_item_for_media.return_value = {"Id": "t1"}
+    client.has_primary_image.return_value = False
+    client.enrich_item_metadata.return_value = MetadataEnrichResult(
+        ok=True, item_id="t1", status="enriched", sort_name=mp4.stem
+    )
+    client.upload_primary_image.return_value = ImageAttachResult(
+        ok=True, item_id="t1", attempts=1, status="uploaded", http_status=204
+    )
+    with patch(
+        "pipeline.flock_artwork.extract_mid_loop_poster",
+        return_value=poster,
+    ), patch(
+        "pipeline.flock_artwork.extract_stills_for_mp4",
+    ) as extract_stills:
+        apply_flock_artwork(
+            _cfg(),
+            mp4,
+            sidecar,
+            duration_sec=13.0,
+            tags=["cc-by"],
+            client=client,
+            sleep=lambda _s: None,
+        )
+    extract_stills.assert_not_called()
+    assert sidecar["stills"]["status"] == "skipped_tuple"
+    assert "jellyfin_stills" not in sidecar
+    client.upload_item_image.assert_not_called()
+    client.clear_backdrop_images.assert_not_called()

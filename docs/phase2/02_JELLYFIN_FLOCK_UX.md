@@ -45,7 +45,7 @@ python -m pipeline.backfill_posters --config configs/jellyflam3.yaml --limit 10 
 python -m pipeline.backfill_posters --config configs/jellyflam3.yaml --interval-sec 1
 ```
 
-Skips sheep whose sidecar already shows poster + Primary (`uploaded` / `local_primary`) + metadata enrich (use `--force` to redo). One Library/Refresh at batch start (not per item). Backfill **always extracts** even when ingest `attach_posters` is `auto` or `false`.
+Skips sheep whose sidecar already shows poster + Primary (`uploaded` / `local_primary`) + metadata enrich + stills (non-tuple; use `--force` to redo). Tuples are complete without stills. One Library/Refresh at batch start (not per item). Backfill **always extracts** posters and stills even when ingest `attach_posters` is `auto` or `false`. Stills ride this same path (Jellyfin Backdrop upload; never from tuples).
 
 **Ops note (lab):** Jellyfin must be able to write media folders and `MetadataPath` (`/var/lib/jellyflam3` on the Pi). Add `jellyfin` to the `jellyflam3` group and `g+rwX` (setgid) on `/media/sheep/by-generation` + MetadataPath, then restart Jellyfin. Client prefers user-scoped Item GET and treats FS `{stem}-poster.jpg` + `ImageTags.Primary` as success (`local_primary`) before Images API upload.
 
@@ -54,11 +54,11 @@ Skips sheep whose sidecar already shows poster + Primary (`uploaded` / `local_pr
 | Artifact | Kind | Role |
 |---|---|---|
 | `pipeline/poster.py` | pipeline | Mid-loop `{stem}-poster.jpg` extract |
-| `pipeline/flock_artwork.py` | pipeline | Ingest artwork + metadata enrich |
-| `pipeline/jellyfin_client.py` | pipeline | Item lookup + Primary Images API upload |
-| `pipeline/backfill_posters.py` | pipeline | One-shot flock poster / metadata backfill |
-| `ffmpeg` | binary | Mid-loop frame grab |
-| `jellyfin` Images API | binary | Primary image attach |
+| `pipeline/flock_artwork.py` | pipeline | Ingest artwork + metadata enrich (stills/Backdrop ride this path) |
+| `pipeline/jellyfin_client.py` | pipeline | Item lookup + Primary / Backdrop Images API |
+| `pipeline/backfill_posters.py` | pipeline | One-shot flock poster + stills + metadata backfill |
+| `ffmpeg` | binary | Mid-loop frame grab + screensaver stills |
+| `jellyfin` Images API | binary | Primary and Backdrop attach |
 
 ## Exit criteria
 

@@ -15,7 +15,9 @@ Usage:
   python -m pipeline.shears sweep --orphans-only --confirm DELETE
 
 Assumptions: Default delete is dry-run. Never touches secrets.env, jellyflam3.yaml,
-or Syncthing/Tailscale device config. Edges/stills cascade stubs until guides 01/04.
+or Syncthing/Tailscale device config. Stills dirs (poster pipeline) cascade with
+the sheep; Jellyfin Backdrops go with the item. Edges remain optional until
+standalone edge files ship.
 """
 
 from __future__ import annotations
@@ -490,7 +492,7 @@ def discover_cascade(cfg: dict[str, Any], target: str | Path) -> CascadeReport:
     if not report.edges:
         report.notes.append("edges: none matched (Phase 4 tuple/edges layout optional)")
     if not report.stills:
-        report.notes.append("stills: none matched (guide 01 layout optional)")
+        report.notes.append("stills: none matched (poster-pipeline extract may not have run)")
 
     item_id, name, jf_notes = _jellyfin_lookup(cfg, report.catalog)
     report.jellyfin_item_id = item_id

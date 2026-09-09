@@ -5,6 +5,7 @@ from pipeline.sheep_names import (
     catalog_generation,
     demo_seed_filename,
     is_template_genome,
+    is_tuple_catalog,
     mutate_filename,
     normalize_filename,
     normalize_stem,
@@ -47,6 +48,16 @@ def test_catalog_generation():
     assert catalog_generation("electricsheep.random.20260101.deadbeef") == "random"
     assert catalog_generation("electricsheep.tuple.247.00505_to_245.09797") == "tuple"
     assert catalog_generation("plain") == "misc"
+
+
+def test_is_tuple_catalog():
+    tup = Path("/media/sheep/by-generation/tuple/electricsheep.tuple.a_to_b.mp4")
+    loop = Path("/media/sheep/by-generation/247/electricsheep.247.00505.mp4")
+    assert is_tuple_catalog(tup)
+    assert is_tuple_catalog("electricsheep.tuple.247.00505_to_245.09797.mp4")
+    assert is_tuple_catalog(loop, {"type": "tuple"})
+    assert not is_tuple_catalog(loop)
+    assert not is_tuple_catalog(loop, {"type": "loop"})
 
 
 def test_template_detection():

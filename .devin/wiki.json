@@ -13,7 +13,7 @@
       "author": "Owner"
     },
     {
-      "content": "REPO LAYOUT PRIORITIES for documentation:\n- pipeline/ — Python render worker, Shears, Hammer, refactor, peering, flock artwork, idle gate, config, link_capacity, library_disk, sheep_tuple\n- scripts/ — operator shell/Python tools (healthcheck, smoke, packaging, jellyfin_id_dump, client_pack_presets)\n- roku-channel/ — JellyFlam3 VoD BrightScript channel (manifest 1.0.28)\n- roku-screensaver/ — Roku stills screensaver (manifest 1.0.6)\n- kodi-screensaver/screensaver.jellyflam3/ — Kodi ES-dogma video screensaver add-on (0.2.6)\n- docs/phaseN/ — discrete task guides with Boundary/In/Out/Exit tables\n- configs/ — jellyflam3.yaml + hw profiles 16/08/04\n- tests/ — pytest (~372 collected; GitHub Actions on push/PR + release)\n- deploy/ — systemd units, peering templates\n- .github/ — issue templates, Dependabot, release workflow",
+      "content": "REPO LAYOUT PRIORITIES for documentation:\n- pipeline/ — Python render worker, Shears, Hammer, refactor, peering, flock artwork, idle gate, config, link_capacity, library_disk, sheep_tuple\n- scripts/ — operator shell/Python tools (healthcheck, smoke, packaging, jellyfin_id_dump, client_pack_presets)\n- roku-channel/ — JellyFlam3 VoD BrightScript channel (manifest 1.0.28)\n- roku-screensaver/ — Roku stills screensaver (manifest 1.0.7)\n- kodi-screensaver/screensaver.jellyflam3/ — Kodi ES-dogma video screensaver add-on (0.2.6)\n- docs/phaseN/ — discrete task guides with Boundary/In/Out/Exit tables\n- configs/ — jellyflam3.yaml + hw profiles 16/08/04\n- tests/ — pytest (~372 collected; GitHub Actions on push/PR + release)\n- deploy/ — systemd units, peering templates\n- .github/ — issue templates, Dependabot, release workflow",
       "author": "Owner"
     },
     {
@@ -21,7 +21,7 @@
       "author": "Owner"
     },
     {
-      "content": "JELLYFIN FLOCK QUERY QUIRK (critical): Jellyfin 10.x ParentId=Sheep library + Recursive Movie/Video often returns a PARTIAL flock (e.g. 1 of 6) when MP4s live under by-generation/{gen}/ child folders. All clients (Roku VoD JellyfinTask.brs, Roku SS StillsTask.brs, Kodi jellyfin_flock.py, scripts/jellyfin_id_dump.py) MUST walk child Folder items and merge/dedupe — empty-only fallback is insufficient. Sideload Roku 1.0.28 / 1.0.6 and Kodi 0.2.6+.",
+      "content": "JELLYFIN FLOCK QUERY QUIRK (critical): Jellyfin 10.x ParentId=Sheep library + Recursive Movie/Video often returns a PARTIAL flock (e.g. 1 of 6) when MP4s live under by-generation/{gen}/ child folders. All clients (Roku VoD JellyfinTask.brs, Roku SS StillsTask.brs, Kodi jellyfin_flock.py, scripts/jellyfin_id_dump.py) MUST walk child Folder items and merge/dedupe — empty-only fallback is insufficient. Sideload Roku 1.0.28 / 1.0.7 and Kodi 0.2.6+.",
       "author": "Owner"
     },
     {
@@ -123,7 +123,7 @@
     },
     {
       "title": "Roku Screensaver",
-      "purpose": "roku-screensaver/ stills slideshow: StillsTask Primary image fetch, shared JellyFlam3 registry, Theme→Screensavers selection, one-sideload-slot constraint, packaging 1.0.6.",
+      "purpose": "roku-screensaver/ stills slideshow: StillsTask Primary+Backdrop fetch, skip tuple, always rotate, commercialMode, shared JellyFlam3 registry, Theme→Screensavers selection, one-sideload-slot constraint, packaging 1.0.7.",
       "parent": "Roku VoD Channel",
       "page_notes": [
         {

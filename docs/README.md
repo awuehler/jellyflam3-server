@@ -45,7 +45,7 @@ Parallel after **02**: `03` (HLS) anytime; `04` once Primary images exist. `05`�
 
 ## Phase 3 guides (execute in order of increasing complexity) — complete
 
-1. [01_SCREENSAVERS_AND_STILLS.md](phase3/01_SCREENSAVERS_AND_STILLS.md) — stills; Roku Screensaver/Backdrop
+1. [01_SCREENSAVERS_AND_STILLS.md](phase3/01_SCREENSAVERS_AND_STILLS.md) — poster-pipeline stills; Roku Screensaver Primary + Backdrop
 2. [02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) — Kodi ES-dogma screensaver
 3. [03_SHEEP_SHEARS.md](phase3/03_SHEEP_SHEARS.md) — CRUD `.flam3` + downstream cascade
 4. [05_SHARED_SHEEP_SECURITY.md](phase3/05_SHARED_SHEEP_SECURITY.md) — pre/post share integrity (anti-tamper)

@@ -75,7 +75,7 @@ Household / mixed flock only. Provisional until Spotworks, Scott Draves, or Laur
 
 - White Electric Sheep silhouette; former black spiral/gaps filled **`#7A8B99`** (cool slate) so the swirl still reads on dark fractals without punching a black hole on bright ones.
 - Canvas around the glyph is **transparent** (not a black plate).
-- ffmpeg overlays the PNG at **45% opacity**. At 1920×1080 the bug is about 17% of frame height — a corner mark, not a title card.
+- ffmpeg overlays the PNG at **45% opacity**. At 1920×1080 the sheepcloud is about 17% of frame height — a corner mark, not a title card.
 - If the PNG is missing on the furnace, the worker logs a warning and falls back to the text string (below).
 
 ### Operator PNG (private and public)

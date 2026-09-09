@@ -15,7 +15,7 @@ Safe flock editing so operators can cull, replace, or inject genomes without orp
 | Action | Behavior |
 |---|---|
 | **Add** | Stage `.flam3` into inbox (`shears add`); **copy by default** (leave original); `--move` relocates |
-| **Modify** | Re-stage into inbox for re-queue; posters via `backfill_posters` after render |
+| **Modify** | Re-stage into inbox for re-queue; posters + stills via `backfill_posters` after render |
 | **Delete** | Dry-run report by default; `--confirm DELETE` applies cascade |
 | **Audit / sweep** | Report catalog orphans + peer junk; optional cull with `--confirm DELETE` |
 
@@ -52,11 +52,10 @@ python3 -m pipeline.backfill_posters --config configs/jellyflam3.yaml
 - Inbox / quarantine / done copies (+ companion sidecars / posters beside genomes)
 - In-repo ``genomes/samples/`` and ``genomes/pedigree/`` (recursive; smoke/examples trees)
 - Job dirs + frame scratch (matched by job `src` stem)
-- Catalog MP4 + `*.jellyflam3.json` + `*-poster.jpg`
+- Catalog MP4 + `*.jellyflam3.json` + `*-poster.jpg` + `stills/{stem}/` (poster-pipeline frames; Jellyfin Backdrops go with the item)
 - Edge / transition MP4s that reference the sheep as parent ([Phase 4 / 03](../phase4/03_EDGES_AND_WATERMARK.md)) — best-effort name/sidecar match when present
 - Jellyfin item delete + library refresh (soft-fail if API unavailable)
 - Pasture clients that already hold the item in an in-memory flock **404** until they re-fetch — parked [Phase 4 client polish](../phase4/00_OVERVIEW.md#client-polish-parked--not-numbered)
-- Stills strips (Phase 3 screensaver assets) — best-effort when layout exists
 - Syncthing peer copies under local `peers/inbox`, `share-out`, `quarantine` (**only if Opt In**)
 - Pedigree child/parent link notes (warn; do **not** auto-delete living children)
 

@@ -22,7 +22,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 - Ed25519 trust enrollment flake: do not `.strip()` exact 32-byte raw public keys (whitespace bytes are valid key material; broke `test_trust_key_enrolls_peer` intermittently on CI).
 - Redact `--auth-key=` values in `pipeline.peering` command logs.
-- Client sheep rotate defaults to **on**: Roku VoD `shuffleFlock` (Settings empty/save no longer writes `false`), Roku screensaver writes `true` when unset, Kodi `shuffle` setting default `true`.
+- Client sheep rotate defaults to **on**: Roku VoD `shuffleFlock` (Settings empty/save no longer writes `false`), Kodi `shuffle` setting default `true`. Roku screensaver always rotates stills and does not read or write `shuffleFlock`.
 - Restore Kodi `resources/icon.png` (was committed as `icon-.png`, which failed CI package checks).
 
 ### Changed
@@ -33,6 +33,8 @@ All notable changes to this project are documented here. Format loosely follows 
 - User guide: full private → public and public → private furnace sequences (yaml, worker, tags, tuple re-furnace, client toggles).
 - Operator PNG (`watermark.image`) overlays on private mixed **and** commercial-safe furnaces; Cesari filenames stay public-blocked.
 - Ingest posters default to `jellyfin.attach_posters: auto` — skip on a standalone furnace; create when 2+ furnaces are live on Tailscale/Syncthing. `true` / `false` override; `backfill_posters` always extracts.
+- Screensaver stills merge into the poster pipeline: ingest / `backfill_posters` extract frames and upload Jellyfin Backdrops (never from tuples). Roku screensaver 1.0.7 cycles Primary + Backdrop from all folders except `tuple`, always rotates, honors `commercialMode`.
+- Corner watermark is a **sheepcloud** (docs, yaml, tests); not a “bug.”
 - Kodi / Roku client icon and splash PNGs replaced (numbered `-00`/`-01` kept as source; packages ship the unnumbered files).
 
 ## [v0.3.1] — 2026-08-23

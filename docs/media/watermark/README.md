@@ -15,7 +15,7 @@ Sidecars record the **effective** style (`text` on commercial-safe furnaces when
 
 ### Operator PNG (both flocks)
 
-Point `watermark.image` at **your own** RGBA PNG (not `Electric-Sheep-Icon*` / `Electric-Sheep-Logo*`). ffmpeg overlays it at native size — about **180×180** with transparent padding matches the default bug; 1024-class files are too large. Absolute path is best (`/var/lib/jellyflam3/watermark.png`). Repo-relative paths resolve from the git tree. `*.png` is gitignored outside `docs/**`, so a file under `configs/` will not be committed. Restart `jellyflam3-worker` and re-furnace tuples. You must have rights to that art; do not drop a third-party trademark in as a substitute. Copying the Cesari file to `watermark.png` still burns the mascot (the public skip keys off the Cesari **filename**).
+Point `watermark.image` at **your own** RGBA PNG (not `Electric-Sheep-Icon*` / `Electric-Sheep-Logo*`). ffmpeg overlays it at native size — about **180×180** with transparent padding matches the default sheepcloud; 1024-class files are too large. Absolute path is best (`/var/lib/jellyflam3/watermark.png`). Repo-relative paths resolve from the git tree. `*.png` is gitignored outside `docs/**`, so a file under `configs/` will not be committed. Restart `jellyflam3-worker` and re-furnace tuples. You must have rights to that art; do not drop a third-party trademark in as a substitute. Copying the Cesari file to `watermark.png` still burns the mascot (the public skip keys off the Cesari **filename**).
 
 Do not point `watermark.image` at the 1024 Cesari icon or the SVG.
 
@@ -46,7 +46,7 @@ Creative Commons on Free Sheep **animations and parameters** does **not** licens
 | Corner watermark OK for TV/wall as **attribution** | Edge-only, 45% opacity, ~13 s of ~39 s |
 | Redistributed files: `electricsheep.{gen}.{id}` | Tuples: `electricsheep.tuple.{from}_to_{to}` (parent IDs present; not the archive form) |
 
-Nominative fair use covers **naming** Electric Sheep in docs; it is a weak fit for a **source-identifying mark on our own product**. The Roku channel is still named JellyFlam3. The Cesari bug is **private mixed flock only** until permission; the **commercial-safe / public** path uses their written credit string unless you set an operator PNG.
+Nominative fair use covers **naming** Electric Sheep in docs; it is a weak fit for a **source-identifying mark on our own product**. The Roku channel is still named JellyFlam3. The Cesari sheepcloud is **private mixed flock only** until permission; the **commercial-safe / public** path uses their written credit string unless you set an operator PNG.
 
 ### Practical heat
 

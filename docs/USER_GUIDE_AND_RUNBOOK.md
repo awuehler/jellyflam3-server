@@ -35,7 +35,7 @@ You do **not** need the Pi terminal for normal viewing. Printable one-pager: [FR
 
 ### Roku Screensaver / Backdrop
 
-The screensaver is a **separate sideload package** (`jellyflam3-screensaver.zip`). It shows stills/posters — no video node (Roku policy).
+The screensaver is a **separate sideload package** (`jellyflam3-screensaver.zip`). It shows **Jellyfin Primary posters and Backdrop stills** from every library folder except `tuple` — no video node (Roku policy). It always rotates (ignores VoD `shuffleFlock`) and honors the same `commercialMode` Tag filter as VoD.
 
 **Credentials:** Screensaver **reads** the same `JellyFlam3` registry keys as VoD. A **furnace-built** screensaver zip also ships `registry/jellyflam3-presets.json` and applies the same Jellyfin values on first run when keys are empty. Otherwise install VoD on that Roku **first** and save Settings once (or paste manually in VoD Settings). Screensaver Settings only adjusts fade/dwell — it has no credential editors.
 
@@ -124,7 +124,7 @@ Run Pi commands from `/opt/jellyflam3-server` unless noted.
 
 1. Sideload `dist/jellyflam3-screensaver.zip`. Developer mode has **one** sideload slot — this **replaces** VoD until you re-sideload VoD; registry keys survive.
 2. Roku **Settings → Theme → Screensavers → JellyFlam3**. Optional: screensaver Settings for fade/dwell only (no credential editors).
-3. Idle the TV (or use the Theme screensaver preview). You should see **posters/stills**, not video.
+3. Idle the TV (or use the Theme screensaver preview). You should see **posters and stills** (Jellyfin Primary + Backdrop), never tuple frames, always rotating. Not video.
 4. On the Pi, while the screensaver is up:
 
    ```bash
@@ -285,7 +285,11 @@ Default is `jellyfin.attach_posters: auto` in the example yaml. Live `configs/je
 | Setup | Default after encode | Why |
 |---|---|---|
 | **Standalone** furnace (Opt Out, or Opt In with no other furnace online) | **No** poster | Mesh size 1 |
-| **2+ furnaces** Opt In, Syncthing active, Tailscale online, ≥1 other `jellyflam3` peer | **Yes** — `{stem}-poster.jpg` beside the MP4 + Jellyfin Primary | Mesh size ≥ 2 |
+| **2+ furnaces** Opt In, Syncthing active, Tailscale online, ≥1 other `jellyflam3` peer | **Yes** — `{stem}-poster.jpg` + Jellyfin Primary, plus stills frames + Backdrops (non-tuple) | Mesh size ≥ 2 |
+
+Screensaver stills (JPEG frames + Jellyfin Backdrops) ride the **same ingest switch**. When posters extract, non-tuple sheep also get `by-generation/{gen}/stills/{stem}/frame_XX.jpg` uploaded as Backdrops. Tuples never generate stills (watermarked edge mid-file is not screensaver-safe). Peering still shares only `*.flam3` + optional `*-poster.jpg` — not stills JPEGs.
+
+`python3 -m pipeline.backfill_posters` always extracts posters **and** stills (operator one-shot). It does not follow ingest auto/never. `python3 -m pipeline.stills` remains an operator re-extract CLI for disk frames only.
 
 Check what this furnace will do on the **next** ingest (no worker restart needed for the check):
 
@@ -293,8 +297,6 @@ Check what this furnace will do on the **next** ingest (no worker restart needed
 python3 -m pipeline.peering status
 # posters.mode / posters.ingest_enabled / posters.mesh_size
 ```
-
-`python3 -m pipeline.backfill_posters` always extracts (operator one-shot). It does not follow ingest auto/never.
 
 #### Standalone — turn posters **on**
 
@@ -308,7 +310,7 @@ python3 -m pipeline.peering status
    sudo systemctl restart jellyflam3-worker
    systemctl is-active jellyflam3-worker
    ```
-3. New renders get a poster. Existing catalog MP4s do not — backfill them:
+3. New renders get a poster **and** stills (non-tuple). Existing catalog MP4s do not — backfill them:
    ```bash
    python3 -m pipeline.backfill_posters --config configs/jellyflam3.yaml
    ```
@@ -588,7 +590,7 @@ This replaces the Cesari default on **both** flock modes. The public Cesari skip
 1. Make an RGBA PNG you have rights to (~**180×180**, transparent padding). ffmpeg burns it at **native size** — do not use a 1024-px file.
 2. Copy it onto the furnace, outside git. Suggested: `/var/lib/jellyflam3/watermark.png` (survives `git pull`). `configs/*.png` is also gitignored.
    ```bash
-   sudo install -m 644 /path/to/your-bug.png /var/lib/jellyflam3/watermark.png
+   sudo install -m 644 /path/to/your-sheepcloud.png /var/lib/jellyflam3/watermark.png
    ```
 3. Edit live yaml (`configs/jellyflam3.yaml`, not the example):
    ```yaml
@@ -603,7 +605,7 @@ This replaces the Cesari default on **both** flock modes. The public Cesari skip
    sudo systemctl restart jellyflam3-worker
    systemctl is-active jellyflam3-worker
    ```
-5. **Re-furnace tuples** so catalog files pick up the new bug. Confirm the sidecar `"style": "image"` and `"image"` is your path.
+5. **Re-furnace tuples** so catalog files pick up the new sheepcloud. Confirm the sidecar `"style": "image"` and `"image"` is your path.
    ```bash
    ls genomes/done/electricsheep.tuple.*.flam3
    for f in genomes/done/electricsheep.tuple.*.flam3; do
@@ -651,7 +653,7 @@ Do this **in order**. Skipping tags or the client toggles is how you get an empt
 6. **Turn commercial-safe on at every pasture client** (furnace yaml does not do this). Existing Roku registry survives sideload; furnace-built zips still preset `commercialMode=false`.
    - **Roku VoD:** Settings → `commercialMode` → **true** → save. Repeat on each stick.
    - **Kodi:** Add-ons → JellyFlam3 Dreams → Configure → **Commercial-safe (skip NC)** on.
-   - **Roku screensaver** has no NC filter of its own; it shows stills of whatever the library lists.
+   - **Roku screensaver:** same registry `commercialMode` as VoD — NC stills are skipped; tuple folders are never shown.
 7. **Do not expose Jellyfin as the public player.** Guests on `:8096` or jellyfin-roku still see NC. Restrict the library (LAN-only, auth, or do not share the URL).
 8. **Verify on the TV:** CC samples remain; NC samples gone; a **new** tuple (or a restamped one) shows the attribution sentence **or** your PNG, not the Cesari sheep. Toggle Roku `commercialMode` back to false in a test if you need to prove NC files are still on disk — then set it true again.
 
@@ -680,17 +682,14 @@ After Tags exist, confirm the **client** filter — this does not flip furnace y
 | Client | Toggle off | Toggle on |
 |---|---|---|
 | Roku VoD `commercialMode` | CC + NC in flock | NC gone; CC remain |
+| Roku screensaver `commercialMode` | CC + NC stills (no tuples) | NC gone; CC remain |
 | Kodi SS `commercial_mode` | May play NC | Only CC-safe Tags |
 
 Expected sample ids: [phase1/07](phase1/07_LICENSE_AND_METADATA.md#lab-check--commercial-mode-toggle). Empty flock with commercial-on → fix enrich (step 2), not the channel.
 
 ### Stills (screensaver feedstock)
 
-```bash
-python3 -m pipeline.stills --config configs/jellyflam3.yaml --dry-run
-python3 -m pipeline.stills --config configs/jellyflam3.yaml --limit 5
-# Output: by-generation/{gen}/stills/{stem}/frame_XX.jpg
-```
+Covered by [Catalog posters](#catalog-posters-after-render): ingest / `backfill_posters` extract frames and upload Jellyfin Backdrops (`stills.enabled: true` on the fleet yaml). Tuples never generate stills. `python3 -m pipeline.stills` is only an operator re-extract of disk JPEGs; run `backfill_posters` afterward if Backdrops must be replaced.
 
 ### Fleet update
 
@@ -813,8 +812,8 @@ python3 -m pipeline.shears          # add/modify/delete/audit/sweep
 python3 -m pipeline.hammer         # nuclear local reset
 python3 -m pipeline.refactor        # quality scan/preview/apply/quarantine/batch
 python3 -m pipeline.peering         # opt-in/out, publish, promote, keys
-python3 -m pipeline.stills          # screensaver stills extract
-python3 -m pipeline.backfill_posters
+python3 -m pipeline.stills          # operator re-extract of screensaver frames
+python3 -m pipeline.backfill_posters  # posters + stills + Jellyfin images
 python3 -m pipeline.media_layout    # catalog dir modes 2775/664
 python3 -m pipeline.job_recovery    # orphan job reclaim
 python3 -m pipeline.hw_profile      # apply 16a/08a/04a profile
@@ -851,7 +850,8 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | Link capacity / N_max | `pipeline/link_capacity.py`, `docs/phase4/07_CONCURRENT_CLIENTS.md` |
 | Library disk check | `pipeline/library_disk.py`, `docs/phase4/06_LIBRARY_DISK_ROTATE.md` |
 | License / Cesari watermark | [NOTICE](../NOTICE), [phase1/07](phase1/07_LICENSE_AND_METADATA.md), [watermark README](media/watermark/README.md), [Private vs public](#private-vs-public-furnace), [Use your own PNG](#use-your-own-png-private-and-public) |
-| Catalog posters after render | [Catalog posters](#catalog-posters-after-render) — `jellyfin.attach_posters` auto / true / false |
+| Catalog posters / stills | [Catalog posters](#catalog-posters-after-render) — `jellyfin.attach_posters` + `stills.enabled`; Roku SS Primary + Backdrop |
+| Roku screensaver | `roku-screensaver/`, [phase3/01](phase3/01_SCREENSAVERS_AND_STILLS.md) |
 | Roku client | `roku-channel/`, `docs/phase1/08_ROKU_BRIGHTSCRIPT.md` |
 | Kodi screensaver | `kodi-screensaver/`, [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) |
 | Architecture | `docs/Pi5_Flam3_VoD_Pipeline.md` |
@@ -862,7 +862,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 
 | Path | Purpose |
 |---|---|
-| `/media/sheep/by-generation/` | Catalog MP4 + sidecar + poster |
+| `/media/sheep/by-generation/` | Catalog MP4 + sidecar + poster + `stills/{stem}/` |
 | `/media/sheep/_refactor-preview/` | Refactor Jellyfin-visible previews |
 | `/var/cache/jellyflam3/frames` | Render scratch |
 | `/var/lib/jellyflam3/jobs` | In-flight job state |

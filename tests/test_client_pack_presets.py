@@ -137,4 +137,6 @@ def test_roku_packages_include_registry_presets_helper():
     vod = (ROOT / "roku-channel" / "components" / "RegistryPresets.brs").read_text(encoding="utf-8")
     ss = (ROOT / "roku-screensaver" / "components" / "RegistryPresets.brs").read_text(encoding="utf-8")
     assert "applyJellyFlam3PackPresets" in vod
-    assert vod.strip() == ss.strip()
+    assert "applyJellyFlam3PackPresets" in ss
+    assert 'reg.write("shuffleFlock"' in vod
+    assert 'reg.write("shuffleFlock"' not in ss

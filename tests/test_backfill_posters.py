@@ -60,11 +60,28 @@ def test_needs_backfill_already_complete(tmp_path: Path):
     sidecar = {
         "jellyfin_image": {"ok": True, "status": "uploaded"},
         "jellyfin_metadata": {"ok": True, "status": "enriched"},
+        "stills": {"ok": True, "status": "extracted", "screensaver_safe": True},
     }
     needed, reason = needs_backfill(mp4, sidecar)
     assert not needed and reason == "already_complete"
     needed, reason = needs_backfill(mp4, sidecar, force=True)
     assert needed and reason == "force"
+
+
+def test_needs_backfill_tuple_complete_without_stills(tmp_path: Path):
+    media = _media_tree(tmp_path)
+    mp4 = media / "by-generation" / "tuple" / "electricsheep.tuple.a_to_b.mp4"
+    mp4.parent.mkdir(parents=True)
+    mp4.write_bytes(b"x")
+    poster = mp4.with_name("electricsheep.tuple.a_to_b-poster.jpg")
+    poster.write_bytes(b"\xff\xd8\xff")
+    sidecar = {
+        "type": "tuple",
+        "jellyfin_image": {"ok": True, "status": "uploaded"},
+        "jellyfin_metadata": {"ok": True, "status": "enriched"},
+    }
+    needed, reason = needs_backfill(mp4, sidecar)
+    assert not needed and reason == "already_complete"
 
 
 def test_needs_backfill_missing_poster(tmp_path: Path):
@@ -87,6 +104,7 @@ def test_run_backfill_dry_run_counts(tmp_path: Path):
             {
                 "jellyfin_image": {"ok": True, "status": "uploaded"},
                 "jellyfin_metadata": {"ok": True, "status": "enriched"},
+                "stills": {"ok": True, "status": "extracted", "screensaver_safe": True},
             }
         ),
         encoding="utf-8",
@@ -112,7 +130,10 @@ def test_backfill_one_poster_only(tmp_path: Path):
     with patch(
         "pipeline.backfill_posters.extract_poster_for_mp4",
         return_value={"ok": True, "status": "extracted", "poster_path": str(poster)},
-    ) as ext:
+    ) as ext, patch(
+        "pipeline.backfill_posters.extract_stills_for_mp4",
+        return_value={"ok": True, "status": "already_complete", "count": 4, "dir": str(tmp_path)},
+    ):
         poster.write_bytes(b"\xff\xd8\xff")
         result = backfill_one(cfg, mp4, skip_jellyfin=True)
 
@@ -153,6 +174,12 @@ def test_backfill_one_uploads_with_mocked_client(tmp_path: Path):
     with patch(
         "pipeline.backfill_posters.extract_poster_for_mp4",
         return_value={"ok": True, "status": "extracted", "poster_path": str(poster)},
+    ), patch(
+        "pipeline.backfill_posters.extract_stills_for_mp4",
+        return_value={"ok": True, "status": "already_complete", "count": 4, "dir": str(tmp_path)},
+    ), patch(
+        "pipeline.backfill_posters.attach_stills_backdrops",
+        return_value={"ok": True, "status": "uploaded", "uploaded": 4},
     ):
         result = backfill_one(
             _cfg(tmp_path, media),
@@ -167,6 +194,8 @@ def test_backfill_one_uploads_with_mocked_client(tmp_path: Path):
     side = json.loads(mp4.with_suffix(".jellyflam3.json").read_text(encoding="utf-8"))
     assert side["jellyfin_image"]["ok"] is True
     assert side["jellyfin_metadata"]["status"] == "enriched"
+    assert side["stills"]["status"] == "already_complete"
+    assert side["jellyfin_stills"]["status"] == "uploaded"
 
 
 def test_run_backfill_respects_limit_and_interval(tmp_path: Path):

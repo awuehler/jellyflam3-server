@@ -69,7 +69,7 @@ Baseline already shipped: two live Roku profiles on one Pi (Phase 2 Owner OK). P
 
 1. Screensaver stays a **separate** package from VoD — never merge for Store convenience.
 2. Prefer private-channel publish first for fleet lab; Store certification is optional until Owner chooses public distribution.
-3. Reuse Phase 2/3 behavior (MP4 ambient, stills Primaries, crossfade options); this guide is polish + distribution + multi-TV ops, not a rewrite of playback.
+3. Reuse Phase 2/3 behavior (MP4 ambient, Primary + Backdrop stills, crossfade options); this guide is polish + distribution + multi-TV ops, not a rewrite of playback.
 4. Watermarked stills/masters (if required for public Store art) follow [03_EDGES_AND_WATERMARK.md](03_EDGES_AND_WATERMARK.md).
 5. **One JellyFlam3-server serves many Rokus** — do not require a Pi per TV; scale is client count + Jellyfin sessions, not one furnace each.
 

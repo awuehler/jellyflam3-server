@@ -48,7 +48,7 @@ Defaults: crossfade **On**, dwell **12 s**, fade **1.5 s**. In Screensaver Setti
 
 ### Confirm idle-gate on a Pi (not on the Roku)
 
-While the screensaver is the active Theme choice and has had time to fetch Primaries:
+While the screensaver is the active Theme choice and has had time to fetch Primary + Backdrop URLs:
 
 ```bash
 # On the Jellyfin/idle-gate Pi (often 16a):
@@ -76,12 +76,16 @@ Roku also **forbids** embedding a screensaver in a streaming app (`screensaver_t
 
 ## Stills on the Pi
 
+Screensaver stills extract with posters (`apply_flock_artwork` / `backfill_posters`). Frames land under
+`/media/sheep/by-generation/{gen}/stills/{stem}/` and are uploaded as Jellyfin **Backdrop** images.
+The screensaver cycles **Primary + Backdrop** from every library folder except `tuple`, always
+rotates (ignores VoD `shuffleFlock`), and honors `commercialMode`. Tuples never generate stills.
+
+Operator re-extract of disk frames:
+
 ```bash
 cd /opt/jellyflam3-server
 python3 -m pipeline.stills --dry-run
 python3 -m pipeline.stills --limit 5
+python3 -m pipeline.backfill_posters   # upload Backdrops for catalog already on disk
 ```
-
-MVP screensaver cycles **Jellyfin Primary** images. Extracted frames under
-`/media/sheep/by-generation/{gen}/stills/{stem}/` are for future Backdrop/local
-serving and Shears cascade; Primaries remain the first-pass feed.

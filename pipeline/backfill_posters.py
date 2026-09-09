@@ -1,4 +1,4 @@
-"""Purpose: One-shot backfill of mid-loop posters and Jellyfin Primary/metadata for catalog MP4s.
+"""Purpose: One-shot backfill of posters, screensaver stills, and Jellyfin images.
 
 Requirements: Config with media_library; ffmpeg/ffprobe; optional Jellyfin api_key and idle_gate.
 
@@ -6,7 +6,9 @@ Usage:
   python -m pipeline.backfill_posters --config configs/jellyflam3.yaml --dry-run
   python -m pipeline.backfill_posters --config configs/jellyflam3.yaml --limit 20
 
-Assumptions: Sidecar ``*.jellyflam3.json`` tracks completion; soft-fails leave partial sidecar state.
+Assumptions: Sidecar ``*.jellyflam3.json`` tracks completion; soft-fails leave partial sidecar
+state. Stills ride the same path as posters (never from tuples). Operator backfill
+force-extracts stills and replaces Jellyfin Backdrops.
 """
 
 from __future__ import annotations
@@ -20,10 +22,16 @@ from pathlib import Path
 from typing import Any
 
 from pipeline.config import load_config, resolve_path
-from pipeline.flock_artwork import attach_primary_after_refresh, extract_poster_for_mp4
+from pipeline.flock_artwork import (
+    attach_primary_after_refresh,
+    attach_stills_backdrops,
+    extract_poster_for_mp4,
+)
 from pipeline.idle_gate import is_gate_open
 from pipeline.jellyfin_client import JellyfinClient
 from pipeline.poster import poster_path_for_mp4, probe_duration_sec
+from pipeline.sheep_names import is_tuple_catalog
+from pipeline.stills import extract_stills_for_mp4, stills_cfg
 from pipeline.tool_lookup import tool as _tool
 
 log = logging.getLogger("jellyflam3.backfill_posters")
@@ -95,7 +103,16 @@ def needs_backfill(
     )
     meta_ok = meta.get("ok") is True or meta.get("status") in ("enriched", "tags_only")
     if has_poster and img_ok and meta_ok:
-        return False, "already_complete"
+        if is_tuple_catalog(mp4, sidecar):
+            return False, "already_complete"
+        sc = stills_cfg({})
+        # stills count from caller cfg is checked in run_backfill; here only sidecar/poster.
+        stills_block = sidecar.get("stills") or {}
+        if stills_block.get("status") in ("extracted", "already_complete") or stills_block.get(
+            "screensaver_safe"
+        ):
+            return False, "already_complete"
+        return True, "missing_stills"
     if not has_poster:
         return True, "missing_poster"
     if not img_ok:
@@ -156,6 +173,14 @@ def backfill_one(
         sidecar["poster"] = poster_info
         if poster_info.get("poster_path"):
             sidecar["poster_path"] = poster_info["poster_path"]
+        if is_tuple_catalog(mp4, sidecar):
+            sidecar["stills"] = {
+                "ok": True,
+                "status": "skipped_tuple",
+                "screensaver_safe": False,
+            }
+        elif bool(stills_cfg(cfg).get("enabled", True)):
+            sidecar["stills"] = extract_stills_for_mp4(cfg, mp4, force=True)
         write_sidecar(mp4, sidecar)
         return {
             "mp4": str(mp4),
@@ -197,6 +222,36 @@ def backfill_one(
     sidecar["jellyfin_image"] = attach
     if isinstance(attach.get("metadata"), dict):
         sidecar["jellyfin_metadata"] = attach["metadata"]
+
+    stills_info: dict[str, Any]
+    if is_tuple_catalog(mp4, sidecar):
+        stills_info = {
+            "ok": True,
+            "status": "skipped_tuple",
+            "screensaver_safe": False,
+        }
+        sidecar["stills"] = stills_info
+    elif bool(stills_cfg(cfg).get("enabled", True)):
+        stills_info = extract_stills_for_mp4(cfg, mp4, force=True)
+        sidecar["stills"] = stills_info
+        item_id = str(attach.get("item_id") or "")
+        if item_id:
+            try:
+                sidecar["jellyfin_stills"] = attach_stills_backdrops(
+                    cfg,
+                    mp4,
+                    stills_info,
+                    client=client or JellyfinClient.from_config(cfg),
+                    item_id=item_id,
+                    sleep=sleep,
+                    replace=True,
+                )
+            except Exception as exc:  # noqa: BLE001
+                sidecar["jellyfin_stills"] = {
+                    "ok": False,
+                    "status": "failed",
+                    "error": str(exc),
+                }
     write_sidecar(mp4, sidecar)
     return {
         "mp4": str(mp4),

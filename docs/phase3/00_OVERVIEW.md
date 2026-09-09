@@ -38,7 +38,7 @@ Phase 3 is **closed**. Post-launch roadmap: [../phase4/00_OVERVIEW.md](../phase4
 
 ## In scope
 
-1. [01_SCREENSAVERS_AND_STILLS.md](01_SCREENSAVERS_AND_STILLS.md) — stills extraction; **Roku** Screensaver/Backdrop only — **complete** (Owner OK 2026-08-16)
+1. [01_SCREENSAVERS_AND_STILLS.md](01_SCREENSAVERS_AND_STILLS.md) — poster-pipeline stills; **Roku** Screensaver Primary + Backdrop — **complete** (Owner OK 2026-08-16; Backdrop merge 2026-09-08)
 2. [02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) — **Kodi** screensaver (Electric Sheep dogma; separate from Roku; loops-only) — **complete** (Owner OK 2026-08-21; loop→edge→loop post-launch)
 3. [03_SHEEP_SHEARS.md](03_SHEEP_SHEARS.md) — add/modify/delete `.flam3` + downstream artifacts — **complete** (Owner OK 2026-08-16)
 4. ~~[04_EDGES_AND_WATERMARK.md](04_EDGES_AND_WATERMARK.md)~~ — **post-launch** ([../phase4/03_EDGES_AND_WATERMARK.md](../phase4/03_EDGES_AND_WATERMARK.md))
@@ -92,7 +92,7 @@ Rollup of Phase 3 deliverables (planned unless noted). Per-guide tables are auth
 
 | Artifact | Kind | Role |
 |---|---|---|
-| Stills pipeline + flock `stills/` | pipeline | Frame extract for Roku Screensaver ([01](01_SCREENSAVERS_AND_STILLS.md)) |
+| Stills + flock `stills/` + Jellyfin Backdrop | pipeline | Poster-pipeline frames for Roku Screensaver ([01](01_SCREENSAVERS_AND_STILLS.md)) |
 | `roku-screensaver/` (sideload) | channel | Roku Screensaver / Backdrop ([01](01_SCREENSAVERS_AND_STILLS.md)) |
 | `kodi-screensaver/` / `screensaver.jellyflam3` | add-on | Kodi ES-dogma screensaver (**complete** loops-only, [02](02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md)) |
 | `pipeline/shears.py` | pipeline | Add / modify / delete / audit / sweep (**complete**, [03](03_SHEEP_SHEARS.md)) |

@@ -214,7 +214,7 @@ The **middle stage** of a **tuple**: genetic morph A→B via `flam3-genome seque
 
 ### Tuple
 
-Phase 4: one catalog MP4 of **loop A + edge(A→B) + loop B** (`electricsheep.tuple.{from}_to_{to}` under `by-generation/tuple/`). A→B and B→A are distinct. The mark appears **only on the edge**, lower right, ~45% opacity, hard cut on/off: Cesari PNG on private furnaces (`commercial_mode: false`); ES attribution sentence on commercial-safe furnaces unless `watermark.image` is an operator PNG (then that bug is used on **both**). Clients shuffle tuples like other sheep.
+Phase 4: one catalog MP4 of **loop A + edge(A→B) + loop B** (`electricsheep.tuple.{from}_to_{to}` under `by-generation/tuple/`). A→B and B→A are distinct. The mark appears **only on the edge**, lower right, ~45% opacity, hard cut on/off: Cesari PNG on private furnaces (`commercial_mode: false`); ES attribution sentence on commercial-safe furnaces unless `watermark.image` is an operator PNG (then that sheepcloud is used on **both**). Clients shuffle tuples like other sheep.
 
 ### Dynamic duration
 
@@ -258,7 +258,7 @@ Jellyfin `POST /Items/{id}/PlaybackInfo` — reports DirectPlay / DirectStream /
 
 ### Stills
 
-Phase 3: JPEG frames extracted from catalog MP4s (`pipeline/stills.py`) under `by-generation/…/stills/{stem}/` for **Roku Screensaver** (no video in screensaver package).
+Phase 3: JPEG frames extracted from catalog MP4s (poster pipeline / `pipeline/stills.py`) under `by-generation/…/stills/{stem}/`, uploaded as Jellyfin Backdrops for **Roku Screensaver**. Never generated from tuple videos.
 
 ---
 
@@ -274,11 +274,11 @@ The Sheep **library** in Jellyfin — curated MP4s, posters, metadata, tags. Sin
 
 ### Poster / Primary
 
-Mid-loop JPEG beside MP4 and/or Jellyfin **Primary** image via Images API. After encode, **auto** (default): skip on a standalone furnace; create when **2+** furnaces are live on Tailscale/Syncthing. Override with `jellyfin.attach_posters: true` / `false`. Operator backfill always extracts. Phase 2 flock UX (`pipeline/flock_artwork.py`, `backfill_posters.py`). Layer 2: [Catalog posters](USER_GUIDE_AND_RUNBOOK.md#catalog-posters-after-render).
+Mid-loop JPEG beside MP4 and/or Jellyfin **Primary** image via Images API. Screensaver stills (non-tuple JPEG frames → Jellyfin **Backdrop**) ride the same ingest switch (`stills.enabled`, default true). After encode, **auto** (default): skip on a standalone furnace; create when **2+** furnaces are live on Tailscale/Syncthing. Override with `jellyfin.attach_posters: true` / `false`. Operator backfill always extracts posters and stills. Phase 2 flock UX (`pipeline/flock_artwork.py`, `backfill_posters.py`). Layer 2: [Catalog posters](USER_GUIDE_AND_RUNBOOK.md#catalog-posters-after-render).
 
 ### Commercial mode
 
-`license.commercial_mode` + channel `commercialMode` — filter out `cc-by-nc` items when enabled. Default off for private lab.
+`license.commercial_mode` + client `commercialMode` — hide `cc-by-nc` items when enabled (Roku VoD, Roku screensaver, Kodi SS). Default off for private lab. Screensaver never shows `tuple` folders.
 
 ### Library refresh
 
@@ -324,7 +324,7 @@ Roku HTTP control on port **8060** — launch, query player (`/launch/dev`, `/qu
 
 ### RunScreenSaver()
 
-Roku screensaver entry point only — separate package from VoD `Main()`. JellyFlam3 Screensaver: stills/slideshow (Phase 3 guide 01).
+Roku screensaver entry point only — separate package from VoD `Main()`. JellyFlam3 Screensaver 1.0.7: Primary + Backdrop slideshow (skip tuple; always rotate; `commercialMode`).
 
 ### Kodi ES screensaver
 

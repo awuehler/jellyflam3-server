@@ -83,6 +83,20 @@ def test_write_stignore_fallback(tmp_path: Path):
     assert "!*.flam3.sha256" in text
     assert "!*.flam3.jellyflam3.sig" in text
     assert text.index("!*.flam3") < text.rindex("\n*")
+    assert "!*.jpg" not in text.replace("!*-poster.jpg", "")
+    assert "frame_" not in text
+    assert "stills" not in text.lower()
+
+
+def test_repo_stignore_does_not_share_stills_jpegs():
+    text = Path(__file__).resolve().parents[1].joinpath(
+        "deploy", "peering", "stignore"
+    ).read_text(encoding="utf-8")
+    assert "!*.flam3" in text
+    assert "!*-poster.jpg" in text
+    assert "!*.jpg" not in text.replace("!*-poster.jpg", "")
+    assert "frame_" not in text
+    assert "stills" not in text.lower()
 
 
 def _live_share_mocks(monkeypatch):

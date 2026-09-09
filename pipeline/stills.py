@@ -1,15 +1,16 @@
-"""Purpose: Extract screensaver stills from catalog sheep MP4s (Phase 3 guide 01).
+"""Purpose: Extract screensaver stills from catalog sheep MP4s (poster pipeline).
 
 Requirements: ffmpeg + ffprobe; configs ``stills.*``; optional idle_gate for CPU extract.
 
-Usage:
+Usage (operator re-extract; ingest also runs this from ``apply_flock_artwork``):
   python3 -m pipeline.stills --config configs/jellyflam3.yaml --dry-run
   python3 -m pipeline.stills --config configs/jellyflam3.yaml --limit 5
   python3 -m pipeline.stills --sheep electricsheep.247.00505
 
 Assumptions: Frames land under ``by-generation/{gen}/stills/{stem}/frame_XX.jpg``
-(matches Shears cascade). Tag stills as screensaver-safe in sidecar. Extraction
-respects idle-gate when enabled so TV playback stays responsive.
+(matches Shears cascade) and are uploaded as Jellyfin Backdrops with posters.
+Never extract from tuple MP4s. Tag stills as screensaver-safe in sidecar.
+Extraction respects idle-gate when enabled so TV playback stays responsive.
 """
 
 from __future__ import annotations
@@ -27,7 +28,7 @@ from pipeline.config import load_config, resolve_path
 from pipeline.idle_gate import is_gate_open
 from pipeline.media_layout import ensure_catalog_dir, ensure_catalog_file_mode
 from pipeline.poster import probe_duration_sec
-from pipeline.sheep_names import catalog_generation
+from pipeline.sheep_names import catalog_generation, is_tuple_catalog
 from pipeline.tool_lookup import tool as _tool
 
 log = logging.getLogger("jellyflam3.stills")
@@ -102,19 +103,29 @@ def write_sidecar(mp4: Path, sidecar: dict[str, Any]) -> None:
     path.write_text(json.dumps(sidecar, indent=2) + "\n", encoding="utf-8")
 
 
-def iter_catalog_mp4s(media_root: Path) -> list[Path]:
+def iter_catalog_mp4s(
+    media_root: Path,
+    *,
+    skip_tuples: bool = False,
+) -> list[Path]:
+    """Sorted catalog ``*.mp4`` paths. Stills extract passes ``skip_tuples=True``."""
     if not media_root.is_dir():
         return []
-    # Prefer by-generation tree; skip standalone /edges/ clips if present.
-    # Tuples live under by-generation/tuple/ and are catalog sheep (include them).
+
+    def _keep(p: Path) -> bool:
+        if not p.is_file():
+            return False
+        posix = p.as_posix().replace("\\", "/")
+        if "/edges/" in posix:
+            return False
+        if skip_tuples and is_tuple_catalog(p):
+            return False
+        return True
+
+    # Prefer by-generation tree; skip standalone /edges/ clips.
     root = media_root / "by-generation"
-    if root.is_dir():
-        return sorted(
-            p
-            for p in root.rglob("*.mp4")
-            if p.is_file() and "/edges/" not in p.as_posix().replace("\\", "/")
-        )
-    return sorted(p for p in media_root.rglob("*.mp4") if p.is_file())
+    walk_root = root if root.is_dir() else media_root
+    return sorted(p for p in walk_root.rglob("*.mp4") if _keep(p))
 
 
 def existing_frame_count(stills_dir: Path) -> int:
@@ -130,7 +141,18 @@ def extract_stills_for_mp4(
     force: bool = False,
     dry_run: bool = False,
 ) -> dict[str, Any]:
-    """Extract N JPEG frames for one catalog MP4; update sidecar ``stills`` block."""
+    """Extract N JPEG frames for one catalog MP4; update sidecar ``stills`` block.
+
+    Tuples are skipped (watermarked edge mid-file is not screensaver-safe).
+    """
+    sidecar = load_sidecar(mp4)
+    if is_tuple_catalog(mp4, sidecar):
+        return {
+            "ok": True,
+            "status": "skipped_tuple",
+            "sheep": mp4.stem,
+            "screensaver_safe": False,
+        }
     sc = stills_cfg(cfg)
     count = max(1, int(sc.get("count", 4)))
     q = int(sc.get("jpeg_quality", 2))
@@ -149,7 +171,6 @@ def extract_stills_for_mp4(
 
     ffmpeg = _tool(cfg, "ffmpeg")
     ffprobe = _tool(cfg, "ffprobe")
-    sidecar = load_sidecar(mp4)
     dur = sidecar.get("duration_sec")
     try:
         duration = float(dur) if dur is not None else probe_duration_sec(ffprobe, mp4)
@@ -264,7 +285,7 @@ def run_backfill(
     stats = StillsStats()
     results: list[dict[str, Any]] = []
 
-    mp4s = iter_catalog_mp4s(media_root)
+    mp4s = iter_catalog_mp4s(media_root, skip_tuples=True)
     if sheep:
         needle = sheep.lower().removesuffix(".mp4").removesuffix(".flam3")
         mp4s = [p for p in mp4s if needle in p.stem.lower()]
@@ -284,6 +305,9 @@ def run_backfill(
         if out.get("status") == "already_complete":
             stats.skipped += 1
             stats.bump("already_complete")
+        elif out.get("status") == "skipped_tuple":
+            stats.skipped += 1
+            stats.bump("skipped_tuple")
         elif out.get("status") == "dry_run":
             stats.dry_run += 1
         elif out.get("ok"):
@@ -310,7 +334,7 @@ def run_backfill(
 
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    ap = argparse.ArgumentParser(description="Extract screensaver stills (Phase 3 guide 01)")
+    ap = argparse.ArgumentParser(description="Extract screensaver stills (poster pipeline)")
     ap.add_argument("--config", default="configs/jellyflam3.yaml")
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--force", action="store_true")

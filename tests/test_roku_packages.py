@@ -77,12 +77,22 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "return true" in settings
     assert 'if val = "" then shown = "true"' in settings
     ss = (SS / "components" / "ScreenSaverScene.brs").read_text(encoding="utf-8")
-    assert 'm.reg.write("shuffleFlock", "true")' in ss
+    assert 'write("shuffleFlock"' not in ss
+    assert "shuffleCopy" in ss
+    ss_reg = (SS / "components" / "RegistryPresets.brs").read_text(encoding="utf-8")
+    assert 'reg.write("shuffleFlock"' not in ss_reg
 
 
 def test_roku_screensaver_expands_nested_library_folders():
     text = (SS / "components" / "StillsTask.brs").read_text(encoding="utf-8")
     assert "fetchStillsViaChildFolders" in text
     assert "mergeStillsById" in text
-    assert "build_version=6" in (SS / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.6""' in text
+    assert "isTupleFolder" in text
+    assert "isTupleItem" in text
+    assert "Images/Backdrop/" in text
+    assert "Images/Primary" in text
+    assert "isCommercialSafe" in text
+    assert 'write("shuffleFlock"' not in text
+    assert "shuffleCopy" in text
+    assert "build_version=7" in (SS / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.7""' in text

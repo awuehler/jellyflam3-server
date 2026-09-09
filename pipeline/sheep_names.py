@@ -90,6 +90,26 @@ def catalog_generation(stem: str) -> str:
     return kind.lower()
 
 
+def is_tuple_catalog(
+    path: Path | str,
+    sidecar: dict | None = None,
+) -> bool:
+    """True for tuple MP4s / genomes (``by-generation/tuple/`` or ``electricsheep.tuple.*``).
+
+    Screensaver stills and extra Jellyfin Backdrop frames are never generated for these.
+    """
+    p = Path(path)
+    posix = p.as_posix().replace("\\", "/").lower()
+    if "/tuple/" in posix or posix.rstrip("/").endswith("/tuple"):
+        return True
+    kind = kind_of(p.stem if p.suffix else p.name)
+    if kind is not None and kind.lower() == "tuple":
+        return True
+    if sidecar is not None and str(sidecar.get("type") or "").lower() == "tuple":
+        return True
+    return False
+
+
 def normalize_stem(stem: str) -> str:
     """Force electricsheep. prefix; strip .flam3 if present."""
     s = stem_of(stem)

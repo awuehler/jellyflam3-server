@@ -73,6 +73,9 @@ def test_discover_and_confirm_delete(tmp_path: Path):
         json.dumps({"id": base}), encoding="utf-8"
     )
     (cat / f"{base}-poster.jpg").write_bytes(b"jpg")
+    stills = cat / "stills" / base
+    stills.mkdir(parents=True)
+    (stills / "frame_00.jpg").write_bytes(b"jpg")
 
     job_id = "abcdef012345"
     job_dir = Path(cfg["paths"]["jobs_dir"]) / job_id
@@ -89,6 +92,7 @@ def test_discover_and_confirm_delete(tmp_path: Path):
     assert report.base == base
     assert flam3 in report.genomes
     assert mp4 in report.catalog
+    assert stills in report.stills
     assert job_dir in report.jobs
     assert frames in report.frames
 
@@ -101,6 +105,7 @@ def test_discover_and_confirm_delete(tmp_path: Path):
     assert not flam3.exists()
     assert not mp4.exists()
     assert not (cat / f"{base}-poster.jpg").exists()
+    assert not stills.exists()
     assert not job_dir.exists()
     assert not frames.exists()
 

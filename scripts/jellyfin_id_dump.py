@@ -331,7 +331,8 @@ def build_report(
         "Paste rokuSettings values into JellyFlam3 Settings (Roku registry JellyFlam3).",
         "baseUrl must be reachable FROM the Roku (use publicUrl / LAN IP, not 127.0.0.1).",
         "item id → deep link: curl -d '' \"http://ROKU_IP:8060/launch/dev?contentId=ITEM_ID\"",
-        "shuffleFlock eligible gens: 247,245,244,243,242,198,191,169,165 (skip misc/test).",
+        "VoD shuffleFlock: archive gens + pedigree + tuple (1.0.28+); skip misc/test. "
+        "Roku screensaver ignores shuffleFlock and always rotates (no tuples).",
         "Hard separation: live Sheep library path should be /media/sheep/by-generation; "
         "Rework Poster / refactor previews → /media/sheep/_refactor-preview. "
         "Do not point Sheep at the /media/sheep mount root.",

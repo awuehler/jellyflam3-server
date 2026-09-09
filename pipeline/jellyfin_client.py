@@ -330,6 +330,110 @@ class JellyfinClient:
             http_status=last_http,
         )
 
+    def upload_item_image(
+        self,
+        item_id: str,
+        image_path: str | Path,
+        *,
+        image_type: str = "Primary",
+        index: int | None = None,
+        retries: int = 5,
+        backoff_sec: float = 1.0,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> ImageAttachResult:
+        """POST item image bytes (Primary or Backdrop). Soft-fail like Primary upload."""
+        kind = (image_type or "Primary").strip() or "Primary"
+        if kind.lower() == "primary" and index is None:
+            return self.upload_primary_image(
+                item_id,
+                image_path,
+                retries=retries,
+                backoff_sec=backoff_sec,
+                sleep=sleep,
+            )
+        if not item_id:
+            return ImageAttachResult(
+                ok=False,
+                item_id="",
+                attempts=0,
+                status="missing_item_id",
+                error="empty item_id",
+            )
+        path = Path(image_path)
+        if not path.is_file() or path.stat().st_size <= 0:
+            return ImageAttachResult(
+                ok=False,
+                item_id=item_id,
+                attempts=0,
+                status="missing_file",
+                error=f"image not found or empty: {path}",
+            )
+        blob = path.read_bytes()
+        ctype = image_content_type(path)
+        if index is None:
+            api_path = f"/Items/{item_id}/Images/{kind}"
+        else:
+            api_path = f"/Items/{item_id}/Images/{kind}/{int(index)}"
+        label = kind if index is None else f"{kind}/{int(index)}"
+        attempts = max(1, int(retries))
+        last_error: str | None = None
+        last_http: int | None = None
+        for attempt in range(1, attempts + 1):
+            retryable = False
+            try:
+                status, _body = self.request_raw(
+                    "POST", api_path, blob, content_type=ctype
+                )
+                if 200 <= status < 300 or status == 204:
+                    log.info(
+                        "%s image uploaded for %s (%s) attempt=%s",
+                        label,
+                        item_id,
+                        path.name,
+                        attempt,
+                    )
+                    return ImageAttachResult(
+                        ok=True,
+                        item_id=item_id,
+                        attempts=attempt,
+                        status="uploaded",
+                        http_status=status,
+                    )
+                last_http = status
+                last_error = f"unexpected HTTP {status}"
+                retryable = status in _RETRYABLE_HTTP
+            except RuntimeError as exc:
+                last_error = str(exc)
+                last_http = _http_status_from_error(last_error)
+                retryable = last_http is None or last_http in _RETRYABLE_HTTP
+            if attempt >= attempts or not retryable:
+                break
+            sleep(backoff_sec * attempt)
+        return ImageAttachResult(
+            ok=False,
+            item_id=item_id,
+            attempts=attempt,
+            status="failed",
+            error=last_error,
+            http_status=last_http,
+        )
+
+    def clear_backdrop_images(self, item_id: str, *, max_index: int = 16) -> int:
+        """DELETE Backdrop/0..n until Jellyfin 404s. Returns deleted count (best-effort)."""
+        if not item_id:
+            return 0
+        deleted = 0
+        for i in range(max(0, int(max_index))):
+            try:
+                self.request("DELETE", f"/Items/{item_id}/Images/Backdrop/{i}")
+                deleted += 1
+            except RuntimeError as exc:
+                if "→ 404" in str(exc):
+                    break
+                log.info("clear Backdrop/%s for %s: %s", i, item_id, exc)
+                break
+        return deleted
+
     def sessions(self, active_within_seconds: int = 60) -> list[dict[str, Any]]:
         """List active Jellyfin sessions (for idle-gate style checks)."""
         q = urllib.parse.urlencode({"activeWithinSeconds": active_within_seconds})

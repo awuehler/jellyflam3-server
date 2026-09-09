@@ -37,7 +37,7 @@ Depends on Phase 1–2 Roku VoD playback ([../phase1/08_ROKU_BRIGHTSCRIPT.md](..
 5. **Idle-gate** — vote HTTP must stay light (no Sessions Playing as a second client); prefer a small host-service / sink like display-profile upsert, not a fake playback session.
 6. **License / commercial-safe** — share cron and breed bias still respect NC / commercial filters; a loved NC sheep does not bypass Opt Out or commercial Mode policy.
 7. **Sidecar is the sole metadata SoT** for a catalog sheep — `{stem}.jellyflam3.json` beside the MP4. License, tags, duration/signals, poster/stills index, pedigree hints, **and viewer vote tallies** live there. **No parallel vote store** under `/var/lib/jellyflam3/` (no `sheep_vote_weights.json` as competing truth). Jellyfin Items Tags / Overview are derived caches only. Binary artifacts stay themselves: `.mp4` (video), `.flam3` (genome), poster/stills **files** (sidecar indexes them). Optional append-only log is debug-only and must not be read for share/breed decisions.
-8. **Shuffle must include pedigree for voting** — Phase 3 VoD `shuffleFlock` allowlists **archive gens only** (`247`…`165`; skips `by-generation/pedigree/`, `misc`, `test`). That keeps ambient ES-archive rotation clean today. **Phase 4 Step 8 changes this:** random shuffle / continuous play loops that invite votes **must include pedigree** (and any other catalog sheep eligible for share/breed bias), so household feedback can reach local pedigree mutates — not only archive seeds. Config should distinguish **ambient archive shuffle** vs **vote-eligible shuffle** (or widen the allowlist when viewer-feedback mode is on).
+8. **VoD shuffle already includes pedigree and tuple** (channel 1.0.28+; skips `misc`/`test`). Roku screensaver ignores `shuffleFlock` and always rotates stills (no tuples). Vote overlay (when built) uses the VoD shuffle pool, not the screensaver.
 
 ## Sidecar reservation (pre-open)
 
@@ -52,7 +52,7 @@ Key **`viewer_feedback`** (likes / loves / votes / last_voted_at / share_candida
 3. **Mapping** — document which remote buttons mean like vs love vs cancel (e.g. `options` / colored keys / OK on focused button); keep shuffle / streamMode keys from colliding.
 4. **Identity** — include Jellyfin item id + catalog stem / generation tags so furnace can resolve `.flam3` and MP4 sidecar.
 5. **Multi-Roku** — per-device DeviceId optional on the event; household votes aggregate on the furnace (see [04](04_ROKU_PUBLISH.md)).
-6. **Shuffle pool (core client change)** — replace or extend `archiveGenerationAllowlist()` / `isArchiveGenerationEligible()` in `roku-channel/components/HomeScene.brs` so vote-mode shuffle includes **`by-generation/pedigree/`** (and stays exclusive of `misc`/`test`). Mirror any shared allowlist docs in `jellyfin_id_dump` notes / Settings help text.
+6. **Shuffle pool (shipped 1.0.28)** — VoD `shuffleFlock` already includes **`pedigree`** and **`tuple`** (skips `misc`/`test`). Screensaver ignores `shuffleFlock`. No further allowlist change is required for vote-mode to reach pedigree sheep.
 
 ### B — Furnace vote capture
 

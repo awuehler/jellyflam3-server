@@ -190,7 +190,7 @@ def test_omitted_commercial_mode_allows_private_logo():
 
 def test_operator_png_overlays_on_private_and_public(tmp_path: Path):
     """Custom (non-Cesari) PNG is allowed on both flock modes."""
-    png = tmp_path / "my-bug.png"
+    png = tmp_path / "my-sheepcloud.png"
     png.write_bytes(b"\x89PNG\r\n\x1a\n" + b"\x00" * 16)
     cfg = {
         "_repo_root": str(tmp_path),
@@ -271,10 +271,16 @@ def test_iter_catalog_includes_tuple_skips_edges(tmp_path: Path):
     media = tmp_path / "media"
     (media / "by-generation" / "tuple").mkdir(parents=True)
     (media / "by-generation" / "247" / "edges").mkdir(parents=True)
+    loop = media / "by-generation" / "247" / "electricsheep.247.00505.mp4"
     tup = media / "by-generation" / "tuple" / "electricsheep.tuple.a_to_b.mp4"
     edge = media / "by-generation" / "247" / "edges" / "edge.mp4"
+    loop.write_bytes(b"l")
     tup.write_bytes(b"t")
     edge.write_bytes(b"e")
     names = {p.name for p in iter_catalog_mp4s(media)}
+    assert "electricsheep.247.00505.mp4" in names
     assert "electricsheep.tuple.a_to_b.mp4" in names
     assert "edge.mp4" not in names
+    stills_names = {p.name for p in iter_catalog_mp4s(media, skip_tuples=True)}
+    assert "electricsheep.tuple.a_to_b.mp4" not in stills_names
+    assert "electricsheep.247.00505.mp4" in stills_names

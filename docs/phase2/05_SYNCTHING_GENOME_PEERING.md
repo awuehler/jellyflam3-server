@@ -51,7 +51,7 @@ The hard step remains **first enrollment trust** (who may join the flock tailnet
 
 | Tier | Rule |
 |---|---|
-| **Now (Phase 2 DoD)** | Peer sync is limited to **`*.flam3`** genomes and optional companion **`*-poster.jpg`** posters when present. No MP4, no scratch, no secrets, no Jellyfin DB, **no** `*.jellyflam3.json` / pedigree sidecars over Syncthing. Ingest **auto**-creates those posters when 2+ furnaces are live on the mesh (standalone skip); see Layer 2 [Catalog posters](../USER_GUIDE_AND_RUNBOOK.md#catalog-posters-after-render). |
+| **Now (Phase 2 DoD)** | Peer sync is limited to **`*.flam3`** genomes and optional companion **`*-poster.jpg`** posters when present. No MP4, no stills JPEGs, no scratch, no secrets, no Jellyfin DB, **no** `*.jellyflam3.json` / pedigree sidecars over Syncthing. Ingest **auto**-creates those posters when 2+ furnaces are live on the mesh (standalone skip); see Layer 2 [Catalog posters](../USER_GUIDE_AND_RUNBOOK.md#catalog-posters-after-render). |
 | **Eventually** | Further restrict sharing to **pedigree-generated sheep** — genomes **uniquely generated on that JellyFlam3 server** (mutate / cross / random / local breed), **not** re-shares of Electric Sheep archive Free Sheep downloads. Origin metadata (sidecar local-only) marks `origin: local_pedigree` vs `origin: archive` **on the breeding host only**. |
 
 **Locked — no cross-host lineage:** pedigree sidecars stay on the host that bred them. Gated promote moves `.flam3` (+ optional poster) only; it does **not** copy, recreate, or invent `*.jellyflam3.json` / parent lists / `origin` on the receiver. A peered sheep is furnace feedstock on the far side, not a continued pedigree child. Do not treat missing remote sidecars as a bug or Phase 2 debt.

@@ -173,6 +173,46 @@ def test_upload_primary_missing_item_id(tmp_path: Path):
     assert result.status == "missing_item_id"
 
 
+def test_upload_item_image_backdrop(tmp_path: Path):
+    client = JellyfinClient(url="http://jf", api_key="k")
+    img = tmp_path / "frame_00.jpg"
+    img.write_bytes(b"\xff\xd8\xfffake")
+    seen: list[str] = []
+
+    def _raw(method, path, data, *, content_type, timeout=60):  # noqa: ARG001
+        seen.append(path)
+        return 204, b""
+
+    client.request_raw = _raw  # type: ignore[method-assign]
+    result = client.upload_item_image(
+        "item-1",
+        img,
+        image_type="Backdrop",
+        index=0,
+        retries=1,
+        sleep=lambda _s: None,
+    )
+    assert result.ok
+    assert seen == ["/Items/item-1/Images/Backdrop/0"]
+
+
+def test_clear_backdrop_images_stops_on_404():
+    client = JellyfinClient(url="http://jf", api_key="k")
+    seen: list[str] = []
+
+    def _req(method, path, data=None, **kwargs):  # noqa: ARG001
+        seen.append(path)
+        if path.endswith("/2"):
+            raise RuntimeError(f"Jellyfin DELETE {path} → 404: not found")
+        return {}
+
+    client.request = _req  # type: ignore[method-assign]
+    deleted = client.clear_backdrop_images("item-1", max_index=8)
+    assert deleted == 2
+    assert seen[0] == "/Items/item-1/Images/Backdrop/0"
+    assert seen[-1] == "/Items/item-1/Images/Backdrop/2"
+
+
 def test_build_flock_overview_and_sort_name():
     ov = build_flock_overview(
         sheep_id="electricsheep.247.00505",

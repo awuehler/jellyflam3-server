@@ -55,7 +55,7 @@ python3 scripts/client_pack_presets.py prepare --kodi-settings kodi-screensaver/
 
 1. Prefer `JELLYFIN_PUBLIC_URL=http://<pi-lan-ip>:8096` so `baseUrl` is Roku-reachable (and matches furnace-built zips).
 2. Do not commit dump output that includes `--show-secrets`, or furnace preset JSON / pre-filled zips.
-3. `shuffleFlock` eligibility still uses archive gens only — item rows show `generation` when Path/Tags allow.
+3. VoD `shuffleFlock` allowlists archive gens plus **pedigree** and **tuple** (channel 1.0.28+). Roku screensaver ignores `shuffleFlock` and always rotates stills (no tuples). Dump `--items` rows still show `generation` when Path/Tags allow.
 4. Deep link after dump: `curl -d '' "http://ROKU_IP:8060/launch/dev?contentId=ITEM_ID"`.
 
 ## Artifacts

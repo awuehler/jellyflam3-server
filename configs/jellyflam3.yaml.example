@@ -115,7 +115,7 @@ jellyfin:
   image_upload_retries: 5
   image_upload_backoff_sec: 1.0
 
-# Phase 3 guide 01 — screensaver stills (ffmpeg from catalog MP4s)
+# Screensaver stills (poster pipeline — ingest + backfill_posters; never from tuples)
 stills:
   enabled: true
   count: 4                 # frames per sheep under by-generation/{gen}/stills/{stem}/
@@ -303,6 +303,6 @@ watermark:
   style: image             # image | text. Cesari default PNG is private-only; operator PNG overlays on both.
   text: "Electric Sheep"   # private fallback; commercial-safe + Cesari image upgrades the default to the ES credit
   font: ""                 # empty → DejaVu / Liberation / FreeSans if present
-  opacity: 0.45            # quiet corner bug (PNG or text)
+  opacity: 0.45            # quiet corner sheepcloud (PNG or text)
   position: lower_right    # 48px from right, 36px from bottom; PNG overlay is always this corner
   image: docs/media/watermark/Electric-Sheep-Icon-7A8B99.png  # Cesari default (private-only). Operator PNG: /var/lib/jellyflam3/watermark.png (both flocks)

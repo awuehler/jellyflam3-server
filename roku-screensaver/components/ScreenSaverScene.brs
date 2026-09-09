@@ -15,16 +15,11 @@ sub init()
 
   m.reg = CreateObject("roRegistrySection", "JellyFlam3")
   applyJellyFlam3PackPresets(m.reg)
-  sf = m.reg.read("shuffleFlock")
-  if sf = invalid then sf = ""
-  if sf.Trim() = ""
-    m.reg.write("shuffleFlock", "true")
-    m.reg.flush()
-  end if
   m.baseUrl = m.reg.read("baseUrl")
   m.apiKey = m.reg.read("apiKey")
   m.userId = m.reg.read("userId")
   m.libraryId = m.reg.read("libraryId")
+  m.commercialMode = m.reg.read("commercialMode")
   m.fadeOn = registryBool(m.reg, "ssFade", true)
   m.dwellSec = registryInt(m.reg, "ssDwellSec", 12, 5, 120)
   m.fadeSec = registryFloat(m.reg, "ssFadeSec", 1.5, 0.3, 5.0)
@@ -51,6 +46,8 @@ sub init()
   m.task.apiKey = m.apiKey
   m.task.userId = m.userId
   m.task.libraryId = m.libraryId
+  if m.commercialMode = invalid then m.commercialMode = ""
+  m.task.commercialMode = m.commercialMode
   m.task.control = "RUN"
 end sub
 
@@ -89,7 +86,7 @@ sub onList()
   end if
   data = ParseJson(raw)
   if data = invalid or data.urls = invalid or data.urls.count() = 0
-    reason = "No Primary images in library"
+    reason = "No Primary or Backdrop stills in library"
     if data <> invalid and data.error <> invalid then reason = data.error
     m.status.text = reason
     return
@@ -104,11 +101,33 @@ sub onList()
   m.timer.control = "start"
 end sub
 
+function shuffleCopy(src as object) as object
+  bag = []
+  if src = invalid then return bag
+  for each u in src
+    bag.push(u)
+  end for
+  n = bag.count()
+  if n < 2 then return bag
+  i = n - 1
+  while i > 0
+    j = Rnd(i + 1) - 1
+    tmp = bag[i]
+    bag[i] = bag[j]
+    bag[j] = tmp
+    i = i - 1
+  end while
+  return bag
+end function
+
 sub onTick()
   if m.urls = invalid or m.urls.count() = 0 then return
   if m.busy then return
   m.index = m.index + 1
-  if m.index >= m.urls.count() then m.index = 0
+  if m.index >= m.urls.count()
+    m.urls = shuffleCopy(m.urls)
+    m.index = 0
+  end if
   nextUri = m.urls[m.index]
   if not m.fadeOn
     hardCut(nextUri)

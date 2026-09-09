@@ -36,8 +36,8 @@ Complements (does not replace):
 | Check health | `./scripts/healthcheck.sh`; services; tip `git rev-parse` |
 | See idle-gate | `cat /var/lib/jellyflam3/idle_gate_status.json` |
 | Play on Roku VoD | Settings IDs via `jellyfin_id_dump.py`; launch / deep link notes |
-| Enable screensaver | **VoD Settings first** on that Roku (writes `JellyFlam3` registry); then SS zip; Theme → Screensavers; fade/dwell only in SS Settings ([04](04_ROKU_PUBLISH.md)) |
-| Extract stills | `python3 -m pipeline.stills --dry-run` / `--limit N` |
+| Enable screensaver | **VoD Settings first** on that Roku (writes `JellyFlam3` registry); then SS zip; Theme → Screensavers; fade/dwell only. SS always rotates (ignores `shuffleFlock`); Primary + Backdrop; no tuples ([01](../phase3/01_SCREENSAVERS_AND_STILLS.md), [04](04_ROKU_PUBLISH.md)) |
+| Extract stills | Poster ingest / `backfill_posters`; operator `python3 -m pipeline.stills --dry-run` / `--limit N` |
 | Breed / seed | Manual `pipeline.breed` (mutate / cross / blend / interpolate) or daily `cron_breed_idle.sh` when inbox empty → wait for worker (Phase 2 pedigree); Phase 4 may weight parents by viewer votes ([08](08_VIEWER_FEEDBACK_LOOP.md)) |
 | Promote peer share | Opt In status; `promote --apply` gated path (Phase 2/4 peering); Phase 4 share-votes cron may auto-stage liked sheep ([08](08_VIEWER_FEEDBACK_LOOP.md)) |
 | Vote / like a sheep | Roku VoD overlay near end of clip (Phase 4 — [08](08_VIEWER_FEEDBACK_LOOP.md)); playback continues; re-votes allowed |
@@ -63,7 +63,7 @@ Symptom-oriented table (extend as lab learns):
 |---|---|---|
 | No new sheep appearing | Worker active? inbox count? gate open? | Open gate / fix worker / seed inbox |
 | Gate stuck closed | Jellyfin Sessions; VoD still Playing? | Stop playback; wait `idle_delay_sec` |
-| Blank screensaver | Empty `JellyFlam3` registry (SS never configured VoD on this box) | Sideload VoD → save Settings → re-sideload SS; then id dump / Primaries |
+| Blank screensaver | Empty `JellyFlam3` registry (SS never configured VoD on this box) | Sideload VoD → save Settings → re-sideload SS; then id dump / Primary+Backdrop |
 | Kodi SS missing brand-new sheep | Jellyfin shows item, but **same** screensaver session still running | Exit screensaver / start a new idle session (flock is fetched once per run). Phase 4 polish: long-interval re-fetch ([00](00_OVERVIEW.md#client-polish-parked--not-numbered)) |
 | Playback 404 after quarantine | Client still playing; operator just quarantined/Shears-deleted that sheep | Today: exit session / pick another title. Phase 4 polish: auto re-poll flock on file-not-found ([00](00_OVERVIEW.md#client-polish-parked--not-numbered)) — VoD, Roku SS, Kodi SS |
 | Screensaver replaced VoD | One sideload slot | Re-sideload VoD or use private/Store ([04](04_ROKU_PUBLISH.md)) |
