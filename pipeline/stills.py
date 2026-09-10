@@ -9,7 +9,8 @@ Usage (operator re-extract; ingest also runs this from ``apply_flock_artwork``):
 
 Assumptions: Frames land under ``by-generation/{gen}/stills/{stem}/frame_XX.jpg``
 (matches Shears cascade) and are uploaded as Jellyfin Backdrops with posters.
-Never extract from tuple MP4s. Tag stills as screensaver-safe in sidecar.
+Never extract from tuple MP4s, ``_refactor-quarantine/``, or ``_refactor-preview/``.
+Tag stills as screensaver-safe in sidecar.
 Extraction respects idle-gate when enabled so TV playback stays responsive.
 """
 
@@ -26,7 +27,11 @@ from typing import Any
 
 from pipeline.config import load_config, resolve_path
 from pipeline.idle_gate import is_gate_open
-from pipeline.media_layout import ensure_catalog_dir, ensure_catalog_file_mode
+from pipeline.media_layout import (
+    ensure_catalog_dir,
+    ensure_catalog_file_mode,
+    is_unpublished_media_path,
+)
 from pipeline.poster import probe_duration_sec
 from pipeline.sheep_names import catalog_generation, is_tuple_catalog
 from pipeline.tool_lookup import tool as _tool
@@ -136,6 +141,8 @@ def iter_catalog_mp4s(
     def _keep(p: Path) -> bool:
         if not p.is_file():
             return False
+        if is_unpublished_media_path(p):
+            return False
         posix = p.as_posix().replace("\\", "/")
         if "/edges/" in posix:
             return False
@@ -164,8 +171,16 @@ def extract_stills_for_mp4(
 ) -> dict[str, Any]:
     """Extract N JPEG frames for one catalog MP4; update sidecar ``stills`` block.
 
-    Tuples are skipped (watermarked edge mid-file is not screensaver-safe).
+    Tuples, ``_refactor-quarantine/``, and ``_refactor-preview/`` are skipped
+    (quarantine/preview MP4s would otherwise write live ``by-generation/.../stills/``).
     """
+    if is_unpublished_media_path(mp4):
+        return {
+            "ok": True,
+            "status": "skipped_unpublished",
+            "sheep": mp4.stem,
+            "screensaver_safe": False,
+        }
     sidecar = load_sidecar(mp4)
     if is_tuple_catalog(mp4, sidecar):
         return {

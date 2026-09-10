@@ -44,11 +44,19 @@ def test_iter_catalog_mp4s(tmp_path: Path):
     a.write_bytes(b"a")
     b.write_bytes(b"b")
     (media / "by-generation" / "247" / "notes.txt").write_text("x")
+    parked = media / "_refactor-quarantine" / "electricsheep.247.00505" / "electricsheep.247.00505.mp4"
+    parked.parent.mkdir(parents=True)
+    parked.write_bytes(b"q")
+    preview = media / "_refactor-preview" / "electricsheep.247.00128" / "electricsheep.247.00128.mp4"
+    preview.parent.mkdir(parents=True)
+    preview.write_bytes(b"p")
     found = iter_catalog_mp4s(media)
     assert [p.name for p in found] == [
         "electricsheep.247.00128.mp4",
         "electricsheep.247.00505.mp4",
     ]
+    assert parked not in found
+    assert preview not in found
 
 
 def test_needs_backfill_already_complete(tmp_path: Path):
@@ -114,6 +122,34 @@ def test_run_backfill_dry_run_counts(tmp_path: Path):
     assert stats.skipped == 1
     assert stats.dry_run_would_process == 1
     assert stats.reasons.get("missing_poster") == 1
+
+
+def test_run_backfill_dry_run_ignores_quarantine_mp4s(tmp_path: Path):
+    media = _media_tree(tmp_path)
+    live = media / "by-generation" / "247" / "todo.mp4"
+    live.write_bytes(b"t")
+    parked = media / "_refactor-quarantine" / "electricsheep.247.00505" / "electricsheep.247.00505.mp4"
+    parked.parent.mkdir(parents=True)
+    parked.write_bytes(b"q")
+    stats = run_backfill(_cfg(tmp_path, media), dry_run=True)
+    assert stats.scanned == 1
+    assert stats.dry_run_would_process == 1
+    assert "unpublished" not in stats.reasons
+
+
+def test_backfill_one_skips_quarantine_without_extract(tmp_path: Path):
+    media = _media_tree(tmp_path)
+    mp4 = media / "_refactor-quarantine" / "electricsheep.247.00505" / "electricsheep.247.00505.mp4"
+    mp4.parent.mkdir(parents=True)
+    mp4.write_bytes(b"q")
+    with patch("pipeline.backfill_posters.extract_poster_for_mp4") as poster, patch(
+        "pipeline.backfill_posters.extract_stills_for_mp4"
+    ) as stills:
+        result = backfill_one(_cfg(tmp_path, media), mp4, skip_jellyfin=True, force=True)
+    assert result["status"] == "skipped"
+    assert result["reason"] == "unpublished"
+    poster.assert_not_called()
+    stills.assert_not_called()
 
 
 def test_backfill_one_poster_only(tmp_path: Path):

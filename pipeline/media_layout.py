@@ -30,6 +30,19 @@ REFACTOR_PREVIEW_DIRNAME = "_refactor-preview"
 REFACTOR_QUARANTINE_DIRNAME = "_refactor-quarantine"
 
 
+def is_unpublished_media_path(path: Path) -> bool:
+    """True when ``path`` is under ``_refactor-quarantine`` or ``_refactor-preview``.
+
+    Those trees are siblings of ``by-generation/``, not live flock. Stills extract
+    always writes ``by-generation/{gen}/stills/{stem}/``, so walking parked MP4s
+    would re-populate stills for unpublished sheep.
+    """
+    parts = Path(path).parts
+    return (
+        REFACTOR_QUARANTINE_DIRNAME in parts or REFACTOR_PREVIEW_DIRNAME in parts
+    )
+
+
 def ensure_refactor_preview_dir(media_root: Path) -> Path:
     """Create ``media_root/_refactor-preview`` with catalog dir mode (Jellyfin-writable)."""
     preview = Path(media_root) / REFACTOR_PREVIEW_DIRNAME

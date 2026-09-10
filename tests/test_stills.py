@@ -60,6 +60,42 @@ def test_iter_catalog_mp4s_skips_tuples_and_edges(tmp_path: Path):
     }
 
 
+def test_iter_catalog_mp4s_skips_quarantine_and_preview(tmp_path: Path):
+    media = tmp_path / "media"
+    gen = media / "by-generation" / "247"
+    gen.mkdir(parents=True)
+    loop = gen / "electricsheep.247.00505.mp4"
+    loop.write_bytes(b"x")
+    q = media / "_refactor-quarantine" / "electricsheep.247.00128" / "electricsheep.247.00128.mp4"
+    q.parent.mkdir(parents=True)
+    q.write_bytes(b"q")
+    prev = media / "_refactor-preview" / "electricsheep.247.14181" / "electricsheep.247.14181.mp4"
+    prev.parent.mkdir(parents=True)
+    prev.write_bytes(b"p")
+    names = {p.name for p in iter_catalog_mp4s(media)}
+    assert names == {"electricsheep.247.00505.mp4"}
+
+
+def test_extract_stills_skips_quarantine_without_writing_live_dir(tmp_path: Path):
+    media = tmp_path / "media"
+    stem = "electricsheep.247.00505"
+    mp4 = media / "_refactor-quarantine" / stem / f"{stem}.mp4"
+    mp4.parent.mkdir(parents=True)
+    mp4.write_bytes(b"fake-mp4")
+    cfg = {
+        "_repo_root": str(tmp_path),
+        "paths": {"media_library": str(media), "status_file": str(tmp_path / "status.json")},
+        "stills": {"enabled": True, "count": 4, "jpeg_quality": 2, "respect_idle_gate": False},
+        "tools": {"ffmpeg": "ffmpeg", "ffprobe": "ffprobe"},
+    }
+    live_stills = stills_dir_for_mp4(media, mp4)
+    with patch("pipeline.stills.subprocess.run") as run:
+        out = extract_stills_for_mp4(cfg, mp4, force=True)
+    run.assert_not_called()
+    assert out["status"] == "skipped_unpublished"
+    assert not live_stills.exists()
+
+
 def test_extract_stills_skips_tuple(tmp_path: Path):
     media = tmp_path / "media"
     tup_dir = media / "by-generation" / "tuple"

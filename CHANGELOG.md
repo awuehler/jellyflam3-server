@@ -26,6 +26,7 @@ All notable changes to this project are documented here. Format loosely follows 
 - Ed25519 trust enrollment flake: do not `.strip()` exact 32-byte raw public keys (whitespace bytes are valid key material; broke `test_trust_key_enrolls_peer` intermittently on CI).
 - Redact `--auth-key=` values in `pipeline.peering` command logs.
 - Client sheep rotate stays **on**: Roku VoD **1.0.30** always writes `shuffleFlock=true` on launch (heals leftover `false` across sideload). Furnace presets no longer copy package shuffle onto the device. Kodi **0.2.8** heals persisted `shuffle=false` and always rotates. Roku screensaver still ignores `shuffleFlock`.
+- `pipeline.backfill_posters` / `pipeline.stills` no longer extract frames from `_refactor-quarantine/` or `_refactor-preview/` MP4s (those would rewrite live `by-generation/{gen}/stills/{stem}/` for unpublished sheep).
 - Restore Kodi `resources/icon.png` (was committed as `icon-.png`, which failed CI package checks).
 
 ### Changed

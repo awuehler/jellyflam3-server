@@ -289,7 +289,7 @@ Default is `jellyfin.attach_posters: auto` in the example yaml. Live `configs/je
 
 Screensaver stills (JPEG frames + Jellyfin Backdrops) ride the **same ingest switch**. When posters extract, non-tuple sheep also get `by-generation/{gen}/stills/{stem}/frame_XX.jpg` uploaded as Backdrops. Tuples never generate stills (watermarked edge mid-file is not screensaver-safe). Peering still shares only `*.flam3` + optional `*-poster.jpg` — not stills JPEGs.
 
-`python3 -m pipeline.backfill_posters` always extracts posters **and** stills (operator one-shot). It does not follow ingest auto/never. `python3 -m pipeline.stills` remains an operator re-extract CLI for disk frames only.
+`python3 -m pipeline.backfill_posters` always extracts posters **and** stills (operator one-shot). It does not follow ingest auto/never, and it does **not** walk `_refactor-quarantine/` or `_refactor-preview/` (stills always land under live `by-generation/{gen}/stills/{stem}/`). `python3 -m pipeline.stills` remains an operator re-extract CLI for disk frames only.
 
 Check what this furnace will do on the **next** ingest (no worker restart needed for the check):
 

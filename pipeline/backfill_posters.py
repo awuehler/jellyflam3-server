@@ -8,7 +8,9 @@ Usage:
 
 Assumptions: Sidecar ``*.jellyflam3.json`` tracks completion; soft-fails leave partial sidecar
 state. Stills ride the same path as posters (never from tuples). Operator backfill
-force-extracts stills and replaces Jellyfin Backdrops.
+force-extracts stills and replaces Jellyfin Backdrops. Does not walk
+``_refactor-quarantine/`` or ``_refactor-preview/`` (stills always land under
+live ``by-generation/{gen}/stills/{stem}/``).
 """
 
 from __future__ import annotations
@@ -29,9 +31,10 @@ from pipeline.flock_artwork import (
 )
 from pipeline.idle_gate import is_gate_open
 from pipeline.jellyfin_client import JellyfinClient
+from pipeline.media_layout import is_unpublished_media_path
 from pipeline.poster import poster_path_for_mp4, probe_duration_sec
 from pipeline.sheep_names import is_tuple_catalog
-from pipeline.stills import extract_stills_for_mp4, stills_cfg
+from pipeline.stills import extract_stills_for_mp4, iter_catalog_mp4s as iter_live_catalog_mp4s, stills_cfg
 from pipeline.tool_lookup import tool as _tool
 
 log = logging.getLogger("jellyflam3.backfill_posters")
@@ -53,10 +56,8 @@ class BackfillStats:
 
 
 def iter_catalog_mp4s(media_root: Path) -> list[Path]:
-    """Sorted recursive ``*.mp4`` paths under the media library root."""
-    if not media_root.is_dir():
-        return []
-    return sorted(p for p in media_root.rglob("*.mp4") if p.is_file())
+    """Live catalog ``*.mp4`` under ``by-generation/`` (skips quarantine, preview, edges)."""
+    return iter_live_catalog_mp4s(media_root, skip_tuples=False)
 
 
 def sidecar_path_for_mp4(mp4: Path) -> Path:
@@ -91,6 +92,8 @@ def needs_backfill(
     force: bool = False,
 ) -> tuple[bool, str]:
     """Return (needed, reason) based on poster file + sidecar Jellyfin fields."""
+    if is_unpublished_media_path(mp4):
+        return False, "unpublished"
     if force:
         return True, "force"
     poster = poster_path_for_mp4(mp4)
@@ -156,6 +159,8 @@ def backfill_one(
     skip_jellyfin: bool = False,
 ) -> dict[str, Any]:
     """Extract/upload/enrich one catalog MP4. Soft-fail; updates sidecar on disk."""
+    if is_unpublished_media_path(mp4):
+        return {"mp4": str(mp4), "status": "skipped", "reason": "unpublished"}
     sidecar = load_sidecar(mp4)
     needed, reason = needs_backfill(mp4, sidecar, force=force)
     if not needed:
