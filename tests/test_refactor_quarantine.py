@@ -48,7 +48,9 @@ def _bad_xml() -> str:
 def _seed(tmp: Path, cfg: dict, stem: str = "electricsheep.247.00505") -> Path:
     mp4 = Path(cfg["paths"]["media_library"]) / "by-generation" / "247" / f"{stem}.mp4"
     mp4.write_bytes(b"fake-mp4")
-    poster_path_for_mp4(mp4).write_bytes(b"jpg")
+    dest = poster_path_for_mp4(mp4)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(b"jpg")
     sidecar_path_for_mp4(mp4).write_text(
         f'{{"id": "{stem}", "duration_sec": 23}}', encoding="utf-8"
     )
@@ -103,6 +105,7 @@ def test_quarantine_apply_moves_genome_and_parks_catalog(tmp_path: Path):
     assert not mp4.exists()
     hold = Path(cfg["paths"]["media_library"]) / "_refactor-quarantine" / stem
     assert (hold / f"{stem}.mp4").is_file()
+    assert (hold / f"{stem}-poster.jpg").is_file()
     assert result.jellyfin.get("status") == "deleted"
     # Genetics preserved (moved, not deleted)
     assert q_genome.read_text(encoding="utf-8").startswith("<flame")
@@ -113,7 +116,9 @@ def test_quarantine_rejects_ok_without_force(tmp_path: Path):
     stem = "electricsheep.247.00999"
     mp4 = Path(cfg["paths"]["media_library"]) / "by-generation" / "247" / f"{stem}.mp4"
     mp4.write_bytes(b"fake-mp4")
-    poster_path_for_mp4(mp4).write_bytes(b"jpg")
+    dest = poster_path_for_mp4(mp4)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(b"jpg")
     sidecar_path_for_mp4(mp4).write_text('{"duration_sec": 23}', encoding="utf-8")
     genome = Path(cfg["paths"]["genomes_done"]) / f"{stem}.flam3"
     genome.write_text(

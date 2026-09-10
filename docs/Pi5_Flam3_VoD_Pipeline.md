@@ -105,7 +105,13 @@ Organize for Jellyfin movie/home-video scanning and easy curation:
   by-generation/
     247/
       electricsheep.247.16021.mp4
-      electricsheep.247.16021-poster.jpg   # optional, from flam3-render
+      electricsheep.247.16021.jellyflam3.json
+      stills/
+        .ignore                            # hide images from Jellyfin library scan
+        electricsheep.247.16021/
+          electricsheep.247.16021-poster.jpg
+          frame_00.jpg                     # screensaver stills (optional)
+
     244/
       ...
   playlists/          # optional symlink sets or Jellyfin collections only
@@ -516,7 +522,7 @@ ffmpeg -framerate 24 -i frames/f%05d.png \
   /media/sheep/by-generation/247/electricsheep.247.16021.mp4
 ```
 
-Optional: set `-g` / `-keyint_min` near the loop length (e.g. `-g 552` when `nframes=552`) so a seamless restart lands near a keyframe. Optional poster: `flam3-render` one frame → `...-poster.jpg`.
+Optional: set `-g` / `-keyint_min` near the loop length (e.g. `-g 552` when `nframes=552`) so a seamless restart lands near a keyframe. Optional poster: mid-loop JPEG → `stills/{stem}/{stem}-poster.jpg`.
 
 ### 6. Refresh Jellyfin and serve Roku
 
@@ -897,7 +903,7 @@ stateDiagram-v2
 - **Licensing:** Free Sheep only as archive seeds — tag `cc-by` vs `cc-by-nc`, `human`/`brood`, generation. **Client** commercial-safe toggles hide BY-NC at playback; furnace `license.commercial_mode` does **not** refuse NC at render (it does change the tuple watermark: no Cesari logo on public; operator PNG still overlays). **Algorithm/robot offspring of human parents stay NC under ES rules**; mutation % does not flip license. **Do not ingest Gold Sheep / Infinidream / paid Spotworks masters.** Cesari mascot files are not MIT / not genome CC — [NOTICE](../NOTICE), [watermark README](media/watermark/README.md). Catalog sidecar schema in [docs/phase1/07_LICENSE_AND_METADATA.md](phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema).
 - **CPU isolation (required):** render supervisor **must** block flam3/ffmpeg work while any **active Jellyfin TV client** is playing (and while any session shows active **transcoding**); **gracefully resume** only after configurable **`idle_delay`** with no such activity.
 - **Storage (Pi 5):** USB SSD = `/media/sheep` flock; PCIe NVMe = scratch + `/var/lib/jellyflam3` state; microSD = OS. Profiles: **16** (128 GB SD / 1 TB NVMe / 1 TB SSD), **08** (64 / 500 / 500), **04** (32 / 250 / 250). Hostnames: `rpi-jellyflam3-16a|16b…`, `-08a|08b…`, `-04a|04b…`.
-- **Posters (Phase 2):** mid-loop frame via ffmpeg → filesystem beside MP4 **and** Jellyfin Images API with retry; **auto** ingest (standalone skip; 2+ live mesh furnaces create); backfill existing flock. Screensaver stills (non-tuple) extract and upload as Jellyfin Backdrops on the same path.
+- **Posters (Phase 2):** mid-loop frame via ffmpeg → `stills/{stem}/{stem}-poster.jpg` **and** Jellyfin Images API with retry; **auto** ingest (standalone skip; 2+ live mesh furnaces create); backfill existing flock. Screensaver stills (non-tuple) extract and upload as Jellyfin Backdrops on the same path.
 - **Deep linking (Phase 1):** VoD channel handles `contentId` launch/input → `PlayerScreen`.
 - **Archive seed library (baseline shipped):** random pick from gens **247…165** `1.html`/`2.html`/`3.html` (manifest ≈6380 IDs; 404 pages skipped); TV-port + Gold Sheep Lite + OkLCh; default fetch **3–7**.
 - **Complementary ambient-TV palettes (baseline shipped):** server-side OkLCh dual-pole tint in TV-optimize path.
@@ -1020,7 +1026,7 @@ Review of the plan against **initial setup → implementation → integration �
 | **Implementation** | No crash/resume / scratch cleanup | High | Per-job work dir; delete frames after successful encode; resume from last incomplete job |
 | **Implementation** | No disk-full / poison-genome handling | Medium | Preflight free-space check; quarantine bad `.flam3`; retry budget |
 | **Implementation** | Secrets in git risk | High | `jellyflam3.yaml` + `secrets.env` (gitignored); API keys via env |
-| **Implementation** | Poster → Jellyfin Primary image | Medium | After encode, set Primary via API or Jellyfin image naming conventions—not only loose `-poster.jpg` |
+| **Implementation** | Poster → Jellyfin Primary image | Medium | After encode, set Primary via API — catalog JPEGs live under `stills/{stem}/` (`.ignore`), not as extra library items |
 | **Implementation** | Attribution / LICENSE for JellyFlam3 code | Medium | Project LICENSE (e.g. GPL/MIT—choose at repo init) + third-party notices for flam3/ES/Jellyfin |
 | **Integration** | Jellyfin first-run / API user steps missing | High | Wizard checklist: admin user, library, API key, enable remote access as needed |
 | **Integration** | Idle-gate client identity | Medium | Register BrightScript `Client`/`DeviceName` string; document match patterns in config |

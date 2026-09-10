@@ -77,8 +77,8 @@ Roku also **forbids** embedding a screensaver in a streaming app (`screensaver_t
 
 ## Stills on the Pi
 
-Screensaver stills extract with posters (`apply_flock_artwork` / `backfill_posters`). Frames land under
-`/media/sheep/by-generation/{gen}/stills/{stem}/` and are uploaded as Jellyfin **Backdrop** images.
+Screensaver stills extract with posters (`apply_flock_artwork` / `backfill_posters`). Frames and `{stem}-poster.jpg` land under
+`/media/sheep/by-generation/{gen}/stills/{stem}/` (hidden from the library scan by `stills/.ignore`). Frames are uploaded as Jellyfin **Backdrop** images.
 The screensaver cycles **Primary + Backdrop** from every library folder except `tuple`, always
 rotates (ignores VoD `shuffleFlock`), and honors `commercialMode`. Tuples never generate stills.
 

@@ -144,6 +144,7 @@ def test_extract_stills_writes_frames(tmp_path: Path):
     dest = stills_dir_for_mp4(media, mp4)
     assert frame_path(dest, 0).is_file()
     assert frame_path(dest, 2).is_file()
+    assert (dest.parent / ".ignore").is_file()
     side = mp4.with_suffix(".jellyflam3.json")
     assert side.is_file()
     assert "screensaver_safe" in side.read_text(encoding="utf-8")

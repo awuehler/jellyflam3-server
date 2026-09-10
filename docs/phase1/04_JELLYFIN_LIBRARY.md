@@ -27,7 +27,7 @@ Jellyfin runs as user `jellyfin` and must be in group `jellyflam3`. It writes **
 | Path | Mode | Why |
 |---|---|---|
 | `/media/sheep/by-generation` and gen folders (`243`, …) | **`2775`** (setgid + `rwxrwxr-x`) | Group can create `.trickplay` dirs |
-| Catalog files (`*.mp4`, `*-poster.jpg`, `*.jellyflam3.json`) | **`664`** | Group-readable/writable |
+| Catalog files (`*.mp4`, `stills/{stem}/*-poster.jpg`, `*.jellyflam3.json`) | **`664`** | Group-readable/writable |
 
 `umask 022` + setgid parent alone yields **`2755`** (no group write) — that produces `UnauthorizedAccessException` on `.trickplay` in Jellyfin logs.
 

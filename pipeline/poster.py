@@ -1,24 +1,105 @@
-"""Purpose: Extract mid-loop poster JPEGs beside catalog MP4s.
+"""Purpose: Extract mid-loop poster JPEGs into the catalog stills folder.
 
 Requirements: ffmpeg (and ffprobe when duration is not passed).
 
 Usage: ``extract_mid_loop_poster(ffmpeg=…, mp4=…, …)`` from flock artwork / backfill.
 
-Assumptions: Jellyfin-friendly sibling name ``{stem}-poster.jpg``; seek at half duration.
+Assumptions: Canonical path is ``by-generation/{gen}/stills/{stem}/{stem}-poster.jpg``
+(same folder as screensaver frames). Legacy sibling ``{stem}-poster.jpg`` next to the
+MP4 is relocated on backfill. Parked quarantine/preview trees keep a sibling poster.
 """
 
 from __future__ import annotations
 
 import logging
+import shutil
 import subprocess
 from pathlib import Path
+
+from pipeline.media_layout import ensure_stills_dir, is_unpublished_media_path, stills_dir_for_mp4
 
 log = logging.getLogger("jellyflam3.poster")
 
 
-def poster_path_for_mp4(mp4: Path) -> Path:
-    """Jellyfin-friendly sibling: ``{stem}-poster.jpg`` next to the MP4."""
-    return mp4.with_name(f"{mp4.stem}-poster.jpg")
+def poster_filename(stem: str) -> str:
+    return f"{stem}-poster.jpg"
+
+
+def legacy_poster_path_for_mp4(mp4: Path) -> Path:
+    """Pre-consolidation sibling: ``{stem}-poster.jpg`` next to the MP4."""
+    mp4 = Path(mp4)
+    return mp4.with_name(poster_filename(mp4.stem))
+
+
+def _media_root_from_catalog_mp4(mp4: Path) -> Path | None:
+    parts = Path(mp4).parts
+    if "by-generation" not in parts:
+        return None
+    idx = parts.index("by-generation")
+    if idx == 0:
+        return Path(".")
+    root = Path(parts[0])
+    for part in parts[1:idx]:
+        root /= part
+    return root
+
+
+def poster_path_for_mp4(mp4: Path, *, media_root: Path | None = None) -> Path:
+    """Canonical poster: ``stills/{stem}/{stem}-poster.jpg`` (sibling if unpublished)."""
+    mp4 = Path(mp4)
+    name = poster_filename(mp4.stem)
+    if is_unpublished_media_path(mp4):
+        return mp4.with_name(name)
+    root = media_root if media_root is not None else _media_root_from_catalog_mp4(mp4)
+    if root is not None:
+        return stills_dir_for_mp4(root, mp4) / name
+    return mp4.parent / "stills" / mp4.stem / name
+
+
+def resolve_poster_path(mp4: Path, *, media_root: Path | None = None) -> Path:
+    """Existing poster path: canonical stills file, else legacy sibling, else canonical."""
+    canonical = poster_path_for_mp4(mp4, media_root=media_root)
+    if canonical.is_file() and canonical.stat().st_size > 0:
+        return canonical
+    legacy = legacy_poster_path_for_mp4(mp4)
+    if legacy.is_file() and legacy.stat().st_size > 0:
+        return legacy
+    return canonical
+
+
+def relocate_legacy_poster(mp4: Path, *, media_root: Path | None = None) -> Path | None:
+    """Move a sibling ``{stem}-poster.jpg`` into the stills folder. Returns dest if present."""
+    dest = poster_path_for_mp4(mp4, media_root=media_root)
+    legacy = legacy_poster_path_for_mp4(mp4)
+    try:
+        if dest.exists() and legacy.exists() and dest.resolve() == legacy.resolve():
+            return dest
+    except OSError:
+        pass
+    if dest.is_file() and dest.stat().st_size > 0:
+        if legacy.is_file() and legacy != dest:
+            try:
+                legacy.unlink()
+            except OSError as exc:
+                log.warning("legacy poster remove failed %s: %s", legacy, exc)
+        return dest
+    if not legacy.is_file() or legacy.stat().st_size <= 0:
+        return dest if dest.is_file() else None
+    _ensure_poster_parent(mp4, dest)
+    try:
+        shutil.move(str(legacy), str(dest))
+    except OSError as exc:
+        log.warning("legacy poster move failed %s -> %s: %s", legacy, dest, exc)
+        return legacy if legacy.is_file() else None
+    return dest
+
+
+def _ensure_poster_parent(mp4: Path, dest: Path) -> None:
+    """Create the stills folder (+ Jellyfin ``.ignore``) for live catalog posters."""
+    if dest.parent.name == Path(mp4).stem and dest.parent.parent.name == "stills":
+        ensure_stills_dir(dest.parent)
+    else:
+        dest.parent.mkdir(parents=True, exist_ok=True)
 
 
 def mid_loop_seek_sec(duration_sec: float) -> float:
@@ -54,7 +135,7 @@ def extract_mid_loop_poster(
     duration_sec: float | None = None,
     ffprobe: str | None = None,
 ) -> Path:
-    """Write a mid-loop JPEG beside ``mp4`` (or to ``dest``) and return its path.
+    """Write a mid-loop JPEG into the stills folder (or to ``dest``) and return its path.
 
     Does not upload to Jellyfin (Images API is a later flock-UX piece).
     """
@@ -63,7 +144,7 @@ def extract_mid_loop_poster(
         raise FileNotFoundError(f"MP4 not found: {mp4}")
 
     out = Path(dest) if dest is not None else poster_path_for_mp4(mp4)
-    out.parent.mkdir(parents=True, exist_ok=True)
+    _ensure_poster_parent(mp4, out)
 
     dur = duration_sec
     if dur is None:

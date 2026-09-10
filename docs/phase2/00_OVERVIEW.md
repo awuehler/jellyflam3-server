@@ -52,7 +52,7 @@ Parallel after **02**: `03` (HLS) can start before posters land; `04` needs Prim
 
 ## Locked implementation decisions
 
-1. **Posters:** filesystem beside MP4 **and** Jellyfin Images API with retry; mid-loop frame; backfill existing flock.
+1. **Posters:** filesystem under `stills/{stem}/` **and** Jellyfin Images API with retry; mid-loop frame; backfill existing flock (relocates leftover sibling `*-poster.jpg`).
 2. **HLS delivery:** Jellyfin is the stream origin; **HLS** is first-class for Roku, VLC, and similar clients; prefer **Direct Stream / remux** (no re-encode) for Gold Sheep Lite masters; full HLS transcode is fallback under idle-gate; Direct Play MP4 remains allowed for ambient loop when HLS loop is weak.
 3. **Display probe:** Roku Settings fetch → registry + POST/drop on Pi; **no** auto-4K retarget in Phase 2.
 4. **Duration:** HW profile overlays scale soft/hard VoD bands + `dynamic.base_sec` by Pi class (filesystem headroom); example defaults min **11 s**, soft **37 s**, hard **90 s** (see `configs/profiles/`). **`vod.dynamic.snap_to_periods: true` is the locked fleet default** on every profile (seamless loops). Period-snap LCM can still jump toward soft max — documented awareness in [08](08_DYNAMIC_DURATION.md), not an open config debt.

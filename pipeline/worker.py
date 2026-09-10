@@ -57,6 +57,7 @@ from pipeline.media_layout import (
     ensure_catalog_file_mode,
     repair_by_generation_perms,
 )
+from pipeline.poster import poster_path_for_mp4
 from pipeline.tv_optimize import tv_optimize_file
 from pipeline.tool_lookup import tool as _tool
 
@@ -766,7 +767,7 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
             json.dumps(sidecar, indent=2), encoding="utf-8"
         )
         ensure_catalog_file_mode(dest)
-        ensure_catalog_file_mode(dest_dir / f"{base}-poster.jpg")
+        ensure_catalog_file_mode(poster_path_for_mp4(dest))
         ensure_catalog_file_mode(dest_dir / f"{base}.jellyflam3.json")
 
         state.update({"state": "ingested", "dest": str(dest), "duration_sec": dur, "tags": tags})

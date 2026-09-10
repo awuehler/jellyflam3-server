@@ -31,7 +31,8 @@ def test_catalog_desaturated_flags_candidate(tmp_path: Path):
     media.mkdir(parents=True)
     mp4 = media / "electricsheep.243.grey.mp4"
     mp4.write_bytes(b"\x00\x00")  # not probed when duration in sidecar
-    poster = media / "electricsheep.243.grey-poster.jpg"
+    poster = media / "stills" / "electricsheep.243.grey" / "electricsheep.243.grey-poster.jpg"
+    poster.parent.mkdir(parents=True)
     Image.new("RGB", (128, 72), (44, 42, 60)).save(poster, quality=85)
     sidecar = media / "electricsheep.243.grey.jellyflam3.json"
     sidecar.write_text(

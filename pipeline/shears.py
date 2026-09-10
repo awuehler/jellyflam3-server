@@ -203,29 +203,24 @@ def _runtime_genome_dirs(cfg: dict[str, Any]) -> list[Path]:
 
 
 def _catalog_paths(cfg: dict[str, Any], base: str) -> list[Path]:
+    from pipeline.poster import legacy_poster_path_for_mp4, poster_path_for_mp4
+
     media = resolve_path(cfg, "media_library")
     gen = catalog_generation(base)
     folder = media / "by-generation" / gen
     out: list[Path] = []
-    for name in (
-        f"{base}.mp4",
-        f"{base}.jellyflam3.json",
-        f"{base}-poster.jpg",
-    ):
-        p = folder / name
-        if p.is_file():
-            out.append(p)
-    # Legacy jellyflam3 catalog stem
+    stems = [base]
     if base.startswith("electricsheep."):
-        legacy = "jellyflam3." + base[len("electricsheep.") :]
-        for name in (
-            f"{legacy}.mp4",
-            f"{legacy}.jellyflam3.json",
-            f"{legacy}-poster.jpg",
-        ):
+        stems.append("jellyflam3." + base[len("electricsheep.") :])
+    for stem in stems:
+        mp4 = folder / f"{stem}.mp4"
+        for name in (f"{stem}.mp4", f"{stem}.jellyflam3.json"):
             p = folder / name
             if p.is_file() and p not in out:
                 out.append(p)
+        for poster in (poster_path_for_mp4(mp4), legacy_poster_path_for_mp4(mp4)):
+            if poster.is_file() and poster not in out:
+                out.append(poster)
     return out
 
 
@@ -288,6 +283,7 @@ def _tuple_related_paths(
     cfg: dict[str, Any], base: str
 ) -> tuple[list[Path], list[Path], list[Path]]:
     """Tuple genomes / catalog files / stills that name ``base`` as from or to."""
+    from pipeline.poster import legacy_poster_path_for_mp4, poster_path_for_mp4
     from pipeline.stills import stills_dir_for_mp4
 
     genomes: list[Path] = []
@@ -328,9 +324,9 @@ def _tuple_related_paths(
                 continue
             catalog.append(p)
             if p.suffix.lower() == ".mp4":
-                poster = p.with_name(f"{p.stem}-poster.jpg")
-                if poster.is_file() and poster not in catalog:
-                    catalog.append(poster)
+                for poster in (poster_path_for_mp4(p), legacy_poster_path_for_mp4(p)):
+                    if poster.is_file() and poster not in catalog:
+                        catalog.append(poster)
                 sd = stills_dir_for_mp4(media, p)
                 if sd.is_dir():
                     stills.append(sd)

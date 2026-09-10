@@ -11,7 +11,7 @@ Phase 3 guide 01 — extract stills from rendered sheep; standalone **Roku** Scr
 ## Stills extraction
 
 1. From each **non-tuple** catalog sheep, sample N JPEG frames with ffmpeg from the MP4 (poster ingest / `backfill_posters`; operator `python3 -m pipeline.stills`).
-2. Store under flock (`by-generation/{gen}/stills/{stem}/frame_XX.jpg`) **and** upload as Jellyfin Backdrop images on the same item as the Primary poster.
+2. Store under flock (`by-generation/{gen}/stills/{stem}/frame_XX.jpg` beside `{stem}-poster.jpg`) **and** upload as Jellyfin Backdrop images on the same item as the Primary poster. `stills/.ignore` hides that folder from the Jellyfin library scan.
 3. Tag `screensaver_safe` in the sidecar; idle-gate must not treat still fetches as render load. Never extract from `by-generation/tuple/` (watermarked edge mid-file).
 
 Stills serve **Roku** (image-only screensaver). Kodi plays video loops and does not need this path.
@@ -61,7 +61,7 @@ Optional AI guidance for parent selection / aesthetic briefs atop Phase 2 `flam3
 | Artifact | Kind | Role |
 |---|---|---|
 | Stills extract path (ffmpeg) | pipeline | Poster ingest / `backfill_posters`; operator `python3 -m pipeline.stills` |
-| `/media/sheep/by-generation/.../stills/{stem}/` | media | Screensaver-safe still store |
+| `/media/sheep/by-generation/.../stills/{stem}/` | media | Poster + screensaver-safe stills (`stills/.ignore`) |
 | `roku-screensaver/` sideload package | channel | `RunScreenSaver()` Backdrop / stills cycle |
 | Shared `JellyFlam3` registry keys | config | Written by VoD Settings; screensaver reads them (SS Settings cannot create credentials) |
 | `screensaver-safe` tag / idle-gate exemption | runtime | Sidecar + `ignore_client_patterns` |

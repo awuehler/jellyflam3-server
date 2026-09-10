@@ -9,6 +9,7 @@ from pipeline.backfill_posters import (
     run_backfill,
 )
 from pipeline.jellyfin_client import ImageAttachResult, MetadataEnrichResult
+from pipeline.poster import poster_path_for_mp4
 
 
 def _media_tree(tmp: Path) -> Path:
@@ -76,6 +77,29 @@ def test_needs_backfill_already_complete(tmp_path: Path):
     assert needed and reason == "force"
 
 
+def test_needs_backfill_stills_folder_poster(tmp_path: Path):
+    media = _media_tree(tmp_path)
+    mp4 = media / "by-generation" / "247" / "electricsheep.247.00505.mp4"
+    mp4.write_bytes(b"x")
+    poster = (
+        media
+        / "by-generation"
+        / "247"
+        / "stills"
+        / "electricsheep.247.00505"
+        / "electricsheep.247.00505-poster.jpg"
+    )
+    poster.parent.mkdir(parents=True)
+    poster.write_bytes(b"\xff\xd8\xff")
+    sidecar = {
+        "jellyfin_image": {"ok": True, "status": "uploaded"},
+        "jellyfin_metadata": {"ok": True, "status": "enriched"},
+        "stills": {"ok": True, "status": "extracted", "screensaver_safe": True},
+    }
+    needed, reason = needs_backfill(mp4, sidecar)
+    assert not needed and reason == "already_complete"
+
+
 def test_needs_backfill_tuple_complete_without_stills(tmp_path: Path):
     media = _media_tree(tmp_path)
     mp4 = media / "by-generation" / "tuple" / "electricsheep.tuple.a_to_b.mp4"
@@ -124,6 +148,42 @@ def test_run_backfill_dry_run_counts(tmp_path: Path):
     assert stats.reasons.get("missing_poster") == 1
 
 
+def test_run_backfill_relocates_legacy_poster(tmp_path: Path):
+    media = _media_tree(tmp_path)
+    mp4 = media / "by-generation" / "247" / "electricsheep.247.00505.mp4"
+    mp4.write_bytes(b"d")
+    legacy = mp4.with_name("electricsheep.247.00505-poster.jpg")
+    legacy.write_bytes(b"j")
+    mp4.with_suffix(".jellyflam3.json").write_text(
+        json.dumps(
+            {
+                "jellyfin_image": {"ok": True, "status": "uploaded"},
+                "jellyfin_metadata": {"ok": True, "status": "enriched"},
+                "stills": {"ok": True, "status": "extracted", "screensaver_safe": True},
+            }
+        ),
+        encoding="utf-8",
+    )
+    stats = run_backfill(
+        _cfg(tmp_path, media, api_key=""),
+        skip_jellyfin=True,
+        interval_sec=0,
+        sleep=lambda _s: None,
+    )
+    dest = (
+        media
+        / "by-generation"
+        / "247"
+        / "stills"
+        / "electricsheep.247.00505"
+        / "electricsheep.247.00505-poster.jpg"
+    )
+    assert dest.is_file()
+    assert dest.read_bytes() == b"j"
+    assert not legacy.exists()
+    assert stats.skipped == 1
+
+
 def test_run_backfill_dry_run_ignores_quarantine_mp4s(tmp_path: Path):
     media = _media_tree(tmp_path)
     live = media / "by-generation" / "247" / "todo.mp4"
@@ -156,7 +216,8 @@ def test_backfill_one_poster_only(tmp_path: Path):
     media = _media_tree(tmp_path)
     mp4 = media / "by-generation" / "247" / "electricsheep.247.00505.mp4"
     mp4.write_bytes(b"fake")
-    poster = mp4.with_name("electricsheep.247.00505-poster.jpg")
+    poster = poster_path_for_mp4(mp4)
+    poster.parent.mkdir(parents=True, exist_ok=True)
     mp4.with_suffix(".jellyflam3.json").write_text(
         json.dumps({"id": "electricsheep.247.00505", "duration_sec": 13.0}),
         encoding="utf-8",
@@ -183,7 +244,8 @@ def test_backfill_one_uploads_with_mocked_client(tmp_path: Path):
     media = _media_tree(tmp_path)
     mp4 = media / "by-generation" / "247" / "electricsheep.247.00505.mp4"
     mp4.write_bytes(b"fake")
-    poster = mp4.with_name("electricsheep.247.00505-poster.jpg")
+    poster = poster_path_for_mp4(mp4)
+    poster.parent.mkdir(parents=True, exist_ok=True)
     poster.write_bytes(b"\xff\xd8\xff")
     mp4.with_suffix(".jellyflam3.json").write_text(
         json.dumps(

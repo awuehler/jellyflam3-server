@@ -8,7 +8,8 @@ Usage (operator re-extract; ingest also runs this from ``apply_flock_artwork``):
   python3 -m pipeline.stills --sheep electricsheep.247.00505
 
 Assumptions: Frames land under ``by-generation/{gen}/stills/{stem}/frame_XX.jpg``
-(matches Shears cascade) and are uploaded as Jellyfin Backdrops with posters.
+next to ``{stem}-poster.jpg`` (Shears cascade) and are uploaded as Jellyfin
+Backdrops with posters. ``stills/.ignore`` hides that tree from Jellyfin.
 Never extract from tuple MP4s, ``_refactor-quarantine/``, or ``_refactor-preview/``.
 Tag stills as screensaver-safe in sidecar.
 Extraction respects idle-gate when enabled so TV playback stays responsive.
@@ -28,12 +29,13 @@ from typing import Any
 from pipeline.config import load_config, resolve_path
 from pipeline.idle_gate import is_gate_open
 from pipeline.media_layout import (
-    ensure_catalog_dir,
     ensure_catalog_file_mode,
+    ensure_stills_dir,
     is_unpublished_media_path,
+    stills_dir_for_mp4,
 )
-from pipeline.poster import probe_duration_sec
-from pipeline.sheep_names import catalog_generation, is_tuple_catalog
+from pipeline.poster import probe_duration_sec, relocate_legacy_poster
+from pipeline.sheep_names import is_tuple_catalog
 from pipeline.tool_lookup import tool as _tool
 
 log = logging.getLogger("jellyflam3.stills")
@@ -62,13 +64,6 @@ def _utc_now() -> str:
 
 def stills_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
     return dict(cfg.get("stills") or {})
-
-
-def stills_dir_for_mp4(media_root: Path, mp4: Path) -> Path:
-    """Canonical stills directory: ``by-generation/{gen}/stills/{stem}/``."""
-    stem = mp4.stem
-    gen = catalog_generation(stem)
-    return Path(media_root) / "by-generation" / gen / "stills" / stem
 
 
 def frame_path(stills_dir: Path, index: int) -> Path:
@@ -181,6 +176,7 @@ def extract_stills_for_mp4(
             "sheep": mp4.stem,
             "screensaver_safe": False,
         }
+    relocate_legacy_poster(mp4)
     sidecar = load_sidecar(mp4)
     if is_tuple_catalog(mp4, sidecar):
         return {
@@ -236,7 +232,7 @@ def extract_stills_for_mp4(
         result["paths"] = [str(frame_path(dest_dir, i)) for i in range(count)]
         return result
 
-    ensure_catalog_dir(dest_dir)
+    ensure_stills_dir(dest_dir)
     written: list[str] = []
     for i, seek in enumerate(seeks):
         out = frame_path(dest_dir, i)

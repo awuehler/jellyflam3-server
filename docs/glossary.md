@@ -127,7 +127,7 @@ Post-render parent pool (`paths.genomes_done`, default `genomes/done`). Successf
 
 ### Catalog
 
-Finished VoD on disk: `/media/sheep/by-generation/{gen}/electricsheep.{gen}.{id}.mp4` (+ poster, sidecar). Live Jellyfin **Sheep** library points at `/media/sheep/by-generation` (not the mount root).
+Finished VoD on disk: `/media/sheep/by-generation/{gen}/electricsheep.{gen}.{id}.mp4` (+ sidecar). Poster and screensaver frames live together under `by-generation/{gen}/stills/{stem}/` (Jellyfin `stills/.ignore`). Live Jellyfin **Sheep** library points at `/media/sheep/by-generation` (not the mount root).
 
 ### by-generation
 
@@ -267,7 +267,7 @@ Jellyfin `POST /Items/{id}/PlaybackInfo` — reports DirectPlay / DirectStream /
 
 ### Stills
 
-Phase 3: JPEG frames extracted from catalog MP4s (poster pipeline / `pipeline/stills.py`) under `by-generation/…/stills/{stem}/`, uploaded as Jellyfin Backdrops for **Roku Screensaver**. Never generated from tuple videos.
+Phase 3: JPEG frames extracted from catalog MP4s (poster pipeline / `pipeline/stills.py`) under `by-generation/…/stills/{stem}/` beside `{stem}-poster.jpg`, uploaded as Jellyfin Backdrops for **Roku Screensaver**. Never generated from tuple videos. `stills/.ignore` keeps those JPEGs out of the Jellyfin library scan.
 
 ---
 
@@ -283,7 +283,7 @@ The Sheep **library** in Jellyfin — curated MP4s, posters, metadata, tags. Sin
 
 ### Poster / Primary
 
-Mid-loop JPEG beside MP4 and/or Jellyfin **Primary** image via Images API. Screensaver stills (non-tuple JPEG frames → Jellyfin **Backdrop**) ride the same ingest switch (`stills.enabled`, default true). After encode, **auto** (default): skip on a standalone furnace; create when **2+** furnaces are live on Tailscale/Syncthing. Override with `jellyfin.attach_posters: true` / `false`. Operator backfill always extracts posters and stills. Phase 2 flock UX (`pipeline/flock_artwork.py`, `backfill_posters.py`). Layer 2: [Catalog posters](USER_GUIDE_AND_RUNBOOK.md#catalog-posters-after-render).
+Mid-loop JPEG in `by-generation/{gen}/stills/{stem}/{stem}-poster.jpg` and/or Jellyfin **Primary** image via Images API. Screensaver stills (non-tuple JPEG frames → Jellyfin **Backdrop**) ride the same ingest switch (`stills.enabled`, default true). After encode, **auto** (default): skip on a standalone furnace; create when **2+** furnaces are live on Tailscale/Syncthing. Override with `jellyfin.attach_posters: true` / `false`. Operator backfill always extracts posters and stills and relocates leftover sibling `*-poster.jpg` into the stills folder. Phase 2 flock UX (`pipeline/flock_artwork.py`, `backfill_posters.py`). Layer 2: [Catalog posters](USER_GUIDE_AND_RUNBOOK.md#catalog-posters-after-render).
 
 ### Commercial mode
 

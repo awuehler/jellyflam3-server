@@ -58,7 +58,7 @@ Arduino App Lab / Qualcomm AI Hub / llama.cpp / GenieX run on **B**. Canonical f
 
 **This slice adds:**
 
-1. **B** fetches catalog `*-poster.jpg` (preferred) or a still ([phase2/02](../phase2/02_JELLYFIN_FLOCK_UX.md), [phase3/01](../phase3/01_SCREENSAVERS_AND_STILLS.md)). Never tuple stills if the stills pipeline excludes tuples.
+1. **B** fetches catalog `{stem}-poster.jpg` from `stills/{stem}/` (preferred) or a still ([phase2/02](../phase2/02_JELLYFIN_FLOCK_UX.md), [phase3/01](../phase3/01_SCREENSAVERS_AND_STILLS.md)). Never tuple stills if the stills pipeline excludes tuples.
 2. **B** proposes an alias; optional rationale in **B** logs (or a sidecar field only if [phase1/07](../phase1/07_LICENSE_AND_METADATA.md) grows a reserved key).
 3. **A** applies: `python3 -m pipeline.sheep_naming set-alias --source llm` (illustrative) after uniqueness check.
 4. Pasture filename-vs-alias **toggle** stays Phase 4 / 09 C. Pasture still talks to **A**.

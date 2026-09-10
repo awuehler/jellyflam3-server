@@ -10,8 +10,12 @@ from pathlib import Path
 from typing import Any, Callable
 
 from pipeline.config import resolve_path
-from pipeline.media_layout import REFACTOR_QUARANTINE_DIRNAME, ensure_refactor_quarantine_dir
-from pipeline.poster import poster_path_for_mp4
+from pipeline.media_layout import (
+    REFACTOR_QUARANTINE_DIRNAME,
+    ensure_refactor_quarantine_dir,
+    stills_dir_for_mp4,
+)
+from pipeline.poster import legacy_poster_path_for_mp4, poster_path_for_mp4
 from pipeline.refactor_history import (
     append_catalog_refactor_history,
     build_refactor_history_entry,
@@ -66,6 +70,17 @@ def _move_file(src: Path, dest: Path, *, dry_run: bool) -> str:
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.exists():
         dest.unlink()
+    shutil.move(str(src), str(dest))
+    return str(dest)
+
+
+def _move_tree(src: Path, dest: Path, *, dry_run: bool) -> str:
+    """Move a directory ``src`` → ``dest``; replace dest if present."""
+    if dry_run:
+        return str(dest)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists():
+        shutil.rmtree(dest)
     shutil.move(str(src), str(dest))
     return str(dest)
 
@@ -262,11 +277,18 @@ def run_quarantine(
                     mp4,
                     sidecar_path_for_mp4(mp4),
                     poster_path_for_mp4(mp4),
+                    legacy_poster_path_for_mp4(mp4),
                 ):
                     if not src.is_file():
                         continue
                     catalog_moved.append(
                         _move_file(src, cat_q_dir / src.name, dry_run=dry_run)
+                    )
+                media = resolve_path(cfg, "media_library")
+                stills_dir = stills_dir_for_mp4(media, mp4)
+                if stills_dir.is_dir():
+                    catalog_moved.append(
+                        _move_tree(stills_dir, cat_q_dir / "stills", dry_run=dry_run)
                     )
                 notes.append(
                     "catalog_unpublished" if not dry_run else "catalog_would_unpublish"

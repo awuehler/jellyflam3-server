@@ -40,22 +40,23 @@ def _fleet_ssh(host_id: str) -> str:
 
 
 # One poster per furnace Pi — diverse gens across the fleet catalog.
+# Canonical: stills/{stem}/{stem}-poster.jpg; fetch also tries the legacy sibling.
 FLEET_POSTERS: tuple[tuple[str, str, str, str], ...] = (
     (
         _fleet_ssh("16a"),
-        "/media/sheep/by-generation/243/electricsheep.243.14985-poster.jpg",
+        "/media/sheep/by-generation/243/stills/electricsheep.243.14985/electricsheep.243.14985-poster.jpg",
         "fleet-16a-gen243.jpg",
         "Gen 243 · 16a",
     ),
     (
         _fleet_ssh("08a"),
-        "/media/sheep/by-generation/244/electricsheep.244.01807-poster.jpg",
+        "/media/sheep/by-generation/244/stills/electricsheep.244.01807/electricsheep.244.01807-poster.jpg",
         "fleet-08a-gen244.jpg",
         "Gen 244 · 08a",
     ),
     (
         _fleet_ssh("04a"),
-        "/media/sheep/by-generation/242/electricsheep.242.03322-poster.jpg",
+        "/media/sheep/by-generation/242/stills/electricsheep.242.03322/electricsheep.242.03322-poster.jpg",
         "fleet-04a-gen242.jpg",
         "Gen 242 · 04a",
     ),
@@ -102,6 +103,16 @@ def _caption(img: Image.Image, label: str) -> Image.Image:
     return Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
 
 
+def _legacy_catalog_poster_remote(stills_remote: str) -> str:
+    """Sibling ``{stem}-poster.jpg`` next to the MP4 (pre-stills consolidation)."""
+    marker = "/stills/"
+    if marker not in stills_remote:
+        return stills_remote
+    before, after = stills_remote.split(marker, 1)
+    name = after.rsplit("/", 1)[-1]
+    return f"{before}/{name}"
+
+
 def fetch_fleet_posters(*, force: bool = False) -> list[Path]:
     """SCP flock *-poster.jpg from each lab Pi into resources/posters/."""
     POSTERS.mkdir(parents=True, exist_ok=True)
@@ -111,22 +122,26 @@ def fetch_fleet_posters(*, force: bool = False) -> list[Path]:
         if dest.is_file() and not force:
             paths.append(dest)
             continue
-        cmd = [
-            "scp",
-            "-o",
-            "BatchMode=yes",
-            f"{host}:{remote}",
-            str(dest),
-        ]
-        print("fetch", host, remote)
-        try:
-            subprocess.run(cmd, check=True, capture_output=True, text=True)
-        except (subprocess.CalledProcessError, FileNotFoundError) as exc:
-            print("WARN: fleet fetch failed for", host, "—", exc, file=sys.stderr)
-            if dest.is_file():
-                paths.append(dest)
+        fetched = False
+        for candidate in (remote, _legacy_catalog_poster_remote(remote)):
+            cmd = [
+                "scp",
+                "-o",
+                "BatchMode=yes",
+                f"{host}:{candidate}",
+                str(dest),
+            ]
+            print("fetch", host, candidate)
+            try:
+                subprocess.run(cmd, check=True, capture_output=True, text=True)
+                fetched = True
+                break
+            except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+                print("WARN: fleet fetch failed for", host, candidate, "—", exc, file=sys.stderr)
+        if dest.is_file():
+            paths.append(dest)
+        elif not fetched:
             continue
-        paths.append(dest)
     return paths
 
 

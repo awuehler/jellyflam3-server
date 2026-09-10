@@ -285,11 +285,11 @@ Default is `jellyfin.attach_posters: auto` in the example yaml. Live `configs/je
 | Setup | Default after encode | Why |
 |---|---|---|
 | **Standalone** furnace (Opt Out, or Opt In with no other furnace online) | **No** poster | Mesh size 1 |
-| **2+ furnaces** Opt In, Syncthing active, Tailscale online, ≥1 other `jellyflam3` peer | **Yes** — `{stem}-poster.jpg` + Jellyfin Primary, plus stills frames + Backdrops (non-tuple) | Mesh size ≥ 2 |
+| **2+ furnaces** Opt In, Syncthing active, Tailscale online, ≥1 other `jellyflam3` peer | **Yes** — `stills/{stem}/{stem}-poster.jpg` + Jellyfin Primary, plus stills frames + Backdrops (non-tuple) | Mesh size ≥ 2 |
 
-Screensaver stills (JPEG frames + Jellyfin Backdrops) ride the **same ingest switch**. When posters extract, non-tuple sheep also get `by-generation/{gen}/stills/{stem}/frame_XX.jpg` uploaded as Backdrops. Tuples never generate stills (watermarked edge mid-file is not screensaver-safe). Peering still shares only `*.flam3` + optional `*-poster.jpg` — not stills JPEGs.
+Screensaver stills (JPEG frames + Jellyfin Backdrops) ride the **same ingest switch**. When posters extract, they land with the frames under `by-generation/{gen}/stills/{stem}/` (`{stem}-poster.jpg` plus `frame_XX.jpg`). Tuples get a poster in that stills folder but never generate frames (watermarked edge mid-file is not screensaver-safe). `stills/.ignore` keeps those JPEGs out of the Jellyfin library scan. Peering still shares only `*.flam3` + optional `*-poster.jpg` beside genomes — not catalog stills JPEGs.
 
-`python3 -m pipeline.backfill_posters` always extracts posters **and** stills (operator one-shot). It does not follow ingest auto/never, and it does **not** walk `_refactor-quarantine/` or `_refactor-preview/` (stills always land under live `by-generation/{gen}/stills/{stem}/`). `python3 -m pipeline.stills` remains an operator re-extract CLI for disk frames only.
+`python3 -m pipeline.backfill_posters` always extracts posters **and** stills (operator one-shot). It does not follow ingest auto/never, and it does **not** walk `_refactor-quarantine/` or `_refactor-preview/` (stills always land under live `by-generation/{gen}/stills/{stem}/`). Leftover sibling `{stem}-poster.jpg` files next to the MP4 are moved into that stills folder. `python3 -m pipeline.stills` remains an operator re-extract CLI for disk frames only.
 
 Check what this furnace will do on the **next** ingest (no worker restart needed for the check):
 
@@ -332,7 +332,7 @@ Leave `attach_posters: auto`. After Opt In + another furnace online, `mesh_size`
    jellyfin:
      attach_posters: false
    ```
-2. Restart the worker. New renders skip extract/upload. Existing `{stem}-poster.jpg` files stay on disk (Shears delete still removes them with the sheep).
+2. Restart the worker. New renders skip extract/upload. Existing `stills/{stem}/{stem}-poster.jpg` files stay on disk (Shears delete still removes them with the sheep).
 
 Do **not** run `hw_profile apply` just to flip this flag (it rewrites the whole yaml).
 
@@ -886,7 +886,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 
 | Path | Purpose |
 |---|---|
-| `/media/sheep/by-generation/` | Catalog MP4 + sidecar + poster + `stills/{stem}/` |
+| `/media/sheep/by-generation/` | Catalog MP4 + sidecar; posters + frames under `stills/{stem}/` (`.ignore`) |
 | `/media/sheep/_refactor-preview/` | Refactor Jellyfin-visible previews |
 | `/var/cache/jellyflam3/frames` | Render scratch |
 | `/var/lib/jellyflam3/jobs` | In-flight job state |

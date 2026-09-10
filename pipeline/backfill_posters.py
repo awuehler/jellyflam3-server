@@ -32,7 +32,7 @@ from pipeline.flock_artwork import (
 from pipeline.idle_gate import is_gate_open
 from pipeline.jellyfin_client import JellyfinClient
 from pipeline.media_layout import is_unpublished_media_path
-from pipeline.poster import poster_path_for_mp4, probe_duration_sec
+from pipeline.poster import probe_duration_sec, relocate_legacy_poster, resolve_poster_path
 from pipeline.sheep_names import is_tuple_catalog
 from pipeline.stills import extract_stills_for_mp4, iter_catalog_mp4s as iter_live_catalog_mp4s, stills_cfg
 from pipeline.tool_lookup import tool as _tool
@@ -96,7 +96,7 @@ def needs_backfill(
         return False, "unpublished"
     if force:
         return True, "force"
-    poster = poster_path_for_mp4(mp4)
+    poster = resolve_poster_path(mp4)
     has_poster = poster.is_file() and poster.stat().st_size > 0
     img = sidecar.get("jellyfin_image") or {}
     meta = sidecar.get("jellyfin_metadata") or {}
@@ -161,6 +161,7 @@ def backfill_one(
     """Extract/upload/enrich one catalog MP4. Soft-fail; updates sidecar on disk."""
     if is_unpublished_media_path(mp4):
         return {"mp4": str(mp4), "status": "skipped", "reason": "unpublished"}
+    relocate_legacy_poster(mp4)
     sidecar = load_sidecar(mp4)
     needed, reason = needs_backfill(mp4, sidecar, force=force)
     if not needed:
@@ -209,7 +210,7 @@ def backfill_one(
     )
     # If extract failed but an older poster exists, still try upload.
     if poster_path is None:
-        existing = poster_path_for_mp4(mp4)
+        existing = resolve_poster_path(mp4)
         if existing.is_file() and existing.stat().st_size > 0:
             poster_path = existing
 
@@ -307,6 +308,9 @@ def run_backfill(
             stats.reasons,
         )
         return stats
+
+    for mp4 in mp4s:
+        relocate_legacy_poster(mp4)
 
     use_client = client
     if not skip_jellyfin and jf.get("api_key"):

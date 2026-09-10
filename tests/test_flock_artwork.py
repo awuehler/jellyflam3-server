@@ -11,6 +11,7 @@ from pipeline.flock_artwork import (
     stills_enabled_for_ingest,
 )
 from pipeline.jellyfin_client import ImageAttachResult, MetadataEnrichResult
+from pipeline.poster import poster_path_for_mp4
 
 
 def _cfg(attach: bool = True, api_key: str = "k") -> dict:
@@ -264,9 +265,11 @@ def test_attach_item_not_found(tmp_path: Path):
 
 
 def test_apply_flock_artwork_updates_sidecar(tmp_path: Path):
-    mp4 = tmp_path / "electricsheep.247.00505.mp4"
+    mp4 = tmp_path / "by-generation" / "247" / "electricsheep.247.00505.mp4"
+    mp4.parent.mkdir(parents=True)
     mp4.write_bytes(b"fake")
-    poster = tmp_path / "electricsheep.247.00505-poster.jpg"
+    poster = poster_path_for_mp4(mp4)
+    poster.parent.mkdir(parents=True, exist_ok=True)
     poster.write_bytes(b"\xff\xd8\xff")
     sidecar: dict = {"id": "electricsheep.247.00505"}
 
@@ -360,6 +363,7 @@ def test_attach_stills_backdrops_uploads_frames(tmp_path: Path):
     media = tmp_path / "media"
     dest = media / "by-generation" / "247" / "stills" / "electricsheep.247.00505"
     dest.mkdir(parents=True)
+    (dest / "electricsheep.247.00505-poster.jpg").write_bytes(b"\xff\xd8\xffposter")
     frames = []
     for i in range(2):
         p = dest / f"frame_{i:02d}.jpg"

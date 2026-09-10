@@ -52,8 +52,15 @@ def _mp4(tmp: Path, stem: str = "electricsheep.247.00505") -> Path:
     return mp4
 
 
+def _write_poster(mp4: Path, data: bytes = b"jpg") -> Path:
+    dest = poster_path_for_mp4(mp4)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(data)
+    return dest
+
+
 def _with_poster_and_duration(mp4: Path, duration_sec: float = 23.0) -> None:
-    poster_path_for_mp4(mp4).write_bytes(b"jpg")
+    _write_poster(mp4)
     sidecar_path_for_mp4(mp4).write_text(
         f'{{"id": "{mp4.stem}", "duration_sec": {duration_sec}}}',
         encoding="utf-8",

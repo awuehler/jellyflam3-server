@@ -18,7 +18,11 @@ from pathlib import Path
 from typing import Any
 
 from pipeline.jellyfin_client import ImageAttachResult, JellyfinClient
-from pipeline.poster import extract_mid_loop_poster, poster_path_for_mp4
+from pipeline.poster import (
+    extract_mid_loop_poster,
+    poster_path_for_mp4,
+    relocate_legacy_poster,
+)
 from pipeline.sheep_names import is_tuple_catalog
 from pipeline.stills import extract_stills_for_mp4, stills_cfg, stills_dir_for_mp4
 from pipeline.tool_lookup import tool as _tool
@@ -158,7 +162,7 @@ def extract_poster_for_mp4(
     duration_sec: float,
     force: bool = False,
 ) -> dict[str, Any]:
-    """Write ``{stem}-poster.jpg`` beside ``mp4``. Soft-fail dict for sidecar.
+    """Write ``stills/{stem}/{stem}-poster.jpg``. Soft-fail dict for sidecar.
 
     ``force=True`` is for operator backfill (ignores ingest auto/never).
     """
@@ -174,6 +178,7 @@ def extract_poster_for_mp4(
                 ),
             }
 
+    relocate_legacy_poster(mp4)
     dest = poster_path_for_mp4(mp4)
     try:
         out = extract_mid_loop_poster(
@@ -267,8 +272,8 @@ def attach_primary_after_refresh(
                 "attempts": 0,
             }
         elif poster_path is not None and poster_path.is_file():
-            # Local-image-first: FS ``{stem}-poster.jpg`` + refresh often yields
-            # ImageTags.Primary without Images API (and survives write denials).
+            # Local-image-first: stills-folder poster (or leftover sibling) +
+            # refresh often yields ImageTags.Primary without Images API.
             if client.has_primary_image(item_id):
                 out = {
                     "ok": True,

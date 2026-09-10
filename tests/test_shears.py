@@ -72,9 +72,10 @@ def test_discover_and_confirm_delete(tmp_path: Path):
     (cat / f"{base}.jellyflam3.json").write_text(
         json.dumps({"id": base}), encoding="utf-8"
     )
-    (cat / f"{base}-poster.jpg").write_bytes(b"jpg")
     stills = cat / "stills" / base
     stills.mkdir(parents=True)
+    poster = stills / f"{base}-poster.jpg"
+    poster.write_bytes(b"jpg")
     (stills / "frame_00.jpg").write_bytes(b"jpg")
 
     job_id = "abcdef012345"
@@ -92,6 +93,7 @@ def test_discover_and_confirm_delete(tmp_path: Path):
     assert report.base == base
     assert flam3 in report.genomes
     assert mp4 in report.catalog
+    assert poster in report.catalog
     assert stills in report.stills
     assert job_dir in report.jobs
     assert frames in report.frames
@@ -104,7 +106,7 @@ def test_discover_and_confirm_delete(tmp_path: Path):
     apply_delete(cfg, report, dry_run=False)
     assert not flam3.exists()
     assert not mp4.exists()
-    assert not (cat / f"{base}-poster.jpg").exists()
+    assert not poster.exists()
     assert not stills.exists()
     assert not job_dir.exists()
     assert not frames.exists()
@@ -183,7 +185,9 @@ def test_audit_and_sweep_orphans(tmp_path: Path):
     kdir = media / "by-generation" / "247"
     kdir.mkdir(parents=True)
     (kdir / f"{keep}.mp4").write_bytes(b"y")
-    (kdir / f"{keep}-poster.jpg").write_bytes(b"j")
+    stills = kdir / "stills" / keep
+    stills.mkdir(parents=True)
+    (stills / f"{keep}-poster.jpg").write_bytes(b"j")
     (kdir / f"{keep}.jellyflam3.json").write_text("{}", encoding="utf-8")
     # peer junk
     peers_inbox = Path(cfg["peering"]["peers_inbox"])

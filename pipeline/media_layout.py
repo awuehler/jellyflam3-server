@@ -18,6 +18,8 @@ import stat
 import sys
 from pathlib import Path
 
+from pipeline.sheep_names import catalog_generation
+
 log = logging.getLogger("jellyflam3.media_layout")
 
 # setgid (0o2000) + rwxrwxr-x
@@ -28,19 +30,47 @@ CATALOG_FILE_MODE = 0o664
 REFACTOR_PREVIEW_DIRNAME = "_refactor-preview"
 # Unpublished catalog holding area (genetics stay in genomes_quarantine; files not deleted).
 REFACTOR_QUARANTINE_DIRNAME = "_refactor-quarantine"
+# Jellyfin skips a directory that contains this file (hides stills/posters from library scan).
+STILLS_IGNORE_NAME = ".ignore"
 
 
 def is_unpublished_media_path(path: Path) -> bool:
     """True when ``path`` is under ``_refactor-quarantine`` or ``_refactor-preview``.
 
     Those trees are siblings of ``by-generation/``, not live flock. Stills extract
-    always writes ``by-generation/{gen}/stills/{stem}/``, so walking parked MP4s
-    would re-populate stills for unpublished sheep.
+    always writes ``by-generation/{gen}/stills/{stem}/`` (poster + frames), so
+    walking parked MP4s would re-populate stills for unpublished sheep.
     """
     parts = Path(path).parts
     return (
         REFACTOR_QUARANTINE_DIRNAME in parts or REFACTOR_PREVIEW_DIRNAME in parts
     )
+
+
+def stills_dir_for_mp4(media_root: Path, mp4: Path) -> Path:
+    """Canonical image directory: ``by-generation/{gen}/stills/{stem}/`` (poster + frames)."""
+    stem = Path(mp4).stem
+    gen = catalog_generation(stem)
+    return Path(media_root) / "by-generation" / gen / "stills" / stem
+
+
+def ensure_stills_dir(path: Path) -> Path:
+    """Create a per-sheep stills directory and mark the ``stills/`` tree ``.ignore`` for Jellyfin."""
+    path = Path(path)
+    if "by-generation" in path.parts:
+        ensure_catalog_dir(path)
+    else:
+        path.mkdir(parents=True, exist_ok=True)
+        _try_chmod_dir(path)
+        _try_chmod_dir(path.parent)
+    ignore = path.parent / STILLS_IGNORE_NAME
+    if not ignore.is_file():
+        try:
+            ignore.write_text("", encoding="utf-8")
+            ensure_catalog_file_mode(ignore)
+        except OSError as exc:
+            log.warning("stills .ignore write failed %s: %s", ignore, exc)
+    return path
 
 
 def ensure_refactor_preview_dir(media_root: Path) -> Path:

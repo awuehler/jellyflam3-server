@@ -31,6 +31,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Catalog posters live with screensaver frames under `by-generation/{gen}/stills/{stem}/{stem}-poster.jpg`. Jellyfin skips that tree via `stills/.ignore` so the library console lists MP4s (and sidecars) without extra JPEG items. Backfill relocates leftover sibling `{stem}-poster.jpg` next to the MP4. Unpublished quarantine/preview trees keep a sibling poster. Clients still use Jellyfin Images Primary/Backdrop APIs (no Roku/Kodi version bump).
+
 - Phase 4 overview: tuples (03) shipped; pytest **366** passed + 6 skipped.
 - Commercial-safe furnaces skip the Cesari Electric Sheep logo on tuple edges and burn the ES attribution sentence instead (`license.commercial_mode: true`). Private flock may still overlay the PNG pending permission.
 - NOTICE / LICENSE carve-out for Cesari watermark assets; Layer 2 operator warning; furnace `commercial_mode` no longer documented as culling NC at render.

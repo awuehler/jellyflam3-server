@@ -42,7 +42,9 @@ def _cfg(tmp: Path) -> dict:
 def _seed_mp4(cfg: dict, stem: str, *, duration: float = 23.0) -> Path:
     mp4 = Path(cfg["paths"]["media_library"]) / "by-generation" / "247" / f"{stem}.mp4"
     mp4.write_bytes(b"fake-mp4")
-    poster_path_for_mp4(mp4).write_bytes(b"jpg")
+    dest = poster_path_for_mp4(mp4)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(b"jpg")
     sidecar_path_for_mp4(mp4).write_text(
         f'{{"id": "{stem}", "duration_sec": {duration}}}',
         encoding="utf-8",

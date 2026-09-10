@@ -17,7 +17,7 @@ from pipeline.genome_signals import (
     is_singularity_cloned,
 )
 from pipeline.palette_harmony import HarmonyResult, apply_palette_harmony
-from pipeline.poster import poster_path_for_mp4
+from pipeline.poster import resolve_poster_path
 from pipeline.sheep_names import normalize_stem, stem_of
 from pipeline.sheep_tax import tax_xml
 from pipeline.stills import iter_catalog_mp4s, load_sidecar
@@ -303,8 +303,8 @@ def catalog_saturation(
     candidates: list[tuple[str, Path]] = []
     if poster is not None and poster.is_file():
         candidates.append(("poster", poster))
-    elif poster_path_for_mp4(mp4).is_file():
-        candidates.append(("poster", poster_path_for_mp4(mp4)))
+    elif resolve_poster_path(mp4).is_file():
+        candidates.append(("poster", resolve_poster_path(mp4)))
     for source, path in candidates:
         mean = image_mean_saturation(path)
         if mean is not None:
@@ -365,7 +365,7 @@ def score_sheep(
     reasons: list[str] = []
     score = 0.0
     sidecar = load_sidecar(mp4)
-    poster = poster_path_for_mp4(mp4)
+    poster = resolve_poster_path(mp4)
     poster_s = str(poster) if poster.is_file() else None
     if not poster.is_file():
         reasons.append("missing_poster")

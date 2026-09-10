@@ -78,7 +78,9 @@ def _catalog(tmp: Path, stem: str, xml: str) -> Path:
     media.mkdir(parents=True, exist_ok=True)
     mp4 = media / f"{stem}.mp4"
     mp4.write_bytes(b"fake-mp4")
-    poster_path_for_mp4(mp4).write_bytes(b"jpg")
+    dest = poster_path_for_mp4(mp4)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(b"jpg")
     sidecar_path_for_mp4(mp4).write_text(
         f'{{"id": "{stem}", "duration_sec": 18.8}}',
         encoding="utf-8",
