@@ -38,7 +38,7 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 | Sidecar preserve | [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) | Worker copies reserved keys on re-ingest; tuples still write `type` / `from_id` / `to_id` / `watermark` from this encode | Vote sink |
 | 404 mid-session re-poll | clients | Drop dead Jellyfin id, rate-limited re-poll, continue session: VoD **1.0.29**, Roku SS **1.0.8**, Kodi SS **0.2.7** | Overnight long-interval re-fetch (hours / wrap) |
 | 07 estimator Owner OK | [07](07_CONCURRENT_CLIENTS.md) | Sign-off 2026-09-09; `N_max` remains an estimate | Enforcing `N_max` as a Jellyfin cap |
-| 09 RNG aliases | [09](09_SHEEP_NAMING.md) | Hash-seed `adjective_surname` on ingest/backfill; `set-alias` / `clear-alias` | Roku/Kodi filename vs alias toggle; LLM poster naming |
+| 09 RNG aliases | [09](09_SHEEP_NAMING.md) | Hash-seed `adjective_surname` on ingest/backfill; `set-alias` / `clear-alias` | Roku/Kodi filename vs alias toggle; LLM poster naming → [../phase5/02](../phase5/02_LLM_INTEGRATION.md) |
 
 ## In scope (parked products)
 
@@ -50,9 +50,9 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 6. [06_LIBRARY_DISK_ROTATE.md](06_LIBRARY_DISK_ROTATE.md) — auto-purge / rotate / worker refuse (check slice already shipped)
 7. [07_CONCURRENT_CLIENTS.md](07_CONCURRENT_CLIENTS.md) — **Owner OK 2026-09-09** on the shipped estimator (enforcing `N_max` as a Jellyfin cap stays parked)
 8. [08_VIEWER_FEEDBACK_LOOP.md](08_VIEWER_FEEDBACK_LOOP.md) — Roku like/love/vote overlay → share cron + weighted idle breed (shuffle already includes pedigree + tuple as of 1.0.28)
-9. [09_SHEEP_NAMING.md](09_SHEEP_NAMING.md) — **RNG slice shipped**; remaining: client filename/alias toggle, LLM-from-poster
+9. [09_SHEEP_NAMING.md](09_SHEEP_NAMING.md) — **RNG slice shipped**; remaining: client filename/alias toggle. LLM-from-poster → [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md)
 
-Also named (aspirational / TBD): broader social flock, DeepDream/AI backends, LLM-assisted pedigree polish — may gain numbered guides when Phase 4 opens. Guide [08](08_VIEWER_FEEDBACK_LOOP.md) is the household feedback slice of social flock evolution; [09](09_SHEEP_NAMING.md) covers memorable aliases (RNG first; LLM naming later).
+Also named (aspirational / TBD): broader social flock, DeepDream/AI backends. **LLM-assisted pedigree** and **LLM poster naming** moved to **Phase 5** ([../phase5/00_OVERVIEW.md](../phase5/00_OVERVIEW.md)): a **separate** Ventuno LLM Agent Platform talking to the Pi furnace — not models on the furnace and not Ventuno-as-16a. Guide [08](08_VIEWER_FEEDBACK_LOOP.md) remains the household vote → share/breed-bias slice; [09](09_SHEEP_NAMING.md) RNG aliases stay here (LLM path in Phase 5).
 
 Sidecar key names for [01](01_PEER_SHARE_PATH.md) / [03](03_EDGES_AND_WATERMARK.md) / [08](08_VIEWER_FEEDBACK_LOOP.md) / [09](09_SHEEP_NAMING.md) are reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Worker copies reserved keys on re-ingest; tuple ingest writes `type` / `from_id` / `to_id` / `watermark` from this encode. Vote sink and pasture alias display stay parked.
 
@@ -85,4 +85,4 @@ Phase 3 RC (or Owner waiver) preferred before opening Phase 4 products, so Shear
 
 ## See also
 
-[../phase3/00_OVERVIEW.md](../phase3/00_OVERVIEW.md) · [../phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_PEERING.md) · [`deploy/peering/README.md`](../../deploy/peering/README.md)
+[../phase3/00_OVERVIEW.md](../phase3/00_OVERVIEW.md) · [../phase5/00_OVERVIEW.md](../phase5/00_OVERVIEW.md) · [../phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_PEERING.md) · [`deploy/peering/README.md`](../../deploy/peering/README.md)

@@ -872,7 +872,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | Share security | `pipeline/share_security.py`, `docs/phase3/05_SHARED_SHEEP_SECURITY.md` |
 | Link capacity / N_max | `pipeline/link_capacity.py`, `docs/phase4/07_CONCURRENT_CLIENTS.md` |
 | Library disk check | `pipeline/library_disk.py`, `docs/phase4/06_LIBRARY_DISK_ROTATE.md` |
-| Sheep aliases | `pipeline/sheep_naming.py`, `docs/phase4/09_SHEEP_NAMING.md` |
+| Sheep aliases | `pipeline/sheep_naming.py`, `docs/phase4/09_SHEEP_NAMING.md` (LLM: [phase5/02](phase5/02_LLM_INTEGRATION.md) on agent platform) |
 | License / Cesari watermark | [NOTICE](../NOTICE), [phase1/07](phase1/07_LICENSE_AND_METADATA.md), [watermark README](media/watermark/README.md), [Private vs public](#private-vs-public-furnace), [Use your own PNG](#use-your-own-png-private-and-public) |
 | Catalog posters / stills | [Catalog posters](#catalog-posters-after-render) — `jellyfin.attach_posters` + `stills.enabled`; Roku SS Primary + Backdrop |
 | Roku screensaver | `roku-screensaver/`, [phase3/01](phase3/01_SCREENSAVERS_AND_STILLS.md) |
@@ -911,6 +911,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | Concurrent clients / N_max | [phase4/07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md) |
 | Library disk check | [phase4/06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md) |
 | Sheep aliases | [phase4/09_SHEEP_NAMING.md](phase4/09_SHEEP_NAMING.md) |
+| LLM Agent Platform / Phase 5 | [phase5/00_OVERVIEW.md](phase5/00_OVERVIEW.md) (parked; not a furnace) |
 | Peering | [phase2/05_SYNCTHING_GENOME_PEERING.md](phase2/05_SYNCTHING_GENOME_PEERING.md) |
 | Phase 3 feature guides | [phase3/00_OVERVIEW.md](phase3/00_OVERVIEW.md) |
 | Kodi screensaver (detail) | [kodi-screensaver/README.md](../kodi-screensaver/README.md) · [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) |

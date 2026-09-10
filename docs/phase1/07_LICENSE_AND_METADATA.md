@@ -188,7 +188,7 @@ File: `{stem}.jellyflam3.json` next to the catalog MP4. Code list: `pipeline.sti
 | `watermark` | [03](../phase4/03_EDGES_AND_WATERMARK.md) | `{ enabled, style, text, image }` | Tuple ingest writes the **effective** style (`text` on commercial-safe furnaces even if yaml says `image`); do not falsify flam3 XML |
 | `viewer_feedback` | [08](../phase4/08_VIEWER_FEEDBACK_LOOP.md); [01](../phase4/01_PEER_SHARE_PATH.md) reads `share_candidate` | `{ likes, loves, votes, last_voted_at, share_candidate }` | Integers / bool / ISO timestamp or `null` |
 | `alias` | [09](../phase4/09_SHEEP_NAMING.md) | `adjective_surname` | Display name; filename stays canonical |
-| `alias_source` | [09](../phase4/09_SHEEP_NAMING.md) | `auto` \| `human` \| `llm` | Companion of `alias` |
+| `alias_source` | [09](../phase4/09_SHEEP_NAMING.md); LLM write path [phase5/02](../phase5/02_LLM_INTEGRATION.md) | `auto` \| `human` \| `llm` | Companion of `alias` |
 
 Vote sink stays parked until [08](../phase4/08_VIEWER_FEEDBACK_LOOP.md) opens. Tuple edge watermark and 09 RNG aliases are **shipped**.
 

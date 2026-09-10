@@ -50,12 +50,13 @@ Full design: [docs/Pi5_Flam3_VoD_Pipeline.md](docs/Pi5_Flam3_VoD_Pipeline.md).
 
 ## Documentation
 
-Phases 1–3 are **complete** (Owner OK 2026-08-23). Post-launch roadmap: [docs/phase4/](docs/phase4/) (products parked; pre-open 05/06/07 slices + sidecar key names shipped — [overview](docs/phase4/00_OVERVIEW.md)).
+Phases 1–3 are **complete** (Owner OK 2026-08-23). Post-launch: [docs/phase4/](docs/phase4/) (products parked; pre-open slices shipped — [overview](docs/phase4/00_OVERVIEW.md)). **Phase 5** (parked): Pi furnace vs Ventuno LLM Agent Platform (separate hosts) — [docs/phase5/](docs/phase5/00_OVERVIEW.md).
 
 - **Phase 1** — [docs/phase1/](docs/phase1/) · [00_OVERVIEW.md](docs/phase1/00_OVERVIEW.md)
 - **Phase 2** — [docs/phase2/](docs/phase2/) · [00_OVERVIEW.md](docs/phase2/00_OVERVIEW.md)
 - **Phase 3** — [docs/phase3/](docs/phase3/) · [00_OVERVIEW.md](docs/phase3/00_OVERVIEW.md)
 - **Phase 4** — [docs/phase4/](docs/phase4/) · [00_OVERVIEW.md](docs/phase4/00_OVERVIEW.md)
+- **Phase 5** — [docs/phase5/](docs/phase5/) · [00_OVERVIEW.md](docs/phase5/00_OVERVIEW.md)
 
 **Guides index** — [docs/README.md](docs/README.md) · **Users** — [User guide & runbook](docs/USER_GUIDE_AND_RUNBOOK.md)
 

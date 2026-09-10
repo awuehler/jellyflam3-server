@@ -17,7 +17,8 @@ All notable changes to this project are documented here. Format loosely follows 
 - Catalog sidecar schema: Phase 4 keys `type`, `watermark`, `viewer_feedback`, `alias` reserved in [phase1/07](docs/phase1/07_LICENSE_AND_METADATA.md); `pipeline.stills.SIDECAR_RESERVED_KEYS`. Tuple ingest writes `type` / `from_id` / `to_id` / `watermark`. Worker copies reserved keys on re-ingest so votes and aliases survive Shears-modify.
 - Phase 4 tuples: one MP4 (loop A + watermarked edge A→B + loop B) under `by-generation/tuple/`; idle-cron mode; Roku shuffle includes `pedigree` and `tuple` (channel 1.0.28). Edge mark: Cesari PNG on private furnaces (`license.commercial_mode: false`); ES attribution sentence (no logo) when commercial_mode is on. Look/feel: [phase4/03](docs/phase4/03_EDGES_AND_WATERMARK.md#look-and-feel-what-the-viewer-sees).
 - Phase 4 client polish: mid-session 404 / quarantine re-poll — Roku VoD **1.0.29**, Roku screensaver **1.0.8**, Kodi screensaver **0.2.7**. Drop the dead Jellyfin id, re-poll Items (30s rate limit), continue the session. Does not invent a Playing session for the miss. Overnight long-interval flock refresh stays parked.
-- Phase 4 sheep naming RNG: `python3 -m pipeline.sheep_naming` hash-seeds `adjective_surname` on ingest/backfill; `set-alias` / `clear-alias` sticky human override. Pasture filename/alias toggle and LLM naming stay parked.
+- Phase 4 sheep naming RNG: `python3 -m pipeline.sheep_naming` hash-seeds `adjective_surname` on ingest/backfill; `set-alias` / `clear-alias` sticky human override. Pasture filename/alias toggle stays parked. LLM naming moved to Phase 5.
+- Phase 5 synopsis (parked): two deployments — **A** JellyFlam3 Furnace (Pi 5, existing playbook) and **B** LLM Agent Platform (Arduino Ventuno Q). Not interchangeable, not overlapping. BOM + agent bring-up + furnace contracts + platform gaps — [docs/phase5/](docs/phase5/00_OVERVIEW.md).
 
 ### Fixed
 

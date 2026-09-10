@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — give every catalog sheep a short, **human-readable alias** (e.g. `frosty_swirles`, `angry_bardeen`) so operators and peer clients can remember and reference sheep without typing `electricsheep.247.00505` or pedigree hashes. Also known as a **random name generator** / **auto-generated names** pattern: typically an **adjective + surname** of a famous person, place, or thing.
 
-**Status:** RNG + ingest + override shipped 2026-09-09. Client filename-vs-alias toggle and LLM poster naming stay parked. Keys `alias` / `alias_source` live in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Household vote recipes still wait on [08](08_VIEWER_FEEDBACK_LOOP.md).
+**Status:** RNG + ingest + override shipped 2026-09-09. Client filename-vs-alias toggle stays parked here. **LLM poster naming** is Phase 5 ([../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md)). Keys `alias` / `alias_source` live in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Household vote recipes still wait on [08](08_VIEWER_FEEDBACK_LOOP.md).
 
 Depends on catalog **sidecar** as sole metadata SoT ([../phase1/07_LICENSE_AND_METADATA.md](../phase1/07_LICENSE_AND_METADATA.md), [08_VIEWER_FEEDBACK_LOOP.md](08_VIEWER_FEEDBACK_LOOP.md)), worker ingest, and peer clients (Roku VoD, Kodi screensaver, Shears CLI). Optional later: LLM vision over poster/stills for a broader inferred vocabulary. Distinct from flam3 XML **`nick`** (designer attribution used by license inference) — aliases are **display / operator names**, not Creative Commons credit.
 
@@ -26,7 +26,7 @@ Depends on catalog **sidecar** as sole metadata SoT ([../phase1/07_LICENSE_AND_M
        │
        ├─► CLI / Shears / promote / breed logs (human-readable refs)
        └─► Roku / Kodi title line (toggle: filename | alias)
-              └─► optional LLM re-suggest from poster (Phase 4+)
+              └─► optional LLM re-suggest from poster (Phase 5)
 ```
 
 ## Locked product rules (design)
@@ -38,7 +38,7 @@ Depends on catalog **sidecar** as sole metadata SoT ([../phase1/07_LICENSE_AND_M
 5. **Not flam3 `nick`** — do not write aliases into genome XML `nick=` as a substitute for designer credit; license inference keeps using true designer nicks / brood markers.
 6. **Vocabulary** — ship a modest curated adjective list + surname/place/thing list in-repo (or config paths); keep offline-first so furnaces do not need network for MVP naming.
 7. **Clients optional** — pasture apps default to today’s filename/title until the user enables “show aliases”; missing alias falls back to filename.
-8. **LLM is aspirational** — vision→alias is a later work item; MVP is deterministic RNG (+ human override). LLM proposals still go through uniqueness + operator accept when `alias_source` would become `llm`.
+8. **LLM is Phase 5** — vision→alias is [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md); MVP here is deterministic RNG (+ human override). LLM proposals still go through uniqueness + operator accept when `alias_source` would become `llm`.
 
 ## Sidecar (shipped)
 
@@ -66,7 +66,9 @@ Keys **`alias`** and **`alias_source`** (`auto` \| `human` \| `llm`) are in [pha
 2. **Kodi screensaver** — log + optional on-screen label (only if chrome is allowed in a settings preview; idle path stays chrome-free) / JSON-RPC title from alias when configured.
 3. ~~**Pipeline UX**~~ — `python3 -m pipeline.sheep_naming resolve` maps alias → stem; stem always valid. Shears/breed still take stems.
 
-### D — LLM poster naming (later)
+### D — LLM poster naming (Phase 5)
+
+Moved: [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md) § A (VLM on the **LLM Agent Platform**; sidecar write on the **furnace**; default off). This guide keeps `alias_source=llm` reserved/sticky so Phase 5 can write it **on A**.
 
 1. Input: catalog poster JPEG (or a still); output: proposed `adjective_surname`-shaped string or free phrase normalized to alias form.
 2. Gate: operator accept, or auto-apply only when `alias_source=auto` and policy allows `llm`.
@@ -99,8 +101,8 @@ Keys **`alias`** and **`alias_source`** (`auto` \| `human` \| `llm`) are in [pha
 - [x] Operator can override and reset; sticky against auto/LLM
 - [ ] At least one peer client (Roku or Kodi) offers filename vs alias display toggle
 - [x] Docs + glossary; sidecar schema documented; generator shipped (`pipeline.sheep_naming`)
-- [x] LLM path documented as optional / off by default
+- [x] LLM path documented as optional / off by default (implementation → [../phase5/02](../phase5/02_LLM_INTEGRATION.md))
 
 ## See also
 
-[00_OVERVIEW.md](00_OVERVIEW.md) · [05_END_USER_GUIDE.md](05_END_USER_GUIDE.md) · [08_VIEWER_FEEDBACK_LOOP.md](08_VIEWER_FEEDBACK_LOOP.md) · [../phase1/07_LICENSE_AND_METADATA.md](../phase1/07_LICENSE_AND_METADATA.md) · [../phase3/03_SHEEP_SHEARS.md](../phase3/03_SHEEP_SHEARS.md) · [../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md)
+[00_OVERVIEW.md](00_OVERVIEW.md) · [05_END_USER_GUIDE.md](05_END_USER_GUIDE.md) · [08_VIEWER_FEEDBACK_LOOP.md](08_VIEWER_FEEDBACK_LOOP.md) · [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md) · [../phase1/07_LICENSE_AND_METADATA.md](../phase1/07_LICENSE_AND_METADATA.md) · [../phase3/03_SHEEP_SHEARS.md](../phase3/03_SHEEP_SHEARS.md) · [../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md)

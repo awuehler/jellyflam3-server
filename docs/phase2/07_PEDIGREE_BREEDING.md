@@ -6,7 +6,7 @@ Generate wholly new sheep via **mutate / cross / blend / interpolate** with line
 
 ## Non-goals (Phase 3)
 
-**LLM-assisted pedigree** (suggest parents, aesthetic briefs, guided mutate/cross) is **Phase 3** — do not add network model stubs in Phase 2.
+**LLM-assisted pedigree** (suggest parents, aesthetic briefs, guided mutate/cross) is **Phase 5** — [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md). Do not add network or local model stubs in Phase 2.
 
 **Git pedigree sheep** (curated in-repo flock for smoke/examples; dual sample dirs collapsed; smoke uses `genomes/pedigree/`) is **Phase 3** — [../phase3/06_GIT_PEDIGREE_SHEEP.md](../phase3/06_GIT_PEDIGREE_SHEEP.md).
 
@@ -159,7 +159,7 @@ python3 -m pipeline.breed --config configs/jellyflam3.yaml --mutate path/to/pare
 - [x] Unit tests cover naming, NC license inheritance, multi-flame policy, and sidecar `origin`
 - [x] Pi smoke: breed → worker inbox → `worker --once` succeeds — Owner OK 2026-08-04
 - [x] `configs/jellyflam3.yaml.example` has `breed:` keys; Commands section matches shipped CLI
-- [x] Phase 3 LLM note present in [00_OVERVIEW.md](00_OVERVIEW.md) (pre-met; keep as guard)
+- [x] LLM-assisted pedigree deferred (now Phase 5 — [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md))
 
 ## Downstream (channel)
 
@@ -198,4 +198,4 @@ Behavior:
 
 ## See also
 
-[`pipeline/breed.py`](../../pipeline/breed.py) · [`pipeline/seed_inbox.py`](../../pipeline/seed_inbox.py) (`--mutate` legacy helper). · [04_ROKU_CHANNEL_POLISH.md](04_ROKU_CHANNEL_POLISH.md) · [../phase4/08_VIEWER_FEEDBACK_LOOP.md](../phase4/08_VIEWER_FEEDBACK_LOOP.md) · flam3 envars via `flam3-render` bogus-arg docs dump on Pi
+[`pipeline/breed.py`](../../pipeline/breed.py) · [`pipeline/seed_inbox.py`](../../pipeline/seed_inbox.py) (`--mutate` legacy helper). · [04_ROKU_CHANNEL_POLISH.md](04_ROKU_CHANNEL_POLISH.md) · [../phase4/08_VIEWER_FEEDBACK_LOOP.md](../phase4/08_VIEWER_FEEDBACK_LOOP.md) · [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md) · flam3 envars via `flam3-render` bogus-arg docs dump on Pi

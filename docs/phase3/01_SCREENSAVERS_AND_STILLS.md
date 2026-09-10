@@ -36,7 +36,7 @@ Stills serve **Roku** (image-only screensaver). Kodi plays video loops and does 
 
 ## LLM-assisted pedigree
 
-Optional AI guidance for parent selection / aesthetic briefs atop Phase 2 `flam3-genome` mutate/cross — **not** required for this Roku screensaver track (may also inform Kodi sequencer weights later). Out of MVP scope for guide 01 exit.
+Optional AI guidance for parent selection / aesthetic briefs atop Phase 2 `flam3-genome` mutate/cross — **Phase 5** ([../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md)). **Not** required for this Roku screensaver track. Out of MVP scope for guide 01 exit.
 
 ## Guidelines
 
@@ -54,7 +54,7 @@ Optional AI guidance for parent selection / aesthetic briefs atop Phase 2 `flam3
 - Channel Store / private-channel publish of VoD + screensaver → [Phase 4 / 04](../phase4/04_ROKU_PUBLISH.md)
 - Mid-session flock **re-poll on 404** when a sheep is quarantined while SS is cycling Primaries → **shipped** screensaver **1.0.8** (drop dead URL, 30s rate-limited StillsTask re-poll, continue). Overnight long-interval re-fetch stays parked.
 - Long-running screensaver **session re-fetch** (Limit 200, hours / wrap so ~daily ingest appears without exit) → [Phase 4 client polish](../phase4/00_OVERVIEW.md#client-polish-parked--not-numbered)
-- LLM pedigree MVP
+- LLM pedigree MVP → [Phase 5 / 02](../phase5/02_LLM_INTEGRATION.md)
 
 ## Artifacts
 

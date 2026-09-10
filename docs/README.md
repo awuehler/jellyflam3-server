@@ -10,6 +10,7 @@
 | [phase2/00_OVERVIEW.md](phase2/00_OVERVIEW.md) | Phase 2 scope, reading order, definition of done — **complete** |
 | [phase3/00_OVERVIEW.md](phase3/00_OVERVIEW.md) | Phase 3 scope, reading order, definition of done — **complete** |
 | [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md) | Phase 4 synopsis, future features to be determined — **parked** |
+| [phase5/00_OVERVIEW.md](phase5/00_OVERVIEW.md) | Phase 5 synopsis — furnace (Pi) vs LLM Agent Platform (Ventuno); not overlapping — **parked** |
 |||
 | [glossary.md](glossary.md) | Terms, keywords, and definitions for project + collateral vocabulary |
 
@@ -55,7 +56,7 @@ Parallel after **02**: `03` (HLS) anytime; `04` once Primary images exist. `05`�
 8. [09_SHEEP_REFACTOR.md](phase3/09_SHEEP_REFACTOR.md) — refactor tool (quality / palette / encode; Jellyfin-visible preview)
 9. [10_TESTING_AND_ACCEPTANCE.md](phase3/10_TESTING_AND_ACCEPTANCE.md) — testing, acceptance, and first `release candidate`
 
-**NOTE:** Tag **`v0.3.0`** at public launch — see [CHANGELOG.md](../CHANGELOG.md). Post-launch roadmap is [docs/phase4/](./phase4) (not part of v0.3.0). Tuples ([03](phase4/03_EDGES_AND_WATERMARK.md)) shipped 2026-09-05. 09 RNG aliases shipped 2026-09-09. Other products (publish, vote, rotate) stay parked.
+**NOTE:** Tag **`v0.3.0`** at public launch — see [CHANGELOG.md](../CHANGELOG.md). Post-launch roadmap is [docs/phase4/](./phase4) (not part of v0.3.0). Tuples ([03](phase4/03_EDGES_AND_WATERMARK.md)) shipped 2026-09-05. 09 RNG aliases shipped 2026-09-09. Other products (publish, vote, rotate) stay parked. **Phase 5** (Ventuno LLM Agent Platform, separate from the Pi furnace) is a parked slice: [docs/phase5/](./phase5).
 
 ## Phase 4 guides (synopsis — products parked; pre-open slices noted)
 
@@ -70,3 +71,11 @@ Parallel after **02**: `03` (HLS) anytime; `04` once Primary images exist. `05`�
 9. [09_SHEEP_NAMING.md](phase4/09_SHEEP_NAMING.md) — RNG aliases (**slice shipped** 2026-09-09; client toggle parked)
 
 Overview: [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md).
+
+## Phase 5 guides (synopsis — two deployments; parked)
+
+1. [01_VENTUNO_Q_HOST.md](phase5/01_VENTUNO_Q_HOST.md) — LLM Agent Platform host (Ventuno Q BOM / bring-up; **not** a furnace)
+2. [02_LLM_INTEGRATION.md](phase5/02_LLM_INTEGRATION.md) — agent ↔ furnace contracts (naming, breeding, other vectors)
+3. [03_AI_PLATFORM_GAPS.md](phase5/03_AI_PLATFORM_GAPS.md) — NPU / RAM / driver gaps **on the agent platform**
+
+Overview: [phase5/00_OVERVIEW.md](phase5/00_OVERVIEW.md). Does not replace remaining Phase 4 products. Furnace playbook stays [phase2/09](phase2/09_PI_FROM_SCRATCH.md).

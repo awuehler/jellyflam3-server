@@ -17,7 +17,7 @@ Historical Phase 1 deferrals (status after Phase 2 planning):
 - Complementary ambient-TV palette tinting → **baseline shipped** (TV-optimize)
 - Electric Sheep archive seed library → **baseline shipped** ([../phase2/01_ARCHIVE_SEED_LIBRARY.md](../phase2/01_ARCHIVE_SEED_LIBRARY.md))
 - Channel Store certification package → deferred
-- Sheep Shears / LLM pedigree / shared sheep security / git pedigree sheep / JellyFlam3 Hammer → **Phase 3** ([../phase3/03_SHEEP_SHEARS.md](../phase3/03_SHEEP_SHEARS.md), [../phase3/05_SHARED_SHEEP_SECURITY.md](../phase3/05_SHARED_SHEEP_SECURITY.md), [../phase3/06_GIT_PEDIGREE_SHEEP.md](../phase3/06_GIT_PEDIGREE_SHEEP.md), [../phase3/07_JELLYFLAM3_HAMMER.md](../phase3/07_JELLYFLAM3_HAMMER.md)); edge crossfades + watermark → **Phase 4** ([../phase4/03_EDGES_AND_WATERMARK.md](../phase4/03_EDGES_AND_WATERMARK.md))
+- Sheep Shears / shared sheep security / git pedigree sheep / JellyFlam3 Hammer → **Phase 3** ([../phase3/03_SHEEP_SHEARS.md](../phase3/03_SHEEP_SHEARS.md), [../phase3/05_SHARED_SHEEP_SECURITY.md](../phase3/05_SHARED_SHEEP_SECURITY.md), [../phase3/06_GIT_PEDIGREE_SHEEP.md](../phase3/06_GIT_PEDIGREE_SHEEP.md), [../phase3/07_JELLYFLAM3_HAMMER.md](../phase3/07_JELLYFLAM3_HAMMER.md)); edge crossfades + watermark → **Phase 4** ([../phase4/03_EDGES_AND_WATERMARK.md](../phase4/03_EDGES_AND_WATERMARK.md)); **LLM-assisted pedigree** → **Phase 5** ([../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md))
 
 ## Reading order
 

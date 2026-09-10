@@ -1,6 +1,6 @@
 # JellyFlam3 glossary
 
-Terms, keywords, and phrases used across the **jellyflam3-server** project — docs, scripts, configs, and collateral (Electric Sheep, flam3, Jellyfin, Roku, Kodi). Intended for operators, contributors, and the Phase 4 end-user guide / runbook.
+Terms, keywords, and phrases used across the **jellyflam3-server** project — docs, scripts, configs, and collateral (Electric Sheep, flam3, Jellyfin, Roku, Kodi). Intended for operators, contributors, and the Phase 4 end-user guide / runbook (Phase 5 Ventuno/LLM slice is parked).
 
 **See also:** [README.md](README.md) (guide index) · [Pi5_Flam3_VoD_Pipeline.md](Pi5_Flam3_VoD_Pipeline.md) (architecture source of truth)
 
@@ -22,9 +22,10 @@ Terms, keywords, and phrases used across the **jellyflam3-server** project — d
 | [Display probe](#display-probe) | [Genome](#genome) | [Period snap](#period-snap) | [Syncthing](#syncthing) |
 | [Dynamic duration](#dynamic-duration) | [Gold Sheep Lite](#gold-sheep-lite) | [PlaybackInfo](#playbackinfo) | [Tailscale](#tailscale) |
 | [ECP](#ecp-external-control-protocol) | [HLS](#hls) | [Poster / Primary](#poster--primary) | [TV-port](#tv-port) |
-| [Edition (render)](#edition-render) | [HW profile](#hw-profile) | [Pre-share / post-share](#pre-share--post-share) | [Viewer feedback](#viewer-feedback--sheep-vote) |
+| [Edition (render)](#edition-render) | [HW profile](#hw-profile) | [Pre-share / post-share](#pre-share--post-share) | [Ventuno Q](#ventuno-q) |
 | [`.flam3`](#flam3-file) | [Idle breed](#idle-breed) | [RC](#release-candidate-rc) | [Sheep naming / alias](#sheep-naming--alias) |
 | [N_max](#n_max-link-capacity) | [Library disk check](#library-disk-check) | [VoD](#vod) | [Worker](#worker) |
+| [LLM Agent Platform](#llm-agent-platform) | [Viewer feedback](#viewer-feedback--sheep-vote) | | |
 
 ---
 
@@ -36,11 +37,11 @@ Self-hosted generative media server: render **flam3**-style flame fractals, enco
 
 ### Furnace
 
-Informal name for the render factory on a Pi — **worker** + **flam3-animate** + **ffmpeg** + scratch I/O. “Keep the furnace busy” = maintain inbox feedstock (archive cron + **idle breed**). Clients are the **pasture** (consume finished loops; do not render).
+Informal name for the render factory — **worker** + **flam3-animate** + **ffmpeg** + scratch I/O. Lab SoT is a Raspberry Pi 5 only ([phase2/09](phase2/09_PI_FROM_SCRATCH.md)). Phase 5’s Arduino **Ventuno Q** is a separate **LLM Agent Platform**, not a furnace ([phase5/00](phase5/00_OVERVIEW.md)). “Keep the furnace busy” = maintain inbox feedstock (archive cron + **idle breed**). Clients are the **pasture** (consume finished loops; do not render).
 
-### Phase 1 / 2 / 3 / 4
+### Phase 1 / 2 / 3 / 4 / 5
 
-Delivery phases in `docs/phaseN/`. **Phase 1** (complete): toolchain, worker, Jellyfin, Roku channel, idle gate. **Phase 2** (complete): archive seed, flock UX, HLS, peering, sheep tax, pedigree, dynamic duration. **Phase 3** (complete — Owner OK 2026-08-23): stills, Kodi screensaver, Shears, share security, git pedigree, Hammer, ID dump, refactor, furnace client presets, acceptance. **Phase 4** (synopsis): peer path, mesh scripting, edges/watermark, Roku publish, end-user guide, library rotate, concurrent clients, viewer feedback, sheep naming.
+Delivery phases in `docs/phaseN/`. **Phase 1** (complete): toolchain, worker, Jellyfin, Roku channel, idle gate. **Phase 2** (complete): archive seed, flock UX, HLS, peering, sheep tax, pedigree, dynamic duration. **Phase 3** (complete — Owner OK 2026-08-23): stills, Kodi screensaver, Shears, share security, git pedigree, Hammer, ID dump, refactor, furnace client presets, acceptance. **Phase 4** (synopsis): peer path, mesh scripting, edges/watermark, Roku publish, end-user guide, library rotate, concurrent clients, viewer feedback, sheep naming. **Phase 5** (synopsis, parked): two deployments — **A** JellyFlam3 Furnace (Pi, already shipped) and **B** LLM Agent Platform (Arduino Ventuno Q); not interchangeable, not overlapping ([phase5/00](phase5/00_OVERVIEW.md)).
 
 ### Release candidate (RC)
 
@@ -158,7 +159,7 @@ Phase 4 design ([phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md)): Roku VoD transi
 
 ### Sheep naming / alias
 
-Phase 4 design ([phase4/09](phase4/09_SHEEP_NAMING.md)): furnace auto-generates a short memorable **alias** (`adjective_surname`, e.g. `frosty_swirles`) on the catalog sidecar (hash-seed from stem; `python3 -m pipeline.sheep_naming`); human override sticky. Peer clients may later toggle **filename vs alias** display (parked). Not the same as flam3 XML **`nick`** (designer credit for license).
+Phase 4 design ([phase4/09](phase4/09_SHEEP_NAMING.md)): furnace auto-generates a short memorable **alias** (`adjective_surname`, e.g. `frosty_swirles`) on the catalog sidecar (hash-seed from stem; `python3 -m pipeline.sheep_naming`); human override sticky. Peer clients may later toggle **filename vs alias** display (parked). **LLM poster naming** (`alias_source=llm`) is Phase 5 ([phase5/02](phase5/02_LLM_INTEGRATION.md)). Not the same as flam3 XML **`nick`** (designer credit for license).
 
 ### flam3-genome maximum attempts warning
 
@@ -230,7 +231,15 @@ Frame count for animate = `round(duration_sec × fps)`. Drives render time and s
 
 ### HW profile
 
-`pipeline/hw_profile.py` — overlays for **rpi-jellyflam3-16 / 08 / 04** (RAM/disk class): VoD bands, `dynamic.base_sec`, edition `compact` on -04.
+`pipeline/hw_profile.py` — overlays for **rpi-jellyflam3-16 / 08 / 04** (RAM/disk class): VoD bands, `dynamic.base_sec`, edition `compact` on -04. Phase 5 does **not** add a Ventuno furnace overlay.
+
+### Ventuno Q
+
+Arduino **VENTUNO Q** SBC (Qualcomm Dragonwing IQ8 + STM32H5): 16 GB RAM, Ubuntu aarch64, NVMe, 2.5 GbE, on-device NPU. Phase 5 parked host for the **LLM Agent Platform** only ([phase5/01](phase5/01_VENTUNO_Q_HOST.md)). **Not** a JellyFlam3 furnace; does **not** run `flam3-animate` / Jellyfin Sheep.
+
+### LLM Agent Platform
+
+Phase 5 **deployment B** ([phase5/00](phase5/00_OVERVIEW.md)): local models on Ventuno **advise** (aliases, breed briefs, operator CLIs); the **furnace** (deployment A, Pi) still **does**. Separate host; default off; furnace fail-open if the agent is down.
 
 ### Direct Play
 
@@ -537,4 +546,4 @@ Terms you will see in upstream docs and community material:
 
 ---
 
-*Last expanded: 2026-08-20 — adds sheep naming / alias; aligns with docs through Phase 4 synopsis and RC test contracts.*
+*Last expanded: 2026-09-10 — Phase 5 split: furnace (Pi) vs LLM Agent Platform (Ventuno).*

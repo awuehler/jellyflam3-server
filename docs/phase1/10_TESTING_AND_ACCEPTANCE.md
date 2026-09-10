@@ -38,7 +38,7 @@ python3 -m pytest tests/ -q
 | Roku screensaver package | Phase 3 |
 | Archive seed random picker (gens 247–165) | Baseline shipped (Phase 2 guide 01) |
 | Dynamic duration weighting | Phase 2 guide 06 |
-| Sheep Shears / LLM pedigree / edges + watermark / share security / git pedigree sheep | Phase 3 ([../phase3/05_SHARED_SHEEP_SECURITY.md](../phase3/05_SHARED_SHEEP_SECURITY.md), [../phase3/06_GIT_PEDIGREE_SHEEP.md](../phase3/06_GIT_PEDIGREE_SHEEP.md)) |
+| Sheep Shears / edges + watermark / share security / git pedigree sheep | Phase 3–4 ([../phase3/05_SHARED_SHEEP_SECURITY.md](../phase3/05_SHARED_SHEEP_SECURITY.md), [../phase3/06_GIT_PEDIGREE_SHEEP.md](../phase3/06_GIT_PEDIGREE_SHEEP.md)); LLM pedigree → [../phase5/02](../phase5/02_LLM_INTEGRATION.md) |
 | Kodi ES screensaver (separate) | Phase 3 ([../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md)) |
 | Full power-cut “cold” vs soft reboot | Soft reboot validated; sticky throttle cleared |
 

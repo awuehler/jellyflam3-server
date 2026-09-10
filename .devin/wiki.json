@@ -5,11 +5,11 @@
       "author": "Owner"
     },
     {
-      "content": "CANONICAL DOCS — read these first before inferring architecture from code alone:\n- Architecture SoT: docs/Pi5_Flam3_VoD_Pipeline.md\n- Guide index + phase status: docs/README.md\n- Layered user/operator/contributor guide: docs/USER_GUIDE_AND_RUNBOOK.md\n- Vocabulary: docs/glossary.md\n- Per-phase overviews: docs/phase1|phase2|phase3|phase4/00_OVERVIEW.md\nDo not treat README.md code comments or stale wiki as authoritative over the phase guides.",
+      "content": "CANONICAL DOCS — read these first before inferring architecture from code alone:\n- Architecture SoT: docs/Pi5_Flam3_VoD_Pipeline.md\n- Guide index + phase status: docs/README.md\n- Layered user/operator/contributor guide: docs/USER_GUIDE_AND_RUNBOOK.md\n- Vocabulary: docs/glossary.md\n- Per-phase overviews: docs/phase1|phase2|phase3|phase4|phase5/00_OVERVIEW.md\nDo not treat README.md code comments or stale wiki as authoritative over the phase guides.",
       "author": "Owner"
     },
     {
-      "content": "PHASE STATUS (2026-09-09): Phase 1 complete (Owner OK 2026-07-28). Phase 2 complete (Owner OK 2026-08-08). Phase 3 complete (Owner OK 2026-08-23). Public launch v0.3.0 (2026-08-23); maintenance v0.3.1. Phase 4 tuples (guide 03) shipped 2026-09-05. 07 link_capacity Owner OK 2026-09-09. 09 RNG aliases shipped (ingest/backfill/override). Remaining Phase 4 products parked (01/02/04/06-rotate/08 overlay). Fleet tracks master.",
+      "content": "PHASE STATUS (2026-09-10): Phase 1 complete (Owner OK 2026-07-28). Phase 2 complete (Owner OK 2026-08-08). Phase 3 complete (Owner OK 2026-08-23). Public launch v0.3.0 (2026-08-23); maintenance v0.3.1. Phase 4 tuples (guide 03) shipped 2026-09-05. 07 link_capacity Owner OK 2026-09-09. 09 RNG aliases shipped (ingest/backfill/override). Remaining Phase 4 products parked (01/02/04/06-rotate/08 overlay). Phase 5 synopsis parked: two deployments — JellyFlam3 Furnace (Pi) vs LLM Agent Platform (Arduino Ventuno Q); not interchangeable, not overlapping (docs/phase5/). Fleet tracks master.",
       "author": "Owner"
     },
     {
@@ -37,7 +37,7 @@
       "author": "Owner"
     },
     {
-      "content": "DEFERRED / OUT OF SCOPE (do not document as shipped): Continuous live HLS from shuffled MP4s (dropped). Gold Sheep / paid ES masters (never ingest). LLM pedigree, DeepDream, full social flock network (aspirational). Kodi standalone loop→edge→loop sequencer (tuples play as one catalog MP4). Channel Store / private Roku publish parked. Auto-promote, mesh introduce, vote overlay, naming RNG, library rotate parked. Shipped Phase 4: tuples (03), 05 user-guide baseline, 06 disk check, 07 N_max estimator, sidecar key names.",
+      "content": "DEFERRED / OUT OF SCOPE (do not document as shipped): Continuous live HLS from shuffled MP4s (dropped). Gold Sheep / paid ES masters (never ingest). DeepDream, full social flock network (aspirational). LLM pedigree + LLM poster naming are Phase 5 on a **separate** Ventuno LLM Agent Platform (docs/phase5/) — not on the Pi furnace, not cloud stubs in the worker, not Ventuno-as-furnace. Kodi standalone loop→edge→loop sequencer (tuples play as one catalog MP4). Channel Store / private Roku publish parked. Auto-promote, mesh introduce, vote overlay, library rotate parked. Shipped Phase 4: tuples (03), 05 user-guide baseline, 06 disk check, 07 N_max estimator, 09 RNG aliases, sidecar key names.",
       "author": "Owner"
     },
     {
@@ -63,7 +63,7 @@
     },
     {
       "title": "Phase Status",
-      "purpose": "Delivery phases 1–4 completion state, Owner OK dates, releases v0.3.0/v0.3.1, and post-launch Phase 4 synopsis.",
+      "purpose": "Delivery phases 1–5 completion state, Owner OK dates, releases v0.3.0/v0.3.1, post-launch Phase 4 synopsis, and parked Phase 5 Ventuno/LLM slice.",
       "parent": "Architecture Overview"
     },
     {
@@ -208,8 +208,18 @@
     },
     {
       "title": "Phase 4 Roadmap",
-      "purpose": "Synopsis of post-launch work: edges/watermark, Roku publish, peer share-path, mesh scripting, library rotate, concurrent clients, viewer feedback, sheep naming — not yet open.",
+      "purpose": "Synopsis of post-launch work: edges/watermark, Roku publish, peer share-path, mesh scripting, library rotate, concurrent clients, viewer feedback, sheep naming RNG. LLM naming/pedigree moved to Phase 5.",
       "parent": "Phase Status"
+    },
+    {
+      "title": "Phase 5 Ventuno Q and LLM",
+      "purpose": "Parked slice with two non-overlapping deployments: A JellyFlam3 Furnace (Pi 5, existing) vs B LLM Agent Platform (Arduino Ventuno Q). Agent advises furnace over LAN; flam3/Jellyfin stay on A only.",
+      "parent": "Phase Status",
+      "page_notes": [
+        {
+          "content": "Guides: docs/phase5/00_OVERVIEW.md, 01_VENTUNO_Q_HOST.md, 02_LLM_INTEGRATION.md, 03_AI_PLATFORM_GAPS.md. Do not implement until Owner opens. Do not install worker on Ventuno or LLM runtime on the Pi furnace."
+        }
+      ]
     },
     {
       "title": "Known Issues and Limits",

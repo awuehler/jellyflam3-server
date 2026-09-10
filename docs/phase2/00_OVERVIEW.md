@@ -11,7 +11,7 @@ Architecture SoT: [Pi5_Flam3_VoD_Pipeline.md](../Pi5_Flam3_VoD_Pipeline.md) (re-
 - Standalone Roku Screensaver / Backdrop package (`RunScreenSaver`)
 - Stills extraction + **Roku** Screensaver/Backdrop ([../phase3/01_SCREENSAVERS_AND_STILLS.md](../phase3/01_SCREENSAVERS_AND_STILLS.md))
 - **Kodi** Electric Sheep–dogma screensaver extension ([../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md)) — separate from Roku
-- LLM-assisted pedigree breeding
+- LLM-assisted pedigree breeding → **Phase 5** ([../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md))
 - **Sheep Shears** (add/modify/delete `.flam3` + cascade downstream artifacts)
 - **Edge / transition crossfades** + **sheep watermark** (see Phase 4 [03_EDGES_AND_WATERMARK.md](../phase4/03_EDGES_AND_WATERMARK.md))
 - **Shared sheep security** — pre/post share checksums/signatures ([../phase3/05_SHARED_SHEEP_SECURITY.md](../phase3/05_SHARED_SHEEP_SECURITY.md))

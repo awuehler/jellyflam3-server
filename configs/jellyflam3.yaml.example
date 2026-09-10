@@ -56,6 +56,8 @@ encode:
   audio: aac_silent
 
 # Modest offline aliases (Phase 4 / 09). Filename stays canonical.
+# LLM poster naming is Phase 5 on the LLM Agent Platform (Ventuno), applied on the furnace:
+#   docs/phase5/02_LLM_INTEGRATION.md
 #   python3 -m pipeline.sheep_naming backfill
 #   python3 -m pipeline.sheep_naming set-alias --stem electricsheep.247.00505 --alias frosty_swirles
 naming:
