@@ -117,10 +117,7 @@ python3 -m pipeline.display_profiles list
 
 ### Continuous random flock playback (piece D2 — channel 1.0.20)
 
-Settings `shuffleFlock` (default `true`):
-
-- **false:** ambient seek-reloop of the selected sheep (unchanged).
-- **true:** at end-of-clip, advance to another sheep in **random order**. Eligible pool:
+Settings `shuffleFlock` is always `true` as of channel **1.0.30** (leftover `false` is rewritten on launch). At end-of-clip, advance to another sheep in **random order**. Eligible pool:
   - Only archive generations `[247, 245, 244, 243, 242, 198, 191, 169, 165]` via item `generation` or `Path` under `/by-generation/{N}/` (see [01](01_ARCHIVE_SEED_LIBRARY.md)).
   - **Ignore** `by-generation/misc`, `by-generation/test`, and other non-allowlisted locations.
   - **Include** `by-generation/pedigree/` and `by-generation/tuple/` (channel 1.0.28).

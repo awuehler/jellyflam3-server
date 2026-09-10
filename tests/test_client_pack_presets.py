@@ -49,6 +49,7 @@ def test_apply_kodi_settings_sets_defaults(tmp_path: Path):
   <setting id="api_key" type="text" label="API key" default=""/>
   <setting id="user_id" type="text" label="User id" default=""/>
   <setting id="library_id" type="text" label="Library id" default=""/>
+  <setting id="shuffle" type="bool" label="Shuffle flock" default="false"/>
 </settings>
 """,
         encoding="utf-8",
@@ -67,6 +68,7 @@ def test_apply_kodi_settings_sets_defaults(tmp_path: Path):
     assert 'default="secret-key"' in text
     assert 'default="user-guid"' in text
     assert 'default="lib-guid"' in text
+    assert 'id="shuffle"' in text and 'default="true"' in text
 
 
 def test_write_roku_registry_dir(tmp_path: Path):
@@ -86,6 +88,24 @@ def test_write_roku_registry_dir(tmp_path: Path):
     data = json.loads(out.read_text(encoding="utf-8"))
     assert data["baseUrl"] == "http://example:8096"
     assert data["apiKey"] == "k"
+    assert data["shuffleFlock"] == "true"
+
+
+def test_normalize_roku_settings_forces_shuffle_true():
+    cpp = _import_presets()
+    out = cpp.normalize_roku_settings(
+        {
+            "baseUrl": "http://example:8096",
+            "apiKey": "k",
+            "userId": "u",
+            "libraryId": "l",
+            "commercialMode": False,
+            "streamMode": "mp4",
+            "shuffleFlock": False,
+        }
+    )
+    assert out["shuffleFlock"] == "true"
+    assert out["commercialMode"] == "false"
 
 
 def test_prepare_packaging_skips_without_furnace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -130,6 +150,8 @@ def test_prepare_packaging_writes_targets(tmp_path: Path, monkeypatch: pytest.Mo
         )
     assert ok is True
     assert (tmp_path / "registry" / "jellyflam3-presets.json").is_file()
+    packed = json.loads((tmp_path / "registry" / "jellyflam3-presets.json").read_text(encoding="utf-8"))
+    assert packed["shuffleFlock"] == "true"
     assert 'default="http://192.168.1.100:8096"' in settings.read_text(encoding="utf-8")
 
 
@@ -138,7 +160,8 @@ def test_roku_packages_include_registry_presets_helper():
     ss = (ROOT / "roku-screensaver" / "components" / "RegistryPresets.brs").read_text(encoding="utf-8")
     assert "applyJellyFlam3PackPresets" in vod
     assert "applyJellyFlam3PackPresets" in ss
-    assert 'reg.write("shuffleFlock"' in vod
+    assert "jsonPresetStr" in vod
+    assert 'reg.write("shuffleFlock"' not in vod
     assert 'reg.write("shuffleFlock"' not in ss
 
 

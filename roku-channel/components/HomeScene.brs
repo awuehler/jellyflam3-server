@@ -185,11 +185,10 @@ sub ensureDefaults()
   if sm <> "mp4" and sm <> "hls"
     m.registry.write("streamMode", "mp4")
   end if
-  sf = m.registry.read("shuffleFlock")
-  if sf = invalid then sf = ""
-  if sf.Trim() = ""
-    m.registry.write("shuffleFlock", "true")
-  end if
+  ' Always persist true. Sideload keeps the JellyFlam3 registry, so a leftover
+  ' "false" (empty Settings save, or older packages that copied presets) would
+  ' otherwise survive every client upgrade.
+  m.registry.write("shuffleFlock", "true")
   m.registry.flush()
 end sub
 

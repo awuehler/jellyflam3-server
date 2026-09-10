@@ -11,7 +11,7 @@ Sideloadable SceneGraph channel that lists sheep from Jellyfin with **poster til
 
 Roku VOD **cannot gapless-loop** HTTP MP4/HLS with the Video node (`Video.loop` still rebuffers). Channel uses seek-before-EOF; residual hitch is accepted for now. Do **not** use `master.m3u8` on Jellyfin 10.11.
 
-If a sheep is quarantined or Shears-deleted while a clip is queued, **1.0.29** drops that id after HLS↔MP4 fallback fails, re-polls the flock (30s rate limit), and continues. A failed open does not POST Playing.
+If a sheep is quarantined or Shears-deleted while a clip is queued, **1.0.29+** drops that id after HLS↔MP4 fallback fails, re-polls the flock (30s rate limit), and continues. A failed open does not POST Playing. **1.0.30** always persists `shuffleFlock=true` so an upgrade cannot leave the TV looping one sheep.
 
 ## Settings version
 
@@ -29,7 +29,7 @@ Section `JellyFlam3` (edit in-channel via **Settings** button, **\* Options**, o
 | `libraryId` | Sheep library ParentId (recommended) |
 | `commercialMode` | `true` / `false` — client-side filter on Items **Tags** only: keep `cc-by` / `cc0` / PD / `cc-by-sa`; hide NC and untagged items. Do **not** use Jellyfin `Tags=` query params. Overview `License:` is display-only |
 | `streamMode` | `mp4` (ambient loop default) or `hls` (remux compare) |
-| `shuffleFlock` | `true` (default) / `false` — when true, play archive gens (`247…165`) in random order at EOF (skips `misc`/`test`); when false, seek-reloop one sheep |
+| `shuffleFlock` | always `true` — rotate archive gens (`247…165`) plus pedigree/tuple at EOF (skips `misc`/`test`). Channel **1.0.30** rewrites this on every launch so sideload cannot leave a leftover `false`. |
 | `displayWidth` / `displayHeight` | From Settings **Fetch TV display** (`roDeviceInfo`) |
 | `uiResolution` / `uiWidth` / `uiHeight` | UI resolution name + pixels |
 | `videoMode` | e.g. `1080p`, `2160p60` |

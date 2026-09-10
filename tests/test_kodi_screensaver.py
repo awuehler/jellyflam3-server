@@ -16,7 +16,7 @@ def test_addon_xml_screensaver_entry():
     tree = ET.parse(ADDON_XML)
     root = tree.getroot()
     assert root.attrib["id"] == "screensaver.jellyflam3"
-    assert root.attrib["version"] == "0.2.7"
+    assert root.attrib["version"] == "0.2.8"
     req = root.find("requires/import")
     assert req is not None
     assert req.attrib["addon"] == "xbmc.python"

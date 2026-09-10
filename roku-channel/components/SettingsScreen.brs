@@ -57,7 +57,7 @@ function fieldHint(name as string) as string
   else if name = "streamMode"
     return "mp4=ambient Direct Play loop; hls=Jellyfin remux compare (other values become mp4)"
   else if name = "shuffleFlock"
-    return "true=play archive gens 247/245/244/243/242/198/191/169/165 in random order (skip misc/test); false=loop one sheep"
+    return "always true — rotate archive gens + pedigree + tuple (skip misc/test); false is not persisted"
   else if name = "probeDisplay"
     return "OK=capture roDeviceInfo + POST per-screen profile to Pi :8791 (multi-Roku/Kodi safe; hint only)"
   else if name = "save"
@@ -135,7 +135,7 @@ sub openSettings()
     else if name = "commercialMode"
       val = normalizeBool(val, false)
     else if name = "shuffleFlock"
-      val = normalizeBool(val, shuffleFlockDefault())
+      val = "true"
     end if
     m.values[name] = val
     refreshRowLabel(name)
@@ -490,7 +490,7 @@ sub onKeyboardButton()
     else if name = "commercialMode"
       text = normalizeBool(text, false)
     else if name = "shuffleFlock"
-      text = normalizeBool(text, shuffleFlockDefault())
+      text = "true"
     end if
     m.values[name] = text
     refreshRowLabel(name)
@@ -514,7 +514,7 @@ sub saveAndClose()
     else if name = "commercialMode"
       val = normalizeBool(val, false)
     else if name = "shuffleFlock"
-      val = normalizeBool(val, shuffleFlockDefault())
+      val = "true"
     end if
     m.registry.write(name, val)
   end for

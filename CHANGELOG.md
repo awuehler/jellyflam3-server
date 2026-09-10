@@ -25,7 +25,7 @@ All notable changes to this project are documented here. Format loosely follows 
 - LibreELEC BusyBox `unzip` can write NUL-padded `default.py` / binary `settings.xml` for the Kodi screensaver; install-from-zip or Python `zipfile` instead.
 - Ed25519 trust enrollment flake: do not `.strip()` exact 32-byte raw public keys (whitespace bytes are valid key material; broke `test_trust_key_enrolls_peer` intermittently on CI).
 - Redact `--auth-key=` values in `pipeline.peering` command logs.
-- Client sheep rotate defaults to **on**: Roku VoD `shuffleFlock` (Settings empty/save no longer writes `false`), Kodi `shuffle` setting default `true`. Roku screensaver always rotates stills and does not read or write `shuffleFlock`.
+- Client sheep rotate stays **on**: Roku VoD **1.0.30** always writes `shuffleFlock=true` on launch (heals leftover `false` across sideload). Furnace presets no longer copy package shuffle onto the device. Kodi **0.2.8** heals persisted `shuffle=false` and always rotates. Roku screensaver still ignores `shuffleFlock`.
 - Restore Kodi `resources/icon.png` (was committed as `icon-.png`, which failed CI package checks).
 
 ### Changed

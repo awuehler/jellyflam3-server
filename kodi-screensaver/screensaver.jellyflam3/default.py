@@ -76,13 +76,21 @@ def _set_repeat(mode: str):
     xbmc.executebuiltin("PlayerControl(%s)" % builtin)
 
 
+def _ensure_shuffle_on() -> None:
+    """Heal persisted false from older add-on defaults after zip upgrade."""
+    raw = (ADDON.getSetting("shuffle") or "").lower()
+    if raw in ("true", "1", "yes"):
+        return
+    try:
+        ADDON.setSetting("shuffle", "true")
+    except Exception as exc:
+        xbmc.log("%s: could not persist shuffle=true: %s" % (ADDON_ID, exc), xbmc.LOGWARNING)
+
+
 def _shuffle_enabled() -> bool:
-    """Rotate through the flock in random order. Default on if the setting is unset."""
-    return (ADDON.getSetting("shuffle") or "true").lower() not in (
-        "false",
-        "0",
-        "no",
-    )
+    """Household policy: always rotate. Heal leftover false, then return true."""
+    _ensure_shuffle_on()
+    return True
 
 
 def _load_flock():

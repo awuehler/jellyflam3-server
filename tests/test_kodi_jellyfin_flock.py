@@ -150,7 +150,7 @@ def test_drop_item_and_repoll_rate_limit():
     assert jf.should_repoll_flock(90.0, 100.0, min_sec=30.0) is False
     assert jf.should_repoll_flock(60.0, 100.0, min_sec=30.0) is True
     assert jf.FLOCK_REPOLL_MIN_SEC == 30.0
-    assert jf.CLIENT_VERSION == "0.2.7"
+    assert jf.CLIENT_VERSION == "0.2.8"
     h = jf.auth_header("secret")
     assert 'Client="JellyFlam3-Screensaver"' in h
     assert "Token=\"secret\"" in h
@@ -173,4 +173,6 @@ def test_screensaver_package_mentions_flock():
     assert 'id="shuffle"' in settings
     assert 'default="true"' in settings
     assert "_shuffle_enabled" in text
+    assert "_ensure_shuffle_on" in text
+    assert 'setSetting("shuffle", "true")' in text
     assert 'getSetting("shuffle")' in text

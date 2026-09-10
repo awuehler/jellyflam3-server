@@ -15,6 +15,7 @@ Tasks **1–4** done; **Jellyfin flock client + commercial filter + shuffle sequ
 - When settings or flock are unavailable, shows a short on-screen hint on black (no bundled test-pattern video)
 - Cancels Kodi’s 15s StopScript alarm (`sssssscreensaver`) so idle video is not killed
 - **0.2.7:** mid-session 404 / quarantine drops the dead Jellyfin id, re-polls the flock (30s rate limit), and continues
+- **0.2.8:** always shuffle; heal persisted `shuffle=false` after zip upgrade
 
 **Post-launch:** loop→edge→loop sequencer (edges + watermark) is not in v0.3.0.
 
@@ -33,7 +34,7 @@ Tasks **1–4** done; **Jellyfin flock client + commercial filter + shuffle sequ
 | **User id** | `user_id` | User **Guid** for `/Users/{id}/Items` (not the login name). |
 | **Library (Parent) id** | `library_id` | Sheep library / view **Guid** (`ParentId`). Recommended. Empty = all Movie/Video items the user can see. |
 | **Commercial-safe (skip NC)** | `commercial_mode` | Client-side Items **Tags** filter only: keep `cc-by` / `cc0` / `public-domain` / `pd` / `cc-by-sa`; hide NC and untagged. Does **not** send Jellyfin `Tags=` query params. Lab CC/NC sample pairs: [docs/phase1/07_LICENSE_AND_METADATA.md](../docs/phase1/07_LICENSE_AND_METADATA.md#lab-check--commercial-mode-toggle) |
-| **Shuffle flock (rotate sheep)** | `shuffle` | Default **true**: random order, reshuffle after a full pass. Off keeps fetch order but still advances. |
+| **Shuffle flock (rotate sheep)** | `shuffle` | Always **true** (0.2.8+): random order, reshuffle after a full pass. Older installs that stored `false` are healed on the next screensaver start. |
 | **Max items to fetch** | `flock_limit` | Cap before shuffle (default `200`). |
 
 Do **not** commit API keys or filled `settings.xml` into git.

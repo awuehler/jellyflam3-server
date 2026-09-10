@@ -65,12 +65,13 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=29" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.29""' in text
+    assert "build_version=30" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.30""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
     assert 'm.registry.write("shuffleFlock", "true")' in home
+    assert "if sf.Trim() = \"\"" not in home
     assert "if tl = \"\" then return true" in home
     assert "sub onPlaybackFailed()" in home
     assert "sub maybeRepollFlock()" in home
@@ -85,6 +86,7 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "function shuffleFlockDefault() as boolean" in settings
     assert "return true" in settings
     assert 'if val = "" then shown = "true"' in settings
+    assert 'val = "true"' in settings
     ss = (SS / "components" / "ScreenSaverScene.brs").read_text(encoding="utf-8")
     assert 'write("shuffleFlock"' not in ss
     assert "shuffleCopy" in ss

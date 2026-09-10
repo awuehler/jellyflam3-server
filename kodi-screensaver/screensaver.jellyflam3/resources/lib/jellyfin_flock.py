@@ -20,7 +20,7 @@ from typing import Any
 CLIENT_NAME = "JellyFlam3-Screensaver"
 CLIENT_DEVICE = "Kodi"
 CLIENT_DEVICE_ID = "jellyflam3-kodi-ss"
-CLIENT_VERSION = "0.2.7"
+CLIENT_VERSION = "0.2.8"
 FLOCK_REPOLL_MIN_SEC = 30.0
 
 

@@ -66,6 +66,22 @@ def is_furnace_host(root: Path | None = None) -> bool:
     return bool(url and key)
 
 
+def _preset_str(value: Any) -> str:
+    """Stringify a preset value. JSON booleans must not become Python ``str(True)``."""
+    if value is None:
+        return ""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value).strip()
+
+
+def normalize_roku_settings(settings: dict[str, Any]) -> dict[str, str]:
+    """Copy ROKU_KEYS; always persist shuffleFlock=true (household rotate policy)."""
+    out = {k: _preset_str(settings.get(k)) for k in ROKU_KEYS}
+    out["shuffleFlock"] = "true"
+    return out
+
+
 def fetch_roku_settings(
     config: Path,
     *,
@@ -81,13 +97,13 @@ def fetch_roku_settings(
         try:
             data = json.loads(cache.read_text(encoding="utf-8"))
             if isinstance(data, dict) and data.get("baseUrl") and data.get("apiKey"):
-                return {k: str(data.get(k) or "") for k in ROKU_KEYS}
+                return normalize_roku_settings(data)
         except (json.JSONDecodeError, OSError):
             pass
     creds = jfd.resolve_creds(config)
     report = jfd.build_report(creds, include_items=False, limit=1, show_secrets=True)
     settings = report.get("rokuSettings") or {}
-    out = {k: str(settings.get(k) or "") for k in ROKU_KEYS}
+    out = normalize_roku_settings(settings)
     payload = {
         "rokuRegistrySection": report.get("rokuRegistrySection") or "JellyFlam3",
         **out,
@@ -101,7 +117,11 @@ def write_roku_registry_dir(registry_dir: Path, settings: dict[str, str]) -> Pat
     """Write ``registry/jellyflam3-presets.json`` for Roku sideload packages."""
     registry_dir.mkdir(parents=True, exist_ok=True)
     out = registry_dir / PRESET_NAME
-    payload = {"rokuRegistrySection": "JellyFlam3", **settings, "source": "jellyfin_id_dump"}
+    payload = {
+        "rokuRegistrySection": "JellyFlam3",
+        **normalize_roku_settings(settings),
+        "source": "jellyfin_id_dump",
+    }
     out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     return out
 
@@ -112,6 +132,9 @@ def apply_kodi_settings(settings_path: Path, roku_settings: dict[str, str]) -> N
     root = tree.getroot()
     for node in root.iter("setting"):
         sid = node.get("id") or ""
+        if sid == "shuffle":
+            node.set("default", "true")
+            continue
         roku_key = KODI_MAP.get(sid)
         if not roku_key:
             continue

@@ -13,7 +13,7 @@
       "author": "Owner"
     },
     {
-      "content": "REPO LAYOUT PRIORITIES for documentation:\n- pipeline/ — Python render worker, Shears, Hammer, refactor, peering, flock artwork, idle gate, config, link_capacity, library_disk, sheep_tuple, sheep_naming\n- scripts/ — operator shell/Python tools (healthcheck, smoke, packaging, jellyfin_id_dump, client_pack_presets)\n- roku-channel/ — JellyFlam3 VoD BrightScript channel (manifest 1.0.29)\n- roku-screensaver/ — Roku stills screensaver (manifest 1.0.8)\n- kodi-screensaver/screensaver.jellyflam3/ — Kodi ES-dogma video screensaver add-on (0.2.7)\n- docs/phaseN/ — discrete task guides with Boundary/In/Out/Exit tables\n- configs/ — jellyflam3.yaml + hw profiles 16/08/04\n- tests/ — pytest (GitHub Actions on push/PR + release)\n- deploy/ — systemd units, peering templates\n- .github/ — issue templates, Dependabot, release workflow",
+      "content": "REPO LAYOUT PRIORITIES for documentation:\n- pipeline/ — Python render worker, Shears, Hammer, refactor, peering, flock artwork, idle gate, config, link_capacity, library_disk, sheep_tuple, sheep_naming\n- scripts/ — operator shell/Python tools (healthcheck, smoke, packaging, jellyfin_id_dump, client_pack_presets)\n- roku-channel/ — JellyFlam3 VoD BrightScript channel (manifest 1.0.30)\n- roku-screensaver/ — Roku stills screensaver (manifest 1.0.8)\n- kodi-screensaver/screensaver.jellyflam3/ — Kodi ES-dogma video screensaver add-on (0.2.8)\n- docs/phaseN/ — discrete task guides with Boundary/In/Out/Exit tables\n- configs/ — jellyflam3.yaml + hw profiles 16/08/04\n- tests/ — pytest (GitHub Actions on push/PR + release)\n- deploy/ — systemd units, peering templates\n- .github/ — issue templates, Dependabot, release workflow",
       "author": "Owner"
     },
     {
@@ -29,7 +29,7 @@
       "author": "Owner"
     },
     {
-      "content": "ROKU CONSTRAINTS: Developer mode allows ONE sideloaded package per device — VoD channel and screensaver alternate; registry JellyFlam3 keys survive zip swap. Furnace-built zips embed registry/jellyflam3-presets.json via scripts/client_pack_presets.py. Commercial filtering is client-side (isCommercialSafe); never pass Tags= to Jellyfin Items API (AND semantics empty flock). shuffleFlock=false reloops one selected sheep in ambient mode — distinguish list size from playback loop behavior.",
+      "content": "ROKU CONSTRAINTS: Developer mode allows ONE sideloaded package per device — VoD channel and screensaver alternate; registry JellyFlam3 keys survive zip swap. Furnace-built zips embed registry/jellyflam3-presets.json via scripts/client_pack_presets.py. Commercial filtering is client-side (isCommercialSafe); never pass Tags= to Jellyfin Items API (AND semantics empty flock). VoD 1.0.30 always persists shuffleFlock=true on launch (package presets must not copy this key; leftover false from empty Settings save / older force-sync survives sideload otherwise). Roku screensaver ignores shuffleFlock and always rotates stills.",
       "author": "Owner"
     },
     {
@@ -113,7 +113,7 @@
     },
     {
       "title": "Roku VoD Channel",
-      "purpose": "roku-channel/ BrightScript: JellyfinTask flock list, HomeScene/PlayerScreen, Settings registry, commercial mode, shuffleFlock (archive gens + pedigree + tuple), HLS vs MP4 streamMode, deep link contentId, packaging 1.0.28.",
+      "purpose": "roku-channel/ BrightScript: JellyfinTask flock list, HomeScene/PlayerScreen, Settings registry, commercial mode, shuffleFlock always true (archive gens + pedigree + tuple), HLS vs MP4 streamMode, deep link contentId, packaging 1.0.30.",
       "parent": null,
       "page_notes": [
         {
@@ -133,7 +133,7 @@
     },
     {
       "title": "Kodi Screensaver",
-      "purpose": "kodi-screensaver/screensaver.jellyflam3 add-on: jellyfin_flock.py Static MP4 shuffle, ES-dogma loops-only MVP, LibreELEC install from zip, Client=JellyFlam3-Screensaver, version 0.2.6.",
+      "purpose": "kodi-screensaver/screensaver.jellyflam3 add-on: jellyfin_flock.py Static MP4 shuffle, ES-dogma loops-only MVP, LibreELEC install from zip, Client=JellyFlam3-Screensaver, version 0.2.8.",
       "parent": null,
       "page_notes": [
         {
