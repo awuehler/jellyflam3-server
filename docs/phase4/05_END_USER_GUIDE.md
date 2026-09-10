@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — author a **household / end-user** guide for day-to-day JellyFlam3 operation: common tasks, worked examples, and problem triage. Audience is the person running one or more Pis + Roku(s), not the Phase 1–3 implementer reading feature guides.
 
-**Status:** Baseline complete (Owner OK 2026-09-03). Day-to-day use: **[../USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md)** (Layer 1 + [worked examples](../USER_GUIDE_AND_RUNBOOK.md#worked-examples) + Layer 2 triage). Fridge card: **[../FRIDGE_CARD.md](../FRIDGE_CARD.md)**. Remaining expansion (vote/rename recipes) waits on [08](08_VIEWER_FEEDBACK_LOOP.md) / [09](09_SHEEP_NAMING.md).
+**Status:** Baseline complete (Owner OK 2026-09-03). Day-to-day use: **[../USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md)** (Layer 1 + [worked examples](../USER_GUIDE_AND_RUNBOOK.md#worked-examples) + Layer 2 triage). Fridge card: **[../FRIDGE_CARD.md](../FRIDGE_CARD.md)**. Remaining expansion (vote / like recipes) waits on [08](08_VIEWER_FEEDBACK_LOOP.md). Alias rename CLI shipped with [09](09_SHEEP_NAMING.md).
 
 Complements (does not replace):
 
@@ -72,9 +72,9 @@ Symptom-oriented table (extend as lab learns):
 | Sheep disk WARN / BAD | `library_disk check`; `df` | Shears delete (no auto-rotate yet) ([06](06_LIBRARY_DISK_ROTATE.md)) |
 | Transcode hammering Pi / several TVs stutter | streamMode / `link_capacity estimate` | Prefer DirectPlay MP4; Ethernet for WiFi STA Pi; stay at/under N_max ([07](07_CONCURRENT_CLIENTS.md)) |
 
-### E — Remaining (waits on 08 / 09)
+### E — Remaining (waits on 08)
 
-Vote / like and rename / alias recipes in the user guide when [08](08_VIEWER_FEEDBACK_LOOP.md) / [09](09_SHEEP_NAMING.md) ship. Fridge card and refactor/Hammer/Kodi triage are already in the baseline.
+Vote / like recipes in the user guide when [08](08_VIEWER_FEEDBACK_LOOP.md) ships. Alias CLI is already in the runbook ([09](09_SHEEP_NAMING.md)). Fridge card and refactor/Hammer/Kodi triage are already in the baseline.
 
 ## Guidelines
 

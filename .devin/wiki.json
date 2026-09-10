@@ -9,11 +9,11 @@
       "author": "Owner"
     },
     {
-      "content": "PHASE STATUS (2026-09-05): Phase 1 complete (Owner OK 2026-07-28). Phase 2 complete (Owner OK 2026-08-08). Phase 3 complete (Owner OK 2026-08-23). Public launch v0.3.0 (2026-08-23); maintenance v0.3.1. Phase 4 tuples (guide 03) shipped 2026-09-05. Other Phase 4 products parked. Pre-open shipped: 05 end-user baseline + fridge card (Owner OK), 06 library_disk check slice, 07 link_capacity estimator (Owner OK pending). Fleet tracks master.",
+      "content": "PHASE STATUS (2026-09-09): Phase 1 complete (Owner OK 2026-07-28). Phase 2 complete (Owner OK 2026-08-08). Phase 3 complete (Owner OK 2026-08-23). Public launch v0.3.0 (2026-08-23); maintenance v0.3.1. Phase 4 tuples (guide 03) shipped 2026-09-05. 07 link_capacity Owner OK 2026-09-09. 09 RNG aliases shipped (ingest/backfill/override). Remaining Phase 4 products parked (01/02/04/06-rotate/08 overlay). Fleet tracks master.",
       "author": "Owner"
     },
     {
-      "content": "REPO LAYOUT PRIORITIES for documentation:\n- pipeline/ — Python render worker, Shears, Hammer, refactor, peering, flock artwork, idle gate, config, link_capacity, library_disk, sheep_tuple\n- scripts/ — operator shell/Python tools (healthcheck, smoke, packaging, jellyfin_id_dump, client_pack_presets)\n- roku-channel/ — JellyFlam3 VoD BrightScript channel (manifest 1.0.28)\n- roku-screensaver/ — Roku stills screensaver (manifest 1.0.7)\n- kodi-screensaver/screensaver.jellyflam3/ — Kodi ES-dogma video screensaver add-on (0.2.6)\n- docs/phaseN/ — discrete task guides with Boundary/In/Out/Exit tables\n- configs/ — jellyflam3.yaml + hw profiles 16/08/04\n- tests/ — pytest (~372 collected; GitHub Actions on push/PR + release)\n- deploy/ — systemd units, peering templates\n- .github/ — issue templates, Dependabot, release workflow",
+      "content": "REPO LAYOUT PRIORITIES for documentation:\n- pipeline/ — Python render worker, Shears, Hammer, refactor, peering, flock artwork, idle gate, config, link_capacity, library_disk, sheep_tuple, sheep_naming\n- scripts/ — operator shell/Python tools (healthcheck, smoke, packaging, jellyfin_id_dump, client_pack_presets)\n- roku-channel/ — JellyFlam3 VoD BrightScript channel (manifest 1.0.29)\n- roku-screensaver/ — Roku stills screensaver (manifest 1.0.8)\n- kodi-screensaver/screensaver.jellyflam3/ — Kodi ES-dogma video screensaver add-on (0.2.7)\n- docs/phaseN/ — discrete task guides with Boundary/In/Out/Exit tables\n- configs/ — jellyflam3.yaml + hw profiles 16/08/04\n- tests/ — pytest (GitHub Actions on push/PR + release)\n- deploy/ — systemd units, peering templates\n- .github/ — issue templates, Dependabot, release workflow",
       "author": "Owner"
     },
     {

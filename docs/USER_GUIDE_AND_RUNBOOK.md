@@ -351,6 +351,20 @@ python3 -m pipeline.shears audit
 python3 -m pipeline.shears sweep --orphans-only --confirm DELETE
 ```
 
+### Curator: sheep aliases (memorable names)
+
+Filename stays `electricsheep.{gen}.{id}`. Sidecar `alias` is `adjective_surname` (hash-stable on re-ingest). Human override is sticky.
+
+```bash
+python3 -m pipeline.sheep_naming backfill --dry-run
+python3 -m pipeline.sheep_naming backfill
+python3 -m pipeline.sheep_naming set-alias --stem electricsheep.247.00505 --alias frosty_swirles
+python3 -m pipeline.sheep_naming clear-alias --stem electricsheep.247.00505
+python3 -m pipeline.sheep_naming resolve frosty_swirles
+```
+
+Pasture filename vs alias display toggle is not in this slice (Roku/Kodi still show Jellyfin titles).
+
 Cascade removes catalog MP4/sidecar/poster, jobs, edges (best-effort), Jellyfin item (soft-fail), peer copies when Opt In. Does **not** touch secrets or Syncthing device config.
 
 ### Quality repair: Sheep refactor
@@ -540,7 +554,13 @@ net use \\<Kodi_IP_Address>\Downloads /delete
 2. Confirm **Settings → Interface → Screensaver** still shows **JellyFlam3 Dreams** (re-select if needed).
 3. Jellyfin settings in **Configure** are preserved under `/storage/.kodi/userdata/addon_data/screensaver.jellyflam3/` — re-enter only if URL/keys changed.
 
-Alternative (Kodi stopped): unzip into `/storage/.kodi/addons/screensaver.jellyflam3/` (folder name must match add-on id).
+Alternative (Kodi stopped): do **not** use LibreELEC BusyBox `unzip` (it can corrupt `default.py` / `settings.xml` with NUL bytes). Extract with Python:
+
+```bash
+python3 -c 'import zipfile; zipfile.ZipFile("/storage/downloads/screensaver.jellyflam3.zip").extractall("/storage/.kodi/addons")'
+```
+
+Folder name must stay `screensaver.jellyflam3`.
 
 **4 — Smoke after upgrade**
 
@@ -817,6 +837,9 @@ python3 -m pipeline.backfill_posters  # posters + stills + Jellyfin images
 python3 -m pipeline.media_layout    # catalog dir modes 2775/664
 python3 -m pipeline.job_recovery    # orphan job reclaim
 python3 -m pipeline.hw_profile      # apply 16a/08a/04a profile
+python3 -m pipeline.link_capacity   # concurrent-client N_max estimate
+python3 -m pipeline.library_disk    # sheep-mount WARN/BAD
+python3 -m pipeline.sheep_naming    # alias backfill / set / clear / resolve
 python3 -m pipeline.display_profiles
 ```
 
@@ -849,6 +872,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | Share security | `pipeline/share_security.py`, `docs/phase3/05_SHARED_SHEEP_SECURITY.md` |
 | Link capacity / N_max | `pipeline/link_capacity.py`, `docs/phase4/07_CONCURRENT_CLIENTS.md` |
 | Library disk check | `pipeline/library_disk.py`, `docs/phase4/06_LIBRARY_DISK_ROTATE.md` |
+| Sheep aliases | `pipeline/sheep_naming.py`, `docs/phase4/09_SHEEP_NAMING.md` |
 | License / Cesari watermark | [NOTICE](../NOTICE), [phase1/07](phase1/07_LICENSE_AND_METADATA.md), [watermark README](media/watermark/README.md), [Private vs public](#private-vs-public-furnace), [Use your own PNG](#use-your-own-png-private-and-public) |
 | Catalog posters / stills | [Catalog posters](#catalog-posters-after-render) — `jellyfin.attach_posters` + `stills.enabled`; Roku SS Primary + Backdrop |
 | Roku screensaver | `roku-screensaver/`, [phase3/01](phase3/01_SCREENSAVERS_AND_STILLS.md) |
@@ -886,6 +910,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | HLS streaming | [phase2/03_HLS_CLIENT_STREAMING.md](phase2/03_HLS_CLIENT_STREAMING.md) |
 | Concurrent clients / N_max | [phase4/07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md) |
 | Library disk check | [phase4/06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md) |
+| Sheep aliases | [phase4/09_SHEEP_NAMING.md](phase4/09_SHEEP_NAMING.md) |
 | Peering | [phase2/05_SYNCTHING_GENOME_PEERING.md](phase2/05_SYNCTHING_GENOME_PEERING.md) |
 | Phase 3 feature guides | [phase3/00_OVERVIEW.md](phase3/00_OVERVIEW.md) |
 | Kodi screensaver (detail) | [kodi-screensaver/README.md](../kodi-screensaver/README.md) · [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) |

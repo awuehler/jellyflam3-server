@@ -50,6 +50,7 @@ from pipeline.flock_artwork import apply_flock_artwork
 from pipeline.idle_gate import is_gate_open
 from pipeline.job_recovery import reclaim_orphans
 from pipeline.license_filter import infer_tags_from_genome
+from pipeline.sheep_naming import collect_taken_aliases, ensure_auto_alias, naming_enabled
 from pipeline.stills import load_sidecar, merge_reserved_sidecar_keys
 from pipeline.media_layout import (
     ensure_catalog_dir,
@@ -725,8 +726,14 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
         # Prior catalog sidecar is still on disk (install_catalog_mp4 rotates the MP4 only).
         try:
             merge_reserved_sidecar_keys(sidecar, load_sidecar(dest))
+        except Exception as exec_merge:  # noqa: BLE001
+            log.warning("reserved sidecar merge failed for %s: %s", dest, exec_merge)
+        try:
+            if naming_enabled(cfg):
+                taken = collect_taken_aliases(media_root, exclude_stem=base)
+                ensure_auto_alias(sidecar, base, taken)
         except Exception as exc:  # noqa: BLE001
-            log.warning("reserved sidecar merge failed for %s: %s", dest, exc)
+            log.warning("alias assign failed for %s: %s", dest, exc)
         # Piece D: mid-loop poster on disk + Jellyfin Primary (soft-fail; never fail ingest).
         try:
             apply_flock_artwork(

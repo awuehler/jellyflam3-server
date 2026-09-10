@@ -55,6 +55,12 @@ encode:
   pix_fmt: yuv420p
   audio: aac_silent
 
+# Modest offline aliases (Phase 4 / 09). Filename stays canonical.
+#   python3 -m pipeline.sheep_naming backfill
+#   python3 -m pipeline.sheep_naming set-alias --stem electricsheep.247.00505 --alias frosty_swirles
+naming:
+  enabled: true
+
 # Concurrent clients / LAN capacity (Phase 4 / 07). Estimate only — not a Jellyfin cap.
 #   python3 -m pipeline.link_capacity estimate --profile wifi-pi --mode directplay
 #   python3 -m pipeline.link_capacity probe

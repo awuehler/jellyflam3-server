@@ -4,7 +4,7 @@
 
 How many endpoint devices (Roku, Kodi, VLC, etc.) a single JellyFlam3-server can serve **at once** over the **local** link without saturating it: estimate from measured per-session Jellyfin bandwidth and usable WiFi or Ethernet capacity, with headroom so clients do not spin-wait, buffer, or glitch.
 
-**Status: complete** (estimator + lab note — Owner OK pending). `N_max` is an **estimate**, not a Jellyfin connection cap.
+**Status: complete** (estimator + lab note — Owner OK 2026-09-09). `N_max` is an **estimate**, not a Jellyfin connection cap.
 
 Most important when the Pi’s path to TVs is **WiFi** (airtime, uplink of a WiFi-connected RPi, or a busy household AP). Gigabit Ethernet is usually not the first bottleneck; the calculator still has an `eth-gigabit` profile so operators can compare.
 
@@ -136,13 +136,13 @@ No on-TV stall log this pass (HTTP proxy, not Roku VoD). Idle-gate was not exerc
 - [x] Calculator outputs integer N_max with explicit headroom and link kind
 - [x] Lab note: WiFi vs Ethernet concurrent playback vs estimated N (stalls / no stalls)
 - [x] Operator docs warn that a WiFi-uplinked Pi is the tight case
-- [ ] Owner OK
+- [x] Owner OK 2026-09-09
 
 ### Sign-off
 
 | Role | Name | Date | OK |
 |---|---|---|---|
-| Owner | Project owner | _TBD_ | [ ] |
+| Owner | Project owner | 2026-09-09 | [x] |
 
 ## See also
 

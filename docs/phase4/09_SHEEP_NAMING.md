@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — give every catalog sheep a short, **human-readable alias** (e.g. `frosty_swirles`, `angry_bardeen`) so operators and peer clients can remember and reference sheep without typing `electricsheep.247.00505` or pedigree hashes. Also known as a **random name generator** / **auto-generated names** pattern: typically an **adjective + surname** of a famous person, place, or thing.
 
-**Status:** Parked. Do not implement RNG / ingest hook / client filename-vs-alias toggle until Phase 4 opens. Pre-open: `alias` / `alias_source` reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema); household guide [05](05_END_USER_GUIDE.md) baseline does not yet include rename recipes.
+**Status:** RNG + ingest + override shipped 2026-09-09. Client filename-vs-alias toggle and LLM poster naming stay parked. Keys `alias` / `alias_source` live in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Household vote recipes still wait on [08](08_VIEWER_FEEDBACK_LOOP.md).
 
 Depends on catalog **sidecar** as sole metadata SoT ([../phase1/07_LICENSE_AND_METADATA.md](../phase1/07_LICENSE_AND_METADATA.md), [08_VIEWER_FEEDBACK_LOOP.md](08_VIEWER_FEEDBACK_LOOP.md)), worker ingest, and peer clients (Roku VoD, Kodi screensaver, Shears CLI). Optional later: LLM vision over poster/stills for a broader inferred vocabulary. Distinct from flam3 XML **`nick`** (designer attribution used by license inference) — aliases are **display / operator names**, not Creative Commons credit.
 
@@ -40,31 +40,31 @@ Depends on catalog **sidecar** as sole metadata SoT ([../phase1/07_LICENSE_AND_M
 7. **Clients optional** — pasture apps default to today’s filename/title until the user enables “show aliases”; missing alias falls back to filename.
 8. **LLM is aspirational** — vision→alias is a later work item; MVP is deterministic RNG (+ human override). LLM proposals still go through uniqueness + operator accept when `alias_source` would become `llm`.
 
-## Sidecar reservation (pre-open)
+## Sidecar (shipped)
 
-Keys **`alias`** and **`alias_source`** (`auto` \| `human` \| `llm`) are reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). No RNG generator, ingest hook, backfill CLI, or client filename/alias toggle in this slice. Load–mutate–write readers keep unknown JSON; worker ingest copies these keys across re-encode (human override stays sticky once a writer exists).
+Keys **`alias`** and **`alias_source`** (`auto` \| `human` \| `llm`) are in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Worker ingest copies them on re-encode, then assigns `alias_source=auto` when missing. Human override stays sticky until `clear-alias`. Load–mutate–write readers keep unknown JSON.
 
 ## Work items (when Phase 4 opens)
 
 ### A — Furnace generator
 
-1. **Word lists** — `adjectives` + `surnames` (scientists, artists, places, sheep-adjacent culture TBD); config under e.g. `naming.*`.
-2. **`pipeline.sheep_naming` (name TBD)** — `generate_alias(stem, existing_aliases) → str`; stable hash-seed option vs pure random (document which is locked).
-3. **Ingest hook** — worker writes `alias` / `alias_source=auto` when missing after encode/sidecar write.
-4. **Backfill** — CLI to assign aliases for existing catalog rows without aliases.
-5. **Override CLI** — `set-alias` / Shears field; `clear-alias` resets to auto and regenerates.
+1. ~~**Word lists**~~ — in-repo `ADJECTIVES` + `SURNAMES` in `pipeline.sheep_naming` (offline).
+2. ~~**`pipeline.sheep_naming`**~~ — `generate_alias(stem, existing)` uses a SHA-256 seed from the stem (stable re-ingest); collision walks the pair grid.
+3. ~~**Ingest hook**~~ — worker writes `alias` / `alias_source=auto` when missing after reserved-key merge.
+4. ~~**Backfill**~~ — `python3 -m pipeline.sheep_naming backfill` (`--dry-run`, `--limit`).
+5. ~~**Override CLI**~~ — `set-alias` / `clear-alias` / `resolve` / `show`.
 
 ### B — Sidecar + Jellyfin
 
-1. **Reserved 2026-09-03** — `alias` / `alias_source` documented in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Generator, uniqueness, and ingest hook still parked.
-2. Best-effort Jellyfin Overview / custom tag or `SortName` refresh so browse UIs can show the alias without a separate client (optional; clients may read sidecar via furnace API later).
-3. Ensure Shears delete/rename cascades do not leave orphan alias indexes.
+1. ~~**Reserved + writer**~~ — keys documented; ingest/backfill write them. Generator uniqueness is in-process (catalog scan).
+2. Best-effort Jellyfin Overview / `SortName` refresh so browse UIs can show the alias without a separate client (optional; parked).
+3. Shears delete already removes the sidecar (no parallel alias index).
 
 ### C — Peer clients
 
 1. **Roku VoD** — Settings toggle: display **filename** vs **alias** on flock rows / player chrome; screensaver stills captions optional.
 2. **Kodi screensaver** — log + optional on-screen label (only if chrome is allowed in a settings preview; idle path stays chrome-free) / JSON-RPC title from alias when configured.
-3. **Pipeline UX** — accept alias in selected commands where stem is required today (resolve alias → stem via sidecar scan); keep stem always valid.
+3. ~~**Pipeline UX**~~ — `python3 -m pipeline.sheep_naming resolve` maps alias → stem; stem always valid. Shears/breed still take stems.
 
 ### D — LLM poster naming (later)
 
@@ -74,9 +74,17 @@ Keys **`alias`** and **`alias_source`** (`auto` \| `human` \| `llm`) are reserve
 
 ### E — Ops & docs
 
-1. End-user guide ([05](05_END_USER_GUIDE.md)): “what is an alias,” how to rename, client toggle.
-2. Glossary entry; examples in breed / promote / Shears recipes.
-3. Tests: uniqueness, override sticky, collision retry, resolve-by-alias.
+1. Operator rename CLI in [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md); client filename/alias toggle parked.
+2. ~~Glossary~~ — alias vs flam3 `nick`.
+3. ~~Tests~~ — uniqueness, override sticky, collision retry, backfill.
+
+## Artifacts
+
+| Artifact | Kind | Role |
+|---|---|---|
+| `pipeline/sheep_naming.py` | pipeline | Hash-seed generator, ingest helper, backfill / set / clear / resolve CLI |
+| `configs/jellyflam3.yaml.example` `naming.enabled` | config | Default on; set false to skip ingest assign |
+| [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) | docs | Curator alias CLI |
 
 ## Non-goals
 
@@ -87,11 +95,11 @@ Keys **`alias`** and **`alias_source`** (`auto` \| `human` \| `llm`) are reserve
 
 ## Exit criteria (when opened)
 
-- [ ] New catalog sheep get a unique auto-alias on ingest
-- [ ] Operator can override and reset; sticky against auto/LLM
+- [x] New catalog sheep get a unique auto-alias on ingest (worker hook; process restart required for running furnaces)
+- [x] Operator can override and reset; sticky against auto/LLM
 - [ ] At least one peer client (Roku or Kodi) offers filename vs alias display toggle
-- [ ] Docs + glossary; sidecar schema documented (key names reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema); generator still parked)
-- [ ] LLM path documented as optional / off by default
+- [x] Docs + glossary; sidecar schema documented; generator shipped (`pipeline.sheep_naming`)
+- [x] LLM path documented as optional / off by default
 
 ## See also
 

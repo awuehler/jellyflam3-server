@@ -158,7 +158,7 @@ Phase 4 design ([phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md)): Roku VoD transi
 
 ### Sheep naming / alias
 
-Phase 4 design ([phase4/09](phase4/09_SHEEP_NAMING.md)): furnace auto-generates a short memorable **alias** (`adjective_surname`, e.g. `frosty_swirles`) on the catalog sidecar; human override sticky; optional later LLM-from-poster. Peer clients may toggle **filename vs alias** display. Not the same as flam3 XML **`nick`** (designer credit for license).
+Phase 4 design ([phase4/09](phase4/09_SHEEP_NAMING.md)): furnace auto-generates a short memorable **alias** (`adjective_surname`, e.g. `frosty_swirles`) on the catalog sidecar (hash-seed from stem; `python3 -m pipeline.sheep_naming`); human override sticky. Peer clients may later toggle **filename vs alias** display (parked). Not the same as flam3 XML **`nick`** (designer credit for license).
 
 ### flam3-genome maximum attempts warning
 

@@ -104,7 +104,7 @@ Cached sources: `resources/posters/fleet-{16a,08a,04a}-gen*.jpg` (gen 243 / 244 
 ## Install (lab — LibreELEC)
 
 1. Copy `dist/screensaver.jellyflam3.zip` to the box (e.g. `/storage/downloads/`).
-2. Kodi → **Add-ons → Install from zip file** (enable unknown sources if prompted), **or** unzip into `/storage/.kodi/addons/` (folder name must be `screensaver.jellyflam3`).
+2. Kodi → **Add-ons → Install from zip file** (enable unknown sources if prompted). Prefer that over shell unzip: LibreELEC `/usr/bin/unzip` is **BusyBox**, which can write NUL-padded / binary `default.py` and empty `settings.xml` (`SyntaxError: source code cannot contain null bytes`). If you must extract by hand, stop Kodi and use Python: `python3 -c 'import zipfile; zipfile.ZipFile("/storage/downloads/screensaver.jellyflam3.zip").extractall("/storage/.kodi/addons")'`.
 3. Enable the add-on if needed, then **Settings → Interface → Screensaver** → **JellyFlam3 Dreams**.
 4. Configure Jellyfin flock settings (above), set wait time (lab uses **1 minute**), then wait — or **Activate screensaver** / `kodi-send --action='ActivateScreensaver'`.
 

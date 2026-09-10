@@ -252,6 +252,7 @@ def test_worker_merges_reserved_sidecar_keys():
     )
     assert "merge_reserved_sidecar_keys" in text
     assert "load_sidecar(dest)" in text
+    assert "ensure_auto_alias" in text
 
 
 def test_worker_does_not_write_reserved_phase4_keys():

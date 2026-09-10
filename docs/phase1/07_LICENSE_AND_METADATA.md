@@ -179,7 +179,7 @@ File: `{stem}.jellyflam3.json` next to the catalog MP4. Code list: `pipeline.sti
 | `refactor` | worker merge / refactor | Pathway history array |
 | `stills` / `screensaver_safe` | poster pipeline / stills | Screensaver frame index; never written for tuples |
 
-### Reserved Phase 4 keys (names locked; writers except tuples parked)
+### Reserved Phase 4 keys (names locked; vote sink parked)
 
 | Key | Guide | Shape | Notes |
 |---|---|---|---|
@@ -190,7 +190,7 @@ File: `{stem}.jellyflam3.json` next to the catalog MP4. Code list: `pipeline.sti
 | `alias` | [09](../phase4/09_SHEEP_NAMING.md) | `adjective_surname` | Display name; filename stays canonical |
 | `alias_source` | [09](../phase4/09_SHEEP_NAMING.md) | `auto` \| `human` \| `llm` | Companion of `alias` |
 
-Vote sink and naming RNG stay parked until those Phase 4 products open. Tuple edge watermark is **shipped**.
+Vote sink stays parked until [08](../phase4/08_VIEWER_FEEDBACK_LOOP.md) opens. Tuple edge watermark and 09 RNG aliases are **shipped**.
 
 ```json
 {
@@ -264,4 +264,4 @@ python3 scripts/jellyfin_id_dump.py --items --limit 50
 - [x] NC genomes tagged `cc-by-nc` (heuristics → **sidecar**; unit-tested)
 - [x] Commercial filter excludes NC when enabled (unit-tested; BrightScript contract retained, default off)
 - [x] Tags persisted for ops — **sidecar-only** Phase 1 (`*.jellyflam3.json`); Items API tags deferred
-- [x] Phase 4 sidecar key names reserved (`type`, `watermark`, `viewer_feedback`, `alias`) — readers keep unknown JSON; worker copies reserved keys on re-ingest; tuple ingest writes `type` / `from_id` / `to_id` / `watermark` from this encode
+- [x] Phase 4 sidecar key names reserved (`type`, `watermark`, `viewer_feedback`, `alias`) — readers keep unknown JSON; worker copies reserved keys on re-ingest; tuple ingest writes `type` / `from_id` / `to_id` / `watermark` from this encode; 09 RNG writes `alias` / `alias_source=auto` when missing

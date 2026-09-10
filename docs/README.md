@@ -55,7 +55,7 @@ Parallel after **02**: `03` (HLS) anytime; `04` once Primary images exist. `05`�
 8. [09_SHEEP_REFACTOR.md](phase3/09_SHEEP_REFACTOR.md) — refactor tool (quality / palette / encode; Jellyfin-visible preview)
 9. [10_TESTING_AND_ACCEPTANCE.md](phase3/10_TESTING_AND_ACCEPTANCE.md) — testing, acceptance, and first `release candidate`
 
-**NOTE:** Tag **`v0.3.0`** at public launch — see [CHANGELOG.md](../CHANGELOG.md). Post-launch roadmap is [docs/phase4/](./phase4) (not part of v0.3.0). Tuples ([03](phase4/03_EDGES_AND_WATERMARK.md)) shipped 2026-09-05. Other products (publish, vote, naming RNG, rotate) stay parked.
+**NOTE:** Tag **`v0.3.0`** at public launch — see [CHANGELOG.md](../CHANGELOG.md). Post-launch roadmap is [docs/phase4/](./phase4) (not part of v0.3.0). Tuples ([03](phase4/03_EDGES_AND_WATERMARK.md)) shipped 2026-09-05. 09 RNG aliases shipped 2026-09-09. Other products (publish, vote, rotate) stay parked.
 
 ## Phase 4 guides (synopsis — products parked; pre-open slices noted)
 
@@ -65,8 +65,8 @@ Parallel after **02**: `03` (HLS) anytime; `04` once Primary images exist. `05`�
 4. [04_ROKU_PUBLISH.md](phase4/04_ROKU_PUBLISH.md) — Channel Store / private / multi-Roku (parked)
 5. [05_END_USER_GUIDE.md](phase4/05_END_USER_GUIDE.md) — household guide (**baseline complete** 2026-09-03)
 6. [06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md) — disk check (**slice shipped**); rotate parked
-7. [07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md) — `link_capacity` (**estimator shipped**); Owner OK pending
+7. [07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md) — `link_capacity` (**estimator shipped**; Owner OK 2026-09-09)
 8. [08_VIEWER_FEEDBACK_LOOP.md](phase4/08_VIEWER_FEEDBACK_LOOP.md) — vote overlay (parked; `viewer_feedback` reserved)
-9. [09_SHEEP_NAMING.md](phase4/09_SHEEP_NAMING.md) — aliases (parked; `alias` reserved)
+9. [09_SHEEP_NAMING.md](phase4/09_SHEEP_NAMING.md) — RNG aliases (**slice shipped** 2026-09-09; client toggle parked)
 
 Overview: [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md).
