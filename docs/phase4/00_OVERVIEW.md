@@ -64,6 +64,16 @@ Sidecar key names for [01](01_PEER_SHARE_PATH.md) / [03](03_EDGES_AND_WATERMARK.
 
 **Shipped (not parked):** **Quarantine / 404 mid-session re-poll** — VoD 1.0.29, Roku screensaver 1.0.8, Kodi screensaver 0.2.7. On file-not-found / stream open fail / missing Primary or Backdrop, clients drop the dead id, re-poll Jellyfin (rate-limited to 30s), and continue the session. Does not stop playback chrome, does not invent a Sessions Playing client for the miss. Overnight long-interval re-fetch stays parked above.
 
+### Furnace polish (parked — not numbered)
+
+Parked so a numbered product guide is not required yet. Do **not** implement until Owner opens this slice.
+
+| Item | Notes |
+|---|---|
+| **Worker drain / idle-before-restart** | Operator command that lets a furnace **finish the current inbox job**, then **not claim the next** genome, so the worker reaches a true idle (watching inbox, nothing in-flight). After that, `systemctl restart jellyflam3-worker` does not orphan a live `flam3-animate`. Today a restart always treats in-flight work as an orphan: frames are discarded (`flam3-animate` cannot resume partial nframes), the genome is re-queued, and render restarts at frame 0 — hours to days lost on a long sheep. Distinct from the **idle-gate** (TV Playing pauses render) and from an **empty inbox** (archive seed / idle-breed can refill). Per host; fleet drain is one command per furnace. Undrain / cancel should resume claiming inbox without requiring a restart. Track against [../phase1/05_RENDER_PIPELINE.md](../phase1/05_RENDER_PIPELINE.md), [../phase1/09_RUNTIME_AND_OPS.md](../phase1/09_RUNTIME_AND_OPS.md), `pipeline.job_recovery`. |
+
+**Not this slice:** checkpoint/resume inside `flam3-animate`; SIGSTOP of a live animate as “pause”; killing the current job on purpose (that is today’s restart). Drain is **pause before the next inbox render**, not mid-frame.
+
 ## Out of scope
 
 - Phase 3 feature guides still owned under [`docs/phase3/`](../phase3/00_OVERVIEW.md) (01–03, 05–10; stub at former 04)
