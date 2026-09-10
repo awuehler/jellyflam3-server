@@ -2,3 +2,5 @@
 *.sh text eol=lf
 *.py text eol=lf
 *.ps1 text eol=lf
+# Kodi TinyXML fails install-from-zip on CRLF addon.xml ("Error reading end tag").
+kodi-screensaver/**/*.xml text eol=lf

@@ -43,6 +43,7 @@ Get-ChildItem -Path $Src -Recurse -File | Where-Object {
 }
 
 python (Join-Path $Root "scripts\client_pack_presets.py") prepare --kodi-settings (Join-Path $Stage "resources\settings.xml") 2>$null | Out-Null
+python (Join-Path $Root "scripts\client_pack_presets.py") strip-cr --dir $Stage
 
 $stageFwd = ($StageRoot -replace '\\', '/')
 $outFwd = ($OutPath -replace '\\', '/')

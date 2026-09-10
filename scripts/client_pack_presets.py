@@ -159,6 +159,27 @@ def _mask_api_key(key: str) -> str:
     return key[:2] + "..." + key[-4:]
 
 
+def strip_cr_bytes(data: bytes) -> bytes:
+    """Normalize newlines to LF. Kodi TinyXML rejects CRLF addon.xml."""
+    return data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def strip_cr_in_dir(root: Path, suffixes: tuple[str, ...] = (".xml", ".py")) -> int:
+    """Rewrite text files under root that still contain CR. Returns files changed."""
+    changed = 0
+    if not root.is_dir():
+        return 0
+    for p in root.rglob("*"):
+        if not p.is_file() or p.suffix.lower() not in suffixes:
+            continue
+        raw = p.read_bytes()
+        fixed = strip_cr_bytes(raw)
+        if fixed != raw:
+            p.write_bytes(fixed)
+            changed += 1
+    return changed
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Pre-fill client packages from furnace Jellyfin")
     ap.add_argument(
@@ -178,6 +199,13 @@ def main() -> int:
         type=Path,
         help="Kodi screensaver resources/settings.xml to patch",
     )
+    strip = sub.add_parser("strip-cr", help="Rewrite CR/CRLF to LF under a staged add-on tree")
+    strip.add_argument(
+        "--dir",
+        type=Path,
+        required=True,
+        help="Staged screensaver.jellyflam3 directory",
+    )
     args = ap.parse_args()
     if args.cmd == "prepare":
         ok = prepare_packaging(
@@ -186,6 +214,10 @@ def main() -> int:
             kodi_settings=args.kodi_settings,
         )
         return 0 if ok or not is_furnace_host() else 1
+    if args.cmd == "strip-cr":
+        n = strip_cr_in_dir(args.dir)
+        print(f"client_pack_presets: strip-cr {n} file(s) under {args.dir}")
+        return 0
     return 1
 
 

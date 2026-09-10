@@ -60,6 +60,8 @@ fi
 python3 "$ROOT/scripts/client_pack_presets.py" prepare \
   --kodi-settings "$STAGE/resources/settings.xml" || true
 
+python3 "$ROOT/scripts/client_pack_presets.py" strip-cr --dir "$STAGE"
+
 (
   cd "$ROOT/dist/kodi-stage"
   if command -v zip >/dev/null 2>&1; then

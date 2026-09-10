@@ -140,3 +140,21 @@ def test_roku_packages_include_registry_presets_helper():
     assert "applyJellyFlam3PackPresets" in ss
     assert 'reg.write("shuffleFlock"' in vod
     assert 'reg.write("shuffleFlock"' not in ss
+
+
+def test_strip_cr_in_dir_rewrites_crlf_xml(tmp_path: Path):
+    cpp = _import_presets()
+    addon = tmp_path / "screensaver.jellyflam3"
+    addon.mkdir()
+    xml = addon / "addon.xml"
+    xml.write_bytes(b'<?xml version="1.0"?>\r\n<addon id="x">\r\n</addon>\r\n')
+    assert cpp.strip_cr_in_dir(addon) == 1
+    assert b"\r" not in xml.read_bytes()
+    assert xml.read_bytes().endswith(b"</addon>\n")
+
+
+def test_kodi_package_scripts_strip_cr():
+    sh = (ROOT / "scripts" / "package_kodi_screensaver.sh").read_text(encoding="utf-8")
+    ps1 = (ROOT / "scripts" / "package_kodi_screensaver.ps1").read_text(encoding="utf-8")
+    assert "strip-cr" in sh
+    assert "strip-cr" in ps1

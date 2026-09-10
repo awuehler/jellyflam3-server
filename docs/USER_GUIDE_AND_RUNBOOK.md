@@ -517,7 +517,7 @@ cd /opt/jellyflam3-server
 # Windows (no presets): .\scripts\package_kodi_screensaver.ps1
 ```
 
-The packaging script runs `build_kodi_screensaver_assets.py` automatically. Optional: `--fetch-fleet` on that script pulls three `*-poster.jpg` files from fleet Pis 16a/08a/04a into store art.
+The packaging script runs `build_kodi_screensaver_assets.py` automatically. Optional: `--fetch-fleet` on that script pulls three `*-poster.jpg` files from fleet Pis 16a/08a/04a into store art. Package on a Pi (or run `strip-cr`) so `addon.xml` is LF — Kodi TinyXML fails install-from-zip on Windows CRLF (`Error reading end tag`).
 
 **2 — Copy zip to the Kodi Pi**
 

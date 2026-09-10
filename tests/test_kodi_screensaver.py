@@ -40,6 +40,8 @@ def test_screensaver_entry_files_exist():
     assert "def onPlayBackEnded" in text  # signals advance only
     assert "def onPlayBackError" in text
     assert "_handle_dead_sheep" in text
+    pkg = (ROOT / "scripts" / "package_kodi_screensaver.sh").read_text(encoding="utf-8")
+    assert "strip-cr" in pkg
     assert "Action(Fullscreen)" not in text
     skin = (ADDON / "resources" / "skins" / "default" / "1080i" / "fallback.xml").read_text(
         encoding="utf-8"
