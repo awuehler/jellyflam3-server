@@ -324,7 +324,7 @@ Roku HTTP control on port **8060** — launch, query player (`/launch/dev`, `/qu
 
 ### RunScreenSaver()
 
-Roku screensaver entry point only — separate package from VoD `Main()`. JellyFlam3 Screensaver 1.0.7: Primary + Backdrop slideshow (skip tuple; always rotate; `commercialMode`).
+Roku screensaver entry point only — separate package from VoD `Main()`. JellyFlam3 Screensaver 1.0.8: Primary + Backdrop slideshow (skip tuple; always rotate; `commercialMode`; 404 re-poll).
 
 ### Kodi ES screensaver
 

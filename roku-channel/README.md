@@ -11,6 +11,8 @@ Sideloadable SceneGraph channel that lists sheep from Jellyfin with **poster til
 
 Roku VOD **cannot gapless-loop** HTTP MP4/HLS with the Video node (`Video.loop` still rebuffers). Channel uses seek-before-EOF; residual hitch is accepted for now. Do **not** use `master.m3u8` on Jellyfin 10.11.
 
+If a sheep is quarantined or Shears-deleted while a clip is queued, **1.0.29** drops that id after HLS↔MP4 fallback fails, re-polls the flock (30s rate limit), and continues. A failed open does not POST Playing.
+
 ## Settings version
 
 Settings shows **Version X.Y.Z** from `roAppInfo.GetVersion()` (manifest `major_version` / `minor_version` / `build_version`). Sideload builds append `(sideload)`. Keep Jellyfin auth `Version=` in sync with the manifest on each package.

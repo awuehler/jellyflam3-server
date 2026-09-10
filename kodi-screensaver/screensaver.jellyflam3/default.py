@@ -17,6 +17,7 @@ import json
 import os
 import sys
 import threading
+import time
 
 import xbmc
 import xbmcaddon
@@ -138,6 +139,7 @@ class LoopPlayer(xbmc.Player):
     def onAVStarted(self):
         _dismiss_busy()
         _cancel_stop_script_alarm()
+        self._owner._av_started = True
         if self._owner._flock_mode:
             _set_repeat("off")
 
@@ -148,6 +150,10 @@ class LoopPlayer(xbmc.Player):
     def onPlayBackEnded(self):
         # Signal watchdog — never call play() on the player thread.
         self._owner._advance = True
+
+    def onPlayBackError(self):
+        # 404 / stream open fail — drop this id and re-poll (watch thread).
+        self._owner._dead = True
 
 
 class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
@@ -160,6 +166,9 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         self._index = 0
         self._flock_mode = False
         self._advance = False
+        self._dead = False
+        self._av_started = False
+        self._last_repoll = None
 
     def onInit(self):
         label = self.getControl(100)
@@ -191,6 +200,7 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
     def _play_current(self) -> bool:
         if not self._flock_mode or not self._flock:
             return False
+        self._av_started = False
         url = self._flock[self._index % len(self._flock)]["url"]
         item = self._flock[self._index % len(self._flock)]
         title = item.get("title") or "JellyFlam3"
@@ -211,6 +221,49 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         _set_repeat("off")
         return True
 
+    def _show_flock_empty(self, reason: str):
+        self._flock_mode = False
+        self._flock = []
+        try:
+            if self._player.isPlaying():
+                self._player.stop()
+        except Exception:
+            pass
+        try:
+            label = self.getControl(100)
+            label.setLabel(reason)
+            label.setVisible(True)
+        except Exception as exc:
+            xbmc.log("%s: empty-flock label failed: %s" % (ADDON_ID, exc), xbmc.LOGERROR)
+
+    def _handle_dead_sheep(self):
+        if not self._flock_mode or not self._flock:
+            self._show_flock_empty(
+                "JellyFlam3 — flock empty (sheep gone); exit screensaver"
+            )
+            return
+        dead = self._flock[self._index % len(self._flock)]
+        dead_id = dead.get("id") or ""
+        xbmc.log(
+            "%s: drop missing sheep %s and re-poll flock" % (ADDON_ID, dead_id),
+            xbmc.LOGWARNING,
+        )
+        self._flock = jellyfin_flock.drop_item(self._flock, dead_id)
+        now = time.monotonic()
+        if jellyfin_flock.should_repoll_flock(self._last_repoll, now):
+            self._last_repoll = now
+            fresh = _load_flock()
+            if fresh:
+                self._flock = jellyfin_flock.drop_item(fresh, dead_id)
+        if not self._flock:
+            self._show_flock_empty(
+                "JellyFlam3 — flock empty (sheep gone); exit screensaver"
+            )
+            return
+        if self._index >= len(self._flock):
+            self._index = 0
+        self._play_current()
+
     def _next_sheep(self):
         if not self._flock_mode or not self._flock:
             return
@@ -226,7 +279,11 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         idle_ticks = 0
         while not self._exiting:
             _cancel_stop_script_alarm()
-            if self._advance:
+            if self._dead:
+                self._dead = False
+                idle_ticks = 0
+                self._handle_dead_sheep()
+            elif self._advance:
                 self._advance = False
                 idle_ticks = 0
                 self._next_sheep()
@@ -238,10 +295,15 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
                     playing = False
                 if self._flock_mode and not playing:
                     idle_ticks += 1
-                    # ~1.5s not playing → advance (covers missed Ended callback)
-                    if idle_ticks >= 3:
+                    if self._av_started:
+                        # ~1.5s not playing → advance (covers missed Ended callback)
+                        if idle_ticks >= 3:
+                            idle_ticks = 0
+                            self._next_sheep()
+                    elif idle_ticks >= 10:
+                        # ~5s never started → treat as 404 / stream open fail
                         idle_ticks = 0
-                        self._next_sheep()
+                        self._handle_dead_sheep()
                 else:
                     idle_ticks = 0
             if self._monitor.waitForAbort(0.5):

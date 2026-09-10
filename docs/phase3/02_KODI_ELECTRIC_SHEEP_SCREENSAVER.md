@@ -80,7 +80,7 @@ The extension should feel like Electric Sheep’s idle canvas, not a VoD browser
 
 **Deferred to Phase 4 (standalone edges):** a client sequencer that plays loop MP4 → edge MP4 → loop MP4. **Tuples** ([03](../phase4/03_EDGES_AND_WATERMARK.md)) already bake that journey into one catalog file; Kodi’s recursive `by-generation/` walk plays them as ordinary flock items. Loops-only shuffle remains the Phase 3 DoD.
 
-**Deferred polish (Phase 4):** flock list is loaded once per screensaver session (`default.py` → `_load_flock`); mid-session wrap only reshuffles that list. New Jellyfin items (e.g. a new gen folder after daily seed) need a new idle session today. Optional **long-interval re-fetch** (hours / wrap) is parked under [../phase4/00_OVERVIEW.md](../phase4/00_OVERVIEW.md#client-polish-parked--not-numbered) — not required for ~daily ingest. Separate parked item: if a sheep is **quarantined** (or Shears-deleted) mid-session, a file-not-found / 404 on the next loop should **re-poll** the flock index and continue — same contract on Roku VoD and Roku SS.
+**Deferred polish (Phase 4):** flock list is loaded once per screensaver session (`default.py` → `_load_flock`); mid-session wrap only reshuffles that list. New Jellyfin items (e.g. a new gen folder after daily seed) need a new idle session today. Optional **long-interval re-fetch** (hours / wrap) is parked under [../phase4/00_OVERVIEW.md](../phase4/00_OVERVIEW.md#client-polish-parked--not-numbered) — not required for ~daily ingest. **Shipped in 0.2.7:** if a sheep is **quarantined** (or Shears-deleted) mid-session, a file-not-found / 404 drops that id, re-polls the flock (30s rate limit), and continues — same contract on Roku VoD 1.0.29 and Roku SS 1.0.8.
 
 ## Exit criteria
 

@@ -21,7 +21,7 @@ function trimSlash(base as string) as string
 end function
 
 function authHeader() as string
-  return "MediaBrowser Client=""JellyFlam3-Screensaver"", Device=""Roku"", DeviceId=""jellyflam3-screensaver"", Version=""1.0.7"", Token=""" + m.top.apiKey + """"
+  return "MediaBrowser Client=""JellyFlam3-Screensaver"", Device=""Roku"", DeviceId=""jellyflam3-screensaver"", Version=""1.0.8"", Token=""" + m.top.apiKey + """"
 end function
 
 function commercialModeOn() as boolean

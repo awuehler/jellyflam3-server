@@ -65,13 +65,22 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=28" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.28""' in text
+    assert "build_version=29" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.29""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
     assert 'm.registry.write("shuffleFlock", "true")' in home
     assert "if tl = \"\" then return true" in home
+    assert "sub onPlaybackFailed()" in home
+    assert "sub maybeRepollFlock()" in home
+    assert "sub dropItemFromFlock(deadId as string)" in home
+    assert "function flockRepollMinSec() as integer" in home
+    assert "return 30" in home
+    player = (VOD / "components" / "PlayerScreen.brs").read_text(encoding="utf-8")
+    assert "sub signalPlaybackFailed()" in player
+    assert "m.top.playbackFailed = true" in player
+    assert "postPlayback(\"playing\")" in player
     settings = (VOD / "components" / "SettingsScreen.brs").read_text(encoding="utf-8")
     assert "function shuffleFlockDefault() as boolean" in settings
     assert "return true" in settings
@@ -79,6 +88,9 @@ def test_roku_commercial_mode_does_not_query_tags():
     ss = (SS / "components" / "ScreenSaverScene.brs").read_text(encoding="utf-8")
     assert 'write("shuffleFlock"' not in ss
     assert "shuffleCopy" in ss
+    assert "handleStillFailed" in ss
+    assert "maybeRepollStills" in ss
+    assert "function flockRepollMinSec() as integer" in ss
     ss_reg = (SS / "components" / "RegistryPresets.brs").read_text(encoding="utf-8")
     assert 'reg.write("shuffleFlock"' not in ss_reg
 
@@ -94,5 +106,5 @@ def test_roku_screensaver_expands_nested_library_folders():
     assert "isCommercialSafe" in text
     assert 'write("shuffleFlock"' not in text
     assert "shuffleCopy" in text
-    assert "build_version=7" in (SS / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.7""' in text
+    assert "build_version=8" in (SS / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.8""' in text

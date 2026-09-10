@@ -12,6 +12,10 @@ sub init()
   m.busy = false
   m.fading = false
   m.pendingUri = ""
+  m.lastRepollSec = 0
+  m.repolling = false
+  m.handlingFail = false
+  m.repollTask = invalid
 
   m.reg = CreateObject("roRegistrySection", "JellyFlam3")
   applyJellyFlam3PackPresets(m.reg)
@@ -33,6 +37,8 @@ sub init()
 
   m.fadeToA.observeField("state", "onFadeState")
   m.fadeToB.observeField("state", "onFadeState")
+  m.stillA.observeField("loadStatus", "onStillALoad")
+  m.stillB.observeField("loadStatus", "onStillBLoad")
 
   if m.baseUrl = invalid or m.baseUrl = "" or m.apiKey = invalid or m.apiKey = "" or m.userId = invalid or m.userId = "" or m.libraryId = invalid or m.libraryId = ""
     m.status.text = "No Jellyfin registry — sideload on furnace Pi or configure VoD Settings first"
@@ -101,6 +107,117 @@ sub onList()
   m.timer.control = "start"
 end sub
 
+function flockRepollMinSec() as integer
+  return 30
+end function
+
+function nowUnixSec() as integer
+  dt = CreateObject("roDateTime")
+  return dt.AsSeconds()
+end function
+
+sub dropUrl(uri as string)
+  if uri = invalid or uri = "" then return
+  if m.urls = invalid then m.urls = []
+  kept = []
+  for each u in m.urls
+    if u <> uri then kept.push(u)
+  end for
+  m.urls = kept
+  if m.index >= m.urls.count() then m.index = 0
+end sub
+
+sub maybeRepollStills()
+  now = nowUnixSec()
+  if m.lastRepollSec <> invalid and m.lastRepollSec > 0 and (now - m.lastRepollSec) < flockRepollMinSec()
+    return
+  end if
+  if m.repolling = true then return
+  m.lastRepollSec = now
+  m.repolling = true
+  t = CreateObject("roSGNode", "StillsTask")
+  t.observeField("resultJson", "onRepollList")
+  t.baseUrl = m.baseUrl
+  t.apiKey = m.apiKey
+  t.userId = m.userId
+  t.libraryId = m.libraryId
+  if m.commercialMode = invalid then m.commercialMode = ""
+  t.commercialMode = m.commercialMode
+  t.control = "RUN"
+  m.repollTask = t
+end sub
+
+sub onRepollList()
+  m.repolling = false
+  t = m.repollTask
+  m.repollTask = invalid
+  if t = invalid then return
+  raw = t.resultJson
+  if raw = invalid or raw = "" then return
+  data = ParseJson(raw)
+  if data = invalid or data.urls = invalid or data.urls.count() = 0 then return
+  m.urls = data.urls
+  if m.index >= m.urls.count() then m.index = 0
+end sub
+
+sub handleStillFailed(uri as string)
+  if m.handlingFail = true then return
+  if uri = invalid or uri = "" then return
+  m.handlingFail = true
+  dropUrl(uri)
+  maybeRepollStills()
+  m.busy = false
+  m.fading = false
+  m.pendingUri = ""
+  if m.urls = invalid or m.urls.count() = 0
+    if m.status <> invalid then m.status.text = "No stills left — flock empty or all 404"
+    if m.timer <> invalid then m.timer.control = "stop"
+    m.handlingFail = false
+    return
+  end if
+  if m.index >= m.urls.count() then m.index = 0
+  nextUri = m.urls[m.index]
+  m.handlingFail = false
+  if not m.fadeOn
+    hardCut(nextUri)
+  else
+    startCrossfade(nextUri)
+  end if
+end sub
+
+sub onStillALoad()
+  handlePosterLoad(m.stillA, m.showingA = false)
+end sub
+
+sub onStillBLoad()
+  handlePosterLoad(m.stillB, m.showingA = true)
+end sub
+
+sub handlePosterLoad(poster as object, incoming as boolean)
+  if poster = invalid then return
+  st = poster.loadStatus
+  if st = "failed" or st = "error"
+    handleStillFailed(poster.uri)
+    return
+  end if
+  if incoming and m.busy and m.fading <> true
+    if st = "ready" or st = "loaded"
+      startIncomingFade()
+    end if
+  end if
+end sub
+
+sub startIncomingFade()
+  if not m.busy then return
+  if m.fading then return
+  m.fading = true
+  if m.showingA
+    m.fadeToB.control = "start"
+  else
+    m.fadeToA.control = "start"
+  end if
+end sub
+
 function shuffleCopy(src as object) as object
   bag = []
   if src = invalid then return bag
@@ -152,45 +269,15 @@ sub startCrossfade(uri as string)
   m.busy = true
   m.pendingUri = uri
   if m.showingA
-    m.stillB.unobserveField("loadStatus")
-    m.stillB.observeField("loadStatus", "onIncomingLoaded")
     m.stillB.uri = uri
-    ' Already cached / ready
     if m.stillB.loadStatus = "ready" or m.stillB.loadStatus = "loaded"
-      onIncomingLoaded()
+      startIncomingFade()
     end if
   else
-    m.stillA.unobserveField("loadStatus")
-    m.stillA.observeField("loadStatus", "onIncomingLoaded")
     m.stillA.uri = uri
     if m.stillA.loadStatus = "ready" or m.stillA.loadStatus = "loaded"
-      onIncomingLoaded()
+      startIncomingFade()
     end if
-  end if
-end sub
-
-sub onIncomingLoaded()
-  if not m.busy then return
-  if m.fading then return
-  if m.showingA
-    status = m.stillB.loadStatus
-  else
-    status = m.stillA.loadStatus
-  end if
-  if status = "loading" or status = "none" then return
-  if status = "failed" or status = "error"
-    m.busy = false
-    m.pendingUri = ""
-    return
-  end if
-  ' ready / loaded — start fade (ignore spurious stopped while still loading)
-  m.fading = true
-  if m.showingA
-    m.stillB.unobserveField("loadStatus")
-    m.fadeToB.control = "start"
-  else
-    m.stillA.unobserveField("loadStatus")
-    m.fadeToA.control = "start"
   end if
 end sub
 

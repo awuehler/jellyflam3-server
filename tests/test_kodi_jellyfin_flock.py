@@ -142,7 +142,15 @@ def test_cc_by_hyphen_is_commercial_safe():
     assert not jf.is_commercial_safe([])
 
 
-def test_auth_header_screensaver_client():
+def test_drop_item_and_repoll_rate_limit():
+    items = [{"id": "aa", "title": "a", "url": "u"}, {"id": "bb", "title": "b", "url": "v"}]
+    assert [i["id"] for i in jf.drop_item(items, "aa")] == ["bb"]
+    assert jf.drop_item(items, "") == items
+    assert jf.should_repoll_flock(None, 100.0) is True
+    assert jf.should_repoll_flock(90.0, 100.0, min_sec=30.0) is False
+    assert jf.should_repoll_flock(60.0, 100.0, min_sec=30.0) is True
+    assert jf.FLOCK_REPOLL_MIN_SEC == 30.0
+    assert jf.CLIENT_VERSION == "0.2.7"
     h = jf.auth_header("secret")
     assert 'Client="JellyFlam3-Screensaver"' in h
     assert "Token=\"secret\"" in h
@@ -154,6 +162,9 @@ def test_screensaver_package_mentions_flock():
     ).read_text(encoding="utf-8")
     assert "jellyfin_flock" in text
     assert "fetch_flock" in text or "_load_flock" in text
+    assert "_handle_dead_sheep" in text
+    assert "should_repoll_flock" in text
+    assert "onPlayBackError" in text
     settings = (
         ROOT / "kodi-screensaver" / "screensaver.jellyflam3" / "resources" / "settings.xml"
     ).read_text(encoding="utf-8")

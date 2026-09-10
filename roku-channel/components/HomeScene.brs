@@ -17,6 +17,8 @@ sub init()
   m.shuffleQueue = []
   m.currentPlayId = ""
   m.advancingClip = false
+  m.lastRepollSec = 0
+  m.repollTask = invalid
 
   m.rowList.observeField("rowItemSelected", "onRowItemSelected")
   m.rowList.observeField("rowItemFocused", "onRowItemFocused")
@@ -309,6 +311,97 @@ function shuffleAdvanceAllowed() as boolean
   return countArchiveEligible() > 1
 end function
 
+function flockRepollMinSec() as integer
+  return 30
+end function
+
+function nowUnixSec() as integer
+  dt = CreateObject("roDateTime")
+  return dt.AsSeconds()
+end function
+
+sub dropItemFromFlock(deadId as string)
+  if deadId = invalid or deadId = "" then return
+  kept = []
+  if m.items = invalid then m.items = []
+  for each it in m.items
+    iid = ""
+    if it.id <> invalid then iid = it.id
+    if iid <> deadId then kept.push(it)
+  end for
+  m.items = kept
+  m.flockCount = kept.count()
+  q = []
+  if m.shuffleQueue <> invalid
+    for each it in m.shuffleQueue
+      iid = ""
+      if it.id <> invalid then iid = it.id
+      if iid <> deadId then q.push(it)
+    end for
+  end if
+  m.shuffleQueue = q
+end sub
+
+function takeNextRemainingItem() as object
+  if shuffleFlockEnabled()
+    nxt = takeNextShuffleItem()
+    if nxt <> invalid then return nxt
+  end if
+  if m.items = invalid or m.items.count() = 0 then return invalid
+  return m.items[0]
+end function
+
+sub maybeRepollFlock()
+  now = nowUnixSec()
+  if m.lastRepollSec <> invalid and m.lastRepollSec > 0 and (now - m.lastRepollSec) < flockRepollMinSec()
+    return
+  end if
+  if m.repollTask <> invalid then return
+  m.lastRepollSec = now
+  t = createObject("roSGNode", "JellyfinTask")
+  t.observeField("resultJson", "onRepollResult")
+  t.baseUrl = m.registry.read("baseUrl")
+  t.apiKey = m.registry.read("apiKey")
+  t.userId = m.registry.read("userId")
+  t.libraryId = m.registry.read("libraryId")
+  t.commercialMode = m.registry.read("commercialMode") = "true"
+  t.command = "list"
+  t.control = "RUN"
+  m.repollTask = t
+end sub
+
+sub onRepollResult()
+  t = m.repollTask
+  m.repollTask = invalid
+  if t = invalid then return
+  raw = t.resultJson
+  res = invalid
+  if raw <> invalid and raw <> "" then res = ParseJson(raw)
+  if res = invalid then return
+  if res.error <> invalid and res.error <> "" then return
+  if res.items = invalid then return
+  m.items = res.items
+  m.flockCount = res.items.count()
+  excludeId = ""
+  if m.currentPlayId <> invalid then excludeId = m.currentPlayId
+  if shuffleFlockEnabled() then rebuildShuffleQueue(excludeId)
+  if m.player = invalid then rebuildFlockRow()
+end sub
+
+sub rebuildFlockRow()
+  if m.rowList = invalid then return
+  if m.player <> invalid then return
+  if m.items = invalid then m.items = []
+  content = createObject("roSGNode", "ContentNode")
+  row = content.createChild("ContentNode")
+  row.title = "Flock"
+  for each it in m.items
+    child = row.createChild("ContentNode")
+    bindFlockItemFields(child, it)
+  end for
+  m.rowList.content = content
+end sub
+
 sub refreshFromRegistry()
   base = m.registry.read("baseUrl")
   if base = invalid then base = ""
@@ -392,14 +485,8 @@ sub onTaskResult()
     return
   end if
 
-  content = createObject("roSGNode", "ContentNode")
-  row = content.createChild("ContentNode")
-  row.title = "Flock"
-  for each it in res.items
-    child = row.createChild("ContentNode")
-    bindFlockItemFields(child, it)
-  end for
-  m.rowList.content = content
+  rebuildFlockRow()
+  if m.rowList = invalid or m.rowList.content = invalid then return
   first = m.rowList.content.getChild(0).getChild(0)
   updateDetailChrome(first)
   setUiState("ready", m.flockCount.toStr() + " dreams in flock")
@@ -521,6 +608,7 @@ sub playItem(item as object)
   m.player = player
   player.observeField("close", "onPlayerClose")
   player.observeField("clipFinished", "onClipFinished")
+  player.observeField("playbackFailed", "onPlaybackFailed")
   player.allowShuffleAdvance = shuffleAdvanceAllowed()
   hls = ""
   if item.hlsUrl <> invalid then hls = item.hlsUrl
@@ -576,11 +664,38 @@ sub onClipFinished()
   playItemFromData(nextIt)
 end sub
 
+sub onPlaybackFailed()
+  if m.player = invalid then return
+  if m.player.playbackFailed <> true then return
+  if m.advancingClip = true then return
+  m.advancingClip = true
+  deadId = ""
+  if m.currentPlayId <> invalid then deadId = m.currentPlayId
+  dropItemFromFlock(deadId)
+  maybeRepollFlock()
+  if m.flockCount = 0 or m.items = invalid or m.items.count() = 0
+    stopPlayer()
+    showEmptyUi()
+    return
+  end if
+  nextIt = takeNextRemainingItem()
+  if nextIt = invalid
+    stopPlayer()
+    showEmptyUi()
+    return
+  end if
+  if m.status <> invalid
+    m.status.text = "Skipped missing sheep — continuing flock"
+  end if
+  playItemFromData(nextIt)
+end sub
+
 sub onPlayerClose()
   m.advancingClip = false
   m.shuffleQueue = []
   m.currentPlayId = ""
   stopPlayer()
+  rebuildFlockRow()
   if m.rowList <> invalid then m.rowList.setFocus(true)
 end sub
 

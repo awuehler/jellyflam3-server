@@ -4,7 +4,7 @@
 
 Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 03)** which shipped 2026-09-05: peer auto-promote, mesh introduce scripting, Roku Store/private publish, library **rotate**, vote overlay / share cron / breed bias, and sheep-naming RNG.
 
-**Pre-open slices** already shipped (docs + operator CLIs; not those products): end-user baseline, sheep-disk check, concurrent-client estimator, and catalog sidecar key names. **Opened 2026-09-09:** worker preserves reserved sidecar keys on re-ingest.
+**Pre-open slices** already shipped (docs + operator CLIs; not those products): end-user baseline, sheep-disk check, concurrent-client estimator, and catalog sidecar key names. **Opened 2026-09-09:** worker preserves reserved sidecar keys on re-ingest. **Opened 2026-09-09:** pasture clients re-poll the flock on mid-session 404 (quarantine / Shears).
 
 ## Status
 
@@ -36,6 +36,7 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 | Slice | Guide | What landed | Still parked |
 |---|---|---|---|
 | Sidecar preserve | [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) | Worker copies reserved keys on re-ingest; tuples still write `type` / `from_id` / `to_id` / `watermark` from this encode | Vote sink, naming RNG |
+| 404 mid-session re-poll | clients | Drop dead Jellyfin id, rate-limited re-poll, continue session: VoD **1.0.29**, Roku SS **1.0.8**, Kodi SS **0.2.7** | Overnight long-interval re-fetch (hours / wrap) |
 
 ## In scope (parked products)
 
@@ -58,7 +59,8 @@ Sidecar key names for [01](01_PEER_SHARE_PATH.md) / [03](03_EDGES_AND_WATERMARK.
 | Item | Notes |
 |---|---|
 | **Long-interval flock refresh** | Kodi screensaver, **Roku screensaver** (Limit 200, one StillsTask fetch per idle run), and optionally Roku VoD ambient fetch Jellyfin once per session and cycle that in-memory list until exit. New catalog artwork appears only after the next session. **Phase 4 polish:** session-based **re-fetch trigger** for long-running idle (hours-scale, or once per full shuffle wrap) so overnight screensaver/ambient picks up ~daily ingest without exit/restart. Not a tight poll — default stays session-scoped. Track against [../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md), [../phase3/01_SCREENSAVERS_AND_STILLS.md](../phase3/01_SCREENSAVERS_AND_STILLS.md) (+ Roku VoD if desired). |
-| **Quarantine / 404 mid-session re-poll** | Operator may **quarantine** (or Shears-delete) a sheep while a pasture session is already running. The in-memory flock still holds that Jellyfin item id; the next play/still request then **file-not-found** (HTTP 404, stream open fail, missing Primary/Backdrop). **Phase 4 polish — all JellyFlam3 client endpoints:** on that error, drop the dead id, **re-poll** Jellyfin (`fetch_flock` / equivalent) to refresh the index, and continue the session with a remaining sheep. Do not stop playback chrome, do not treat the miss as a furnace Sessions client, and rate-limit re-polls so a shrinking library cannot hammer the Pi. Same contract on **Roku VoD** (MP4 and HLS `streamMode`), **Roku screensaver** (Primary / stills URLs), and **Kodi screensaver** (loop URLs). Track: [../phase3/09_SHEEP_REFACTOR.md](../phase3/09_SHEEP_REFACTOR.md) Pathway C, [../phase3/03_SHEEP_SHEARS.md](../phase3/03_SHEEP_SHEARS.md), [../phase3/01_SCREENSAVERS_AND_STILLS.md](../phase3/01_SCREENSAVERS_AND_STILLS.md), [../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](../phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md), [../phase2/04_ROKU_CHANNEL_POLISH.md](../phase2/04_ROKU_CHANNEL_POLISH.md). |
+
+**Shipped (not parked):** **Quarantine / 404 mid-session re-poll** — VoD 1.0.29, Roku screensaver 1.0.8, Kodi screensaver 0.2.7. On file-not-found / stream open fail / missing Primary or Backdrop, clients drop the dead id, re-poll Jellyfin (rate-limited to 30s), and continue the session. Does not stop playback chrome, does not invent a Sessions Playing client for the miss. Overnight long-interval re-fetch stays parked above.
 
 ## Out of scope
 

@@ -16,7 +16,7 @@ def test_addon_xml_screensaver_entry():
     tree = ET.parse(ADDON_XML)
     root = tree.getroot()
     assert root.attrib["id"] == "screensaver.jellyflam3"
-    assert root.attrib["version"]
+    assert root.attrib["version"] == "0.2.7"
     req = root.find("requires/import")
     assert req is not None
     assert req.attrib["addon"] == "xbmc.python"
@@ -38,6 +38,8 @@ def test_screensaver_entry_files_exist():
     assert "doModal" in text
     assert "jellyfin_flock" in text
     assert "def onPlayBackEnded" in text  # signals advance only
+    assert "def onPlayBackError" in text
+    assert "_handle_dead_sheep" in text
     assert "Action(Fullscreen)" not in text
     skin = (ADDON / "resources" / "skins" / "default" / "1080i" / "fallback.xml").read_text(
         encoding="utf-8"

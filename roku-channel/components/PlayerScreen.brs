@@ -18,6 +18,7 @@ sub init()
   m.triedAltFallback = false
   m.reloopPending = false
   m.advancePending = false
+  m.failureSignaled = false
   ' Finer position ticks help catch end-of-clip before "finished".
   m.video.notificationInterval = 0.25
 end sub
@@ -47,7 +48,9 @@ sub playSheep(item as object)
   m.triedAltFallback = false
   m.reloopPending = false
   m.advancePending = false
+  m.failureSignaled = false
   m.top.clipFinished = false
+  m.top.playbackFailed = false
   m.hlsUrl = ""
   m.mp4Url = ""
   m.title = ""
@@ -182,6 +185,17 @@ sub requestClipAdvance()
   m.top.clipFinished = true
 end sub
 
+' After HLS↔MP4 fallback fails (404 / stream open), tell HomeScene to drop this id.
+' Do not POST Playing — stopPlaybackReport is a no-op when reportedPlaying is false.
+sub signalPlaybackFailed()
+  if m.failureSignaled = true then return
+  if m.advancePending = true then return
+  m.failureSignaled = true
+  stopPlaybackReport()
+  if m.video <> invalid then m.video.control = "stop"
+  m.top.playbackFailed = true
+end sub
+
 sub endOfClipAction()
   if shouldShuffleAdvance()
     requestClipAdvance()
@@ -263,6 +277,8 @@ sub onState()
     m.status.visible = false
   else if st = "error"
     if tryAltFallback() then return
+    signalPlaybackFailed()
+    if m.status = invalid then return
     m.status.visible = true
     msg = m.video.errorMsg
     if msg = invalid or msg = "" then msg = "playback error"
@@ -272,6 +288,7 @@ end sub
 
 sub onError()
   if tryAltFallback() then return
+  signalPlaybackFailed()
   if m.status = invalid then return
   msg = m.video.errorMsg
   code = m.video.errorCode

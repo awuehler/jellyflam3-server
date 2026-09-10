@@ -20,7 +20,8 @@ from typing import Any
 CLIENT_NAME = "JellyFlam3-Screensaver"
 CLIENT_DEVICE = "Kodi"
 CLIENT_DEVICE_ID = "jellyflam3-kodi-ss"
-CLIENT_VERSION = "0.2.6"
+CLIENT_VERSION = "0.2.7"
+FLOCK_REPOLL_MIN_SEC = 30.0
 
 
 def trim_slash(url: str) -> str:
@@ -183,3 +184,22 @@ def shuffle_copy(items: list[dict[str, str]], rng: random.Random | None = None) 
     bag = list(items)
     (rng or random).shuffle(bag)
     return bag
+
+
+def drop_item(items: list[dict[str, str]], item_id: str) -> list[dict[str, str]]:
+    """Remove a Jellyfin id from an in-memory flock (quarantine / 404)."""
+    dead = (item_id or "").strip()
+    if not dead:
+        return list(items)
+    return [it for it in items if (it.get("id") or "") != dead]
+
+
+def should_repoll_flock(
+    last_monotonic: float | None,
+    now: float,
+    min_sec: float = FLOCK_REPOLL_MIN_SEC,
+) -> bool:
+    """Rate-limit mid-session Jellyfin re-fetch so a shrinking library cannot hammer the Pi."""
+    if last_monotonic is None:
+        return True
+    return (now - last_monotonic) >= float(min_sec)

@@ -6,7 +6,7 @@ Phase 3 guide 01 — extract stills from rendered sheep; standalone **Roku** Scr
 
 **Kodi** is a **separate** Phase 3 feature (Electric Sheep–dogma video screensaver) — see [02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md). Do not implement Kodi work in this guide.
 
-**Status: complete** — Owner OK 2026-08-16 (extract + sideload). Poster-pipeline Backdrop merge + screensaver 1.0.7 (skip tuple, always rotate, `commercialMode`) 2026-09-08.
+**Status: complete** — Owner OK 2026-08-16 (extract + sideload). Poster-pipeline Backdrop merge + screensaver 1.0.7 (skip tuple, always rotate, `commercialMode`) 2026-09-08. Mid-session 404 re-poll in screensaver **1.0.8** (2026-09-09).
 
 ## Stills extraction
 
@@ -29,7 +29,7 @@ Stills serve **Roku** (image-only screensaver). Kodi plays video loops and does 
 3. ~~**`screensaver-safe` + idle-gate**~~ — sidecar tag + `idle_gate.ignore_client_patterns` for `JellyFlam3-Screensaver`
 4. ~~**`roku-screensaver/` package**~~ — `RunScreenSaver()` + settings stub; no Video / playback reports
 5. ~~**Shared registry**~~ — same `JellyFlam3` keys as VoD
-6. ~~**Stills cycle UX**~~ — timed Primary + Backdrop cycle + crossfade; empty/error labels; SS Settings fade/dwell (Owner OK fade controls 2026-08-16; 1.0.7 Backdrop + tuple skip)
+6. ~~**Stills cycle UX**~~ — timed Primary + Backdrop cycle + crossfade; empty/error labels; SS Settings fade/dwell (Owner OK fade controls 2026-08-16; 1.0.7 Backdrop + tuple skip; 1.0.8 404 re-poll)
 7. ~~**Package / sideload**~~ — `scripts/package_roku_screensaver.{ps1,sh}` on a furnace Pi → `dist/jellyflam3-screensaver.zip` (includes Jellyfin presets when `secrets.env` is present)
 8. ~~**Docs / SoT**~~ — guide + README; watermark stills → Phase 4; Roku publish → Phase 4 / 04
 9. ~~**Lab smoke**~~ — Pi stills + idle-gate + Roku Theme/SS + fade controls (Owner OK 2026-08-16)
@@ -52,8 +52,8 @@ Optional AI guidance for parent selection / aesthetic briefs atop Phase 2 `flam3
 - Kodi add-on (guide [02](02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md))
 - Video / edge playback inside the Roku screensaver
 - Channel Store / private-channel publish of VoD + screensaver → [Phase 4 / 04](../phase4/04_ROKU_PUBLISH.md)
-- Mid-session flock **re-poll on 404** when a sheep is quarantined while SS is cycling Primaries → [Phase 4 client polish](../phase4/00_OVERVIEW.md#client-polish-parked--not-numbered)
-- Long-running screensaver **session re-fetch** (Limit 200, one fetch per run) → same Phase 4 parked polish
+- Mid-session flock **re-poll on 404** when a sheep is quarantined while SS is cycling Primaries → **shipped** screensaver **1.0.8** (drop dead URL, 30s rate-limited StillsTask re-poll, continue). Overnight long-interval re-fetch stays parked.
+- Long-running screensaver **session re-fetch** (Limit 200, hours / wrap so ~daily ingest appears without exit) → [Phase 4 client polish](../phase4/00_OVERVIEW.md#client-polish-parked--not-numbered)
 - LLM pedigree MVP
 
 ## Artifacts

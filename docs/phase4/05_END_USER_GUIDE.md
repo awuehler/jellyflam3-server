@@ -65,7 +65,7 @@ Symptom-oriented table (extend as lab learns):
 | Gate stuck closed | Jellyfin Sessions; VoD still Playing? | Stop playback; wait `idle_delay_sec` |
 | Blank screensaver | Empty `JellyFlam3` registry (SS never configured VoD on this box) | Sideload VoD → save Settings → re-sideload SS; then id dump / Primary+Backdrop |
 | Kodi SS missing brand-new sheep | Jellyfin shows item, but **same** screensaver session still running | Exit screensaver / start a new idle session (flock is fetched once per run). Phase 4 polish: long-interval re-fetch ([00](00_OVERVIEW.md#client-polish-parked--not-numbered)) |
-| Playback 404 after quarantine | Client still playing; operator just quarantined/Shears-deleted that sheep | Today: exit session / pick another title. Phase 4 polish: auto re-poll flock on file-not-found ([00](00_OVERVIEW.md#client-polish-parked--not-numbered)) — VoD, Roku SS, Kodi SS |
+| Playback 404 after quarantine | Client still playing; operator just quarantined/Shears-deleted that sheep | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id, re-poll Jellyfin (30s rate limit), and continue. Sideload/install the new packages. Overnight new-sheep refresh still needs a new session ([00](00_OVERVIEW.md#client-polish-parked--not-numbered)) |
 | Screensaver replaced VoD | One sideload slot | Re-sideload VoD or use private/Store ([04](04_ROKU_PUBLISH.md)) |
 | Peering empty | Opt In? Syncthing? trust keys? | Peering README; share-security verify |
 | Healthcheck mount fail | USB/NVMe | Phase 2 from-scratch mounts |

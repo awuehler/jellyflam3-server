@@ -14,6 +14,7 @@ Tasks **1–4** done; **Jellyfin flock client + commercial filter + shuffle sequ
 - Client `JellyFlam3-Screensaver` matches furnace `idle_gate.ignore_client_patterns`
 - When settings or flock are unavailable, shows a short on-screen hint on black (no bundled test-pattern video)
 - Cancels Kodi’s 15s StopScript alarm (`sssssscreensaver`) so idle video is not killed
+- **0.2.7:** mid-session 404 / quarantine drops the dead Jellyfin id, re-polls the flock (30s rate limit), and continues
 
 **Post-launch:** loop→edge→loop sequencer (edges + watermark) is not in v0.3.0.
 
