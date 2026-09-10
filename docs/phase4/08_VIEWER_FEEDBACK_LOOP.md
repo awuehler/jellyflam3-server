@@ -41,7 +41,7 @@ Depends on Phase 1–2 Roku VoD playback ([../phase1/08_ROKU_BRIGHTSCRIPT.md](..
 
 ## Sidecar reservation (pre-open)
 
-Key **`viewer_feedback`** (likes / loves / votes / last_voted_at / share_candidate) is reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Guide [01](01_PEER_SHARE_PATH.md) reads `share_candidate` when share-out is built. No overlay, vote sink, share cron, or breed-weight hook in this slice. Load–mutate–write readers keep unknown JSON; worker ingest rebuilds known fields only and would drop this block on re-encode until Phase 4 preserves it.
+Key **`viewer_feedback`** (likes / loves / votes / last_voted_at / share_candidate) is reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Guide [01](01_PEER_SHARE_PATH.md) reads `share_candidate` when share-out is built. No overlay, vote sink, share cron, or breed-weight hook in this slice. Load–mutate–write readers keep unknown JSON; worker ingest copies this block across re-encode (tuples still rewrite `type` / watermark from this encode).
 
 ## Work items (when Phase 4 opens)
 

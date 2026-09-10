@@ -34,9 +34,10 @@ from pipeline.tool_lookup import tool as _tool
 log = logging.getLogger("jellyflam3.stills")
 
 # Phase 4 reserved sidecar keys (guides 01 / 03 / 08 / 09). Readers must ignore
-# if absent. load/write round-trips them. Worker ingest rebuilds the sidecar and
-# only merges ``refactor[]``, except tuples which write ``type`` / ``from_id`` /
-# ``to_id`` / ``watermark``. Schema: docs/phase1/07_LICENSE_AND_METADATA.md
+# if absent. load/write round-trips them. Worker ingest rebuilds known fields,
+# merges ``refactor[]``, and copies these keys from the previous sidecar unless
+# this encode already wrote them (tuples write ``type`` / ``from_id`` / ``to_id``
+# / ``watermark``). Schema: docs/phase1/07_LICENSE_AND_METADATA.md
 SIDECAR_RESERVED_KEYS = frozenset(
     {
         "type",  # loop (default) | edge | tuple (guide 03)
@@ -101,6 +102,26 @@ def write_sidecar(mp4: Path, sidecar: dict[str, Any]) -> None:
     """Persist sidecar JSON as given (does not strip reserved / unknown keys)."""
     path = sidecar_path_for_mp4(mp4)
     path.write_text(json.dumps(sidecar, indent=2) + "\n", encoding="utf-8")
+
+
+def merge_reserved_sidecar_keys(
+    sidecar: dict[str, Any],
+    prior: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Copy reserved Phase 4 keys from ``prior`` unless this ingest already set them.
+
+    Tuple ingest writes ``type`` / ``from_id`` / ``to_id`` / ``watermark`` first so
+    those stay from this encode. Loops (and tuples) keep ``alias`` /
+    ``viewer_feedback`` across Shears-modify / re-furnace.
+    """
+    if not prior:
+        return sidecar
+    for key in SIDECAR_RESERVED_KEYS:
+        if key in sidecar:
+            continue
+        if key in prior:
+            sidecar[key] = prior[key]
+    return sidecar
 
 
 def iter_catalog_mp4s(

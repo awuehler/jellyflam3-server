@@ -4,7 +4,7 @@
 
 Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 03)** which shipped 2026-09-05: peer auto-promote, mesh introduce scripting, Roku Store/private publish, library **rotate**, vote overlay / share cron / breed bias, and sheep-naming RNG.
 
-**Pre-open slices** already shipped (docs + operator CLIs; not those products): end-user baseline, sheep-disk check, concurrent-client estimator, and catalog sidecar key names.
+**Pre-open slices** already shipped (docs + operator CLIs; not those products): end-user baseline, sheep-disk check, concurrent-client estimator, and catalog sidecar key names. **Opened 2026-09-09:** worker preserves reserved sidecar keys on re-ingest.
 
 ## Status
 
@@ -28,8 +28,14 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 | Household guide + fridge card | [05](05_END_USER_GUIDE.md) | [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) Layer 1 + four worked examples; [FRIDGE_CARD.md](../FRIDGE_CARD.md) | Vote / rename recipes (need 08 / 09) |
 | Sheep disk WARN/BAD | [06](06_LIBRARY_DISK_ROTATE.md) | `python3 -m pipeline.library_disk check`; healthcheck | Auto-purge, worker refuse on sheep mount, rotate cron |
 | Concurrent-client `N_max` | [07](07_CONCURRENT_CLIENTS.md) | `python3 -m pipeline.link_capacity`; WiFi-STA lab note | Enforcing `N_max` as a Jellyfin cap; Ethernet lab (eth0 DOWN) |
-| Sidecar key names | [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) | `type`, `watermark`, `viewer_feedback`, `alias` (+ companions) | Vote sink, naming RNG; worker still drops reserved keys on loop re-ingest (tuples write `type` / `from_id` / `to_id` / `watermark`) |
+| Sidecar key names | [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) | `type`, `watermark`, `viewer_feedback`, `alias` (+ companions) | Vote sink, naming RNG |
 | Tuples (loop A + edge + loop B) | [03](03_EDGES_AND_WATERMARK.md) | One MP4 under `by-generation/tuple/`; edge-only watermark; idle-cron mode; Roku shuffle `tuple`+`pedigree` | Standalone edge files; watermark on loops/stills; Kodi edge sequencer |
+
+## Opened (2026-09-09)
+
+| Slice | Guide | What landed | Still parked |
+|---|---|---|---|
+| Sidecar preserve | [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) | Worker copies reserved keys on re-ingest; tuples still write `type` / `from_id` / `to_id` / `watermark` from this encode | Vote sink, naming RNG |
 
 ## In scope (parked products)
 
@@ -45,7 +51,7 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 
 Also named (aspirational / TBD): broader social flock, DeepDream/AI backends, LLM-assisted pedigree polish — may gain numbered guides when Phase 4 opens. Guide [08](08_VIEWER_FEEDBACK_LOOP.md) is the household feedback slice of social flock evolution; [09](09_SHEEP_NAMING.md) covers memorable aliases (RNG first; LLM naming later).
 
-Sidecar key names for [01](01_PEER_SHARE_PATH.md) / [03](03_EDGES_AND_WATERMARK.md) / [08](08_VIEWER_FEEDBACK_LOOP.md) / [09](09_SHEEP_NAMING.md) are reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Tuple ingest writes `type` / `from_id` / `to_id` / `watermark`. Vote sink and naming RNG stay parked.
+Sidecar key names for [01](01_PEER_SHARE_PATH.md) / [03](03_EDGES_AND_WATERMARK.md) / [08](08_VIEWER_FEEDBACK_LOOP.md) / [09](09_SHEEP_NAMING.md) are reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Worker copies reserved keys on re-ingest; tuple ingest writes `type` / `from_id` / `to_id` / `watermark` from this encode. Vote sink and naming RNG stay parked.
 
 ### Client polish (parked — not numbered)
 

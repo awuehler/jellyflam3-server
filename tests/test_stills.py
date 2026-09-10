@@ -8,6 +8,7 @@ from pipeline.stills import (
     frame_path,
     iter_catalog_mp4s,
     load_sidecar,
+    merge_reserved_sidecar_keys,
     seek_points_sec,
     stills_dir_for_mp4,
     write_sidecar,
@@ -183,6 +184,74 @@ def test_extract_stills_preserves_reserved_keys(tmp_path: Path):
     assert loaded["alias_source"] == "human"
     assert loaded["viewer_feedback"]["share_candidate"] is True
     assert loaded["stills"]["screensaver_safe"] is True
+
+
+def test_merge_reserved_loop_keeps_alias_and_votes():
+    sidecar = {
+        "id": "electricsheep.247.00505",
+        "license": "cc-by",
+        "nframes": 312,
+    }
+    prior = {
+        "id": "electricsheep.247.00505",
+        "license": "cc-by-nc",
+        "type": "loop",
+        "viewer_feedback": {"likes": 3, "loves": 1, "votes": 4, "share_candidate": True},
+        "alias": "frosty_swirles",
+        "alias_source": "human",
+        "duration_sec": 13.0,
+    }
+    merge_reserved_sidecar_keys(sidecar, prior)
+    assert sidecar["alias"] == "frosty_swirles"
+    assert sidecar["alias_source"] == "human"
+    assert sidecar["viewer_feedback"]["likes"] == 3
+    assert sidecar["type"] == "loop"
+    assert sidecar["license"] == "cc-by"
+    assert "duration_sec" not in sidecar
+
+
+def test_merge_reserved_tuple_overwrites_watermark_keeps_votes():
+    sidecar = {
+        "id": "electricsheep.tuple.a_to_b",
+        "type": "tuple",
+        "from_id": "a",
+        "to_id": "b",
+        "watermark": {"enabled": True, "style": "text", "text": "Electric Sheep", "image": ""},
+    }
+    prior = {
+        "type": "tuple",
+        "from_id": "old_a",
+        "to_id": "old_b",
+        "watermark": {"enabled": True, "style": "image", "text": "", "image": "old.png"},
+        "viewer_feedback": {"votes": 9, "share_candidate": False},
+        "alias": "angry_bardeen",
+        "alias_source": "auto",
+    }
+    merge_reserved_sidecar_keys(sidecar, prior)
+    assert sidecar["type"] == "tuple"
+    assert sidecar["from_id"] == "a"
+    assert sidecar["to_id"] == "b"
+    assert sidecar["watermark"]["style"] == "text"
+    assert sidecar["watermark"]["image"] == ""
+    assert sidecar["alias"] == "angry_bardeen"
+    assert sidecar["viewer_feedback"]["votes"] == 9
+
+
+def test_merge_reserved_skips_missing_prior():
+    sidecar = {"id": "x", "license": "cc-by"}
+    merge_reserved_sidecar_keys(sidecar, None)
+    merge_reserved_sidecar_keys(sidecar, {})
+    assert sidecar == {"id": "x", "license": "cc-by"}
+
+
+def test_worker_merges_reserved_sidecar_keys():
+    text = (
+        Path(__file__).resolve().parents[1].joinpath("pipeline", "worker.py").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert "merge_reserved_sidecar_keys" in text
+    assert "load_sidecar(dest)" in text
 
 
 def test_worker_does_not_write_reserved_phase4_keys():

@@ -48,8 +48,9 @@ from pipeline.config import load_config, resolve_path
 from pipeline.cpu_limit import effective_cpus, ffmpeg_thread_args, flam3_nthreads, wrap_cmd
 from pipeline.flock_artwork import apply_flock_artwork
 from pipeline.idle_gate import is_gate_open
-from pipeline.license_filter import infer_tags_from_genome
 from pipeline.job_recovery import reclaim_orphans
+from pipeline.license_filter import infer_tags_from_genome
+from pipeline.stills import load_sidecar, merge_reserved_sidecar_keys
 from pipeline.media_layout import (
     ensure_catalog_dir,
     ensure_catalog_file_mode,
@@ -685,9 +686,10 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
         if is_tuple and "tuple" not in tags:
             tags = sorted(set(list(tags) + ["tuple"]))
         # Phase 1 license SoT: sidecar next to MP4 (Items API Tags are best-effort).
-        # Rebuilds known fields + merge refactor[]. Phase 4 reserved keys
-        # (type, watermark, viewer_feedback, alias — see pipeline.stills.SIDECAR_RESERVED_KEYS
-        # and docs/phase1/07) are written here for tuples; loops omit them (type defaults to loop).
+        # Rebuilds known fields, merges reserved Phase 4 keys from the previous
+        # sidecar, then refactor[]. Tuples write type / from_id / to_id / watermark
+        # from this encode (those reserved keys are not copied). See
+        # pipeline.stills.SIDECAR_RESERVED_KEYS and docs/phase1/07.
         sidecar: dict[str, Any] = {
             "id": base,
             "license": "cc-by-nc" if "cc-by-nc" in tags else ("cc-by" if "cc-by" in tags else "unknown"),
@@ -720,6 +722,11 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
                 "seed_hex": harmony.seed_hex,
                 "complement_hex": harmony.complement_hex,
             }
+        # Prior catalog sidecar is still on disk (install_catalog_mp4 rotates the MP4 only).
+        try:
+            merge_reserved_sidecar_keys(sidecar, load_sidecar(dest))
+        except Exception as exc:  # noqa: BLE001
+            log.warning("reserved sidecar merge failed for %s: %s", dest, exc)
         # Piece D: mid-loop poster on disk + Jellyfin Primary (soft-fail; never fail ingest).
         try:
             apply_flock_artwork(

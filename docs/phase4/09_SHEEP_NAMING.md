@@ -42,7 +42,7 @@ Depends on catalog **sidecar** as sole metadata SoT ([../phase1/07_LICENSE_AND_M
 
 ## Sidecar reservation (pre-open)
 
-Keys **`alias`** and **`alias_source`** (`auto` \| `human` \| `llm`) are reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). No RNG generator, ingest hook, backfill CLI, or client filename/alias toggle in this slice. Load–mutate–write readers keep unknown JSON; worker ingest rebuilds known fields only and would drop these keys on re-encode until Phase 4 preserves them.
+Keys **`alias`** and **`alias_source`** (`auto` \| `human` \| `llm`) are reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). No RNG generator, ingest hook, backfill CLI, or client filename/alias toggle in this slice. Load–mutate–write readers keep unknown JSON; worker ingest copies these keys across re-encode (human override stays sticky once a writer exists).
 
 ## Work items (when Phase 4 opens)
 

@@ -161,7 +161,7 @@ File: `{stem}.jellyflam3.json` next to the catalog MP4. Code list: `pipeline.sti
 
 **Readers keep extra keys.** `load_sidecar` / `write_sidecar` (stills, stills-style backfill, refactor history) load–mutate–write and do not strip unknown JSON.
 
-**Worker ingest rebuilds.** `pipeline/worker.py` writes a new dict of known fields and only merges `refactor[]`. Loop re-encodes **drop** reserved Phase 4 keys (`viewer_feedback`, `alias`, …). **Tuples** write `type`, `from_id`, `to_id`, `watermark`, and `segments` on ingest. Do not treat a loop re-ingest as a merge.
+**Worker ingest rebuilds known fields** (`id`, license/tags, duration, …) and merges `refactor[]`. Reserved Phase 4 keys on the **previous** sidecar are copied unless this encode already wrote them: **tuples** write `type`, `from_id`, `to_id`, `watermark`, and `segments` from this ingest (those reserved keys are not copied). Loops keep `viewer_feedback`, `alias`, and `alias_source` across Shears-modify / re-furnace. Do not treat a loop re-ingest as a full JSON merge — non-reserved extras are still dropped.
 
 ### Shipped fields (worker / poster pipeline write today)
 
@@ -264,4 +264,4 @@ python3 scripts/jellyfin_id_dump.py --items --limit 50
 - [x] NC genomes tagged `cc-by-nc` (heuristics → **sidecar**; unit-tested)
 - [x] Commercial filter excludes NC when enabled (unit-tested; BrightScript contract retained, default off)
 - [x] Tags persisted for ops — **sidecar-only** Phase 1 (`*.jellyflam3.json`); Items API tags deferred
-- [x] Phase 4 sidecar key names reserved (`type`, `watermark`, `viewer_feedback`, `alias`) — readers keep unknown JSON; tuple ingest writes `type` / `from_id` / `to_id` / `watermark`
+- [x] Phase 4 sidecar key names reserved (`type`, `watermark`, `viewer_feedback`, `alias`) — readers keep unknown JSON; worker copies reserved keys on re-ingest; tuple ingest writes `type` / `from_id` / `to_id` / `watermark` from this encode

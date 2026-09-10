@@ -14,7 +14,7 @@ All notable changes to this project are documented here. Format loosely follows 
 - Phase 4 guide 05 baseline complete: four worked examples in the user guide (first evening, screensaver, two Rokus, peer receive); Owner OK 2026-09-03.
 - Concurrent-client estimator (`python3 -m pipeline.link_capacity`): integer `N_max` from usable hop × headroom ÷ session bps; WiFi-STA lab note in guide 07.
 - Sheep-library disk check slice (`python3 -m pipeline.library_disk`): healthcheck WARN/BAD on mount used % / free GiB; no auto-purge, no worker refuse.
-- Catalog sidecar schema: Phase 4 keys `type`, `watermark`, `viewer_feedback`, `alias` reserved in [phase1/07](docs/phase1/07_LICENSE_AND_METADATA.md); `pipeline.stills.SIDECAR_RESERVED_KEYS`. Tuple ingest writes `type` / `from_id` / `to_id` / `watermark`.
+- Catalog sidecar schema: Phase 4 keys `type`, `watermark`, `viewer_feedback`, `alias` reserved in [phase1/07](docs/phase1/07_LICENSE_AND_METADATA.md); `pipeline.stills.SIDECAR_RESERVED_KEYS`. Tuple ingest writes `type` / `from_id` / `to_id` / `watermark`. Worker copies reserved keys on re-ingest so votes and aliases survive Shears-modify.
 - Phase 4 tuples: one MP4 (loop A + watermarked edge A→B + loop B) under `by-generation/tuple/`; idle-cron mode; Roku shuffle includes `pedigree` and `tuple` (channel 1.0.28). Edge mark: Cesari PNG on private furnaces (`license.commercial_mode: false`); ES attribution sentence (no logo) when commercial_mode is on. Look/feel: [phase4/03](docs/phase4/03_EDGES_AND_WATERMARK.md#look-and-feel-what-the-viewer-sees).
 - Phase 4 client polish (parked): re-poll flock index on file-not-found when a sheep is quarantined mid-session — Roku VoD, Roku SS, Kodi SS.
 
