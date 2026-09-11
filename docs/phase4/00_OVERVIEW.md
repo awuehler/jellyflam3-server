@@ -4,7 +4,7 @@
 
 Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 03)** which shipped 2026-09-05 and **09 RNG aliases** which shipped 2026-09-09: peer auto-promote, mesh introduce scripting, Roku Store/private publish, library **rotate**, vote overlay / share cron / breed bias, and pasture filename-vs-alias toggle.
 
-**Pre-open slices** already shipped (docs + operator CLIs; not those products): end-user baseline, sheep-disk check, concurrent-client estimator, and catalog sidecar key names. **Opened 2026-09-09:** worker preserves reserved sidecar keys on re-ingest. **Opened 2026-09-09:** pasture clients re-poll the flock on mid-session 404 (quarantine / Shears). **Opened 2026-09-10:** wrap-once flock re-fetch + 313 session cap. **Opened 2026-09-09:** 07 estimator Owner OK; 09 RNG aliases (ingest + backfill + override).
+**Pre-open slices** already shipped (docs + operator CLIs; not those products): end-user baseline, sheep-disk check, concurrent-client estimator, and catalog sidecar key names. **Opened 2026-09-09:** worker preserves reserved sidecar keys on re-ingest. **Opened 2026-09-09:** pasture clients re-poll the flock on mid-session 404 (quarantine / Shears). **Opened 2026-09-10:** wrap-once flock re-fetch + 313 session cap. **Opened 2026-09-10:** worker drain (finish current job, pause claiming until cancel). **Opened 2026-09-09:** 07 estimator Owner OK; 09 RNG aliases (ingest + backfill + override).
 
 ## Status
 
@@ -40,6 +40,7 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 | Wrap-once flock re-fetch + 313 cap | clients | Once per full shuffle wrap (one random permutation; next item is not last-played), re-fetch Jellyfin and regenerate the in-memory list (skip if a fetch is already in flight; no 30s 404 gate). HTTP Limit 5000 then randomly prune to **313**. VoD **1.0.31**, Roku SS **1.0.9**, Kodi SS **0.2.9** | Hours-scale timer (not needed for ~daily ingest) |
 | 07 estimator Owner OK | [07](07_CONCURRENT_CLIENTS.md) | Sign-off 2026-09-09; `N_max` remains an estimate | Enforcing `N_max` as a Jellyfin cap |
 | 09 RNG aliases | [09](09_SHEEP_NAMING.md) | Hash-seed `adjective_surname` on ingest/backfill; `set-alias` / `clear-alias` | Roku/Kodi filename vs alias toggle; LLM poster naming → [../phase5/02](../phase5/02_LLM_INTEGRATION.md) |
+| Worker drain / idle-before-restart | furnace polish | Finish current inbox job, then do not claim; `python3 -m pipeline.worker_drain` (`request`, `wait`, `cancel`). Flag persists until cancel. | Checkpoint/resume inside `flam3-animate`; SIGSTOP live animate |
 
 ## In scope (parked products)
 
@@ -65,15 +66,13 @@ Sidecar key names for [01](01_PEER_SHARE_PATH.md) / [03](03_EDGES_AND_WATERMARK.
 
 **Shipped (not parked):** **Quarantine / 404 mid-session re-poll** — VoD 1.0.29, Roku screensaver 1.0.8, Kodi screensaver 0.2.7. On file-not-found / stream open fail / missing Primary or Backdrop, clients drop the dead id, re-poll Jellyfin (rate-limited to 30s), and continue the session. Does not stop playback chrome, does not invent a Sessions Playing client for the miss.
 
-### Furnace polish (parked — not numbered)
-
-Parked so a numbered product guide is not required yet. Do **not** implement until Owner opens this slice.
+### Furnace polish (shipped drain)
 
 | Item | Notes |
 |---|---|
-| **Worker drain / idle-before-restart** | Operator command that lets a furnace **finish the current inbox job**, then **not claim the next** genome, so the worker reaches a true idle (watching inbox, nothing in-flight). After that, `systemctl restart jellyflam3-worker` does not orphan a live `flam3-animate`. Today a restart always treats in-flight work as an orphan: frames are discarded (`flam3-animate` cannot resume partial nframes), the genome is re-queued, and render restarts at frame 0 — hours to days lost on a long sheep. Distinct from the **idle-gate** (TV Playing pauses render) and from an **empty inbox** (archive seed / idle-breed can refill). Per host; fleet drain is one command per furnace. Undrain / cancel should resume claiming inbox without requiring a restart. Track against [../phase1/05_RENDER_PIPELINE.md](../phase1/05_RENDER_PIPELINE.md), [../phase1/09_RUNTIME_AND_OPS.md](../phase1/09_RUNTIME_AND_OPS.md), `pipeline.job_recovery`. |
+| **Worker drain / idle-before-restart** | **Shipped** `python3 -m pipeline.worker_drain`. Finish the current inbox job, then do not claim the next genome. Worker keeps watching inbox (seed/breed may refill; files wait). Flag file `/var/lib/jellyflam3/worker_drain.json` persists across restart until `cancel` / `resume` / `undrain` (no restart required to resume). `request --wait` blocks until no in-flight job.json (`queued`/`rendering`/`encoding`/`gating`) — then `systemctl restart jellyflam3-worker` does not orphan a live `flam3-animate`. Distinct from the **idle-gate** (TV Playing) and from an **empty inbox**. Per host. Household recipe: [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md#5--pause-the-furnace-drain). Tracked in [../phase1/05_RENDER_PIPELINE.md](../phase1/05_RENDER_PIPELINE.md), [../phase1/09_RUNTIME_AND_OPS.md](../phase1/09_RUNTIME_AND_OPS.md), `pipeline.job_recovery`. |
 
-**Not this slice:** checkpoint/resume inside `flam3-animate`; SIGSTOP of a live animate as “pause”; killing the current job on purpose (that is today’s restart). Drain is **pause before the next inbox render**, not mid-frame.
+**Not this slice:** checkpoint/resume inside `flam3-animate`; SIGSTOP of a live animate as “pause”; killing the current job on purpose (that is today’s restart without drain). Drain is **pause before the next inbox render**, not mid-frame. The first pull of this code still needs one worker restart to load the poll check — do that between jobs if you can.
 
 ## Out of scope
 

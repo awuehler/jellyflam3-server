@@ -114,6 +114,15 @@ def test_healthcheck_queue_probe_does_not_swallow_with_or_true():
     assert 'if "genomes_inbox" not in paths' in queue or "genomes_inbox" in queue
 
 
+def test_healthcheck_worker_drain_is_warn_not_fail():
+    text = _read("scripts/healthcheck.sh")
+    assert "== worker drain ==" in text
+    section = text.split("== worker drain ==", 1)[1].split("== tools ==", 1)[0]
+    assert "pipeline.worker_drain status" in section
+    assert "WARN worker drain" in section
+    assert "ERR=1" not in section
+
+
 def test_bringup_maps_healthcheck_failure_to_bad_not_warn():
     text = _read("scripts/bringup_check.sh")
     assert 'bad "healthcheck.sh failed' in text

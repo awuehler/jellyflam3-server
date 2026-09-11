@@ -7,6 +7,7 @@ Usage: ``python3 -m pipeline.worker [--once GENOME]`` (polls genomes_inbox by de
 Assumptions: Single-threaded; sheep tax then TV-port before render; frozen single-flame
   genomes still-loop one Lite still (skip sequence/animate); tuple genomes render three
   sequence stages then watermark the middle edge; successful genomes archive to genomes_done.
+  Drain flag (pipeline.worker_drain) skips the next inbox claim after the current job.
 """
 
 from __future__ import annotations
@@ -49,6 +50,7 @@ from pipeline.cpu_limit import effective_cpus, ffmpeg_thread_args, flam3_nthread
 from pipeline.flock_artwork import apply_flock_artwork
 from pipeline.idle_gate import is_gate_open
 from pipeline.job_recovery import reclaim_orphans
+from pipeline.worker_drain import is_drain_requested
 from pipeline.license_filter import infer_tags_from_genome
 from pipeline.sheep_naming import collect_taken_aliases, ensure_auto_alias, naming_enabled
 from pipeline.stills import load_sidecar, merge_reserved_sidecar_keys
@@ -362,12 +364,20 @@ def apply_edge_watermark(
     return src_mp4
 
 
-def wait_for_gate(cfg: dict[str, Any]) -> None:
-    """Block until idle gate is open (no-op if idle_gate disabled)."""
+def wait_for_gate(cfg: dict[str, Any], *, abort_if_drain: bool = False) -> None:
+    """Block until idle gate is open (no-op if idle_gate disabled).
+
+    ``abort_if_drain`` is for the inbox poll loop only — return early so drain
+    can skip the next claim. In-flight ``process_genome`` must pass False so the
+    current sheep still waits out Playing/transcode and finishes.
+    """
     ig = cfg.get("idle_gate") or {}
     if not ig.get("enabled", True):
         return
     while not is_gate_open(cfg):
+        if abort_if_drain and is_drain_requested(cfg):
+            log.info("worker drain: leaving gate wait without claiming")
+            return
         log.info("gate closed; sleeping 15s")
         time.sleep(15)
 
@@ -804,10 +814,24 @@ def poll_inbox(cfg: dict[str, Any]) -> None:
         n = sum(1 for a in actions if a.outcome in ("orphaned", "superseded"))
         log.info("startup orphan reclaim: %s job(s)", n)
     log.info("watching inbox %s", inbox)
+    last_drain_log = 0.0
     while True:
-        wait_for_gate(cfg)
+        if is_drain_requested(cfg):
+            now = time.monotonic()
+            if now - last_drain_log >= 60.0:
+                log.info("worker drain: not claiming inbox (cancel to resume)")
+                last_drain_log = now
+            time.sleep(10)
+            continue
+        last_drain_log = 0.0
+        wait_for_gate(cfg, abort_if_drain=True)
+        if is_drain_requested(cfg):
+            continue
         files = sorted(inbox.glob("*.flam3")) + sorted(inbox.glob("*.flame"))
         for src in files:
+            if is_drain_requested(cfg):
+                log.info("worker drain: stopping before next inbox genome")
+                break
             log.info("processing %s", src)
             try:
                 dest = process_genome(cfg, src)

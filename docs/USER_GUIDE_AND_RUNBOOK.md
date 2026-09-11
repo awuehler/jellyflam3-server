@@ -91,6 +91,7 @@ If a sheep disappears mid-session (quarantine / Shears), the client **drops that
 | New sheep appear quickly | **No** — each MP4 can take hours to days on a Pi |
 | Overnight sheep while idle | **Yes** after a full mix (VoD 1.0.31 / Roku SS 1.0.9 / Kodi 0.2.9). Older packages wait for a new session |
 | Gate closes while you watch | **Yes** — by design; furnace waits for idle |
+| Pause new renders on purpose | **Yes** — drain finishes the sheep already rendering, then waits until you cancel |
 | Screensaver shows video | **No** on Roku SS — images only |
 | Gold Sheep / paid ES masters | **Never** ingested — personal viewing only |
 
@@ -201,6 +202,25 @@ Run Pi commands from `/opt/jellyflam3-server` unless noted.
 
 **Pass:** file left `peers/inbox`, `promote --apply` moved a `.flam3` to worker inbox (or quarantine if verify failed). **Fail:** `share_live: false` → healthcheck peering section; do not skip the promote gate.
 
+### 5 — Pause the furnace (drain)
+
+Finish the sheep already rendering, then **do not start another** until you say so. Inbox files and cron seed/breed may still arrive; they wait. This is not the TV idle-gate (Playing) and not `systemctl stop`.
+
+On that furnace Pi:
+
+```bash
+cd /opt/jellyflam3-server
+python3 -m pipeline.worker_drain request --wait
+# phase is "idle" — nothing in-flight. Optional safe restart:
+# sudo systemctl restart jellyflam3-worker
+# Stay paused until you resume (survives restart):
+python3 -m pipeline.worker_drain cancel
+```
+
+`status` prints `phase`: `off` (normal), `draining` (current job still running), `idle` (safe to restart or leave quiet). `cancel` / `resume` / `undrain` are the same.
+
+**Pass:** after `--wait`, `status` shows `"phase": "idle"` and `"drain": true`; healthcheck WARNs drain until cancel. **Fail:** restarting **before** idle still orphans the live `flam3-animate` (today’s restart). The **first** git pull that adds drain still needs one worker restart to load the check — do that between jobs if you can.
+
 ---
 
 ## Layer 2 — Operator runbook
@@ -262,6 +282,24 @@ python3 -m pipeline.idle_gate --config configs/jellyflam3.yaml   # foreground de
 ```
 
 Screensaver client pattern `JellyFlam3-Screensaver` is **ignored** by the gate (by design).
+
+### Worker drain (pause before next sheep)
+
+Lets the **current** inbox job finish, then the worker **watches inbox without claiming**. Archive seed and idle-breed may still drop files; they sit until you cancel. Distinct from [idle gate](#idle-gate-behavior) (TV Playing) and from an empty inbox.
+
+```bash
+python3 -m pipeline.worker_drain request          # stop after the current job
+python3 -m pipeline.worker_drain request --wait   # same, then block until idle
+python3 -m pipeline.worker_drain status           # off | draining | idle
+python3 -m pipeline.worker_drain wait             # block until idle (flag already set)
+python3 -m pipeline.worker_drain cancel           # resume claiming (no restart)
+```
+
+Status file: `/var/lib/jellyflam3/worker_drain.json` (`paths.worker_drain_file`). The flag **persists across** `systemctl restart` until `cancel`. Safe restart recipe: `request --wait` then restart. Do **not** SIGSTOP `flam3-animate` and do not kill the current job to “pause”.
+
+`--once` is an explicit operator run and still processes that genome while drained.
+
+healthcheck prints **WARN** while drain is on (does not fail). `status_report.sh` shows `drain=` / `phase=`.
 
 ### Feed the furnace
 
@@ -740,8 +778,10 @@ cd /opt/jellyflam3-server
 git pull --ff-only
 git log -1 --oneline
 ./scripts/ensure_exec_bits.sh --check     # or ./scripts/ensure_exec_bits.sh if drift
-# Restart if worker/idle_gate code changed:
+# If worker/idle_gate code changed, drain first so restart does not orphan animate:
+python3 -m pipeline.worker_drain request --wait
 sudo systemctl restart jellyflam3-idlegate jellyflam3-worker
+python3 -m pipeline.worker_drain cancel   # resume claiming (omit to stay paused)
 ./scripts/healthcheck.sh
 ```
 
@@ -785,7 +825,7 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 |---|---|---|
 | No new sheep | `healthcheck.sh`; `gate` in status JSON; inbox count | Open gate / fix worker / seed or breed. If Jellyfin already has the item, wait for a client **wrap** ([Flock mix](#flock-mix-shuffle-wrap)) |
 | Gate stuck closed | Jellyfin Sessions; Roku still “Playing”? | Stop playback; wait `idle_delay_sec` |
-| Worker quiet, gate open | `ls genomes/inbox/*.flam3`; journal `-u jellyflam3-worker` | Seed inbox; inspect quarantine |
+| Worker quiet, gate open | `ls genomes/inbox/*.flam3`; journal `-u jellyflam3-worker`; `python3 -m pipeline.worker_drain status` | Seed inbox; inspect quarantine; **cancel** drain if `drain: true` |
 | healthcheck exit 1 | Read script sections (units, tools, status file, **peering share_live**, **library disk BAD**) | See [offline peering](#opt-in-vs-share-live-do-not-confuse-them); `opt-in` or `opt-out`; free space on `/media/sheep` |
 | Sheep disk WARN / BAD | `python3 -m pipeline.library_disk check`; `df -h /media/sheep` | Delete with Shears (no auto-rotate yet); do not Hammer unless wiping the factory |
 | Empty flock with commercial-safe on | Items Tags missing | `jellyfin_id_dump.py --items`; [private vs public](#private-vs-public-furnace) step 2 |
@@ -845,6 +885,7 @@ On Windows: use Git Bash for gate script tests; `media_layout` tests skip on `nt
 
 ```text
 python3 -m pipeline.worker          # furnace (poll inbox or --once)
+python3 -m pipeline.worker_drain    # finish current job, then pause claiming
 python3 -m pipeline.idle_gate       # gate supervisor
 python3 -m pipeline.seed_inbox      # archive / random / mutate feedstock
 python3 -m pipeline.breed           # pedigree mutate/cross/blend/interpolate
@@ -890,6 +931,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | Change | Read first |
 |---|---|
 | Render duration bands | `pipeline/choose_duration.py`, `docs/phase2/08_DYNAMIC_DURATION.md` |
+| Worker drain / pause | `pipeline/worker_drain.py`, [Worker drain](#worker-drain-pause-before-next-sheep), [phase1/05](phase1/05_RENDER_PIPELINE.md) |
 | TV-port / palette | `pipeline/tv_optimize.py`, `pipeline/palette_harmony.py` |
 | Share security | `pipeline/share_security.py`, `docs/phase3/05_SHARED_SHEEP_SECURITY.md` |
 | Link capacity / N_max | `pipeline/link_capacity.py`, `docs/phase4/07_CONCURRENT_CLIENTS.md` |
@@ -913,6 +955,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | `/var/cache/jellyflam3/frames` | Render scratch |
 | `/var/lib/jellyflam3/jobs` | In-flight job state |
 | `/var/lib/jellyflam3/idle_gate_status.json` | Gate SoT |
+| `/var/lib/jellyflam3/worker_drain.json` | Drain flag (pause before next inbox claim) |
 | `genomes/inbox` | Worker input queue |
 | `genomes/quarantine` | Failed genomes |
 | `genomes/done` | Rendered parent pool (breeding) |

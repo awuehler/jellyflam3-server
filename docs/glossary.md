@@ -25,7 +25,7 @@ Terms, keywords, and phrases used across the **jellyflam3-server** project — d
 | [Edition (render)](#edition-render) | [HW profile](#hw-profile) | [Pre-share / post-share](#pre-share--post-share) | [Ventuno Q](#ventuno-q) |
 | [`.flam3`](#flam3-file) | [Idle breed](#idle-breed) | [RC](#release-candidate-rc) | [Sheep naming / alias](#sheep-naming--alias) |
 | [N_max](#n_max-link-capacity) | [Library disk check](#library-disk-check) | [VoD](#vod) | [Worker](#worker) |
-| [LLM Agent Platform](#llm-agent-platform) | [Viewer feedback](#viewer-feedback--sheep-vote) | [Shuffle wrap](#shuffle-wrap) | |
+| [LLM Agent Platform](#llm-agent-platform) | [Viewer feedback](#viewer-feedback--sheep-vote) | [Shuffle wrap](#shuffle-wrap) | [Worker drain](#worker-drain) |
 
 ---
 
@@ -111,7 +111,11 @@ Electric Sheep flock epoch (e.g. **247**). Archive URLs: `…/generation-{N}/bes
 
 ### Worker
 
-`pipeline/worker.py` / `jellyflam3-worker.service`. Polls **`genomes/inbox`**, runs tax → TV-optimize → animate → ffmpeg → ingest to **catalog**, writes **sidecar**, optional Jellyfin poster/metadata (`jellyfin.attach_posters`: auto / true / false).
+`pipeline/worker.py` / `jellyflam3-worker.service`. Polls **`genomes/inbox`**, runs tax → TV-optimize → animate → ffmpeg → ingest to **catalog**, writes **sidecar**, optional Jellyfin poster/metadata (`jellyfin.attach_posters`: auto / true / false). Honors **worker drain** before the next claim.
+
+### Worker drain
+
+Operator pause: finish the **current** inbox job, then do not claim another until `python3 -m pipeline.worker_drain cancel`. Flag: `/var/lib/jellyflam3/worker_drain.json`. Not the **idle gate** (TV Playing) and not an empty inbox (seed/breed may still refill). See [USER_GUIDE drain](USER_GUIDE_AND_RUNBOOK.md#worker-drain-pause-before-next-sheep).
 
 ### Inbox
 
@@ -467,7 +471,7 @@ Supervisor (`pipeline/idle_gate.py`) polling Jellyfin **Sessions**. Closes **gat
 
 ### Gate open / gate closed
 
-Status in `/var/lib/jellyflam3/idle_gate_status.json`. Worker checks before starting jobs.
+Status in `/var/lib/jellyflam3/idle_gate_status.json`. Worker checks before starting jobs. **Worker drain** is a separate flag (`worker_drain.json`) for pause-until-cancel.
 
 ### Playing API
 

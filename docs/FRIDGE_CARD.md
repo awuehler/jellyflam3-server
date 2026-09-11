@@ -67,6 +67,8 @@ Furnace-built zips often pre-fill these. If the flock is empty, open VoD **Setti
 cd /opt/jellyflam3-server && ./scripts/healthcheck.sh    # exit 0 = healthy
 python3 -m json.tool /var/lib/jellyflam3/idle_gate_status.json
 # gate: open = rendering allowed; closed = a TV is Playing
+python3 -m pipeline.worker_drain request --wait   # finish current sheep, then pause
+python3 -m pipeline.worker_drain cancel           # resume new sheep
 ```
 
 Layer 2 runbook: [USER_GUIDE_AND_RUNBOOK.md](USER_GUIDE_AND_RUNBOOK.md#layer-2--operator-runbook). Do not post Cesari-logo tuples as official Electric Sheep.

@@ -16,6 +16,10 @@ Terminal recoveries: `orphaned` (re-queued or sample dropped) · `superseded` (c
 set -a; source secrets.env; set +a
 python3 -m pipeline.worker --config configs/jellyflam3.yaml
 python3 -m pipeline.worker --config configs/jellyflam3.yaml --once genomes/pedigree/smoke/electricsheep.pedigree.smoke.0001.flam3
+# Finish the current inbox job, then stop claiming until cancel (no mid-frame pause):
+python3 -m pipeline.worker_drain request --wait
+python3 -m pipeline.worker_drain status
+python3 -m pipeline.worker_drain cancel
 ```
 
 ### Seed inbox (feedstock for the worker)
@@ -46,7 +50,7 @@ python3 -m pipeline.seed_inbox --config configs/jellyflam3.yaml --mutate genomes
 
 ## Steps
 
-1. Take `.flam3` from inbox or `--once`
+1. Take `.flam3` from inbox or `--once` (inbox claim skips when drain is requested — [Worker drain](../USER_GUIDE_AND_RUNBOOK.md#worker-drain-pause-before-next-sheep))
 2. TV-optimize: 16:9 + Gold Sheep Lite quality + OkLCh palette
 3. Choose duration / nframes (fixed **23 s** default → **552** frames @ 24 fps). Frozen single-flame genomes skip rotate period-snap.
 4. If `is_orbit_frozen` and one `<flame>` and `render.still_loop_if_orbit_frozen` (default **true**): one Lite `flam3-render` still + ffmpeg loop of the chosen duration (no `sequence=` / `flam3-animate`). Else:
@@ -68,6 +72,7 @@ Default `render.max_cpus: 3` (leave 1 of 4 Pi cores free): `flam3-animate` `nthr
 | Artifact | Kind | Role |
 |---|---|---|
 | `pipeline/worker.py` | pipeline | Job queue: tax → TV-optimize → sequence → animate → encode → ingest |
+| `pipeline/worker_drain.py` | pipeline | Finish current job, then pause inbox claiming until cancel |
 | `pipeline/seed_inbox.py` | pipeline | Feed inbox (samples / archive / mutate / generate) |
 | `pipeline/job_recovery.py` | pipeline | Reclaim orphaned / superseded in-flight jobs |
 | `pipeline/tv_optimize.py` / `resize_genome.py` / `choose_duration.py` | pipeline | Size, Gold Sheep Lite, duration / nframes |

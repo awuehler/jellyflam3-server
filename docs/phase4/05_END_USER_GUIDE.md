@@ -35,6 +35,7 @@ Complements (does not replace):
 |---|---|
 | Check health | `./scripts/healthcheck.sh`; services; tip `git rev-parse` |
 | See idle-gate | `cat /var/lib/jellyflam3/idle_gate_status.json` |
+| Pause new renders | `python3 -m pipeline.worker_drain request --wait` then `cancel` to resume |
 | Play on Roku VoD | Settings IDs via `jellyfin_id_dump.py`; launch / deep link notes |
 | Enable screensaver | **VoD Settings first** on that Roku (writes `JellyFlam3` registry); then SS zip; Theme → Screensavers; fade/dwell only. SS always rotates (ignores `shuffleFlock`); Primary + Backdrop; no tuples; **1.0.9** wrap-refetch ([01](../phase3/01_SCREENSAVERS_AND_STILLS.md), [04](04_ROKU_PUBLISH.md), [USER_GUIDE flock mix](../USER_GUIDE_AND_RUNBOOK.md#flock-mix-shuffle-wrap)) |
 | Extract stills | Poster ingest / `backfill_posters`; operator `python3 -m pipeline.stills --dry-run` / `--limit N` |
@@ -54,6 +55,7 @@ Shipped in [USER_GUIDE_AND_RUNBOOK.md — Worked examples](../USER_GUIDE_AND_RUN
 2. Screensaver evening: sideload SS → Theme select → confirm gate stays open.
 3. Two Rokus, one Pi: Fetch TV display on both → two profile files → independent prefs.
 4. Peer receive: land in `peers/inbox` → verify → promote → furnace picks up.
+5. Pause the furnace: drain request --wait → optional restart → cancel.
 
 ### D — Triage cookbook
 
@@ -61,7 +63,7 @@ Symptom-oriented table (extend as lab learns):
 
 | Symptom | Checks | Likely fix |
 |---|---|---|
-| No new sheep appearing | Worker active? inbox count? gate open? | Open gate / fix worker / seed inbox |
+| No new sheep appearing | Worker active? inbox count? gate open? drain off? | Open gate / `worker_drain cancel` / fix worker / seed inbox |
 | Gate stuck closed | Jellyfin Sessions; VoD still Playing? | Stop playback; wait `idle_delay_sec` |
 | Blank screensaver | Empty `JellyFlam3` registry (SS never configured VoD on this box) | Sideload VoD → save Settings → re-sideload SS; then id dump / Primary+Backdrop |
 | Kodi SS missing brand-new sheep | Jellyfin shows item, but screensaver has not wrapped the shuffle yet | Wait for a full pass (0.2.9 wrap re-fetch) or exit screensaver / start a new idle session. Same wrap-once contract on VoD 1.0.31 and Roku SS 1.0.9 ([USER_GUIDE flock mix](../USER_GUIDE_AND_RUNBOOK.md#flock-mix-shuffle-wrap)) |

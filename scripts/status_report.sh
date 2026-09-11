@@ -80,6 +80,7 @@ def load_cfg() -> dict:
         ("frames_scratch", "/var/cache/jellyflam3/frames"),
         ("media_library", "/media/sheep"),
         ("status_file", "/var/lib/jellyflam3/idle_gate_status.json"),
+        ("worker_drain_file", "/var/lib/jellyflam3/worker_drain.json"),
     ):
         p = Path(paths.get(key) or default)
         if not p.is_absolute():
@@ -361,6 +362,22 @@ def idle_gate(cfg: dict) -> dict | None:
         return {"error": str(exc)}
 
 
+def worker_drain_block(cfg: dict) -> dict:
+    """Drain flag + in-flight jobs (pause-before-next-inbox)."""
+    try:
+        from pipeline.worker_drain import status_payload
+    except Exception as exc:
+        return {"error": str(exc), "drain": False, "phase": "off"}
+    use = dict(cfg)
+    use["_repo_root"] = str(ROOT)
+    resolved = {k: str(v) for k, v in (cfg.get("_paths") or {}).items()}
+    use["paths"] = {**(cfg.get("paths") or {}), **resolved}
+    try:
+        return status_payload(use)
+    except Exception as exc:
+        return {"error": str(exc), "drain": False, "phase": "off"}
+
+
 def _library_disk_block(cfg: dict) -> dict:
     """WARN/BAD classification for sheep (and scratch) mounts — guide 06 slice."""
     try:
@@ -396,6 +413,7 @@ def build_report() -> dict:
         "library_disk": _library_disk_block(cfg),
         "services": services(),
         "idle_gate": idle_gate(cfg),
+        "worker_drain": worker_drain_block(cfg),
         "peering": peering_status(),
         "sheep": sheep_stats(cfg),
         "top_cpu": top_procs(12),
@@ -476,6 +494,16 @@ def print_human(r: dict) -> None:
         )
     else:
         print("status file missing")
+    drain = r.get("worker_drain") or {}
+    print()
+    print("== worker drain ==")
+    print(
+        f"drain={drain.get('drain')} phase={drain.get('phase')} "
+        f"in_flight={len(drain.get('in_flight') or [])} "
+        f"inbox_pending={drain.get('inbox_pending')}"
+    )
+    if drain.get("drain"):
+        print("resume: python3 -m pipeline.worker_drain cancel")
     peer = r.get("peering") or {}
     print()
     print("== peering ==")

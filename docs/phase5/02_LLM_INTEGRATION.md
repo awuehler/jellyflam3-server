@@ -84,7 +84,7 @@ Do **not** implement cloud-API pedigree **on the Pi** as a substitute for B.
 |---|---|---|---|
 | **Shears** | Propose audit/sweep/delete list | Cascade delete without `DELETE` **on A** | [phase3/03](../phase3/03_SHEEP_SHEARS.md) |
 | **Refactor** | Map “grey / muddy / frozen orbit” to pathways | `APPLY` without token on A | [phase3/09](../phase3/09_SHEEP_REFACTOR.md) |
-| **Idle-gate / drain** | Explain A’s `idle_gate_status.json` | Restart worker on A; fake Sessions | [phase1/06](../phase1/06_IDLE_GATE.md) |
+| **Idle-gate / drain** | Explain A’s `idle_gate_status.json` and `worker_drain status` | Restart worker on A; fake Sessions; cancel drain without operator | [phase1/06](../phase1/06_IDLE_GATE.md), [phase4/00](../phase4/00_OVERVIEW.md#furnace-polish-shipped-drain) |
 | **Library disk** | Read A’s `library_disk check` | Auto-purge (parked in 06) | [phase4/06](../phase4/06_LIBRARY_DISK_ROTATE.md) |
 | **Share / promote** | Flag candidates after 08 | Bypass Opt Out / tax / Ed25519 on A | [phase4/01](../phase4/01_PEER_SHARE_PATH.md) |
 | **Display profiles** | Read A’s TV probe JSON | Auto-escalate 4K | [phase2/04](../phase2/04_ROKU_CHANNEL_POLISH.md) |

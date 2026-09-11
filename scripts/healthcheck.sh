@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Purpose: Quick pass/fail ops check for mounts, library disk, systemd units, peering, idle gate, tools, and inbox.
+# Purpose: Quick pass/fail ops check for mounts, library disk, systemd units, peering, idle gate, worker drain, tools, and inbox.
 # Requirements: bash, systemctl (optional), python3, PyYAML; vcgencmd optional (Pi).
 #          flam3-genome/animate + ffmpeg/ffprobe on PATH (this script prepends /usr/local/bin).
 #
@@ -128,6 +128,24 @@ if [[ -f "$STATUS" ]]; then
 else
   echo "status file missing: $STATUS"
   ERR=1
+fi
+
+echo "== worker drain =="
+set +e
+drain_json=$(python3 -m pipeline.worker_drain status --config "$CFG" 2>/dev/null)
+drain_rc=$?
+set -e
+if [[ "$drain_rc" -ne 0 || -z "$drain_json" ]]; then
+  echo "WARN worker drain status unavailable"
+else
+  echo "$drain_json"
+  drain_on=$(printf '%s' "$drain_json" | python3 -c "import json,sys; print(json.load(sys.stdin).get('drain'))")
+  drain_phase=$(printf '%s' "$drain_json" | python3 -c "import json,sys; print(json.load(sys.stdin).get('phase'))")
+  if [[ "$drain_on" == "True" ]]; then
+    echo "WARN worker drain $drain_phase — not claiming inbox until: python3 -m pipeline.worker_drain cancel"
+  else
+    echo "OK worker drain off"
+  fi
 fi
 
 echo "== tools =="

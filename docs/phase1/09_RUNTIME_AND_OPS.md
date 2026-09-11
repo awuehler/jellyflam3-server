@@ -48,6 +48,10 @@ python3 -m pipeline.media_layout --config configs/jellyflam3.yaml
 ./scripts/perf_healthcheck.sh --quick
 ./scripts/status_report.sh            # load, flock/inbox, thermals, top procs snapshot
 ./scripts/status_report.sh --json     # same report as JSON
+
+# Finish the current sheep, then pause claiming (safe restart / quiet house)
+python3 -m pipeline.worker_drain request --wait
+python3 -m pipeline.worker_drain cancel   # resume; no worker restart
 ```
 
 Validated on `rpi-jellyflam3-16a` (formerly lab `rpi-jellyflam3-01`; 2026-07-28 / reboot 2026-07-28 19:47 PDT):
@@ -68,6 +72,7 @@ Validated on `rpi-jellyflam3-16a` (formerly lab `rpi-jellyflam3-01`; 2026-07-28 
 | `scripts/healthcheck.sh` | script | Mounts, library disk, units, idle-gate, tools |
 | `scripts/perf_healthcheck.sh` | script | Thermals + disk microbench |
 | `scripts/status_report.sh` | script | Load, flock/inbox, top-procs snapshot |
+| `pipeline/worker_drain.py` | pipeline | Drain flag: finish current job, pause next claim |
 | `scripts/ensure_exec_bits.sh` | script | Maintain git `100755` on CLI tools |
 | `pipeline/media_layout.py` | pipeline | Catalog perms on worker start / ops |
 | `/opt/jellyflam3-server` | deploy | Canonical install symlink / WorkingDirectory |

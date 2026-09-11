@@ -42,6 +42,7 @@ Phase 1 is complete when all exit criteria in guides 01–10 pass, including:
 | Artifact | Kind | Role |
 |---|---|---|
 | `pipeline/worker.py` | pipeline | Furnace CLI — genome → catalog MP4 |
+| `pipeline/worker_drain.py` | pipeline | Finish current job, pause next inbox claim |
 | `pipeline/seed_inbox.py` | pipeline | Stage `.flam3` feedstock into inbox |
 | `pipeline/idle_gate.py` | pipeline | TV-playback CPU isolation supervisor |
 | `pipeline/media_layout.py` | pipeline | Catalog dir/file perms for Jellyfin |

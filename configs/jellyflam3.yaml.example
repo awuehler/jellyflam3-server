@@ -16,6 +16,9 @@ paths:
   # Jellyfin Rework Poster / Refactor previews library → that folder only.
   template: configs/templates/electricsheep.tv.1080p.flam3
   status_file: /var/lib/jellyflam3/idle_gate_status.json
+  # Pause-before-next-inbox (furnace polish). Missing key → file beside status_file.
+  # python3 -m pipeline.worker_drain request|status|wait|cancel
+  worker_drain_file: /var/lib/jellyflam3/worker_drain.json
   log_dir: /var/lib/jellyflam3/logs
   # Guide 04 F: one JSON file per TV/screen (Roku sticks/TVs, Kodi, …)
   display_profiles: /var/lib/jellyflam3/display_profiles
@@ -167,7 +170,9 @@ render:
   supersample: 2
   temporal_filter_width: 1.2
 
-# Worker reclaim of crashed mid-render jobs (see pipeline/job_recovery.py)
+# Worker reclaim of crashed mid-render jobs (see pipeline/job_recovery.py).
+# Drain (python3 -m pipeline.worker_drain) is a flag file, not a yaml toggle:
+# finish the current job, then do not claim the next until cancel.
 worker:
   reclaim_orphans_on_start: true
   requeue_orphans: true
