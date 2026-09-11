@@ -57,7 +57,7 @@ Video screensaver add-on **JellyFlam3 Dreams** (`screensaver.jellyflam3`) — pl
 4. **Configure Jellyfin** — if the zip was built on a furnace Pi (`package_kodi_screensaver.*`), defaults are already in the add-on settings. Otherwise open **Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → Configure** and paste Jellyfin URL, API key, user id, library id (operator runs `jellyfin_id_dump.py` on the furnace Pi).
 5. Set screensaver wait time (e.g. **1 minute** for testing), then wait or use **Activate screensaver**.
 
-**Everyday use:** leave Kodi idle; any keypress exits the screensaver (Kodi default). When flock is configured, sheep MP4s shuffle; if Jellyfin is unreachable, you see a short hint on black (no test-pattern video). The flock list is loaded **once per screensaver session** — after a new sheep lands in Jellyfin, exit idle and let the screensaver start again (or wait for the next natural idle). Optional mid-session **long-interval** refresh (hours / wrap) is still Phase 4 polish. If a sheep is **quarantined** while idle is running, 0.2.7 drops that id, re-polls Jellyfin (rate-limited), and continues with a remaining loop.
+**Everyday use:** leave Kodi idle; any keypress exits the screensaver (Kodi default). When flock is configured, sheep MP4s shuffle; if Jellyfin is unreachable, you see a short hint on black (no test-pattern video). After a **full shuffle wrap**, 0.2.9 re-fetches Jellyfin (randomly cap 313) so overnight ingest appears without exiting. If a sheep is **quarantined** while idle is running, 0.2.7 drops that id, re-polls Jellyfin (rate-limited), and continues with a remaining loop.
 
 **Upgrade (on the TV, no PC):** if the operator already dropped a new zip into Downloads, Kodi → **Add-ons → Install from zip file** → select the new `screensaver.jellyflam3.zip`. Jellyfin settings in add-on **Configure** are kept (`addon_data`).
 
@@ -773,7 +773,7 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 | Offline peering (Opt In, no sync) | `healthcheck`: `BAD share not live`; `peering status` → `share_live: false` | `opt-in` with `TS_AUTHKEY` + Syncthing up, or `opt-out` |
 | Peering stuck (live mesh) | `peering status`; inbox under `peers/inbox` | `promote --apply`; trust keys; share-security verify |
 | Bad palette / encode | `refactor scan` | preview → apply pathway |
-| Black / error after quarantine | Item gone from disk/Jellyfin; client still has old flock list | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id and re-poll (30s rate limit). Sideload/install those packages; overnight new-sheep pickup still needs a new session ([phase4/00](phase4/00_OVERVIEW.md#client-polish-parked--not-numbered)) |
+| Black / error after quarantine | Item gone from disk/Jellyfin; client still has old flock list | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id and re-poll (30s rate limit). Sideload/install those packages. Overnight new-sheep pickup is wrap-once re-fetch (VoD 1.0.31 / Roku SS 1.0.9 / Kodi SS 0.2.9) — [phase4/00](phase4/00_OVERVIEW.md#client-polish-shipped-wrap-once-refresh) |
 | Playback stutters / several TVs | `python3 -m pipeline.link_capacity estimate`; WiFi STA furnace? | Ethernet for the Pi; Direct Play; stay at/under `N_max` |
 | Wipe everything local | — | `hammer --dry-run` then `--confirm HAMMER` (not Shears) |
 

@@ -123,7 +123,7 @@ Settings `shuffleFlock` is always `true` as of channel **1.0.30** (leftover `fal
   - **Include** `by-generation/pedigree/` and `by-generation/tuple/` (channel 1.0.28).
   - Still respects `commercialMode` on the list fetch.
 - Back exits player and clears the shuffle round.
-- Mid-session **quarantine / Shears delete** can 404 the next shuffle pick; VoD **1.0.29** drops the dead id, re-polls Jellyfin (30s rate limit), and continues (MP4 and HLS). Same contract on Roku SS 1.0.8 and Kodi SS 0.2.7.
+- Mid-session **quarantine / Shears delete** can 404 the next shuffle pick; VoD **1.0.29** drops the dead id, re-polls Jellyfin (30s rate limit), and continues (MP4 and HLS). Same contract on Roku SS 1.0.8 and Kodi SS 0.2.7. After a **full shuffle wrap**, VoD **1.0.31** re-fetches the flock (Limit 5000, randomly prune to 313) so overnight ingest appears without exiting ambient.
 
 ## Future improvements (not pieces E–F)
 

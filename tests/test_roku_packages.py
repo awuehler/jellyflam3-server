@@ -65,8 +65,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=30" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.30""' in text
+    assert "build_version=31" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.31""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
@@ -75,9 +75,17 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "if tl = \"\" then return true" in home
     assert "sub onPlaybackFailed()" in home
     assert "sub maybeRepollFlock()" in home
+    assert "sub maybeWrapRefetchFlock()" in home
+    assert "sub rotateQueuePast(lastId as string)" in home
+    assert "sub startFlockRepoll(force as boolean)" in home
     assert "sub dropItemFromFlock(deadId as string)" in home
     assert "function flockRepollMinSec() as integer" in home
     assert "return 30" in home
+    assert "function flockIndexCap() as integer" in text
+    assert "return 313" in text
+    assert "function flockFetchLimit() as integer" in text
+    assert "return 5000" in text
+    assert "function pruneToCap(src as object, cap as integer)" in text
     player = (VOD / "components" / "PlayerScreen.brs").read_text(encoding="utf-8")
     assert "sub signalPlaybackFailed()" in player
     assert "m.top.playbackFailed = true" in player
@@ -92,6 +100,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "shuffleCopy" in ss
     assert "handleStillFailed" in ss
     assert "maybeRepollStills" in ss
+    assert "maybeWrapRefetchStills" in ss
+    assert "rotateUrlsPast" in ss
     assert "function flockRepollMinSec() as integer" in ss
     ss_reg = (SS / "components" / "RegistryPresets.brs").read_text(encoding="utf-8")
     assert 'reg.write("shuffleFlock"' not in ss_reg
@@ -108,5 +118,8 @@ def test_roku_screensaver_expands_nested_library_folders():
     assert "isCommercialSafe" in text
     assert 'write("shuffleFlock"' not in text
     assert "shuffleCopy" in text
-    assert "build_version=8" in (SS / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.8""' in text
+    assert "pruneToCap" in text
+    assert "flockIndexCap" in text
+    assert "flockFetchLimit" in text
+    assert "build_version=9" in (SS / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.9""' in text

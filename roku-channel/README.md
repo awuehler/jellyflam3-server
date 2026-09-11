@@ -11,7 +11,7 @@ Sideloadable SceneGraph channel that lists sheep from Jellyfin with **poster til
 
 Roku VOD **cannot gapless-loop** HTTP MP4/HLS with the Video node (`Video.loop` still rebuffers). Channel uses seek-before-EOF; residual hitch is accepted for now. Do **not** use `master.m3u8` on Jellyfin 10.11.
 
-If a sheep is quarantined or Shears-deleted while a clip is queued, **1.0.29+** drops that id after HLS↔MP4 fallback fails, re-polls the flock (30s rate limit), and continues. A failed open does not POST Playing. **1.0.30** always persists `shuffleFlock=true` so an upgrade cannot leave the TV looping one sheep.
+If a sheep is quarantined or Shears-deleted while a clip is queued, **1.0.29+** drops that id after HLS↔MP4 fallback fails, re-polls the flock (30s rate limit), and continues. A failed open does not POST Playing. **1.0.30** always persists `shuffleFlock=true` so an upgrade cannot leave the TV looping one sheep. **1.0.31** re-fetches Jellyfin once per full shuffle wrap (HTTP Limit 5000, randomly prune to 313) so overnight ingest appears without exiting ambient.
 
 ## Settings version
 

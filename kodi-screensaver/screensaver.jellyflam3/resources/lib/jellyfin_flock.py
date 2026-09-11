@@ -20,8 +20,12 @@ from typing import Any
 CLIENT_NAME = "JellyFlam3-Screensaver"
 CLIENT_DEVICE = "Kodi"
 CLIENT_DEVICE_ID = "jellyflam3-kodi-ss"
-CLIENT_VERSION = "0.2.8"
+CLIENT_VERSION = "0.2.9"
 FLOCK_REPOLL_MIN_SEC = 30.0
+# In-memory session list after a random prune. HTTP fetch is larger so the
+# sample is not Jellyfin's first-N sort.
+FLOCK_INDEX_CAP = 313
+FLOCK_FETCH_LIMIT = 5000
 
 
 def trim_slash(url: str) -> str:
@@ -85,19 +89,27 @@ def fetch_flock(
     user_id: str,
     library_id: str = "",
     commercial_mode: bool = False,
-    limit: int = 200,
+    limit: int = FLOCK_INDEX_CAP,
+    fetch_limit: int | None = None,
     timeout: float = 20.0,
 ) -> list[dict[str, str]]:
-    """Return playable sheep dicts: id, title, url (Static MP4)."""
+    """Return playable sheep dicts: id, title, url (Static MP4).
+
+    ``fetch_limit`` is the Jellyfin Items cap (default 5000). After merge and
+    commercial filter, randomly prune to ``limit`` (default 313).
+    """
     base = trim_slash(base_url)
     if not base or not api_key or not user_id:
         raise ValueError("server_url, api_key, and user_id are required")
+    http_limit = int(fetch_limit if fetch_limit is not None else FLOCK_FETCH_LIMIT)
+    if http_limit < 1:
+        http_limit = FLOCK_FETCH_LIMIT
 
     q: dict[str, str] = {
         "IncludeItemTypes": "Movie,Video",
         "Recursive": "true",
         "Fields": "Overview,Tags,RunTimeTicks,Path,Name",
-        "Limit": str(int(limit)),
+        "Limit": str(http_limit),
     }
     if library_id:
         q["ParentId"] = library_id
@@ -135,7 +147,7 @@ def fetch_flock(
             fid = folder.get("Id") or ""
             if not fid:
                 continue
-            remain = max(1, int(limit) - len(merged))
+            remain = max(1, http_limit - len(merged))
             cq = dict(q)
             cq["ParentId"] = fid
             cq["Limit"] = str(remain)
@@ -150,12 +162,12 @@ def fetch_flock(
                     continue
                 seen.add(iid)
                 merged.append(it)
-                if len(merged) >= int(limit):
+                if len(merged) >= http_limit:
                     break
-            if len(merged) >= int(limit):
+            if len(merged) >= http_limit:
                 break
         for it in raw:
-            if len(merged) >= int(limit):
+            if len(merged) >= http_limit:
                 break
             iid = it.get("Id") or ""
             if not iid or iid in seen:
@@ -177,12 +189,42 @@ def fetch_flock(
                 "url": mp4_stream_url(base, item_id, api_key),
             }
         )
-    return out
+    return prune_to_cap(out, int(limit))
+
+
+def prune_to_cap(
+    items: list[dict[str, str]],
+    cap: int = FLOCK_INDEX_CAP,
+    rng: random.Random | None = None,
+) -> list[dict[str, str]]:
+    """Random sample down to ``cap`` when Jellyfin returned a larger flock."""
+    bag = list(items)
+    n = max(0, int(cap))
+    if n <= 0 or len(bag) <= n:
+        return bag
+    (rng or random).shuffle(bag)
+    return bag[:n]
 
 
 def shuffle_copy(items: list[dict[str, str]], rng: random.Random | None = None) -> list[dict[str, str]]:
     bag = list(items)
     (rng or random).shuffle(bag)
+    return bag
+
+
+def rotate_past(items: list[dict[str, str]], item_id: str) -> list[dict[str, str]]:
+    """Keep a full permutation; rotate so the last-played id is not first.
+
+    Avoids a wrap-seam repeat without dropping the sheep from the new round.
+    """
+    bag = list(items)
+    last = (item_id or "").strip()
+    if not last or len(bag) < 2:
+        return bag
+    for _ in range(len(bag)):
+        if (bag[0].get("id") or "") != last:
+            return bag
+        bag.append(bag.pop(0))
     return bag
 
 

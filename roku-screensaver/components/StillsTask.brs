@@ -21,7 +21,7 @@ function trimSlash(base as string) as string
 end function
 
 function authHeader() as string
-  return "MediaBrowser Client=""JellyFlam3-Screensaver"", Device=""Roku"", DeviceId=""jellyflam3-screensaver"", Version=""1.0.8"", Token=""" + m.top.apiKey + """"
+  return "MediaBrowser Client=""JellyFlam3-Screensaver"", Device=""Roku"", DeviceId=""jellyflam3-screensaver"", Version=""1.0.9"", Token=""" + m.top.apiKey + """"
 end function
 
 function commercialModeOn() as boolean
@@ -210,19 +210,42 @@ function shuffleCopy(src as object) as object
   return bag
 end function
 
+function flockIndexCap() as integer
+  return 313
+end function
+
+function flockFetchLimit() as integer
+  return 5000
+end function
+
+function pruneToCap(src as object, cap as integer) as object
+  out = []
+  if src = invalid then return out
+  bag = shuffleCopy(src)
+  n = bag.count()
+  if n <= cap then return bag
+  i = 0
+  while i < cap
+    out.push(bag[i])
+    i = i + 1
+  end while
+  return out
+end function
+
 function fetchArtworkUrls() as object
   base = trimSlash(m.top.baseUrl)
   if base = "" then return { urls: [], error: "missing baseUrl" }
   libId = m.top.libraryId
   if libId = invalid or libId = "" then return { urls: [], error: "missing libraryId" }
-  limit = 200
-  fetched = fetchRawStillsItems(base, libId, limit)
+  fetchLimit = flockFetchLimit()
+  fetched = fetchRawStillsItems(base, libId, fetchLimit)
   if fetched.error <> invalid
     return { urls: [], error: fetched.error }
   end if
   raw = fetched.items
-  nested = fetchStillsViaChildFolders(base, libId, limit)
-  raw = mergeStillsById(nested, raw, limit)
-  urls = shuffleCopy(artworkUrlsFromItems(base, raw))
+  nested = fetchStillsViaChildFolders(base, libId, fetchLimit)
+  raw = mergeStillsById(nested, raw, fetchLimit)
+  urls = pruneToCap(artworkUrlsFromItems(base, raw), flockIndexCap())
+  urls = shuffleCopy(urls)
   return { urls: urls, count: urls.count() }
 end function

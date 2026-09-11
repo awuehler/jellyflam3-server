@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import random
 from pathlib import Path
 from unittest.mock import patch
 
@@ -42,9 +43,10 @@ def test_fetch_flock_maps_mp4(monkeypatch):
             {"Id": "bb", "Name": "nc-sheep", "Tags": ["cc-by-nc"]},
         ]
     }
-    seen = {}
+    seen = {"urls": []}
 
     def fake_get(url, api_key, timeout=20.0):
+        seen["urls"].append(url)
         seen["url"] = url
         assert "Users/u1/Items" in url
         if "IncludeItemTypes=Folder" in url:
@@ -66,7 +68,10 @@ def test_fetch_flock_maps_mp4(monkeypatch):
     assert items[0]["id"] == "aa"
     assert "stream.mp4" in items[0]["url"]
     assert items[0]["title"] == "electricsheep.247.001"
-    assert "Tags=" not in seen["url"]
+    video_urls = [u for u in seen["urls"] if "IncludeItemTypes=Movie" in u]
+    assert video_urls
+    assert all("Tags=" not in u for u in video_urls)
+    assert all("Limit=5000" in u for u in video_urls)
 
 
 def test_fetch_flock_expands_child_folders(monkeypatch):
@@ -150,7 +155,9 @@ def test_drop_item_and_repoll_rate_limit():
     assert jf.should_repoll_flock(90.0, 100.0, min_sec=30.0) is False
     assert jf.should_repoll_flock(60.0, 100.0, min_sec=30.0) is True
     assert jf.FLOCK_REPOLL_MIN_SEC == 30.0
-    assert jf.CLIENT_VERSION == "0.2.8"
+    assert jf.CLIENT_VERSION == "0.2.9"
+    assert jf.FLOCK_INDEX_CAP == 313
+    assert jf.FLOCK_FETCH_LIMIT == 5000
     h = jf.auth_header("secret")
     assert 'Client="JellyFlam3-Screensaver"' in h
     assert "Token=\"secret\"" in h
@@ -172,7 +179,60 @@ def test_screensaver_package_mentions_flock():
     assert 'id="api_key"' in settings
     assert 'id="shuffle"' in settings
     assert 'default="true"' in settings
+    assert 'id="flock_limit"' in settings
+    assert 'default="313"' in settings
     assert "_shuffle_enabled" in text
     assert "_ensure_shuffle_on" in text
     assert 'setSetting("shuffle", "true")' in text
     assert 'getSetting("shuffle")' in text
+    assert "flock wrap refetch" in text
+    assert "rotate_past" in text
+
+
+def test_rotate_past_avoids_wrap_seam_repeat():
+    items = [{"id": "aa"}, {"id": "bb"}, {"id": "cc"}]
+    assert [i["id"] for i in jf.rotate_past(items, "zz")] == ["aa", "bb", "cc"]
+    rotated = jf.rotate_past(items, "aa")
+    assert rotated[0]["id"] != "aa"
+    assert {i["id"] for i in rotated} == {"aa", "bb", "cc"}
+    assert len(jf.rotate_past([{"id": "aa"}], "aa")) == 1
+
+
+def test_prune_to_cap_keeps_small_lists():
+    small = [{"id": "a"}, {"id": "b"}]
+    assert jf.prune_to_cap(small, cap=313) == small
+    assert jf.prune_to_cap([], cap=313) == []
+
+
+def test_prune_to_cap_samples_down_to_313():
+    items = [{"id": str(i)} for i in range(400)]
+    rng = random.Random(7)
+    out = jf.prune_to_cap(items, cap=313, rng=rng)
+    assert len(out) == 313
+    ids = {it["id"] for it in out}
+    assert ids <= {str(i) for i in range(400)}
+    again = jf.prune_to_cap(items, cap=313, rng=random.Random(7))
+    assert [it["id"] for it in again] == [it["id"] for it in out]
+
+
+def test_fetch_flock_prunes_after_merge(monkeypatch):
+    payload = {
+        "Items": [
+            {"Id": str(i), "Name": "sheep-%s" % i, "Tags": []} for i in range(400)
+        ]
+    }
+
+    def fake_get(url, api_key, timeout=20.0):
+        if "IncludeItemTypes=Folder" in url:
+            return {"Items": []}
+        return payload
+
+    monkeypatch.setattr(jf, "http_get_json", fake_get)
+    items = jf.fetch_flock(
+        base_url="http://jf:8096",
+        api_key="k",
+        user_id="u1",
+        library_id="lib1",
+    )
+    assert len(items) == 313
+    assert {it["id"] for it in items} <= {str(i) for i in range(400)}

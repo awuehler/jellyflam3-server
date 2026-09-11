@@ -33,7 +33,7 @@ end function
 
 function authHeader() as string
   ' Token in Authorization is what Jellyfin uses to bind Client/Device into /Sessions
-  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.30"", Token=""" + m.top.apiKey + """"
+  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.31"", Token=""" + m.top.apiKey + """"
 end function
 
 ' Lab-verified HLS remux path: prefer main.m3u8 + AudioCodec=aac.
@@ -176,6 +176,37 @@ function urlHost(url as string) as string
   return u
 end function
 
+function flockIndexCap() as integer
+  return 313
+end function
+
+function flockFetchLimit() as integer
+  return 5000
+end function
+
+function pruneToCap(src as object, cap as integer) as object
+  out = []
+  if src = invalid then return out
+  for each it in src
+    out.push(it)
+  end for
+  n = out.count()
+  if n <= cap then return out
+  for i = n - 1 to 1 step -1
+    j = Rnd(i + 1) - 1
+    tmp = out[i]
+    out[i] = out[j]
+    out[j] = tmp
+  end for
+  pruned = []
+  i = 0
+  while i < cap
+    pruned.push(out[i])
+    i = i + 1
+  end while
+  return pruned
+end function
+
 function flockItemFields() as string
   return "Overview,Tags,RunTimeTicks,PrimaryImageAspectRatio,ImageTags,Path"
 end function
@@ -262,11 +293,11 @@ function fetchList() as object
 
   registerSession(base)
 
-  limit = 200
+  fetchLimit = flockFetchLimit()
   libId = ""
   if m.top.libraryId <> invalid and m.top.libraryId <> "" then libId = m.top.libraryId
 
-  fetched = fetchRawItems(base, libId, limit)
+  fetched = fetchRawItems(base, libId, fetchLimit)
   if fetched.error <> invalid
     return { error: fetched.error, debugUrl: fetched.debugUrl }
   end if
@@ -274,8 +305,8 @@ function fetchList() as object
   ' Always walk child folders when libraryId is set — empty-only fallback misses
   ' partial flat hits (lab: 1 of 6 sheep under by-generation/).
   if libId <> ""
-    nested = fetchItemsViaChildFolders(base, libId, limit)
-    raw = mergeItemsById(nested, raw, limit)
+    nested = fetchItemsViaChildFolders(base, libId, fetchLimit)
+    raw = mergeItemsById(nested, raw, fetchLimit)
   end if
   ' Commercial filtering is client-side via isCommercialSafe() below.
 
@@ -287,6 +318,7 @@ function fetchList() as object
       items.push(mapItem(it, base))
     end if
   end for
+  items = pruneToCap(items, flockIndexCap())
   return { items: items, count: items.count() }
 end function
 

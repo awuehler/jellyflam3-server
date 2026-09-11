@@ -128,12 +128,22 @@ sub dropUrl(uri as string)
 end sub
 
 sub maybeRepollStills()
-  now = nowUnixSec()
-  if m.lastRepollSec <> invalid and m.lastRepollSec > 0 and (now - m.lastRepollSec) < flockRepollMinSec()
-    return
-  end if
+  startStillsRepoll(false)
+end sub
+
+sub maybeWrapRefetchStills()
+  startStillsRepoll(true)
+end sub
+
+sub startStillsRepoll(force as boolean)
   if m.repolling = true then return
-  m.lastRepollSec = now
+  if force <> true
+    now = nowUnixSec()
+    if m.lastRepollSec <> invalid and m.lastRepollSec > 0 and (now - m.lastRepollSec) < flockRepollMinSec()
+      return
+    end if
+    m.lastRepollSec = now
+  end if
   m.repolling = true
   t = CreateObject("roSGNode", "StillsTask")
   t.observeField("resultJson", "onRepollList")
@@ -237,12 +247,27 @@ function shuffleCopy(src as object) as object
   return bag
 end function
 
+sub rotateUrlsPast(lastUri as string)
+  if lastUri = invalid or lastUri = "" then return
+  if m.urls = invalid or m.urls.count() < 2 then return
+  n = m.urls.count()
+  i = 0
+  while i < n
+    if m.urls[0] <> lastUri then return
+    m.urls.push(m.urls.Shift())
+    i = i + 1
+  end while
+end sub
+
 sub onTick()
   if m.urls = invalid or m.urls.count() = 0 then return
   if m.busy then return
   m.index = m.index + 1
   if m.index >= m.urls.count()
+    lastUri = m.urls[m.urls.count() - 1]
+    if m.urls.count() > 1 then maybeWrapRefetchStills()
     m.urls = shuffleCopy(m.urls)
+    rotateUrlsPast(lastUri)
     m.index = 0
   end if
   nextUri = m.urls[m.index]

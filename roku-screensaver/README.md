@@ -29,6 +29,7 @@ If neither VoD Settings nor a furnace preset was ever applied on this Roku, the 
 - Entry: `RunScreenSaver()` / optional `RunScreenSaverSettings()`
 - **No** `Video` node, deep links, or Sessions/Playing reports (keeps idle-gate open)
 - Mid-session **404 / missing still:** drop that URL, re-poll StillsTask (30s rate limit), continue — never Video / Sessions
+- **Wrap-once re-fetch (1.0.9):** after a full stills shuffle wrap, re-run StillsTask (HTTP Limit 5000, randomly prune Primary+Backdrop URLs to 313). Skip if a fetch is already in flight. Single-URL lists do not wrap-refetch.
 - Screensaver options (same `JellyFlam3` section): `ssFade`, `ssDwellSec`, `ssFadeSec` — edit under **Change screensaver settings**
 
 ## Crossfade / dwell

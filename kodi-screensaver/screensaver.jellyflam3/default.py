@@ -106,9 +106,11 @@ def _load_flock():
     )
     shuffle = _shuffle_enabled()
     try:
-        limit = int(ADDON.getSetting("flock_limit") or "200")
+        limit = int(ADDON.getSetting("flock_limit") or str(jellyfin_flock.FLOCK_INDEX_CAP))
     except ValueError:
-        limit = 200
+        limit = jellyfin_flock.FLOCK_INDEX_CAP
+    if limit < 1:
+        limit = jellyfin_flock.FLOCK_INDEX_CAP
 
     if not (base and key and user):
         xbmc.log(
@@ -277,9 +279,19 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
             return
         self._index += 1
         if self._index >= len(self._flock):
-            if _shuffle_enabled():
+            last_id = self._flock[-1].get("id") or ""
+            if len(self._flock) > 1:
+                fresh = _load_flock()
+                if fresh:
+                    self._flock = fresh
+                    xbmc.log("%s: flock wrap refetch (%s item(s))" % (ADDON_ID, len(fresh)), xbmc.LOGINFO)
+                elif _shuffle_enabled():
+                    self._flock = jellyfin_flock.shuffle_copy(self._flock)
+                    xbmc.log("%s: flock reshuffled (wrap refetch empty)" % ADDON_ID, xbmc.LOGINFO)
+            elif _shuffle_enabled():
                 self._flock = jellyfin_flock.shuffle_copy(self._flock)
                 xbmc.log("%s: flock reshuffled" % ADDON_ID, xbmc.LOGINFO)
+            self._flock = jellyfin_flock.rotate_past(self._flock, last_id)
             self._index = 0
         self._play_current()
 

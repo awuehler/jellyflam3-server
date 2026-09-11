@@ -286,10 +286,32 @@ sub rebuildShuffleQueue(excludeId as string)
   m.shuffleQueue = shuffleCopy(eligible)
 end sub
 
+' Full new permutation stays intact; rotate so last-played is not first.
+sub rotateQueuePast(lastId as string)
+  if lastId = invalid or lastId = "" then return
+  if m.shuffleQueue = invalid or m.shuffleQueue.count() < 2 then return
+  n = m.shuffleQueue.count()
+  i = 0
+  while i < n
+    first = m.shuffleQueue[0]
+    fid = ""
+    if first <> invalid and first.id <> invalid then fid = first.id
+    if fid <> lastId then return
+    m.shuffleQueue.push(m.shuffleQueue.Shift())
+    i = i + 1
+  end while
+end sub
+
 function takeNextShuffleItem() as object
   if m.shuffleQueue = invalid then m.shuffleQueue = []
   if m.shuffleQueue.count() = 0
+    ' Full shuffle wrap: kick a Jellyfin re-fetch (skip 30s 404 gate). Keep
+    ' cycling the current in-memory list until the Task replaces m.items.
+    if countArchiveEligible() > 1 then maybeWrapRefetchFlock()
+    lastId = ""
+    if m.currentPlayId <> invalid then lastId = m.currentPlayId
     rebuildShuffleQueue("")
+    rotateQueuePast(lastId)
   end if
   if m.shuffleQueue.count() = 0 then return invalid
   return m.shuffleQueue.Shift()
@@ -351,12 +373,22 @@ function takeNextRemainingItem() as object
 end function
 
 sub maybeRepollFlock()
-  now = nowUnixSec()
-  if m.lastRepollSec <> invalid and m.lastRepollSec > 0 and (now - m.lastRepollSec) < flockRepollMinSec()
-    return
-  end if
+  startFlockRepoll(false)
+end sub
+
+sub maybeWrapRefetchFlock()
+  startFlockRepoll(true)
+end sub
+
+sub startFlockRepoll(force as boolean)
   if m.repollTask <> invalid then return
-  m.lastRepollSec = now
+  if force <> true
+    now = nowUnixSec()
+    if m.lastRepollSec <> invalid and m.lastRepollSec > 0 and (now - m.lastRepollSec) < flockRepollMinSec()
+      return
+    end if
+    m.lastRepollSec = now
+  end if
   t = createObject("roSGNode", "JellyfinTask")
   t.observeField("resultJson", "onRepollResult")
   t.baseUrl = m.registry.read("baseUrl")
