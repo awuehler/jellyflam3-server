@@ -29,13 +29,13 @@ You do **not** need the Pi terminal for normal viewing. Printable one-pager: [FR
 2. **Furnace-built zips are pre-configured:** when packaged on a Pi with `secrets.env`, the zip includes that furnace’s Jellyfin URL, API key, user id, and library id. Launch the channel — credentials apply on first run if the registry is empty; the flock list should load without manual paste.
 3. **Otherwise** (Windows packaging host or empty registry): open the channel → **Settings** → enter Jellyfin connection values. An operator runs `python3 scripts/jellyfin_id_dump.py` on the Pi and gives you `baseUrl`, `apiKey`, `userId`, `libraryId` (never share the API key in chat/email — paste on the TV only) → save Settings.
 
-**Everyday use:** launch JellyFlam3 → pick a sheep → ambient loop plays. With **shuffle** on (channel 1.0.28+), the mix includes archive gens plus **pedigree** and **tuple** folders. A **tuple** is one longer clip: sheep A, then a morph into sheep B. During that middle morph only, a quiet mark sits in the lower-right corner (the Electric Sheep logo PNG on the default private furnace; your own PNG if the operator set one; or the credit “artwork by Scott Draves and the Electric Sheep” on a commercial-safe furnace that still uses the Cesari file). Loops A and B have no mark. That mark is **not** a license to post the clip as official Electric Sheep — operators, see [Private vs public furnace](#private-vs-public-furnace) and [Use your own PNG](#use-your-own-png-private-and-public). When you press **Play**, the Pi **stops rendering** new sheep until the TV has been idle for several minutes (see [idle gate](#idle-gate-behavior) below).
+**Everyday use:** launch JellyFlam3 → pick a sheep → ambient loop plays. Shuffle is always on (channel **1.0.30+**): archive gens plus **pedigree** and **tuple**. After a full mix, **1.0.31** asks Jellyfin again so overnight ingest can appear without leaving the player ([Flock mix](#flock-mix-shuffle-wrap)). A **tuple** is one longer clip: sheep A, then a morph into sheep B. During that middle morph only, a quiet mark sits in the lower-right corner (the Electric Sheep logo PNG on the default private furnace; your own PNG if the operator set one; or the credit “artwork by Scott Draves and the Electric Sheep” on a commercial-safe furnace that still uses the Cesari file). Loops A and B have no mark. That mark is **not** a license to post the clip as official Electric Sheep — operators, see [Private vs public furnace](#private-vs-public-furnace) and [Use your own PNG](#use-your-own-png-private-and-public). When you press **Play**, the Pi **stops rendering** new sheep until the TV has been idle for several minutes (see [idle gate](#idle-gate-behavior) below).
 
 **Deep link smoke (optional):** after an operator dumps item Guids (`jellyfin_id_dump.py --items`), a specific sheep can be launched with `contentId=<Guid>` via the Roku ECP port (developer mode).
 
 ### Roku Screensaver / Backdrop
 
-The screensaver is a **separate sideload package** (`jellyflam3-screensaver.zip`). It shows **Jellyfin Primary posters and Backdrop stills** from every library folder except `tuple` — no video node (Roku policy). It always rotates (ignores VoD `shuffleFlock`) and honors the same `commercialMode` Tag filter as VoD.
+The screensaver is a **separate sideload package** (`jellyflam3-screensaver.zip`). It shows **Jellyfin Primary posters and Backdrop stills** from every library folder except `tuple` — no video node (Roku policy). It always rotates (ignores VoD `shuffleFlock`) and honors the same `commercialMode` Tag filter as VoD. Package **1.0.9** re-fetches stills after a full mix ([Flock mix](#flock-mix-shuffle-wrap)).
 
 **Credentials:** Screensaver **reads** the same `JellyFlam3` registry keys as VoD. A **furnace-built** screensaver zip also ships `registry/jellyflam3-presets.json` and applies the same Jellyfin values on first run when keys are empty. Otherwise install VoD on that Roku **first** and save Settings once (or paste manually in VoD Settings). Screensaver Settings only adjusts fade/dwell — it has no credential editors.
 
@@ -57,17 +57,39 @@ Video screensaver add-on **JellyFlam3 Dreams** (`screensaver.jellyflam3`) — pl
 4. **Configure Jellyfin** — if the zip was built on a furnace Pi (`package_kodi_screensaver.*`), defaults are already in the add-on settings. Otherwise open **Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → Configure** and paste Jellyfin URL, API key, user id, library id (operator runs `jellyfin_id_dump.py` on the furnace Pi).
 5. Set screensaver wait time (e.g. **1 minute** for testing), then wait or use **Activate screensaver**.
 
-**Everyday use:** leave Kodi idle; any keypress exits the screensaver (Kodi default). When flock is configured, sheep MP4s shuffle; if Jellyfin is unreachable, you see a short hint on black (no test-pattern video). After a **full shuffle wrap**, 0.2.9 re-fetches Jellyfin (randomly cap 313) so overnight ingest appears without exiting. If a sheep is **quarantined** while idle is running, 0.2.7 drops that id, re-polls Jellyfin (rate-limited), and continues with a remaining loop.
+**Everyday use:** leave Kodi idle; any keypress exits the screensaver (Kodi default). When flock is configured, sheep MP4s shuffle; if Jellyfin is unreachable, you see a short hint on black (no test-pattern video). Package **0.2.9** re-fetches after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). If a sheep is **quarantined** while idle is running, 0.2.7 drops that id, re-polls Jellyfin (rate-limited), and continues with a remaining loop.
 
 **Upgrade (on the TV, no PC):** if the operator already dropped a new zip into Downloads, Kodi → **Add-ons → Install from zip file** → select the new `screensaver.jellyflam3.zip`. Jellyfin settings in add-on **Configure** are kept (`addon_data`).
 
 **While screensaver runs:** furnace idle gate should stay **open** (Client=`JellyFlam3-Screensaver` is ignored). Operator verifies on the Pi: `cat /var/lib/jellyflam3/idle_gate_status.json`.
+
+### Flock mix (shuffle wrap)
+
+VoD **1.0.31**, Roku screensaver **1.0.9**, and Kodi **0.2.9** all play a **random mix** of the current catalog (need those packages on the device):
+
+- One **pass** is a shuffled list: each sheep (VoD / Kodi) or still URL (Roku SS) appears **once**.
+- When that list finishes (**wrap**), the client asks Jellyfin again and builds a new random mix. Overnight ingest can appear without exiting the session.
+- The clip or still that just finished is not the first item of the new mix (a one-item library still loops that one item).
+- The session list is capped at **313** (a random sample if Jellyfin returned more). Kodi’s **Max items in session** setting is that cap (default 313). An older Kodi install that still stores `200` keeps 200 until you raise it in Configure.
+
+VoD plays each mixed sheep **once** per pass, then wraps. Using live catalog `duration_sec` on 2026-09-10 (sidecars next to `/media/sheep/by-generation/` MP4s; not quarantine/preview):
+
+| Furnace | Sheep in catalog | Average loop | One 313-sheep mix |
+|---|---:|---:|---|
+| **16a** | 10 | 36 s | **3 h 9 min** |
+| **08a** | 15 | 33 s | **2 h 51 min** |
+| **04a** | 16 | 22 s | **1 h 55 min** |
+
+Until a furnace has 313 eligible sheep, a wrap happens after the whole catalog (~6–8 min on these counts). Shorter 04a loops follow that host’s compact duration band. Roku screensaver is stills (default dwell 12 s), not this table.
+
+If a sheep disappears mid-session (quarantine / Shears), the client **drops that id** and continues (30s re-poll). That is separate from wrap.
 
 ### What to expect
 
 | Expectation | Reality |
 |---|---|
 | New sheep appear quickly | **No** — each MP4 can take hours to days on a Pi |
+| Overnight sheep while idle | **Yes** after a full mix (VoD 1.0.31 / Roku SS 1.0.9 / Kodi 0.2.9). Older packages wait for a new session |
 | Gate closes while you watch | **Yes** — by design; furnace waits for idle |
 | Screensaver shows video | **No** on Roku SS — images only |
 | Gold Sheep / paid ES masters | **Never** ingested — personal viewing only |
@@ -82,7 +104,7 @@ Video screensaver add-on **JellyFlam3 Dreams** (`screensaver.jellyflam3`) — pl
 | Screensaver blank | VoD was never configured on **this** Roku | After VoD Settings saved, still blank |
 | Screensaver “replaced” VoD | Re-sideload VoD channel zip | — |
 | Kodi screensaver black / hint text | Open add-on **Configure**; confirm Jellyfin URL is furnace **LAN IP**, not `127.0.0.1` | Settings correct but no sheep play |
-| Nothing new for days | Normal if gate was closed or inbox empty | Gate open + inbox empty for a week |
+| Nothing new for days | Normal if gate was closed or inbox empty | Gate open + inbox empty for a week; or client package older than wrap-once ([Flock mix](#flock-mix-shuffle-wrap)) |
 
 Copy-paste evenings (VoD + gate, screensaver, two Rokus, peer receive): [Worked examples](#worked-examples).
 
@@ -124,7 +146,7 @@ Run Pi commands from `/opt/jellyflam3-server` unless noted.
 
 1. Sideload `dist/jellyflam3-screensaver.zip`. Developer mode has **one** sideload slot — this **replaces** VoD until you re-sideload VoD; registry keys survive.
 2. Roku **Settings → Theme → Screensavers → JellyFlam3**. Optional: screensaver Settings for fade/dwell only (no credential editors).
-3. Idle the TV (or use the Theme screensaver preview). You should see **posters and stills** (Jellyfin Primary + Backdrop), never tuple frames, always rotating. Not video.
+3. Idle the TV (or use the Theme screensaver preview). You should see **posters and stills** (Jellyfin Primary + Backdrop), never tuple frames, always rotating. Not video. A full stills mix then wrap-refetches (package **1.0.9**).
 4. On the Pi, while the screensaver is up:
 
    ```bash
@@ -552,7 +574,7 @@ net use \\<Kodi_IP_Address>\Downloads /delete
 
 1. Kodi → **Add-ons → Install from zip file** → navigate to **Downloads** → `screensaver.jellyflam3.zip`.
 2. Confirm **Settings → Interface → Screensaver** still shows **JellyFlam3 Dreams** (re-select if needed).
-3. Jellyfin settings in **Configure** are preserved under `/storage/.kodi/userdata/addon_data/screensaver.jellyflam3/` — re-enter only if URL/keys changed.
+3. Jellyfin settings in **Configure** are preserved under `/storage/.kodi/userdata/addon_data/screensaver.jellyflam3/` — re-enter only if URL/keys changed. **Max items in session** (`flock_limit`) is the 313 cap; a leftover `200` from an older zip stays until you change it.
 
 Alternative (Kodi stopped): do **not** use LibreELEC BusyBox `unzip` (it can corrupt `default.py` / `settings.xml` with NUL bytes). Extract with Python:
 
@@ -566,7 +588,7 @@ Folder name must stay `screensaver.jellyflam3`.
 
 | Check | How |
 |---|---|
-| Version | Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → **Information** (version in `addon.xml`, e.g. `0.2.2+`). |
+| Version | Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → **Information** (version in `addon.xml`, currently **0.2.9**). |
 | Playback | Set short wait time → **Activate screensaver** or wait; sheep MP4s should shuffle. |
 | Idle gate | On furnace Pi: `cat /var/lib/jellyflam3/idle_gate_status.json` → `"gate": "open"` while Kodi SS runs. |
 | Jellyfin IDs | On furnace: `python3 scripts/jellyfin_id_dump.py --items --limit 5` — item count should be > 0 when flock is seeded. |
@@ -761,7 +783,7 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 
 | Symptom | Check | Fix |
 |---|---|---|
-| No new sheep | `healthcheck.sh`; `gate` in status JSON; inbox count | Open gate / fix worker / seed or breed |
+| No new sheep | `healthcheck.sh`; `gate` in status JSON; inbox count | Open gate / fix worker / seed or breed. If Jellyfin already has the item, wait for a client **wrap** ([Flock mix](#flock-mix-shuffle-wrap)) |
 | Gate stuck closed | Jellyfin Sessions; Roku still “Playing”? | Stop playback; wait `idle_delay_sec` |
 | Worker quiet, gate open | `ls genomes/inbox/*.flam3`; journal `-u jellyflam3-worker` | Seed inbox; inspect quarantine |
 | healthcheck exit 1 | Read script sections (units, tools, status file, **peering share_live**, **library disk BAD**) | See [offline peering](#opt-in-vs-share-live-do-not-confuse-them); `opt-in` or `opt-out`; free space on `/media/sheep` |
@@ -773,7 +795,7 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 | Offline peering (Opt In, no sync) | `healthcheck`: `BAD share not live`; `peering status` → `share_live: false` | `opt-in` with `TS_AUTHKEY` + Syncthing up, or `opt-out` |
 | Peering stuck (live mesh) | `peering status`; inbox under `peers/inbox` | `promote --apply`; trust keys; share-security verify |
 | Bad palette / encode | `refactor scan` | preview → apply pathway |
-| Black / error after quarantine | Item gone from disk/Jellyfin; client still has old flock list | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id and re-poll (30s rate limit). Sideload/install those packages. Overnight new-sheep pickup is wrap-once re-fetch (VoD 1.0.31 / Roku SS 1.0.9 / Kodi SS 0.2.9) — [phase4/00](phase4/00_OVERVIEW.md#client-polish-shipped-wrap-once-refresh) |
+| Black / error after quarantine | Item gone from disk/Jellyfin; client still has old flock list | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id and re-poll (30s rate limit). Overnight new-sheep pickup is wrap-once (VoD 1.0.31 / Roku SS 1.0.9 / Kodi SS 0.2.9) — [Flock mix](#flock-mix-shuffle-wrap) |
 | Playback stutters / several TVs | `python3 -m pipeline.link_capacity estimate`; WiFi STA furnace? | Ethernet for the Pi; Direct Play; stay at/under `N_max` |
 | Wipe everything local | — | `hammer --dry-run` then `--confirm HAMMER` (not Shears) |
 

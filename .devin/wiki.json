@@ -9,11 +9,11 @@
       "author": "Owner"
     },
     {
-      "content": "PHASE STATUS (2026-09-10): Phase 1 complete (Owner OK 2026-07-28). Phase 2 complete (Owner OK 2026-08-08). Phase 3 complete (Owner OK 2026-08-23). Public launch v0.3.0 (2026-08-23); maintenance v0.3.1. Phase 4 tuples (guide 03) shipped 2026-09-05. 07 link_capacity Owner OK 2026-09-09. 09 RNG aliases shipped (ingest/backfill/override). Remaining Phase 4 products parked (01/02/04/06-rotate/08 overlay). Phase 5 synopsis parked: two deployments — JellyFlam3 Furnace (Pi) vs LLM Agent Platform (Arduino Ventuno Q); not interchangeable, not overlapping (docs/phase5/). Fleet tracks master.",
+      "content": "PHASE STATUS (2026-09-10): Phase 1 complete (Owner OK 2026-07-28). Phase 2 complete (Owner OK 2026-08-08). Phase 3 complete (Owner OK 2026-08-23). Public launch v0.3.0 (2026-08-23); maintenance v0.3.1. Phase 4 tuples (guide 03) shipped 2026-09-05. 07 link_capacity Owner OK 2026-09-09. 09 RNG aliases shipped (ingest/backfill/override). Client polish wrap-once re-fetch + 313 cap shipped 2026-09-10 (VoD 1.0.31 / Roku SS 1.0.9 / Kodi 0.2.9). Remaining Phase 4 products parked (01/02/04/06-rotate/08 overlay). Phase 5 synopsis parked: two deployments — JellyFlam3 Furnace (Pi) vs LLM Agent Platform (Arduino Ventuno Q); not interchangeable, not overlapping (docs/phase5/). Fleet tracks master.",
       "author": "Owner"
     },
     {
-      "content": "REPO LAYOUT PRIORITIES for documentation:\n- pipeline/ — Python render worker, Shears, Hammer, refactor, peering, flock artwork, idle gate, config, link_capacity, library_disk, sheep_tuple, sheep_naming\n- scripts/ — operator shell/Python tools (healthcheck, smoke, packaging, jellyfin_id_dump, client_pack_presets)\n- roku-channel/ — JellyFlam3 VoD BrightScript channel (manifest 1.0.30)\n- roku-screensaver/ — Roku stills screensaver (manifest 1.0.8)\n- kodi-screensaver/screensaver.jellyflam3/ — Kodi ES-dogma video screensaver add-on (0.2.8)\n- docs/phaseN/ — discrete task guides with Boundary/In/Out/Exit tables\n- configs/ — jellyflam3.yaml + hw profiles 16/08/04\n- tests/ — pytest (GitHub Actions on push/PR + release)\n- deploy/ — systemd units, peering templates\n- .github/ — issue templates, Dependabot, release workflow",
+      "content": "REPO LAYOUT PRIORITIES for documentation:\n- pipeline/ — Python render worker, Shears, Hammer, refactor, peering, flock artwork, idle gate, config, link_capacity, library_disk, sheep_tuple, sheep_naming\n- scripts/ — operator shell/Python tools (healthcheck, smoke, packaging, jellyfin_id_dump, client_pack_presets)\n- roku-channel/ — JellyFlam3 VoD BrightScript channel (manifest 1.0.31)\n- roku-screensaver/ — Roku stills screensaver (manifest 1.0.9)\n- kodi-screensaver/screensaver.jellyflam3/ — Kodi ES-dogma video screensaver add-on (0.2.9)\n- docs/phaseN/ — discrete task guides with Boundary/In/Out/Exit tables\n- configs/ — jellyflam3.yaml + hw profiles 16/08/04\n- tests/ — pytest (GitHub Actions on push/PR + release)\n- deploy/ — systemd units, peering templates\n- .github/ — issue templates, Dependabot, release workflow",
       "author": "Owner"
     },
     {
@@ -29,7 +29,7 @@
       "author": "Owner"
     },
     {
-      "content": "ROKU CONSTRAINTS: Developer mode allows ONE sideloaded package per device — VoD channel and screensaver alternate; registry JellyFlam3 keys survive zip swap. Furnace-built zips embed registry/jellyflam3-presets.json via scripts/client_pack_presets.py. Commercial filtering is client-side (isCommercialSafe); never pass Tags= to Jellyfin Items API (AND semantics empty flock). VoD 1.0.30 always persists shuffleFlock=true on launch (package presets must not copy this key; leftover false from empty Settings save / older force-sync survives sideload otherwise). Roku screensaver ignores shuffleFlock and always rotates stills.",
+      "content": "ROKU CONSTRAINTS: Developer mode allows ONE sideloaded package per device — VoD channel and screensaver alternate; registry JellyFlam3 keys survive zip swap. Furnace-built zips embed registry/jellyflam3-presets.json via scripts/client_pack_presets.py. Commercial filtering is client-side (isCommercialSafe); never pass Tags= to Jellyfin Items API (AND semantics empty flock). VoD 1.0.30 always persists shuffleFlock=true on launch (package presets must not copy this key; leftover false from empty Settings save / older force-sync survives sideload otherwise). VoD 1.0.31 / Roku SS 1.0.9 wrap-refetch Jellyfin after a full shuffle permutation (Limit 5000, prune to 313; rotate past last-played). Roku screensaver ignores shuffleFlock and always rotates stills.",
       "author": "Owner"
     },
     {
@@ -37,7 +37,7 @@
       "author": "Owner"
     },
     {
-      "content": "DEFERRED / OUT OF SCOPE (do not document as shipped): Continuous live HLS from shuffled MP4s (dropped). Gold Sheep / paid ES masters (never ingest). DeepDream, full social flock network (aspirational). LLM pedigree + LLM poster naming are Phase 5 on a **separate** Ventuno LLM Agent Platform (docs/phase5/) — not on the Pi furnace, not cloud stubs in the worker, not Ventuno-as-furnace. Kodi standalone loop→edge→loop sequencer (tuples play as one catalog MP4). Channel Store / private Roku publish parked. Auto-promote, mesh introduce, vote overlay, library rotate parked. Shipped Phase 4: tuples (03), 05 user-guide baseline, 06 disk check, 07 N_max estimator, 09 RNG aliases, sidecar key names.",
+      "content": "DEFERRED / OUT OF SCOPE (do not document as shipped): Continuous live HLS from shuffled MP4s (dropped). Gold Sheep / paid ES masters (never ingest). DeepDream, full social flock network (aspirational). LLM pedigree + LLM poster naming are Phase 5 on a **separate** Ventuno LLM Agent Platform (docs/phase5/) — not on the Pi furnace, not cloud stubs in the worker, not Ventuno-as-furnace. Kodi standalone loop→edge→loop sequencer (tuples play as one catalog MP4). Channel Store / private Roku publish parked. Auto-promote, mesh introduce, vote overlay, library rotate parked. Hours-scale flock timer not needed (wrap-once shipped). Shipped Phase 4: tuples (03), 05 user-guide baseline, 06 disk check, 07 N_max estimator, 09 RNG aliases, sidecar key names, wrap-once flock refresh + 313 cap.",
       "author": "Owner"
     },
     {
@@ -113,7 +113,7 @@
     },
     {
       "title": "Roku VoD Channel",
-      "purpose": "roku-channel/ BrightScript: JellyfinTask flock list, HomeScene/PlayerScreen, Settings registry, commercial mode, shuffleFlock always true (archive gens + pedigree + tuple), HLS vs MP4 streamMode, deep link contentId, packaging 1.0.30.",
+      "purpose": "roku-channel/ BrightScript: JellyfinTask flock list, HomeScene/PlayerScreen, Settings registry, commercial mode, shuffleFlock always true (archive gens + pedigree + tuple), HLS vs MP4 streamMode, deep link contentId, wrap-once re-fetch + 313 cap, packaging 1.0.31.",
       "parent": null,
       "page_notes": [
         {
@@ -123,7 +123,7 @@
     },
     {
       "title": "Roku Screensaver",
-      "purpose": "roku-screensaver/ stills slideshow: StillsTask Primary+Backdrop fetch, skip tuple, always rotate, commercialMode, shared JellyFlam3 registry, Theme→Screensavers selection, one-sideload-slot constraint, packaging 1.0.7.",
+      "purpose": "roku-screensaver/ stills slideshow: StillsTask Primary+Backdrop fetch, skip tuple, always rotate, commercialMode, wrap-once re-fetch + 313 URL cap, shared JellyFlam3 registry, Theme→Screensavers selection, one-sideload-slot constraint, packaging 1.0.9.",
       "parent": "Roku VoD Channel",
       "page_notes": [
         {
@@ -133,7 +133,7 @@
     },
     {
       "title": "Kodi Screensaver",
-      "purpose": "kodi-screensaver/screensaver.jellyflam3 add-on: jellyfin_flock.py Static MP4 shuffle, ES-dogma loops-only MVP, LibreELEC install from zip, Client=JellyFlam3-Screensaver, version 0.2.8.",
+      "purpose": "kodi-screensaver/screensaver.jellyflam3 add-on: jellyfin_flock.py Static MP4 shuffle, ES-dogma loops-only MVP, LibreELEC install from zip, Client=JellyFlam3-Screensaver, wrap-once re-fetch + 313 cap, version 0.2.9.",
       "parent": null,
       "page_notes": [
         {

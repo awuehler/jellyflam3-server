@@ -37,7 +37,7 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 |---|---|---|---|
 | Sidecar preserve | [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) | Worker copies reserved keys on re-ingest; tuples still write `type` / `from_id` / `to_id` / `watermark` from this encode | Vote sink |
 | 404 mid-session re-poll | clients | Drop dead Jellyfin id, rate-limited re-poll, continue session: VoD **1.0.29**, Roku SS **1.0.8**, Kodi SS **0.2.7** | — |
-| Wrap-once flock re-fetch + 313 cap | clients | Once per full shuffle wrap, re-fetch Jellyfin and regenerate the in-memory list (skip if a fetch is already in flight; no 30s 404 gate). HTTP Limit 5000 then randomly prune to **313**. VoD **1.0.31**, Roku SS **1.0.9**, Kodi SS **0.2.9** | Hours-scale timer (not needed for ~daily ingest) |
+| Wrap-once flock re-fetch + 313 cap | clients | Once per full shuffle wrap (one random permutation; next item is not last-played), re-fetch Jellyfin and regenerate the in-memory list (skip if a fetch is already in flight; no 30s 404 gate). HTTP Limit 5000 then randomly prune to **313**. VoD **1.0.31**, Roku SS **1.0.9**, Kodi SS **0.2.9** | Hours-scale timer (not needed for ~daily ingest) |
 | 07 estimator Owner OK | [07](07_CONCURRENT_CLIENTS.md) | Sign-off 2026-09-09; `N_max` remains an estimate | Enforcing `N_max` as a Jellyfin cap |
 | 09 RNG aliases | [09](09_SHEEP_NAMING.md) | Hash-seed `adjective_surname` on ingest/backfill; `set-alias` / `clear-alias` | Roku/Kodi filename vs alias toggle; LLM poster naming → [../phase5/02](../phase5/02_LLM_INTEGRATION.md) |
 
@@ -61,7 +61,7 @@ Sidecar key names for [01](01_PEER_SHARE_PATH.md) / [03](03_EDGES_AND_WATERMARK.
 
 | Item | Notes |
 |---|---|
-| **Wrap-once flock refresh** | **Shipped** VoD **1.0.31**, Roku screensaver **1.0.9**, Kodi screensaver **0.2.9**. Fetch Jellyfin with Limit **5000**, then randomly prune the in-memory cycle list to **313** (VoD/Kodi: sheep items; Roku SS: Primary+Backdrop URLs). After a **full shuffle wrap**, kick a re-fetch and replace the list when it arrives — do not stall the current clip/still. Skip wrap fetch if one is already in flight. 404 re-poll keeps its **30s** gate and is separate. Single-item lists do not wrap-refetch. Hours-scale timer stays unneeded for ~daily ingest. |
+| **Wrap-once flock refresh** | **Shipped** VoD **1.0.31**, Roku screensaver **1.0.9**, Kodi screensaver **0.2.9**. A wrap is one random permutation of the in-memory list (each item once). Fetch Jellyfin with Limit **5000**, then randomly prune to **313** (VoD/Kodi: sheep items; Roku SS: Primary+Backdrop URLs). Kick a re-fetch at wrap and replace the list when it arrives — do not stall the current clip/still. Rotate so the first item of the new mix is not the last-played id. Skip wrap fetch if one is already in flight. 404 re-poll keeps its **30s** gate and is separate. Single-item lists do not wrap-refetch. Hours-scale timer stays unneeded for ~daily ingest. Household wording: [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md#flock-mix-shuffle-wrap). |
 
 **Shipped (not parked):** **Quarantine / 404 mid-session re-poll** — VoD 1.0.29, Roku screensaver 1.0.8, Kodi screensaver 0.2.7. On file-not-found / stream open fail / missing Primary or Backdrop, clients drop the dead id, re-poll Jellyfin (rate-limited to 30s), and continue the session. Does not stop playback chrome, does not invent a Sessions Playing client for the miss.
 

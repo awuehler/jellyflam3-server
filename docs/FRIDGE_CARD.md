@@ -18,9 +18,9 @@ Never use `127.0.0.1` or `localhost` on a TV — those are the Pi talking to its
 
 | Device | Everyday |
 |---|---|
-| **Roku VoD** | Launch **JellyFlam3** → pick a sheep. Loop plays. |
-| **Roku screensaver** | **Settings → Theme → Screensavers → JellyFlam3**. Images only (not video). Install **VoD first** on this Roku and save Settings, then sideload the screensaver zip. |
-| **Kodi** | **Settings → Interface → Screensaver → JellyFlam3 Dreams**. Leave idle. Any key exits. |
+| **Roku VoD** | Launch **JellyFlam3** → pick a sheep. Loop plays. Overnight new sheep after a full mix (package 1.0.31). |
+| **Roku screensaver** | **Settings → Theme → Screensavers → JellyFlam3**. Images only (not video). Install **VoD first** on this Roku and save Settings, then sideload the screensaver zip. New stills after a full mix (1.0.9). |
+| **Kodi** | **Settings → Interface → Screensaver → JellyFlam3 Dreams**. Leave idle. Any key exits. New sheep after a full mix (0.2.9). |
 
 **One Roku sideload slot:** installing screensaver **replaces** VoD until you re-sideload VoD. Settings survive the swap.
 

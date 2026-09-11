@@ -36,7 +36,7 @@ Complements (does not replace):
 | Check health | `./scripts/healthcheck.sh`; services; tip `git rev-parse` |
 | See idle-gate | `cat /var/lib/jellyflam3/idle_gate_status.json` |
 | Play on Roku VoD | Settings IDs via `jellyfin_id_dump.py`; launch / deep link notes |
-| Enable screensaver | **VoD Settings first** on that Roku (writes `JellyFlam3` registry); then SS zip; Theme → Screensavers; fade/dwell only. SS always rotates (ignores `shuffleFlock`); Primary + Backdrop; no tuples ([01](../phase3/01_SCREENSAVERS_AND_STILLS.md), [04](04_ROKU_PUBLISH.md)) |
+| Enable screensaver | **VoD Settings first** on that Roku (writes `JellyFlam3` registry); then SS zip; Theme → Screensavers; fade/dwell only. SS always rotates (ignores `shuffleFlock`); Primary + Backdrop; no tuples; **1.0.9** wrap-refetch ([01](../phase3/01_SCREENSAVERS_AND_STILLS.md), [04](04_ROKU_PUBLISH.md), [USER_GUIDE flock mix](../USER_GUIDE_AND_RUNBOOK.md#flock-mix-shuffle-wrap)) |
 | Extract stills | Poster ingest / `backfill_posters`; operator `python3 -m pipeline.stills --dry-run` / `--limit N` |
 | Breed / seed | Manual `pipeline.breed` (mutate / cross / blend / interpolate) or daily `cron_breed_idle.sh` when inbox empty → wait for worker (Phase 2 pedigree); Phase 4 may weight parents by viewer votes ([08](08_VIEWER_FEEDBACK_LOOP.md)) |
 | Promote peer share | Opt In status; `promote --apply` gated path (Phase 2/4 peering); Phase 4 share-votes cron may auto-stage liked sheep ([08](08_VIEWER_FEEDBACK_LOOP.md)) |
@@ -64,8 +64,8 @@ Symptom-oriented table (extend as lab learns):
 | No new sheep appearing | Worker active? inbox count? gate open? | Open gate / fix worker / seed inbox |
 | Gate stuck closed | Jellyfin Sessions; VoD still Playing? | Stop playback; wait `idle_delay_sec` |
 | Blank screensaver | Empty `JellyFlam3` registry (SS never configured VoD on this box) | Sideload VoD → save Settings → re-sideload SS; then id dump / Primary+Backdrop |
-| Kodi SS missing brand-new sheep | Jellyfin shows item, but screensaver has not wrapped the shuffle yet | Wait for a full pass (0.2.9 wrap re-fetch) or exit screensaver / start a new idle session. Same wrap-once contract on VoD 1.0.31 and Roku SS 1.0.9 ([00](00_OVERVIEW.md#client-polish-shipped-wrap-once-refresh)) |
-| Playback 404 after quarantine | Client still playing; operator just quarantined/Shears-deleted that sheep | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id, re-poll Jellyfin (30s rate limit), and continue. Sideload/install the new packages. Overnight new-sheep refresh is wrap-once (VoD 1.0.31 / SS 1.0.9 / Kodi 0.2.9) ([00](00_OVERVIEW.md#client-polish-shipped-wrap-once-refresh)) |
+| Kodi SS missing brand-new sheep | Jellyfin shows item, but screensaver has not wrapped the shuffle yet | Wait for a full pass (0.2.9 wrap re-fetch) or exit screensaver / start a new idle session. Same wrap-once contract on VoD 1.0.31 and Roku SS 1.0.9 ([USER_GUIDE flock mix](../USER_GUIDE_AND_RUNBOOK.md#flock-mix-shuffle-wrap)) |
+| Playback 404 after quarantine | Client still playing; operator just quarantined/Shears-deleted that sheep | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id, re-poll Jellyfin (30s rate limit), and continue. Sideload/install the new packages. Overnight new-sheep refresh is wrap-once (VoD 1.0.31 / SS 1.0.9 / Kodi 0.2.9) |
 | Screensaver replaced VoD | One sideload slot | Re-sideload VoD or use private/Store ([04](04_ROKU_PUBLISH.md)) |
 | Peering empty | Opt In? Syncthing? trust keys? | Peering README; share-security verify |
 | Healthcheck mount fail | USB/NVMe | Phase 2 from-scratch mounts |

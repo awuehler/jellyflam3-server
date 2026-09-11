@@ -25,7 +25,7 @@ Terms, keywords, and phrases used across the **jellyflam3-server** project — d
 | [Edition (render)](#edition-render) | [HW profile](#hw-profile) | [Pre-share / post-share](#pre-share--post-share) | [Ventuno Q](#ventuno-q) |
 | [`.flam3`](#flam3-file) | [Idle breed](#idle-breed) | [RC](#release-candidate-rc) | [Sheep naming / alias](#sheep-naming--alias) |
 | [N_max](#n_max-link-capacity) | [Library disk check](#library-disk-check) | [VoD](#vod) | [Worker](#worker) |
-| [LLM Agent Platform](#llm-agent-platform) | [Viewer feedback](#viewer-feedback--sheep-vote) | | |
+| [LLM Agent Platform](#llm-agent-platform) | [Viewer feedback](#viewer-feedback--sheep-vote) | [Shuffle wrap](#shuffle-wrap) | |
 
 ---
 
@@ -275,7 +275,7 @@ Phase 3: JPEG frames extracted from catalog MP4s (poster pipeline / `pipeline/st
 
 ### Jellyfin flock
 
-The Sheep **library** in Jellyfin — curated MP4s, posters, metadata, tags. Single stream origin for clients.
+The Sheep **library** in Jellyfin — curated MP4s, posters, metadata, tags. Single stream origin for clients. Pasture clients fetch a session list (Limit 5000, randomly cap **313**) and re-fetch after a [shuffle wrap](#shuffle-wrap).
 
 ### Path 1 / Path 2
 
@@ -333,11 +333,15 @@ Roku HTTP control on port **8060** — launch, query player (`/launch/dev`, `/qu
 
 ### RunScreenSaver()
 
-Roku screensaver entry point only — separate package from VoD `Main()`. JellyFlam3 Screensaver 1.0.9: Primary + Backdrop slideshow (skip tuple; always rotate; `commercialMode`; 404 re-poll; wrap-once re-fetch; 313 URL cap).
+Roku screensaver entry point only — separate package from VoD `Main()`. JellyFlam3 Screensaver **1.0.9**: Primary + Backdrop slideshow (skip tuple; always rotate; `commercialMode`; 404 re-poll; [shuffle wrap](#shuffle-wrap) re-fetch; 313 URL cap).
 
 ### Kodi ES screensaver
 
-Phase 3 `screensaver.jellyflam3` — Electric Sheep **dogma** (video loops; loop→edge→loop post-launch). **Complete** loops-only (Owner OK 2026-08-21). Example pasture host: `rpi-kodi-08a` (LibreELEC). Separate from Roku stills track.
+Phase 3 `screensaver.jellyflam3` — Electric Sheep **dogma** (video loops; loop→edge→loop post-launch). **Complete** loops-only (Owner OK 2026-08-21). Example pasture host: `rpi-kodi-08a` (LibreELEC). Separate from Roku stills track. **0.2.9:** [shuffle wrap](#shuffle-wrap) re-fetch + 313 session cap (`flock_limit`).
+
+### Shuffle wrap
+
+One full **random permutation** of the in-memory flock (each item once). At wrap, VoD **1.0.31** / Roku SS **1.0.9** / Kodi **0.2.9** re-fetch Jellyfin, prune to 313, and start a new permutation whose first item is not the last-played id. 404 re-poll is a separate 30s-gated path. Household wording: [USER_GUIDE_AND_RUNBOOK.md — Flock mix](USER_GUIDE_AND_RUNBOOK.md#flock-mix-shuffle-wrap).
 
 ### JSON-RPC (Kodi)
 

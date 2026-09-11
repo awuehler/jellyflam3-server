@@ -16,7 +16,7 @@ Tasks **1–4** done; **Jellyfin flock client + commercial filter + shuffle sequ
 - Cancels Kodi’s 15s StopScript alarm (`sssssscreensaver`) so idle video is not killed
 - **0.2.7:** mid-session 404 / quarantine drops the dead Jellyfin id, re-polls the flock (30s rate limit), and continues
 - **0.2.8:** always shuffle; heal persisted `shuffle=false` after zip upgrade
-- **0.2.9:** re-fetch Jellyfin once per full shuffle wrap; HTTP Limit 5000 then randomly prune the session list to 313 (`flock_limit`)
+- **0.2.9:** re-fetch Jellyfin once per full shuffle wrap (one random permutation; next clip is not the one that just finished); HTTP Limit 5000 then randomly prune the session list to 313 (`flock_limit`)
 
 **Post-launch:** loop→edge→loop sequencer (edges + watermark) is not in v0.3.0.
 
@@ -35,8 +35,8 @@ Tasks **1–4** done; **Jellyfin flock client + commercial filter + shuffle sequ
 | **User id** | `user_id` | User **Guid** for `/Users/{id}/Items` (not the login name). |
 | **Library (Parent) id** | `library_id` | Sheep library / view **Guid** (`ParentId`). Recommended. Empty = all Movie/Video items the user can see. |
 | **Commercial-safe (skip NC)** | `commercial_mode` | Client-side Items **Tags** filter only: keep `cc-by` / `cc0` / `public-domain` / `pd` / `cc-by-sa`; hide NC and untagged. Does **not** send Jellyfin `Tags=` query params. Lab CC/NC sample pairs: [docs/phase1/07_LICENSE_AND_METADATA.md](../docs/phase1/07_LICENSE_AND_METADATA.md#lab-check--commercial-mode-toggle) |
-| **Shuffle flock (rotate sheep)** | `shuffle` | Always **true** (0.2.8+): random order, reshuffle after a full pass. Older installs that stored `false` are healed on the next screensaver start. |
-| **Max items in session** | `flock_limit` | In-memory cap after fetch (default `313`). Jellyfin is queried with Limit 5000, then a random sample is kept if the flock is larger. |
+| **Shuffle flock (rotate sheep)** | `shuffle` | Always **true** (0.2.8+): random order, one pass then wrap. Older installs that stored `false` are healed on the next screensaver start. |
+| **Max items in session** | `flock_limit` | In-memory cap after fetch (default `313`). Jellyfin is queried with Limit 5000, then a random sample is kept if the flock is larger. Userdata from an older zip may still store `200` until Configure is changed. |
 
 Do **not** commit API keys or filled `settings.xml` into git.
 
@@ -114,7 +114,7 @@ Stop Kodi before editing `/storage/.kodi/userdata/guisettings.xml` or `Database/
 
 Any remote/keypress (and JSON-RPC) exits the screensaver (Kodi default).
 
-**Flock refresh (0.2.9):** after a full shuffle wrap, the add-on re-fetches Jellyfin (Limit 5000, randomly prune to `flock_limit` / 313) and replaces the in-memory list. Overnight ~daily ingest appears without exiting the screensaver. 404 / quarantine re-poll (0.2.7) stays 30s-gated and is separate. See [docs/phase4/00_OVERVIEW.md](../docs/phase4/00_OVERVIEW.md#client-polish-shipped-wrap-once-refresh).
+**Flock refresh (0.2.9):** a wrap is one random permutation of the in-memory list (each sheep once). The add-on then re-fetches Jellyfin (Limit 5000, randomly prune to `flock_limit` / 313) and starts a new mix whose first item is not the last-played id. Overnight ~daily ingest appears without exiting the screensaver. 404 / quarantine re-poll (0.2.7) stays 30s-gated and is separate. Household wording: [docs/USER_GUIDE_AND_RUNBOOK.md](../docs/USER_GUIDE_AND_RUNBOOK.md#flock-mix-shuffle-wrap).
 
 ## Layout
 

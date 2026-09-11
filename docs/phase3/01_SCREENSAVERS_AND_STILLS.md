@@ -19,7 +19,7 @@ Stills serve **Roku** (image-only screensaver). Kodi plays video loops and does 
 ## Roku Screensaver / Backdrop
 
 - Standalone package: `RunScreenSaver()` only; **no** Video node; no deep links.
-- Cycle Primary posters **and** Backdrop stills via HTTP from all library folders except `tuple`; **depends on** a **current or previously installed** VoD channel (`roku-channel/`) to write registry section `JellyFlam3` (`baseUrl`, `apiKey`, `userId`, `libraryId`). Screensaver Settings does **not** create those keys. Always rotates (does not read VoD `shuffleFlock`). Honors `commercialMode` like VoD.
+- Cycle Primary posters **and** Backdrop stills via HTTP from all library folders except `tuple`; **depends on** a **current or previously installed** VoD channel (`roku-channel/`) to write registry section `JellyFlam3` (`baseUrl`, `apiKey`, `userId`, `libraryId`). Screensaver Settings does **not** create those keys. Always rotates (does not read VoD `shuffleFlock`). Honors `commercialMode` like VoD. **1.0.9** wrap-refetches after a full stills permutation (Limit 5000, prune URLs to 313; next still is not the one that just showed).
 - Platform rules: [Roku Screensavers](https://developer.roku.com/docs/developer-program/media-playback/screensavers.md).
 
 ## Work items (implementation)
@@ -53,7 +53,7 @@ Optional AI guidance for parent selection / aesthetic briefs atop Phase 2 `flam3
 - Video / edge playback inside the Roku screensaver
 - Channel Store / private-channel publish of VoD + screensaver → [Phase 4 / 04](../phase4/04_ROKU_PUBLISH.md)
 - Mid-session flock **re-poll on 404** when a sheep is quarantined while SS is cycling Primaries → **shipped** screensaver **1.0.8** (drop dead URL, 30s rate-limited StillsTask re-poll, continue). Wrap-once re-fetch + 313 URL cap → **shipped** screensaver **1.0.9**.
-- Long-running screensaver **session re-fetch** (once per full shuffle wrap so ~daily ingest appears without exit) → **shipped** screensaver **1.0.9** (HTTP Limit 5000, randomly prune Primary+Backdrop URLs to 313). Same contract on VoD 1.0.31 and Kodi 0.2.9.
+- Long-running screensaver **session re-fetch** (once per full shuffle wrap so ~daily ingest appears without exit) → **shipped** screensaver **1.0.9** (one random URL permutation; HTTP Limit 5000; prune to 313; rotate past last-played). Same contract on VoD 1.0.31 and Kodi 0.2.9.
 - LLM pedigree MVP → [Phase 5 / 02](../phase5/02_LLM_INTEGRATION.md)
 
 ## Artifacts
