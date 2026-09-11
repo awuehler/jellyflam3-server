@@ -15,6 +15,8 @@ sub runTask()
     out = reportPlayback("Playing/Stopped")
   else if cmd = "displayProfile"
     out = postDisplayProfile()
+  else if cmd = "sheepVote"
+    out = postSheepVote()
   else
     out = fetchList()
   end if
@@ -33,7 +35,7 @@ end function
 
 function authHeader() as string
   ' Token in Authorization is what Jellyfin uses to bind Client/Device into /Sessions
-  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.31"", Token=""" + m.top.apiKey + """"
+  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.32"", Token=""" + m.top.apiKey + """"
 end function
 
 ' Lab-verified HLS remux path: prefer main.m3u8 + AudioCodec=aac.
@@ -149,6 +151,33 @@ function postDisplayProfile() as object
     if resp.reason <> invalid and resp.reason <> "" then detail = detail + ": " + resp.reason
     if resp.body <> invalid and resp.body <> "" then detail = detail + " " + Left(resp.body, 120)
     return { ok: false, error: "display sink failed — " + detail, debugUrl: url }
+  end if
+  parsed = invalid
+  if resp.body <> invalid and resp.body <> ""
+    parsed = ParseJson(resp.body)
+  end if
+  if parsed = invalid then return { ok: true, raw: resp.body }
+  parsed.ok = true
+  return parsed
+end function
+
+function postSheepVote() as object
+  sink = m.top.displaySinkUrl
+  if sink = invalid then sink = ""
+  sink = trimSlash(sink)
+  body = m.top.voteJson
+  if body = invalid then body = ""
+  if sink = "" then return { error: "displaySinkUrl not set", ok: false }
+  if body = "" then return { error: "voteJson empty", ok: false }
+  token = ""
+  if m.top.sinkToken <> invalid then token = m.top.sinkToken
+  url = sink + "/v1/sheep-votes"
+  resp = httpPostJson(url, body, token)
+  if resp.code <> 200
+    detail = "HTTP " + resp.code.toStr()
+    if resp.reason <> invalid and resp.reason <> "" then detail = detail + ": " + resp.reason
+    if resp.body <> invalid and resp.body <> "" then detail = detail + " " + Left(resp.body, 120)
+    return { ok: false, error: "sheep vote sink failed — " + detail, debugUrl: url }
   end if
   parsed = invalid
   if resp.body <> invalid and resp.body <> ""

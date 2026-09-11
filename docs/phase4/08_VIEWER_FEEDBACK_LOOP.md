@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — close the **end-user → furnace** feedback loop: during VoD playback the Roku channel shows a **transient overlay** near the end of each sheep MP4 that invites a remote **like / love / vote** without stopping playback. Captured votes on the furnace drive (a) **share promotion** of the corresponding `.flam3` into the Tailscale / Syncthing peer path, and (b) **weighted bias** in daily idle pedigree breeding so well-liked sheep are more likely parents. Complements the existing **~10-day archive-seed** and **daily idle-breed** crons with **one additional cron** that detects shareable (voted) sheep, and enhances the daily breed job with viewer weights.
 
-**Status:** Parked. Do not implement overlay / vote sink / share cron / breed weights until Phase 4 opens. Pre-open: `viewer_feedback` reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema); household guide [05](05_END_USER_GUIDE.md) baseline does not yet include vote recipes.
+**Status:** Overlay + sidecar vote sink **shipped** 2026-09-11 (Wave 2). Share cron and idle-breed weights stay parked (Wave 3). Household guide [05](05_END_USER_GUIDE.md) has a short button map; full vote recipes wait on Wave 3.
 
 Depends on Phase 1–2 Roku VoD playback ([../phase1/08_ROKU_BRIGHTSCRIPT.md](../phase1/08_ROKU_BRIGHTSCRIPT.md), [../phase2/04_ROKU_CHANNEL_POLISH.md](../phase2/04_ROKU_CHANNEL_POLISH.md)), pedigree idle breed ([../phase2/07_PEDIGREE_BREEDING.md](../phase2/07_PEDIGREE_BREEDING.md)), and Syncthing-over-Tailscale peering ([../phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_PEERING.md)). Interacts with [01_PEER_SHARE_PATH.md](01_PEER_SHARE_PATH.md) (how votes trigger share-out / promote) and [04_ROKU_PUBLISH.md](04_ROKU_PUBLISH.md) (overlay UX polish for published builds). Does **not** replace archive seed or idle-breed — it **biases and extends** flock evolution with household interest.
 
@@ -39,27 +39,42 @@ Depends on Phase 1–2 Roku VoD playback ([../phase1/08_ROKU_BRIGHTSCRIPT.md](..
 7. **Sidecar is the sole metadata SoT** for a catalog sheep — `{stem}.jellyflam3.json` beside the MP4. License, tags, duration/signals, poster/stills index, pedigree hints, **and viewer vote tallies** live there. **No parallel vote store** under `/var/lib/jellyflam3/` (no `sheep_vote_weights.json` as competing truth). Jellyfin Items Tags / Overview are derived caches only. Binary artifacts stay themselves: `.mp4` (video), `.flam3` (genome), poster/stills **files** (sidecar indexes them). Optional append-only log is debug-only and must not be read for share/breed decisions.
 8. **VoD shuffle already includes pedigree and tuple** (channel 1.0.28+; skips `misc`/`test`). Roku screensaver ignores `shuffleFlock` and always rotates stills (no tuples). Vote overlay (when built) uses the VoD shuffle pool, not the screensaver.
 
-## Sidecar reservation (pre-open)
+## Sidecar + sink (shipped Wave 2)
 
-Key **`viewer_feedback`** (likes / loves / votes / last_voted_at / share_candidate) is reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Guide [01](01_PEER_SHARE_PATH.md) reads `share_candidate` when share-out is built. No overlay, vote sink, share cron, or breed-weight hook in this slice. Load–mutate–write readers keep unknown JSON; worker ingest copies this block across re-encode (tuples still rewrite `type` / watermark from this encode).
+Key **`viewer_feedback`** (likes / loves / votes / last_voted_at / share_candidate) is reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Guide [01](01_PEER_SHARE_PATH.md) reads `share_candidate` when share-out is built. Overlay and vote sink write that block on `{stem}.jellyflam3.json` only. Share cron and breed-weight hooks stay parked. Load–mutate–write readers keep unknown JSON; worker ingest copies this block across re-encode (tuples still rewrite `type` / watermark from this encode). Any vote sets `share_candidate: true`; gated `promote --apply` is unchanged.
+
+### Remote map (VoD 1.0.32)
+
+Overlay is visual-only (Video stays focused; playback does not pause). Shown when remaining duration ≤ 12 s.
+
+| Key | Action |
+|---|---|
+| **OK** | like (`likes++`, `votes++`) |
+| **Fast-forward** | love (`loves++`, `votes++`) |
+| **Replay** | plain vote (`votes++` only) |
+| **Back** (overlay visible) | dismiss overlay; do not exit playback |
+| **Up** | exit playback (same trapdoor as before the overlay) |
+| **\*** / Options / Info | Settings on Home (not consumed during overlay) |
+
+`POST /v1/sheep-votes` on `jellyflam3-display-sink` (:8791, header `X-JellyFlam3-Token`). CLI: `python3 -m pipeline.sheep_votes apply --stem … --kind like\|love\|vote`. Restart **display-sink** (not the worker) to load the route.
 
 ## Work items (when Phase 4 opens)
 
-### A — Roku VoD overlay
+### A — Roku VoD overlay (shipped 1.0.32)
 
-1. **Timing** — show overlay when remaining duration ≤ configurable threshold (e.g. 8–15 s before end / before seek-reloop); hide on timeout, vote, or Back.
-2. **UI** — transient SceneGraph group over Video (dim banner or corner chip); copy for like / love / vote; focusable remote affordances without taking exclusive focus away from Back/exit.
-3. **Mapping** — document which remote buttons mean like vs love vs cancel (e.g. `options` / colored keys / OK on focused button); keep shuffle / streamMode keys from colliding.
-4. **Identity** — include Jellyfin item id + catalog stem / generation tags so furnace can resolve `.flam3` and MP4 sidecar.
-5. **Multi-Roku** — per-device DeviceId optional on the event; household votes aggregate on the furnace (see [04](04_ROKU_PUBLISH.md)).
-6. **Shuffle pool (shipped 1.0.28)** — VoD `shuffleFlock` already includes **`pedigree`** and **`tuple`** (skips `misc`/`test`). Screensaver ignores `shuffleFlock`. No further allowlist change is required for vote-mode to reach pedigree sheep.
+1. **Timing** — overlay when remaining duration ≤ 12 s; hide on timeout (10 s), vote, Back, or clip advance.
+2. **UI** — transient SceneGraph group over Video (bottom banner); copy for like / love / vote; no Button focus (Video stays focused).
+3. **Mapping** — see Remote map above; shuffle / streamMode / Options keys are not stolen during playback.
+4. **Identity** — stem from `mediaPath` basename (fallback `electricsheep.{generation}.{sheepId}`); Jellyfin item id + optional DeviceId on the event.
+5. **Multi-Roku** — per-device DeviceId optional; household votes aggregate on the furnace sidecar.
+6. **Shuffle pool (shipped 1.0.28)** — VoD `shuffleFlock` already includes **`pedigree`** and **`tuple`**.
 
-### B — Furnace vote capture
+### B — Furnace vote capture (shipped)
 
-1. **API / sink** — e.g. `POST /v1/sheep-votes` on an existing or new LAN service (pattern after display-profile sink); auth via shared secret or Jellyfin API key policy TBD.
-2. **Store** — atomic rewrite of that sheep’s `{stem}.jellyflam3.json` `viewer_feedback` block (likes / loves / votes / last_voted_at / share_candidate). Key **reserved** in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). That sidecar is the **only** place share cron and idle-breed read weights.
-3. **Unlimited re-vote** — each event increments sidecar counts; optional decay / window for breed weights vs raw share threshold (still computed from sidecar).
-4. **Resolve genome** — map voted catalog item → sidecar stem → `.flam3` in `genomes/done` / pedigree for share and breed.
+1. **API / sink** — `POST /v1/sheep-votes` on the existing display-profile sink (`pipeline.display_profile_sink`, port 8791); same `DISPLAY_SINK_TOKEN` / `X-JellyFlam3-Token`.
+2. **Store** — atomic rewrite of that sheep’s `{stem}.jellyflam3.json` `viewer_feedback` (`pipeline.sheep_votes`). No `/var/lib` vote JSON.
+3. **Unlimited re-vote** — each event increments sidecar counts.
+4. **Resolve genome** — stem via catalog sidecar scan; else mediaPath basename under `paths.media_library`; 404 if no sidecar (never invent JSON).
 
 ### C — Share cron (new)
 
@@ -106,14 +121,14 @@ Key **`viewer_feedback`** (likes / loves / votes / last_voted_at / share_candida
 
 ## Exit criteria (when Phase 4 opens)
 
-- [ ] Vote-mode / feedback shuffle includes **pedigree** catalog sheep (not archive-gen allowlist only); misc/test still excluded
-- [ ] Overlay appears before end of sheep playback without stopping Video
-- [ ] Remote vote records on that sheep’s catalog sidecar; same sheep can be re-voted freely
-- [ ] Share cron and idle breed read **only** sidecar `viewer_feedback` (no competing store)
+- [x] Vote-mode / feedback shuffle includes **pedigree** catalog sheep (not archive-gen allowlist only); misc/test still excluded
+- [x] Overlay appears before end of sheep playback without stopping Video
+- [x] Remote vote records on that sheep’s catalog sidecar; same sheep can be re-voted freely
+- [ ] Share cron and idle breed read **only** sidecar `viewer_feedback` (no competing store) — sink writes sidecar only; cron/weights parked
 - [ ] Share cron publishes or stages liked `.flam3` for Tailscale/Syncthing path (Opt In + share-security honored)
 - [ ] Daily idle breed uses vote weights when available; uniform fallback when not
-- [ ] Docs: button map, cron examples, privacy / LAN scope; linked from Phase 4 overview + end-user guide
-- [ ] Idle-gate / Sessions behavior verified (vote traffic does not close the furnace)
+- [x] Docs: button map, privacy / LAN scope; linked from Phase 4 overview + end-user guide (cron examples wait on Wave 3)
+- [x] Idle-gate / Sessions behavior: vote POST is display-sink, not a Playing client
 
 ## See also
 

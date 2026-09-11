@@ -17,6 +17,30 @@
       translation="[0,0]"
       loop="false"
       enableUI="false" />
+    <Group id="voteOverlay" visible="false">
+      <Rectangle
+        id="voteBanner"
+        translation="[80,860]"
+        width="1760"
+        height="100"
+        color="0x0A0A12CC" />
+      <Label
+        id="votePrompt"
+        translation="[100,872]"
+        width="1720"
+        height="36"
+        font="font:MediumSystemFont"
+        color="0xE8E8F0FF"
+        text="Like this sheep?" />
+      <Label
+        id="voteHint"
+        translation="[100,910]"
+        width="1720"
+        height="36"
+        font="font:SmallSystemFont"
+        color="0xA0A0B8FF"
+        text="OK like · FF love · Replay vote · Back dismiss" />
+    </Group>
     <Label
       id="status"
       translation="[80,980]"
@@ -28,6 +52,10 @@
     <Timer
       id="progressTimer"
       repeat="true"
+      duration="10" />
+    <Timer
+      id="voteHideTimer"
+      repeat="false"
       duration="10" />
   </children>
 </component>

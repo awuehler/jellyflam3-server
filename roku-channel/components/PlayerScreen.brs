@@ -2,11 +2,15 @@ sub init()
   m.video = m.top.findNode("Video")
   m.status = m.top.findNode("status")
   m.progressTimer = m.top.findNode("progressTimer")
+  m.voteOverlay = m.top.findNode("voteOverlay")
+  m.votePrompt = m.top.findNode("votePrompt")
+  m.voteHideTimer = m.top.findNode("voteHideTimer")
   m.video.observeField("state", "onState")
   m.video.observeField("errorCode", "onError")
   m.video.observeField("errorMsg", "onError")
   m.video.observeField("position", "onPosition")
   m.progressTimer.observeField("fire", "onProgressFire")
+  if m.voteHideTimer <> invalid then m.voteHideTimer.observeField("fire", "onVoteHideFire")
   m.registry = CreateObject("roRegistrySection", "JellyFlam3")
   m.itemId = ""
   m.reportedPlaying = false
@@ -19,6 +23,11 @@ sub init()
   m.reloopPending = false
   m.advancePending = false
   m.failureSignaled = false
+  m.mediaPath = ""
+  m.sheepId = ""
+  m.generation = ""
+  m.stem = ""
+  m.voteDismissed = false
   ' Finer position ticks help catch end-of-clip before "finished".
   m.video.notificationInterval = 0.25
 end sub
@@ -55,6 +64,12 @@ sub playSheep(item as object)
   m.mp4Url = ""
   m.title = ""
   m.lengthSec = 0
+  m.mediaPath = ""
+  m.sheepId = ""
+  m.generation = ""
+  m.stem = ""
+  m.voteDismissed = false
+  hideVoteOverlay()
   if item <> invalid
     if item.hlsUrl <> invalid and item.hlsUrl <> ""
       m.hlsUrl = item.hlsUrl
@@ -64,7 +79,12 @@ sub playSheep(item as object)
     if item.mp4Url <> invalid then m.mp4Url = item.mp4Url
     if item.title <> invalid then m.title = item.title
     if item.length <> invalid then m.lengthSec = item.length
+    if item.mediaPath <> invalid then m.mediaPath = item.mediaPath
+    if item.sheepId <> invalid then m.sheepId = item.sheepId
+    if item.generation <> invalid then m.generation = item.generation
+    if item.stem <> invalid then m.stem = item.stem
   end if
+  if m.stem = "" then m.stem = stemFromPlayback()
 
   mode = resolveStreamMode()
   if mode = "hls" and m.hlsUrl <> ""
@@ -106,6 +126,7 @@ sub startVideo(url as string, fmt as string)
 end sub
 
 sub stopSheep()
+  hideVoteOverlay()
   stopPlaybackReport()
   if m.video <> invalid
     m.video.control = "stop"
@@ -180,6 +201,7 @@ end sub
 sub requestClipAdvance()
   if m.advancePending = true then return
   m.advancePending = true
+  hideVoteOverlay()
   stopPlaybackReport()
   if m.video <> invalid then m.video.control = "stop"
   m.top.clipFinished = true
@@ -212,6 +234,7 @@ sub onPosition()
   if dur <= 1.0 then return
   cur = m.video.position
   if cur = invalid then return
+  maybeShowVoteOverlay(dur, cur)
   ' Jump before EOF so we avoid the heavier "finished" path when possible.
   if cur >= (dur - 0.4) and cur > 0.5
     endOfClipAction()
@@ -299,10 +322,154 @@ sub onError()
 end sub
 
 function onKeyEvent(key as string, press as boolean) as boolean
-  if press and (key = "back" or key = "up")
+  if not press then return false
+  if voteOverlayVisible()
+    if key = "OK"
+      submitSheepVote("like")
+      return true
+    else if key = "fastforward"
+      submitSheepVote("love")
+      return true
+    else if key = "replay"
+      submitSheepVote("vote")
+      return true
+    else if key = "back"
+      dismissVoteOverlay()
+      return true
+    end if
+  end if
+  if key = "back" or key = "up"
     stopSheep()
     m.top.close = true
     return true
   end if
   return false
 end function
+
+function voteOverlayVisible() as boolean
+  if m.voteOverlay = invalid then return false
+  return m.voteOverlay.visible = true
+end function
+
+function voteRemainThresholdSec() as float
+  return 12.0
+end function
+
+sub maybeShowVoteOverlay(dur as float, cur as float)
+  if m.voteDismissed = true then return
+  if voteOverlayVisible() then return
+  if m.reloopPending = true then return
+  remain = dur - cur
+  if remain <= voteRemainThresholdSec() and remain > 0.5
+    showVoteOverlay()
+  end if
+end sub
+
+sub showVoteOverlay()
+  if m.voteOverlay = invalid then return
+  if m.votePrompt <> invalid then m.votePrompt.text = "Like this sheep?"
+  m.voteOverlay.visible = true
+  if m.voteHideTimer <> invalid
+    m.voteHideTimer.control = "stop"
+    m.voteHideTimer.control = "start"
+  end if
+end sub
+
+sub hideVoteOverlay()
+  if m.voteHideTimer <> invalid then m.voteHideTimer.control = "stop"
+  if m.voteOverlay <> invalid then m.voteOverlay.visible = false
+end sub
+
+sub dismissVoteOverlay()
+  m.voteDismissed = true
+  hideVoteOverlay()
+end sub
+
+sub onVoteHideFire()
+  hideVoteOverlay()
+end sub
+
+function lastPathComponent(path as string) as string
+  if path = invalid or path = "" then return ""
+  p = path.Trim()
+  while Instr(1, p, "\") > 0
+    p = Mid(p, Instr(1, p, "\") + 1)
+  end while
+  while Instr(1, p, "/") > 0
+    p = Mid(p, Instr(1, p, "/") + 1)
+  end while
+  low = LCase(p)
+  if Right(low, 4) = ".mp4" then return Left(p, Len(p) - 4)
+  return p
+end function
+
+function stemFromPlayback() as string
+  fromPath = lastPathComponent(m.mediaPath)
+  if fromPath <> "" then return fromPath
+  if m.generation <> invalid and m.generation <> "" and m.sheepId <> invalid and m.sheepId <> ""
+    return "electricsheep." + m.generation + "." + m.sheepId
+  end if
+  if m.title <> invalid then return lastPathComponent(m.title)
+  return ""
+end function
+
+function hostFromBaseUrl(base as string) as string
+  if base = invalid or base = "" then return ""
+  b = base.Trim()
+  idx = Instr(1, b, "://")
+  if idx > 0 then b = Mid(b, idx + 3)
+  slash = Instr(1, b, "/")
+  if slash > 0 then b = Left(b, slash - 1)
+  colon = Instr(1, b, ":")
+  if colon > 0 then b = Left(b, colon - 1)
+  return b
+end function
+
+function resolveDisplaySinkUrl() as string
+  explicit = m.registry.read("displaySinkUrl")
+  if explicit <> invalid and explicit <> ""
+    u = explicit.Trim()
+    while Len(u) > 0 and Right(u, 1) = "/"
+      u = Left(u, Len(u) - 1)
+    end while
+    return u
+  end if
+  base = m.registry.read("baseUrl")
+  if base = invalid then base = ""
+  host = hostFromBaseUrl(base)
+  if host = "" then return ""
+  return "http://" + host + ":8791"
+end function
+
+function channelDeviceId() as string
+  di = CreateObject("roDeviceInfo")
+  if di = invalid then return ""
+  cid = di.GetChannelClientId()
+  if cid = invalid then return ""
+  return cid
+end function
+
+sub submitSheepVote(kind as string)
+  if m.stem = "" then m.stem = stemFromPlayback()
+  payload = {
+    stem: m.stem
+    kind: kind
+    itemId: m.itemId
+    mediaPath: m.mediaPath
+    generation: m.generation
+    sheepId: m.sheepId
+    deviceId: channelDeviceId()
+  }
+  sink = resolveDisplaySinkUrl()
+  token = m.registry.read("displaySinkToken")
+  if token = invalid then token = ""
+  task = createObject("roSGNode", "JellyfinTask")
+  task.command = "sheepVote"
+  task.displaySinkUrl = sink
+  task.sinkToken = token
+  task.voteJson = FormatJson(payload)
+  task.control = "RUN"
+  m.voteTask = task
+  m.voteDismissed = true
+  hideVoteOverlay()
+end sub

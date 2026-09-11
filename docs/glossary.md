@@ -159,7 +159,7 @@ Short non-catalog test via `scripts/smoke_render.sh` (`JELLYFLAM3_SMOKE=1`, ~13 
 
 ### Viewer feedback / sheep vote
 
-Phase 4 design ([phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md)): Roku VoD transient overlay near end of each sheep invites like/love/vote **without stopping playback**. Tallies live on the catalog **sidecar** (`viewer_feedback`); re-votes allowed. Share cron and idle-breed bias read that sidecar only.
+Phase 4 design ([phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md)): Roku VoD **1.0.32** transient overlay near end of each sheep invites like/love/vote **without stopping playback**. Tallies live on the catalog **sidecar** (`viewer_feedback`); re-votes allowed. Share cron and idle-breed bias (parked) read that sidecar only. Sink: `POST /v1/sheep-votes` on display-sink `:8791`.
 
 ### Sheep naming / alias
 

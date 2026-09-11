@@ -6,6 +6,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Phase 4 Wave 2: Roku VoD **1.0.32** like/love/vote overlay (last 12 s, playback continues). `POST /v1/sheep-votes` on `jellyflam3-display-sink` (:8791) writes catalog sidecar `viewer_feedback` only and sets `share_candidate`. CLI `python3 -m pipeline.sheep_votes`. Share cron / breed weights / auto-promote stay parked.
+- Phase 4 Wave 2: private-channel coexistence path ([phase4/04](docs/phase4/04_ROKU_PUBLISH.md#private-channel-path-wave-2)). Roku screensaver **1.0.10** Settings writes Jellyfin credentials so VoD (private channel) and SS (sideload slot) can both stay installed. Channel Store parked.
 - Fleet log hygiene: persistent journald (class-sized) + 72h `jellyflam3-logrotate.timer`; compress file-log backups after 11 days; purge after 23 days (`scripts/enable_log_hygiene.sh`).
 - Opt-In watchdog LAN heal: ping default gateway; rate-limited Wi‑Fi bounce (`nmcli`) before Tailscale re-auth (`peering.watchdog.*`).
 - Sheep refactor Pathway A: `catalog_desaturated` + `palette_washed_out` heuristics for grey/muddy catalog sheep.

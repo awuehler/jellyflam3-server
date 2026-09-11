@@ -1,5 +1,5 @@
 [Unit]
-Description=JellyFlam3 display profile sink (per-screen TV hints)
+Description=JellyFlam3 display-profile + sheep-vote sink (:8791)
 After=network-online.target
 Wants=network-online.target
 

@@ -65,8 +65,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=31" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.31""' in text
+    assert "build_version=32" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.32""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
@@ -90,6 +90,12 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "sub signalPlaybackFailed()" in player
     assert "m.top.playbackFailed = true" in player
     assert "postPlayback(\"playing\")" in player
+    assert "sub submitSheepVote(kind as string)" in player
+    assert 'submitSheepVote("like")' in player
+    assert 'submitSheepVote("love")' in player
+    assert 'command = "sheepVote"' in player
+    assert "/v1/sheep-votes" in text
+    assert "function postSheepVote() as object" in text
     settings = (VOD / "components" / "SettingsScreen.brs").read_text(encoding="utf-8")
     assert "function shuffleFlockDefault() as boolean" in settings
     assert "return true" in settings
@@ -109,6 +115,9 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "function flockRepollMinSec() as integer" in ss
     ss_reg = (SS / "components" / "RegistryPresets.brs").read_text(encoding="utf-8")
     assert 'reg.write("shuffleFlock"' not in ss_reg
+    ss_set = (SS / "components" / "ScreenSaverSettings.brs").read_text(encoding="utf-8")
+    assert 'm.credFields = ["baseUrl", "apiKey", "userId", "libraryId"]' in ss_set
+    assert "sub editCred(name as string)" in ss_set
 
 
 def test_roku_screensaver_expands_nested_library_folders():
@@ -125,5 +134,5 @@ def test_roku_screensaver_expands_nested_library_folders():
     assert "pruneToCap" in text
     assert "flockIndexCap" in text
     assert "flockFetchLimit" in text
-    assert "build_version=9" in (SS / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.9""' in text
+    assert "build_version=10" in (SS / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.10""' in text

@@ -179,18 +179,18 @@ File: `{stem}.jellyflam3.json` next to the catalog MP4. Code list: `pipeline.sti
 | `refactor` | worker merge / refactor | Pathway history array |
 | `stills` / `screensaver_safe` | poster pipeline / stills | Screensaver frame index; never written for tuples |
 
-### Reserved Phase 4 keys (names locked; vote sink parked)
+### Reserved Phase 4 keys (names locked; vote sink shipped)
 
 | Key | Guide | Shape | Notes |
 |---|---|---|---|
 | `type` | [03](../phase4/03_EDGES_AND_WATERMARK.md) | `"loop"` (default when omitted), `"tuple"` (worker writes), or `"edge"` (reserved, not written) | Guide 01 does not add its own top-level key |
 | `from_id`, `to_id` | [03](../phase4/03_EDGES_AND_WATERMARK.md) | string or `null` | Companions of `type: tuple` (and reserved `type: edge`) |
 | `watermark` | [03](../phase4/03_EDGES_AND_WATERMARK.md) | `{ enabled, style, text, image }` | Tuple ingest writes the **effective** style (`text` on commercial-safe furnaces even if yaml says `image`); do not falsify flam3 XML |
-| `viewer_feedback` | [08](../phase4/08_VIEWER_FEEDBACK_LOOP.md); [01](../phase4/01_PEER_SHARE_PATH.md) reads `share_candidate` | `{ likes, loves, votes, last_voted_at, share_candidate }` | Integers / bool / ISO timestamp or `null` |
+| `viewer_feedback` | [08](../phase4/08_VIEWER_FEEDBACK_LOOP.md); [01](../phase4/01_PEER_SHARE_PATH.md) reads `share_candidate` | `{ likes, loves, votes, last_voted_at, share_candidate }` | Integers / bool / ISO timestamp or `null`. Vote sink: `POST /v1/sheep-votes` / `python3 -m pipeline.sheep_votes` |
 | `alias` | [09](../phase4/09_SHEEP_NAMING.md) | `adjective_surname` | Display name; filename stays canonical |
 | `alias_source` | [09](../phase4/09_SHEEP_NAMING.md); LLM write path [phase5/02](../phase5/02_LLM_INTEGRATION.md) | `auto` \| `human` \| `llm` | Companion of `alias` |
 
-Vote sink stays parked until [08](../phase4/08_VIEWER_FEEDBACK_LOOP.md) opens. Tuple edge watermark and 09 RNG aliases are **shipped**.
+Vote sink is **shipped** (Wave 2): overlay on VoD **1.0.32**; sidecar-only tallies; share cron / breed weights parked. Tuple edge watermark and 09 RNG aliases are **shipped**.
 
 ```json
 {
@@ -264,4 +264,4 @@ python3 scripts/jellyfin_id_dump.py --items --limit 50
 - [x] NC genomes tagged `cc-by-nc` (heuristics → **sidecar**; unit-tested)
 - [x] Commercial filter excludes NC when enabled (unit-tested; BrightScript contract retained, default off)
 - [x] Tags persisted for ops — **sidecar-only** Phase 1 (`*.jellyflam3.json`); Items API tags deferred
-- [x] Phase 4 sidecar key names reserved (`type`, `watermark`, `viewer_feedback`, `alias`) — readers keep unknown JSON; worker copies reserved keys on re-ingest; tuple ingest writes `type` / `from_id` / `to_id` / `watermark` from this encode; 09 RNG writes `alias` / `alias_source=auto` when missing
+- [x] Phase 4 sidecar key names reserved (`type`, `watermark`, `viewer_feedback`, `alias`) — readers keep unknown JSON; worker copies reserved keys on re-ingest; tuple ingest writes `type` / `from_id` / `to_id` / `watermark` from this encode; 09 RNG writes `alias` / `alias_source=auto` when missing; **08 vote sink** writes `viewer_feedback` on the catalog sidecar

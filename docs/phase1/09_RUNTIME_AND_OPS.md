@@ -20,7 +20,7 @@ ls /opt/jellyflam3-server/secrets.env /opt/jellyflam3-server/configs/jellyflam3.
 sudo cp deploy/systemd/*.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now jellyflam3-idlegate jellyflam3-worker
-# Guide 04 F — per-screen TV display profile sink (port 8791; accepts Roku FormatJson lowercase keys)
+# Guide 04 F — per-screen TV display profile sink + sheep votes (port 8791; accepts Roku FormatJson lowercase keys)
 sudo mkdir -p /var/lib/jellyflam3/display_profiles
 sudo chown jellyflam3:jellyflam3 /var/lib/jellyflam3/display_profiles
 sudo systemctl enable --now jellyflam3-display-sink

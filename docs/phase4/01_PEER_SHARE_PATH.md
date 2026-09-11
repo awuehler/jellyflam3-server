@@ -24,7 +24,7 @@ Contract: [phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_
 
 Share-out automation (when built) reads **`viewer_feedback.share_candidate`** on `{stem}.jellyflam3.json`. That block is reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) with the rest of `viewer_feedback`. Guide 01 does **not** add its own top-level key.
 
-No vote sink, share cron, or auto-promote in this slice. Worker ingest copies reserved sidecar keys (`viewer_feedback` included) across re-encode; `share_candidate` therefore survives Shears-modify. Auto-promote stays parked.
+Vote sink (Wave 2) sets `share_candidate` on like/love/vote. Share cron and auto-promote stay parked. Worker ingest copies reserved sidecar keys (`viewer_feedback` included) across re-encode; `share_candidate` therefore survives Shears-modify. Auto-promote stays parked.
 
 ## Non-goals (until opened)
 

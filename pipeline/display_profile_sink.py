@@ -1,14 +1,17 @@
-"""Purpose: LAN HTTP sink for per-screen display profiles (guide 04 piece F).
+"""Purpose: LAN HTTP sink for display profiles and sidecar sheep votes.
 
-Requirements: Writable display_profiles dir; DISPLAY_SINK_TOKEN in secrets.env for non-loopback binds
-  (or pass --allow-unauthenticated for lab-only open access).
+Requirements: Writable display_profiles dir; catalog media_library for votes;
+  DISPLAY_SINK_TOKEN in secrets.env for non-loopback binds (or --allow-unauthenticated).
 
 Usage:
   python3 -m pipeline.display_profile_sink --config configs/jellyflam3.yaml
-  GET /healthz | GET/POST/PUT /v1/display-profiles (header X-JellyFlam3-Token when auth on)
+  GET /healthz | GET/POST/PUT /v1/display-profiles | POST /v1/sheep-votes
+  (header X-JellyFlam3-Token when auth on)
 
-Assumptions: Clients POST profile JSON; sink upserts one file per client+deviceId via display_profiles helpers.
+Assumptions: Profile POSTs upsert one file per client+deviceId. Vote POSTs rewrite
+  that sheep's catalog sidecar ``viewer_feedback`` only (no /var/lib store).
   Auth is fail-closed: empty token denies API writes unless --allow-unauthenticated.
+  Vote traffic is not a Jellyfin Sessions client (idle-gate safe).
 """
 
 from __future__ import annotations
@@ -22,18 +25,20 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from pipeline.config import load_config, load_dotenv
+from pipeline.config import load_config, load_dotenv, resolve_path
 from pipeline.display_profiles import (
     list_profiles,
     profiles_dir_from_cfg,
     upsert_profile,
 )
+from pipeline.sheep_votes import InvalidVote, StemNotFound, apply_vote
 
 DEFAULT_PORT = 8791
 
 
 class _State:
     profiles_dir: Path = Path("/var/lib/jellyflam3/display_profiles")
+    media_root: Path = Path("/media/sheep")
     token: str = ""
     allow_unauthenticated: bool = False
 
@@ -88,6 +93,7 @@ class Handler(BaseHTTPRequestHandler):
                     "ok": True,
                     "service": "display_profile_sink",
                     "profilesDir": str(STATE.profiles_dir),
+                    "mediaRoot": str(STATE.media_root),
                 },
             )
             return
@@ -100,10 +106,39 @@ class Handler(BaseHTTPRequestHandler):
         self._send(404, {"ok": False, "error": "not found"})
 
     def do_POST(self) -> None:  # noqa: N802
+        path = urlparse(self.path).path.rstrip("/") or "/"
+        if path == "/v1/sheep-votes":
+            self._sheep_vote()
+            return
         self._upsert()
 
     def do_PUT(self) -> None:  # noqa: N802
         self._upsert()
+
+    def _sheep_vote(self) -> None:
+        """POST handler: increment sidecar viewer_feedback (unlimited re-vote)."""
+        if not self._check_token():
+            self._send(401, {"ok": False, "error": "unauthorized"})
+            return
+        try:
+            raw = self._read_json()
+            result = apply_vote(STATE.media_root, raw)
+        except InvalidVote as e:
+            self._send(400, {"ok": False, "error": str(e)})
+            return
+        except StemNotFound as e:
+            self._send(404, {"ok": False, "error": str(e)})
+            return
+        except FileNotFoundError as e:
+            self._send(404, {"ok": False, "error": str(e)})
+            return
+        except ValueError as e:
+            self._send(400, {"ok": False, "error": str(e)})
+            return
+        except Exception as e:  # noqa: BLE001
+            self._send(500, {"ok": False, "error": str(e)})
+            return
+        self._send(200, result)
 
     def _upsert(self) -> None:
         """POST/PUT handler: normalize and write one display profile file."""
@@ -138,7 +173,9 @@ class Handler(BaseHTTPRequestHandler):
 
 def main(argv: list[str] | None = None) -> int:
     """CLI: serve the LAN HTTP sink for per-screen display profiles."""
-    ap = argparse.ArgumentParser(description="JellyFlam3 display profile HTTP sink")
+    ap = argparse.ArgumentParser(
+        description="JellyFlam3 display-profile + sheep-vote HTTP sink"
+    )
     ap.add_argument("--config", default="configs/jellyflam3.yaml")
     ap.add_argument("--host", default="0.0.0.0")
     ap.add_argument("--port", type=int, default=DEFAULT_PORT)
@@ -174,6 +211,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     STATE.profiles_dir = profiles_dir_from_cfg(cfg)
     STATE.profiles_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        STATE.media_root = resolve_path(cfg, "media_library") if cfg else Path("/media/sheep")
+    except (KeyError, TypeError, ValueError):
+        STATE.media_root = Path("/media/sheep")
 
     if STATE.token:
         auth = "on"

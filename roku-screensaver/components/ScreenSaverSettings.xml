@@ -8,7 +8,7 @@
       text="JellyFlam3 Screensaver Settings"
       width="1920"
       height="60"
-      translation="[0,40]"
+      translation="[0,28]"
       horizAlign="center"
       font="font:LargeBoldSystemFont"
       color="0xFFFFFFFF"
@@ -16,37 +16,45 @@
     <Label
       id="help"
       width="1600"
-      height="120"
-      translation="[160,110]"
+      height="90"
+      translation="[160,88]"
       wrap="true"
       font="font:SmallSystemFont"
       color="0xAAAAAAFF"
-      text="Jellyfin URL / API key / user / library are written only by the JellyFlam3 VoD channel Settings on this Roku (install VoD now or earlier, then save Settings). This screen cannot create those keys. Below: screensaver-only options. Up/Down select · Left/Right or OK change · Back exit."
+      text="Jellyfin URL / API key / user / library can be entered here (needed when VoD is a private channel — registry is per package). Fade/dwell still save immediately. Up/Down select · OK edit creds or change fade · Back exit."
     />
     <Label
       id="credStatus"
       width="1600"
-      height="50"
-      translation="[160,240]"
+      height="40"
+      translation="[160,178]"
       wrap="true"
       font="font:SmallSystemFont"
       color="0x88FF88FF"
       text=""
     />
-    <Rectangle id="row0bg" width="1600" height="72" translation="[160,320]" color="0x1A1A28FF" />
-    <Label id="row0" width="1540" height="40" translation="[188,340]" font="font:MediumSystemFont" color="0xE8E8F0FF" text="" />
-    <Rectangle id="row1bg" width="1600" height="72" translation="[160,410]" color="0x1A1A28FF" />
-    <Label id="row1" width="1540" height="40" translation="[188,430]" font="font:MediumSystemFont" color="0xE8E8F0FF" text="" />
-    <Rectangle id="row2bg" width="1600" height="72" translation="[160,500]" color="0x1A1A28FF" />
-    <Label id="row2" width="1540" height="40" translation="[188,520]" font="font:MediumSystemFont" color="0xE8E8F0FF" text="" />
+    <Rectangle id="row0bg" width="1600" height="62" translation="[160,220]" color="0x1A1A28FF" />
+    <Label id="row0" width="1540" height="40" translation="[188,232]" font="font:MediumSystemFont" color="0xE8E8F0FF" text="" />
+    <Rectangle id="row1bg" width="1600" height="62" translation="[160,286]" color="0x1A1A28FF" />
+    <Label id="row1" width="1540" height="40" translation="[188,298]" font="font:MediumSystemFont" color="0xE8E8F0FF" text="" />
+    <Rectangle id="row2bg" width="1600" height="62" translation="[160,352]" color="0x1A1A28FF" />
+    <Label id="row2" width="1540" height="40" translation="[188,364]" font="font:MediumSystemFont" color="0xE8E8F0FF" text="" />
+    <Rectangle id="row3bg" width="1600" height="62" translation="[160,418]" color="0x1A1A28FF" />
+    <Label id="row3" width="1540" height="40" translation="[188,430]" font="font:MediumSystemFont" color="0xE8E8F0FF" text="" />
+    <Rectangle id="row4bg" width="1600" height="62" translation="[160,484]" color="0x1A1A28FF" />
+    <Label id="row4" width="1540" height="40" translation="[188,496]" font="font:MediumSystemFont" color="0xE8E8F0FF" text="" />
+    <Rectangle id="row5bg" width="1600" height="62" translation="[160,550]" color="0x1A1A28FF" />
+    <Label id="row5" width="1540" height="40" translation="[188,562]" font="font:MediumSystemFont" color="0xE8E8F0FF" text="" />
+    <Rectangle id="row6bg" width="1600" height="62" translation="[160,616]" color="0x1A1A28FF" />
+    <Label id="row6" width="1540" height="40" translation="[188,628]" font="font:MediumSystemFont" color="0xE8E8F0FF" text="" />
     <Label
       id="hint"
       width="1600"
-      height="40"
-      translation="[160,600]"
+      height="50"
+      translation="[160,700]"
       font="font:SmallSystemFont"
       color="0x888888FF"
-      text="Changes save immediately to registry section JellyFlam3 (ssFade / ssDwellSec / ssFadeSec)."
+      text="Saves to registry section JellyFlam3 (baseUrl / apiKey / userId / libraryId / ssFade / ssDwellSec / ssFadeSec)."
     />
   </children>
 </component>

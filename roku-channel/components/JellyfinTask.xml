@@ -16,6 +16,7 @@
     <field id="displaySinkUrl" type="string" />
     <field id="profileJson" type="string" />
     <field id="sinkToken" type="string" />
+    <field id="voteJson" type="string" />
     <!-- string JSON — nested AA from Task→render often silently fails -->
     <field id="resultJson" type="string" alwaysNotify="true" />
   </interface>

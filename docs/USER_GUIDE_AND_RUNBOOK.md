@@ -29,19 +29,19 @@ You do **not** need the Pi terminal for normal viewing. Printable one-pager: [FR
 2. **Furnace-built zips are pre-configured:** when packaged on a Pi with `secrets.env`, the zip includes that furnace’s Jellyfin URL, API key, user id, and library id. Launch the channel — credentials apply on first run if the registry is empty; the flock list should load without manual paste.
 3. **Otherwise** (Windows packaging host or empty registry): open the channel → **Settings** → enter Jellyfin connection values. An operator runs `python3 scripts/jellyfin_id_dump.py` on the Pi and gives you `baseUrl`, `apiKey`, `userId`, `libraryId` (never share the API key in chat/email — paste on the TV only) → save Settings.
 
-**Everyday use:** launch JellyFlam3 → pick a sheep → ambient loop plays. Shuffle is always on (channel **1.0.30+**): archive gens plus **pedigree** and **tuple**. After a full mix, **1.0.31** asks Jellyfin again so overnight ingest can appear without leaving the player ([Flock mix](#flock-mix-shuffle-wrap)). A **tuple** is one longer clip: sheep A, then a morph into sheep B. During that middle morph only, a quiet mark sits in the lower-right corner (the Electric Sheep logo PNG on the default private furnace; your own PNG if the operator set one; or the credit “artwork by Scott Draves and the Electric Sheep” on a commercial-safe furnace that still uses the Cesari file). Loops A and B have no mark. That mark is **not** a license to post the clip as official Electric Sheep — operators, see [Private vs public furnace](#private-vs-public-furnace) and [Use your own PNG](#use-your-own-png-private-and-public). When you press **Play**, the Pi **stops rendering** new sheep until the TV has been idle for several minutes (see [idle gate](#idle-gate-behavior) below).
+**Everyday use:** launch JellyFlam3 → pick a sheep → ambient loop plays. Shuffle is always on (channel **1.0.30+**): archive gens plus **pedigree** and **tuple**. After a full mix, **1.0.31** asks Jellyfin again so overnight ingest can appear without leaving the player ([Flock mix](#flock-mix-shuffle-wrap)). Near the end of each clip (**1.0.32**), a banner invites a vote without pausing: **OK** like, **FF** love, **Replay** vote, **Back** dismiss. Votes stay on the Pi (LAN only). A **tuple** is one longer clip: sheep A, then a morph into sheep B. During that middle morph only, a quiet mark sits in the lower-right corner (the Electric Sheep logo PNG on the default private furnace; your own PNG if the operator set one; or the credit “artwork by Scott Draves and the Electric Sheep” on a commercial-safe furnace that still uses the Cesari file). Loops A and B have no mark. That mark is **not** a license to post the clip as official Electric Sheep — operators, see [Private vs public furnace](#private-vs-public-furnace) and [Use your own PNG](#use-your-own-png-private-and-public). When you press **Play**, the Pi **stops rendering** new sheep until the TV has been idle for several minutes (see [idle gate](#idle-gate-behavior) below).
 
 **Deep link smoke (optional):** after an operator dumps item Guids (`jellyfin_id_dump.py --items`), a specific sheep can be launched with `contentId=<Guid>` via the Roku ECP port (developer mode).
 
 ### Roku Screensaver / Backdrop
 
-The screensaver is a **separate sideload package** (`jellyflam3-screensaver.zip`). It shows **Jellyfin Primary posters and Backdrop stills** from every library folder except `tuple` — no video node (Roku policy). It always rotates (ignores VoD `shuffleFlock`) and honors the same `commercialMode` Tag filter as VoD. Package **1.0.9** re-fetches stills after a full mix ([Flock mix](#flock-mix-shuffle-wrap)).
+The screensaver is a **separate sideload package** (`jellyflam3-screensaver.zip`). It shows **Jellyfin Primary posters and Backdrop stills** from every library folder except `tuple` — no video node (Roku policy). It always rotates (ignores VoD `shuffleFlock`) and honors the same `commercialMode` Tag filter as VoD. Package **1.0.9** re-fetches stills after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). **1.0.10** Screensaver Settings can enter Jellyfin URL / API key / user / library (needed when VoD is a private channel).
 
-**Credentials:** Screensaver **reads** the same `JellyFlam3` registry keys as VoD. A **furnace-built** screensaver zip also ships `registry/jellyflam3-presets.json` and applies the same Jellyfin values on first run when keys are empty. Otherwise install VoD on that Roku **first** and save Settings once (or paste manually in VoD Settings). Screensaver Settings only adjusts fade/dwell — it has no credential editors.
+**Credentials:** Screensaver reads registry section `JellyFlam3` on **this** package. A **furnace-built** zip ships `registry/jellyflam3-presets.json`. Otherwise paste in **Screensaver Settings** (**1.0.10+**) or, while both packages still share the developer slot, save VoD Settings first then sideload SS (registry survives the zip swap). Private-channel VoD does **not** share registry with sideload SS.
 
 **Enable:** sideload screensaver zip → on Roku go to **Settings → Theme → Screensavers** → select JellyFlam3.
 
-**Developer-mode note:** only **one** sideload slot. Installing screensaver **replaces** VoD until you re-sideload VoD. Registry keys survive the swap.
+**Developer-mode note:** only **one** sideload slot. Installing screensaver **replaces** VoD until you re-sideload VoD. Long-term coexistence: publish VoD as a **private/unpublished** channel ([phase4/04](phase4/04_ROKU_PUBLISH.md#private-channel-path-wave-2)), then sideload SS in the free slot.
 
 **While screensaver runs:** the Pi idle gate should stay **open** (rendering may continue). Operator verifies with `cat /var/lib/jellyflam3/idle_gate_status.json`.
 
@@ -907,6 +907,7 @@ python3 -m pipeline.hw_profile      # apply 16a/08a/04a profile
 python3 -m pipeline.link_capacity   # concurrent-client N_max estimate
 python3 -m pipeline.library_disk    # sheep-mount WARN/BAD
 python3 -m pipeline.sheep_naming    # alias backfill / set / clear / resolve
+python3 -m pipeline.sheep_votes     # sidecar like/love/vote (show / apply)
 python3 -m pipeline.display_profiles
 ```
 

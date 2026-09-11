@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — author a **household / end-user** guide for day-to-day JellyFlam3 operation: common tasks, worked examples, and problem triage. Audience is the person running one or more Pis + Roku(s), not the Phase 1–3 implementer reading feature guides.
 
-**Status:** Baseline complete (Owner OK 2026-09-03). Day-to-day use: **[../USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md)** (Layer 1 + [worked examples](../USER_GUIDE_AND_RUNBOOK.md#worked-examples) + Layer 2 triage). Fridge card: **[../FRIDGE_CARD.md](../FRIDGE_CARD.md)**. Remaining expansion (vote / like recipes) waits on [08](08_VIEWER_FEEDBACK_LOOP.md). Alias rename CLI shipped with [09](09_SHEEP_NAMING.md).
+**Status:** Baseline complete (Owner OK 2026-09-03). Day-to-day use: **[../USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md)** (Layer 1 + [worked examples](../USER_GUIDE_AND_RUNBOOK.md#worked-examples) + Layer 2 triage). Fridge card: **[../FRIDGE_CARD.md](../FRIDGE_CARD.md)**. Overlay button map is in the user guide (VoD **1.0.32**); fuller vote recipes wait on share cron ([08](08_VIEWER_FEEDBACK_LOOP.md) Wave 3). Alias rename CLI shipped with [09](09_SHEEP_NAMING.md).
 
 Complements (does not replace):
 
@@ -37,7 +37,7 @@ Complements (does not replace):
 | See idle-gate | `cat /var/lib/jellyflam3/idle_gate_status.json` |
 | Pause new renders | `python3 -m pipeline.worker_drain request --wait` then `cancel` to resume |
 | Play on Roku VoD | Settings IDs via `jellyfin_id_dump.py`; launch / deep link notes |
-| Enable screensaver | **VoD Settings first** on that Roku (writes `JellyFlam3` registry); then SS zip; Theme → Screensavers; fade/dwell only. SS always rotates (ignores `shuffleFlock`); Primary + Backdrop; no tuples; **1.0.9** wrap-refetch ([01](../phase3/01_SCREENSAVERS_AND_STILLS.md), [04](04_ROKU_PUBLISH.md), [USER_GUIDE flock mix](../USER_GUIDE_AND_RUNBOOK.md#flock-mix-shuffle-wrap)) |
+| Enable screensaver | SS Settings **1.0.10** writes Jellyfin creds, or furnace zip, or VoD Settings while sharing the developer slot; Theme → Screensavers; fade/dwell. SS always rotates (ignores `shuffleFlock`); Primary + Backdrop; no tuples; **1.0.9** wrap-refetch. Private-channel path: [04](04_ROKU_PUBLISH.md#private-channel-path-wave-2) |
 | Extract stills | Poster ingest / `backfill_posters`; operator `python3 -m pipeline.stills --dry-run` / `--limit N` |
 | Breed / seed | Manual `pipeline.breed` (mutate / cross / blend / interpolate) or daily `cron_breed_idle.sh` when inbox empty → wait for worker (Phase 2 pedigree); Phase 4 may weight parents by viewer votes ([08](08_VIEWER_FEEDBACK_LOOP.md)) |
 | Promote peer share | Opt In status; `promote --apply` gated path (Phase 2/4 peering); Phase 4 share-votes cron may auto-stage liked sheep ([08](08_VIEWER_FEEDBACK_LOOP.md)) |

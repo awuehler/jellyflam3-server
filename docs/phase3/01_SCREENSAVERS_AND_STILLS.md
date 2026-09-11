@@ -19,7 +19,7 @@ Stills serve **Roku** (image-only screensaver). Kodi plays video loops and does 
 ## Roku Screensaver / Backdrop
 
 - Standalone package: `RunScreenSaver()` only; **no** Video node; no deep links.
-- Cycle Primary posters **and** Backdrop stills via HTTP from all library folders except `tuple`; **depends on** a **current or previously installed** VoD channel (`roku-channel/`) to write registry section `JellyFlam3` (`baseUrl`, `apiKey`, `userId`, `libraryId`). Screensaver Settings does **not** create those keys. Always rotates (does not read VoD `shuffleFlock`). Honors `commercialMode` like VoD. **1.0.9** wrap-refetches after a full stills permutation (Limit 5000, prune URLs to 313). The wrap re-fetch replaces the URL list and **rotates** so the next still is not the one on screen (same seam rule as VoD 1.0.31 / Kodi 0.2.9). Without `BackdropImageTags` the mix is Primaries only.
+- Cycle Primary posters **and** Backdrop stills via HTTP from all library folders except `tuple`. **1.0.10** Screensaver Settings can create Jellyfin registry keys (needed when VoD is a private channel). Always rotates (does not read VoD `shuffleFlock`). Honors `commercialMode` like VoD. **1.0.9** wrap-refetches after a full stills permutation (Limit 5000, prune URLs to 313). The wrap re-fetch replaces the URL list and **rotates** so the next still is not the one on screen (same seam rule as VoD 1.0.31 / Kodi 0.2.9). Without `BackdropImageTags` the mix is Primaries only.
 - Platform rules: [Roku Screensavers](https://developer.roku.com/docs/developer-program/media-playback/screensavers.md).
 
 ## Work items (implementation)
@@ -43,7 +43,7 @@ Optional AI guidance for parent selection / aesthetic briefs atop Phase 2 `flam3
 1. Screensaver is a **separate** channel from VoD — never embed screensaver in the streaming app (Roku policy: streaming apps may not ship `RunScreenSaver` / `screensaver_title`).
 2. Images only on Roku SceneGraph screensaver path — no H.264 `Video` node.
 3. Prefer existing flock Primaries when Backdrop stills are not yet uploaded; extract + **Images API Backdrop** upload is the durable screensaver path (never from tuples). Disk frames under `stills/` are not cycled until `BackdropImageTags` exist.
-4. Reuse Jellyfin auth/library contract from guide 08; do not invent a second secrets scheme. **Locked:** screensaver **depends on** VoD having been installed **on that same Roku** (now or earlier) and Settings saved. Registry is per-device; SS Settings is fade/dwell only.
+4. Reuse Jellyfin auth/library contract from guide 08; do not invent a second secrets scheme. **Screensaver 1.0.10:** Settings can write `baseUrl` / `apiKey` / `userId` / `libraryId` (private-channel coexistence). Zip-swap with VoD still shares the developer-slot registry; private VoD does not. Furnace-built zip presets remain. Fade/dwell stay on this screen.
 5. Watermark bake on stills (if any) waits on [Phase 4 edges/watermark](../phase4/03_EDGES_AND_WATERMARK.md) unless a minimal unwatermarked MVP is accepted.
 6. **Lab sideload:** developer mode holds **one** custom package. Sideloading the screensaver **replaces** VoD on that Roku; restore by re-sideloading `jellyflam3-roku.zip`. Registry keys **survive** the zip swap. On the Roku, pick the SS only under **Settings → Theme → Screensavers** (nothing named idle-gate appears there). Idle-gate confirmation is a **Pi** check (`idle_gate_status.json` stays `open` while SS runs). For both packages installed at once, use a private channel for one.
 

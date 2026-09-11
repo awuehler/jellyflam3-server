@@ -2,27 +2,22 @@
 
 Standalone **image-only** screensaver. Separate from the VoD channel (`roku-channel/`).
 
-## Registry dependency
+## Registry
 
-This package **does not ship a credential editor** in Settings. It **reads** registry section `JellyFlam3` on **this** Roku:
+This package reads and writes registry section `JellyFlam3` on **this** Roku / **this** channel ID:
 
 | Key | Written by | Screensaver |
 |---|---|---|
-| `baseUrl`, `apiKey`, `userId`, `libraryId` | **VoD channel** Settings, or **furnace zip** `registry/jellyflam3-presets.json` on first launch | Read only |
+| `baseUrl`, `apiKey`, `userId`, `libraryId` | **Screensaver Settings 1.0.10+**, furnace zip `registry/jellyflam3-presets.json`, or VoD Settings **while sharing the developer slot** | Read + write (1.0.10+) |
 | `ssFade`, `ssDwellSec`, `ssFadeSec` | Screensaver Settings | Read + write |
 
 **Furnace-built zip (recommended):** package on a Pi with `secrets.env` (`./scripts/package_roku_screensaver.sh` on `16a` / `08a` / `04a`). The zip includes `registry/jellyflam3-presets.json`; first run applies Jellyfin IDs when keys are empty.
 
-**Manual path on a new device:**
+**Private-channel VoD** does not share this registry. Paste Jellyfin values in Screensaver Settings, or use a furnace-built zip.
 
-1. Sideload **`roku-channel/`** (`dist/jellyflam3-roku.zip`) — currently installed, **or** previously configured on this same box.
-2. Open the VoD channel → **Settings** → save Jellyfin URL, API key, user id, library id.
-3. Sideload **`roku-screensaver/`**. Developer mode then **replaces** the VoD zip; **registry keys remain** on the device.
-4. **Settings → Theme → Screensavers** → **JellyFlam3 Dreams**.
+**Sideload-swap path (same developer slot):** VoD Settings first, then sideload SS — keys survive the zip replace.
 
-If neither VoD Settings nor a furnace preset was ever applied on this Roku, the screensaver shows “registry missing” until credentials exist. Credentials do **not** sync from other TVs or from the Pi automatically (except via furnace-built zip for that Pi’s Jellyfin).
-
-**Post-launch:** credential editors inside Screensaver Settings may arrive later; until then use VoD Settings or a furnace-built zip.
+If neither Settings nor a furnace preset was applied, the screensaver shows “registry missing” until credentials exist. Credentials do **not** sync from other TVs automatically.
 
 ## Platform rules
 
@@ -72,7 +67,7 @@ Roku developer mode allows **only one sideloaded package** at a time. Installing
 |---|---|
 | Smoke the screensaver | **VoD Settings already saved on this box**, then sideload SS zip; Theme → Screensavers |
 | Restore VoD after SS smoke | Re-sideload `dist/jellyflam3-roku.zip` |
-| Keep both installed long-term | Publish one as a **private/unpublished** channel; leave the other as the single sideload |
+| Keep both installed long-term | Publish VoD as a **private/unpublished** channel ([phase4/04](../docs/phase4/04_ROKU_PUBLISH.md#private-channel-path-wave-2)); leave SS as the single sideload (or publish both) |
 
 Roku also **forbids** embedding a screensaver in a streaming app (`screensaver_title` / `RunScreenSaver` are screensaver-only). VoD and screensaver must stay separate packages.
 

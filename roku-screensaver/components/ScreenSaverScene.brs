@@ -43,7 +43,7 @@ sub init()
   m.stillB.observeField("loadStatus", "onStillBLoad")
 
   if m.baseUrl = invalid or m.baseUrl = "" or m.apiKey = invalid or m.apiKey = "" or m.userId = invalid or m.userId = "" or m.libraryId = invalid or m.libraryId = ""
-    m.status.text = "No Jellyfin registry — sideload on furnace Pi or configure VoD Settings first"
+    m.status.text = "No Jellyfin registry — Screensaver Settings, furnace zip, or VoD Settings"
     return
   end if
 

@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — take the **existing** JellyFlam3 Roku packages from lab sideload to **publishable** distribution: VoD player (`roku-channel/`) and standalone screensaver (`roku-screensaver/`). Includes Store/private-channel packaging, brand assets, settings UX / input polish, Roku publishing best-practices, and **multi-Roku households on a single JellyFlam3-server**.
 
-**Status:** Parked. Do not implement Store/private publish until Phase 4 opens. Pre-open: household guide [05](05_END_USER_GUIDE.md) baseline (Owner OK); concurrent-session **estimate** in [07](07_CONCURRENT_CLIENTS.md) (`N_max`, not a Jellyfin cap).
+**Status:** Private-channel coexistence path **shipped in-repo** 2026-09-11 (Wave 2): runbook below, SS Settings writes Jellyfin creds (**1.0.10**). Channel Store listing, brand-asset refresh, and VoD Settings layout polish stay parked. Owner dashboard publish is an ops step after merge (do not sideload SS over VoD unless asked).
 
 Depends on Phase 2 VoD polish ([../phase2/04_ROKU_CHANNEL_POLISH.md](../phase2/04_ROKU_CHANNEL_POLISH.md)) and Phase 3 screensaver MVP ([../phase3/01_SCREENSAVERS_AND_STILLS.md](../phase3/01_SCREENSAVERS_AND_STILLS.md)). Does **not** replace those guides; this is the publish + productization + multi-TV track.
 
@@ -18,6 +18,29 @@ Depends on Phase 2 VoD polish ([../phase2/04_ROKU_CHANNEL_POLISH.md](../phase2/0
 
 Lab constraint (one sideload at a time **per device**) is **not** a product bug — publishing (private channel and/or Store) is how VoD + screensaver stay installed together, and how every living-room Roku gets the same apps without juggling developer zips.
 
+## Private-channel path (Wave 2)
+
+Prefer **VoD as a private/unpublished channel** (Home tile; does not occupy developer mode). Leave the **single sideload slot for the screensaver** on lab TVs (or publish SS later the same way). Channel Store stays Wave 4.
+
+### Registry split
+
+Roku `roRegistrySection` is **per channel ID**. Zip-swap (sideload VoD, then sideload SS) keeps section `JellyFlam3` because both packages share the developer slot. A **private VoD** has a different channel ID than sideload SS, so credentials do **not** carry over.
+
+- Furnace-built SS zip still ships `registry/jellyflam3-presets.json` for that Pi’s Jellyfin.
+- Screensaver **1.0.10** Settings can **write** `baseUrl` / `apiKey` / `userId` / `libraryId` (plus fade/dwell as before). Needed for coexistence and for boxes that never had VoD sideloaded (e.g. developer mode off).
+
+### Package a signed `.pkg` (on a developer Roku)
+
+Sideload zips stay the lab iterate path (`./scripts/package_roku_channel.sh`). A private channel needs a **signed package** produced **on a Roku** (Installer → Package), not in CI:
+
+1. Sideload `dist/jellyflam3-roku.zip` on one developer-mode Roku.
+2. Open the Developer Application Installer → **Package** → set/rekey the packaging password → download the `.pkg`.
+3. Roku developer dashboard → add an **unpublished / private** channel → upload the `.pkg` → copy the add-channel code.
+4. On each household Roku (including boxes with developer mode **off**): Channel Store → **Add channel** → enter the code. VoD appears on Home and does not use the sideload slot.
+5. Sideload `dist/jellyflam3-screensaver.zip` into the free developer slot **only when Owner asks**. Theme → Screensavers → JellyFlam3 Dreams. Enter Jellyfin creds in SS Settings (or use a furnace-built zip).
+
+Do not merge VoD and screensaver into one zip (Roku policy: no `RunScreenSaver` inside a streaming app).
+
 ## Work items (when Phase 4 opens)
 
 ### A — Brand & storefront assets
@@ -29,7 +52,7 @@ Lab constraint (one sideload at a time **per device**) is **not** a product bug 
 ### B — Settings layout & user input
 
 1. **VoD Settings** — clearer layout (sections, focus rings, safe margins); keyboard / paste-friendly Jellyfin URL + API key + user/library IDs; validation and error copy; keep display probe + Pi sink behavior from Phase 2.
-2. **Screensaver Settings** — first-class editors for Jellyfin credentials **and** `ssFade` / `ssDwellSec` / `ssFadeSec` (not status-only); Back / focus already required; match VoD visual language where sensible. **Today (Phase 3):** SS **depends on** a current or previously installed VoD channel on **that** Roku to populate `JellyFlam3`; SS Settings cannot create credentials.
+2. **Screensaver Settings** — first-class editors for Jellyfin credentials **and** `ssFade` / `ssDwellSec` / `ssFadeSec` (not status-only). **Shipped 1.0.10** (Wave 2): SS Settings writes `baseUrl` / `apiKey` / `userId` / `libraryId`. Back / focus already required. VoD visual-language polish stays parked.
 3. Shared `JellyFlam3` registry contract documented as the single secrets surface; no second ad-hoc store for Store builds.
 4. Optional **friendly screen name** (e.g. `Living Room`) stored in registry + echoed into display-profile JSON for operator lists.
 
@@ -96,8 +119,9 @@ Baseline already shipped: two live Roku profiles on one Pi (Phase 2 Owner OK). P
 
 - [ ] VoD and screensaver brand assets replaced (icons/logos/splash at minimum)
 - [ ] VoD Settings: improved layout + reliable text input for Jellyfin fields
-- [ ] Screensaver Settings: credential + fade/dwell/fade-duration editors; Back exits
+- [x] Screensaver Settings: credential + fade/dwell/fade-duration editors; Back exits (**1.0.10**)
 - [ ] Both packages build via existing (or extended) package scripts; signed/private path documented
+- [x] Private-channel path documented (VoD unpublished + one sideload slot); Store listing parked
 - [ ] At least one publish path exercised (private channel **or** Store) for each package, or Owner waiver for Store
 - [ ] Idle-gate still open under published screensaver; VoD still reports Playing as today
 - [ ] **Multi-Roku:** ≥2 physical Rokus against one JellyFlam3-server — each has its own display profile; concurrent SS does not close gate; concurrent VoD closes gate as designed; operator can list screens

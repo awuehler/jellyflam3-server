@@ -649,6 +649,12 @@ sub playItem(item as object)
   playId = ""
   if item.jellyfinId <> invalid then playId = item.jellyfinId
   m.currentPlayId = playId
+  mediaPath = ""
+  if item.mediaPath <> invalid then mediaPath = item.mediaPath
+  sheepId = ""
+  if item.sheepId <> invalid then sheepId = item.sheepId
+  generation = ""
+  if item.generation <> invalid then generation = item.generation
   player.callFunc("playSheep", {
     url: hls
     hlsUrl: hls
@@ -656,6 +662,9 @@ sub playItem(item as object)
     title: item.title
     length: item.length
     id: playId
+    mediaPath: mediaPath
+    sheepId: sheepId
+    generation: generation
   })
   player.setFocus(true)
 end sub

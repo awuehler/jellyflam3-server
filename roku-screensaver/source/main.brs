@@ -1,5 +1,5 @@
 ' Purpose: JellyFlam3 Roku Screensaver entry (Phase 3 guide 01).
-' Requirements: JellyFlam3 registry written by VoD channel Settings (this package does not create credentials).
+' Requirements: JellyFlam3 registry (VoD Settings, furnace presets, or SS Settings 1.0.10+).
 ' Assumptions: Image-only — never Video / Sessions/Playing (idle-gate safe).
 
 sub RunScreenSaver()

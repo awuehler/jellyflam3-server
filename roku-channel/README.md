@@ -82,9 +82,11 @@ cd /opt/jellyflam3-server
 # Upload dist/jellyflam3-roku.zip at http://<roku-ip>/ (Developer installer)
 ```
 
-Developer mode holds **one** sideloaded package. Installing the Phase 3 screensaver zip replaces this VoD channel on that box; re-sideload this zip to restore.
+Developer mode holds **one** sideloaded package. Installing the screensaver zip replaces this VoD channel on that box; re-sideload this zip to restore. To keep **both** installed, publish VoD as a private/unpublished channel ([docs/phase4/04](../docs/phase4/04_ROKU_PUBLISH.md#private-channel-path-wave-2)).
 
-**Screensaver depends on VoD registry keys** (`baseUrl` / `apiKey` / `userId` / `libraryId`). The VoD channel’s Settings UI is the usual way to populate them. **Furnace-built zips** also ship `registry/jellyflam3-presets.json`; on first launch the screensaver applies those values when registry keys are empty (no VoD sideload required on a new Roku when using a zip built on that furnace Pi). See [`roku-channel/README.md`](../roku-channel/README.md) and [docs/phase3/08_JELLYFIN_ID_DUMP.md](../docs/phase3/08_JELLYFIN_ID_DUMP.md).
+**Vote overlay (1.0.32):** near the end of each clip a banner appears without pausing. **OK** like · **FF** love · **Replay** vote · **Back** dismiss. The channel POSTs to `http://{Jellyfin-host}:8791/v1/sheep-votes` (same token as display profiles). Playback / Sessions / wrap-once behavior is unchanged.
+
+**Screensaver depends on Jellyfin registry keys** (`baseUrl` / `apiKey` / `userId` / `libraryId`). While both packages share the developer slot, VoD Settings populate them and the zip swap keeps them. Private-channel VoD does **not** share registry with sideload SS — use SS Settings **1.0.10** or a furnace-built SS zip. See [`roku-screensaver/README.md`](../roku-screensaver/README.md) and [docs/phase3/08_JELLYFIN_ID_DUMP.md](../docs/phase3/08_JELLYFIN_ID_DUMP.md).
 
 See [docs/phase1/08_ROKU_BRIGHTSCRIPT.md](../docs/phase1/08_ROKU_BRIGHTSCRIPT.md) and [docs/phase2/03_HLS_CLIENT_STREAMING.md](../docs/phase2/03_HLS_CLIENT_STREAMING.md).
 
