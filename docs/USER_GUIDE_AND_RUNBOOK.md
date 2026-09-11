@@ -67,10 +67,10 @@ Video screensaver add-on **JellyFlam3 Dreams** (`screensaver.jellyflam3`) — pl
 
 VoD **1.0.31**, Roku screensaver **1.0.9**, and Kodi **0.2.9** all play a **random mix** of the current catalog (need those packages on the device):
 
-- One **pass** is a shuffled list: each sheep (VoD / Kodi) or still URL (Roku SS) appears **once**.
+- One **pass** is a shuffled list: each sheep (VoD / Kodi) or still URL (Roku SS) appears **once**. Roku SS URLs are Jellyfin **Primary** plus **Backdrop** tags (not disk JPEGs). Without Backdrop tags the mix is Primaries only.
 - When that list finishes (**wrap**), the client asks Jellyfin again and builds a new random mix. Overnight ingest can appear without exiting the session.
 - The clip or still that just finished is not the first item of the new mix (a one-item library still loops that one item).
-- The session list is capped at **313** (a random sample if Jellyfin returned more). Kodi’s **Max items in session** setting is that cap (default 313). An older Kodi install that still stores `200` keeps 200 until you raise it in Configure.
+- The session list is capped at **313** (a random sample if Jellyfin returned more). For Roku SS that cap is **URLs**, not sheep. Kodi’s **Max items in session** setting is that cap (default 313). An older Kodi install that still stores `200` keeps 200 until you raise it in Configure.
 
 VoD plays each mixed sheep **once** per pass, then wraps. Using live catalog `duration_sec` on 2026-09-10 (sidecars next to `/media/sheep/by-generation/` MP4s; not quarantine/preview):
 
@@ -103,6 +103,8 @@ If a sheep disappears mid-session (quarantine / Shears), the client **drops that
 | “Cannot connect” on Roku | Confirm `baseUrl` is the Pi’s **LAN IP** (`http://192.168.x.x:8096`), not `127.0.0.1` | Jellyfin down on Pi |
 | Playback stutters / buffers | Prefer Direct Play (H.264 MP4); avoid forcing transcode in client | Persistent transcode hammering Pi, or several TVs on a WiFi Pi (`link_capacity`) |
 | Screensaver blank | VoD was never configured on **this** Roku | After VoD Settings saved, still blank |
+| VoD tiles say **No poster** | Jellyfin item has no `ImageTags.Primary` | Operator: Images API Primary upload (disk JPEG under `stills/` is hidden). Relaunch VoD after tags exist |
+| Screensaver posters only / no extra stills | No `BackdropImageTags` on items | Operator: backfill Backdrops (`jellyfin_stills`); SS cycles Primaries until then |
 | Screensaver “replaced” VoD | Re-sideload VoD channel zip | — |
 | Kodi screensaver black / hint text | Open add-on **Configure**; confirm Jellyfin URL is furnace **LAN IP**, not `127.0.0.1` | Settings correct but no sheep play |
 | Nothing new for days | Normal if gate was closed or inbox empty | Gate open + inbox empty for a week; or client package older than wrap-once ([Flock mix](#flock-mix-shuffle-wrap)) |
@@ -347,7 +349,7 @@ Default is `jellyfin.attach_posters: auto` in the example yaml. Live `configs/je
 | **Standalone** furnace (Opt Out, or Opt In with no other furnace online) | **No** poster | Mesh size 1 |
 | **2+ furnaces** Opt In, Syncthing active, Tailscale online, ≥1 other `jellyflam3` peer | **Yes** — `stills/{stem}/{stem}-poster.jpg` + Jellyfin Primary, plus stills frames + Backdrops (non-tuple) | Mesh size ≥ 2 |
 
-Screensaver stills (JPEG frames + Jellyfin Backdrops) ride the **same ingest switch**. When posters extract, they land with the frames under `by-generation/{gen}/stills/{stem}/` (`{stem}-poster.jpg` plus `frame_XX.jpg`). Tuples get a poster in that stills folder but never generate frames (watermarked edge mid-file is not screensaver-safe). `stills/.ignore` keeps those JPEGs out of the Jellyfin library scan. Peering still shares only `*.flam3` + optional `*-poster.jpg` beside genomes — not catalog stills JPEGs.
+Screensaver stills (JPEG frames + Jellyfin Backdrops) ride the **same ingest switch**. When posters extract, they land with the frames under `by-generation/{gen}/stills/{stem}/` (`{stem}-poster.jpg` plus `frame_XX.jpg`). Tuples get a poster in that stills folder but never generate frames (watermarked edge mid-file is not screensaver-safe). `stills/.ignore` keeps those JPEGs out of the Jellyfin library scan — VoD tiles and the Roku screensaver only see **Images API** Primary / Backdrop tags, not the files. Peering still shares only `*.flam3` + optional `*-poster.jpg` beside genomes — not catalog stills JPEGs.
 
 `python3 -m pipeline.backfill_posters` always extracts posters **and** stills (operator one-shot). It does not follow ingest auto/never, and it does **not** walk `_refactor-quarantine/` or `_refactor-preview/` (stills always land under live `by-generation/{gen}/stills/{stem}/`). Leftover sibling `{stem}-poster.jpg` files next to the MP4 are moved into that stills folder. `python3 -m pipeline.stills` remains an operator re-extract CLI for disk frames only.
 
@@ -769,7 +771,7 @@ Expected sample ids: [phase1/07](phase1/07_LICENSE_AND_METADATA.md#lab-check--co
 
 ### Stills (screensaver feedstock)
 
-Covered by [Catalog posters](#catalog-posters-after-render): ingest / `backfill_posters` extract frames and upload Jellyfin Backdrops (`stills.enabled: true` on the fleet yaml). Tuples never generate stills. `python3 -m pipeline.stills` is only an operator re-extract of disk JPEGs; run `backfill_posters` afterward if Backdrops must be replaced.
+Covered by [Catalog posters](#catalog-posters-after-render): ingest / `backfill_posters` extract frames and upload Jellyfin Backdrops (`stills.enabled: true` on the fleet yaml). Disk frames are not Backdrops until `jellyfin_stills` is `uploaded` (same base64 Images POST as Primary). Tuples never generate stills. `python3 -m pipeline.stills` is only an operator re-extract of disk JPEGs; run `backfill_posters` afterward if Backdrops must be replaced.
 
 ### Fleet update
 
@@ -830,6 +832,8 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 | Sheep disk WARN / BAD | `python3 -m pipeline.library_disk check`; `df -h /media/sheep` | Delete with Shears (no auto-rotate yet); do not Hammer unless wiping the factory |
 | Empty flock with commercial-safe on | Items Tags missing | `jellyfin_id_dump.py --items`; [private vs public](#private-vs-public-furnace) step 2 |
 | Blank Roku SS | VoD Settings ever saved on this device? | Sideload VoD → Settings → re-sideload SS |
+| VoD **No poster** tiles | Items lack `ImageTags.Primary` (stills JPEGs are ignored) | `backfill_posters` (base64 Images POST); relaunch VoD |
+| Roku SS posters only | Items lack `BackdropImageTags` | `backfill_posters` until sidecar `jellyfin_stills.status=uploaded` |
 | Kodi SS hint / no video | `server_url` uses LAN IP? flock empty on Jellyfin? | `jellyfin_id_dump.py --items`; re-install zip after client fix |
 | Kodi zip push fails | SMB `\\<Kodi_IP>\Downloads` vs SSH key | Use LibreELEC SMB; or install SSH key for `root@<Kodi_IP_Address>` |
 | Offline peering (Opt In, no sync) | `healthcheck`: `BAD share not live`; `peering status` → `share_live: false` | `opt-in` with `TS_AUTHKEY` + Syncthing up, or `opt-out` |

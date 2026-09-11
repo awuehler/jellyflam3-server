@@ -25,6 +25,10 @@
       "author": "Owner"
     },
     {
+      "content": "JELLYFIN IMAGES (Primary/Backdrop): live catalog posters and screensaver frames live under stills/{stem}/ with stills/.ignore — Jellyfin does not attach local Primary/Backdrop from those JPEGs. Clients need ImageTags.Primary / BackdropImageTags from POST /Items/{id}/Images/{type}. Jellyfin 10.9+ ImageController wraps the POST body in FromBase64Transform; pipeline.encode_image_upload_body base64-encodes JPEG/PNG. Raw image bytes 500 FormatException. Sidecar local_primary and disk-only stills are not complete; backfill_posters re-uploads.",
+      "author": "Owner"
+    },
+    {
       "content": "SECRETS AND CONFIG: Never document or commit secrets.env, filled jellyflam3.yaml, or API keys. Reference secrets.env / JELLYFIN_API_KEY only. Sheep library ParentId must point at Sheep virtual folder (path /media/sheep/by-generation), NOT /media/sheep mount root. Keep Rework Poster library separate (/media/sheep/_refactor-preview).",
       "author": "Owner"
     },
@@ -82,7 +86,7 @@
       "parent": "Architecture Overview",
       "page_notes": [
         {
-          "content": "Document the Jellyfin 10.x partial ParentId flock bug and merge-via-child-folders client fix. Guides: phase1/04, phase2/02, phase2/03, phase3/08."
+          "content": "Document the Jellyfin 10.x partial ParentId flock bug and merge-via-child-folders client fix. Images API Primary/Backdrop POST is base64 (GetFromBase64Stream). Guides: phase1/04, phase2/02, phase2/03, phase3/08."
         }
       ]
     },
@@ -123,7 +127,7 @@
     },
     {
       "title": "Roku Screensaver",
-      "purpose": "roku-screensaver/ stills slideshow: StillsTask Primary+Backdrop fetch, skip tuple, always rotate, commercialMode, wrap-once re-fetch + 313 URL cap, shared JellyFlam3 registry, Theme→Screensavers selection, one-sideload-slot constraint, packaging 1.0.9.",
+      "purpose": "roku-screensaver/ stills slideshow: StillsTask Primary+Backdrop fetch (ImageTags only; stills/.ignore JPEGs are not URLs), skip tuple, always rotate, commercialMode, wrap-once re-fetch + 313 URL cap (rotate new mix past still on screen), shared JellyFlam3 registry, Theme→Screensavers selection, one-sideload-slot constraint, packaging 1.0.9.",
       "parent": "Roku VoD Channel",
       "page_notes": [
         {
@@ -228,6 +232,9 @@
       "page_notes": [
         {
           "content": "Include 2026-08-23 confirmation: flat ParentId returned partial flock; folder walk returns full flock; client merge required. Roku VoD + screensaver verified after sideload 1.0.26/1.0.6."
+        },
+        {
+          "content": "stills/.ignore: catalog JPEGs are not Jellyfin Primaries or Backdrops. VoD FlockItem shows No poster without ImageTags.Primary. Roku SS mixes Primaries only until BackdropImageTags exist. Images POST must be base64 on Jellyfin 10.11."
         },
         {
           "content": "Concerns: Jellyfin API behavior may change; child-folder walk capped at 50 direct folders under library; no server-side proxy yet; multi-Roku household needs Phase 4 publish or manual per-TV sideload; secrets in registry on Roku devices."

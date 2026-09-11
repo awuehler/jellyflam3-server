@@ -8,6 +8,8 @@ Assumptions: Soft-fail dicts for sidecars; metadata enrich still runs when poste
 upload is skipped. Ingest default is ``attach_posters: auto`` (standalone off,
 2+ live mesh furnaces on). Operator backfill passes ``force=True``. Screensaver
 stills (non-tuple) extract + Jellyfin Backdrop upload ride the same ingest path.
+``stills/.ignore`` means disk JPEGs are not Jellyfin Primaries or Backdrops — Images API
+upload is required (base64 POST body on Jellyfin 10.9+).
 """
 
 from __future__ import annotations
@@ -272,8 +274,8 @@ def attach_primary_after_refresh(
                 "attempts": 0,
             }
         elif poster_path is not None and poster_path.is_file():
-            # Local-image-first: stills-folder poster (or leftover sibling) +
-            # refresh often yields ImageTags.Primary without Images API.
+            # Skip upload only when Jellyfin already has ImageTags.Primary
+            # (Images API). stills/.ignore means a disk JPEG is not a local Primary.
             if client.has_primary_image(item_id):
                 out = {
                     "ok": True,

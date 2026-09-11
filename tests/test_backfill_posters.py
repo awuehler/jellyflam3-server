@@ -70,11 +70,36 @@ def test_needs_backfill_already_complete(tmp_path: Path):
         "jellyfin_image": {"ok": True, "status": "uploaded"},
         "jellyfin_metadata": {"ok": True, "status": "enriched"},
         "stills": {"ok": True, "status": "extracted", "screensaver_safe": True},
+        "jellyfin_stills": {"ok": True, "status": "uploaded"},
     }
     needed, reason = needs_backfill(mp4, sidecar)
     assert not needed and reason == "already_complete"
     needed, reason = needs_backfill(mp4, sidecar, force=True)
     assert needed and reason == "force"
+
+
+def test_needs_backfill_stale_local_primary_needs_upload(tmp_path: Path):
+    """stills/.ignore: sidecar local_primary is not a live Jellyfin Primary."""
+    media = _media_tree(tmp_path)
+    mp4 = media / "by-generation" / "247" / "electricsheep.247.00505.mp4"
+    mp4.write_bytes(b"x")
+    poster = (
+        media
+        / "by-generation"
+        / "247"
+        / "stills"
+        / "electricsheep.247.00505"
+        / "electricsheep.247.00505-poster.jpg"
+    )
+    poster.parent.mkdir(parents=True)
+    poster.write_bytes(b"\xff\xd8\xff")
+    sidecar = {
+        "jellyfin_image": {"ok": True, "status": "local_primary"},
+        "jellyfin_metadata": {"ok": True, "status": "enriched"},
+        "stills": {"ok": True, "status": "extracted", "screensaver_safe": True},
+    }
+    needed, reason = needs_backfill(mp4, sidecar)
+    assert needed and reason == "missing_primary"
 
 
 def test_needs_backfill_stills_folder_poster(tmp_path: Path):
@@ -95,9 +120,34 @@ def test_needs_backfill_stills_folder_poster(tmp_path: Path):
         "jellyfin_image": {"ok": True, "status": "uploaded"},
         "jellyfin_metadata": {"ok": True, "status": "enriched"},
         "stills": {"ok": True, "status": "extracted", "screensaver_safe": True},
+        "jellyfin_stills": {"ok": True, "status": "uploaded"},
     }
     needed, reason = needs_backfill(mp4, sidecar)
     assert not needed and reason == "already_complete"
+
+
+def test_needs_backfill_stale_disk_stills_need_backdrop_upload(tmp_path: Path):
+    """stills/.ignore: extracted frames are not live BackdropImageTags."""
+    media = _media_tree(tmp_path)
+    mp4 = media / "by-generation" / "247" / "electricsheep.247.00505.mp4"
+    mp4.write_bytes(b"x")
+    poster = (
+        media
+        / "by-generation"
+        / "247"
+        / "stills"
+        / "electricsheep.247.00505"
+        / "electricsheep.247.00505-poster.jpg"
+    )
+    poster.parent.mkdir(parents=True)
+    poster.write_bytes(b"\xff\xd8\xff")
+    sidecar = {
+        "jellyfin_image": {"ok": True, "status": "uploaded"},
+        "jellyfin_metadata": {"ok": True, "status": "enriched"},
+        "stills": {"ok": True, "status": "extracted", "screensaver_safe": True},
+    }
+    needed, reason = needs_backfill(mp4, sidecar)
+    assert needed and reason == "missing_backdrops"
 
 
 def test_needs_backfill_tuple_complete_without_stills(tmp_path: Path):
@@ -137,6 +187,7 @@ def test_run_backfill_dry_run_counts(tmp_path: Path):
                 "jellyfin_image": {"ok": True, "status": "uploaded"},
                 "jellyfin_metadata": {"ok": True, "status": "enriched"},
                 "stills": {"ok": True, "status": "extracted", "screensaver_safe": True},
+                "jellyfin_stills": {"ok": True, "status": "uploaded"},
             }
         ),
         encoding="utf-8",
@@ -160,6 +211,7 @@ def test_run_backfill_relocates_legacy_poster(tmp_path: Path):
                 "jellyfin_image": {"ok": True, "status": "uploaded"},
                 "jellyfin_metadata": {"ok": True, "status": "enriched"},
                 "stills": {"ok": True, "status": "extracted", "screensaver_safe": True},
+                "jellyfin_stills": {"ok": True, "status": "uploaded"},
             }
         ),
         encoding="utf-8",

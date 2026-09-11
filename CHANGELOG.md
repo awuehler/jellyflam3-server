@@ -23,6 +23,9 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Fixed
 
+- Jellyfin 10.11 Images API: POST Primary/Backdrop as **base64** (`encode_image_upload_body`). Raw JPEG bytes 500 (`GetFromBase64Stream` / `FormatException`). VoD tiles need `ImageTags.Primary`; Roku SS Backdrops need `BackdropImageTags` — disk JPEGs under `stills/.ignore` are neither.
+- `backfill_posters.needs_backfill`: sidecar `local_primary` is not a live Primary; extracted stills without `jellyfin_stills` `uploaded` are not live Backdrops.
+- Roku screensaver 1.0.9 wrap re-fetch: rotate the **new** URL mix past the still on screen (`rotateUrlsPast` on apply), matching VoD / Kodi seam rule.
 - LibreELEC BusyBox `unzip` can write NUL-padded `default.py` / binary `settings.xml` for the Kodi screensaver; install-from-zip or Python `zipfile` instead.
 - Ed25519 trust enrollment flake: do not `.strip()` exact 32-byte raw public keys (whitespace bytes are valid key material; broke `test_trust_key_enrolls_peer` intermittently on CI).
 - Redact `--auth-key=` values in `pipeline.peering` command logs.

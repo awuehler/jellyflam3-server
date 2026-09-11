@@ -14,6 +14,8 @@ sub init()
   m.pendingUri = ""
   m.lastRepollSec = 0
   m.repolling = false
+  m.wrapRefetch = false
+  m.awaitingNewMix = false
   m.handlingFail = false
   m.repollTask = invalid
 
@@ -145,6 +147,7 @@ sub startStillsRepoll(force as boolean)
     m.lastRepollSec = now
   end if
   m.repolling = true
+  m.wrapRefetch = (force = true)
   t = CreateObject("roSGNode", "StillsTask")
   t.observeField("resultJson", "onRepollList")
   t.baseUrl = m.baseUrl
@@ -157,17 +160,38 @@ sub startStillsRepoll(force as boolean)
   m.repollTask = t
 end sub
 
+function currentStillUri() as string
+  if m.pendingUri <> invalid and m.pendingUri <> "" then return m.pendingUri
+  poster = invalid
+  if m.showingA = true
+    poster = m.stillA
+  else
+    poster = m.stillB
+  end if
+  if poster <> invalid and poster.uri <> invalid then return poster.uri
+  return ""
+end function
+
 sub onRepollList()
   m.repolling = false
   t = m.repollTask
   m.repollTask = invalid
+  wrap = (m.wrapRefetch = true)
+  m.wrapRefetch = false
   if t = invalid then return
   raw = t.resultJson
   if raw = invalid or raw = "" then return
   data = ParseJson(raw)
   if data = invalid or data.urls = invalid or data.urls.count() = 0 then return
+  showing = currentStillUri()
   m.urls = data.urls
-  if m.index >= m.urls.count() then m.index = 0
+  if wrap = true
+    rotateUrlsPast(showing)
+    m.index = 0
+    m.awaitingNewMix = true
+  else if m.index >= m.urls.count()
+    m.index = 0
+  end if
 end sub
 
 sub handleStillFailed(uri as string)
@@ -262,13 +286,18 @@ end sub
 sub onTick()
   if m.urls = invalid or m.urls.count() = 0 then return
   if m.busy then return
-  m.index = m.index + 1
-  if m.index >= m.urls.count()
-    lastUri = m.urls[m.urls.count() - 1]
-    if m.urls.count() > 1 then maybeWrapRefetchStills()
-    m.urls = shuffleCopy(m.urls)
-    rotateUrlsPast(lastUri)
+  if m.awaitingNewMix = true
+    m.awaitingNewMix = false
     m.index = 0
+  else
+    m.index = m.index + 1
+    if m.index >= m.urls.count()
+      lastUri = m.urls[m.urls.count() - 1]
+      if m.urls.count() > 1 then maybeWrapRefetchStills()
+      m.urls = shuffleCopy(m.urls)
+      rotateUrlsPast(lastUri)
+      m.index = 0
+    end if
   end if
   nextUri = m.urls[m.index]
   if not m.fadeOn

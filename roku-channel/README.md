@@ -1,6 +1,6 @@
 # JellyFlam3 Roku channel
 
-Sideloadable SceneGraph channel that lists sheep from Jellyfin with **poster tiles** (`FlockItem`). **Ambient loop** defaults to Static MP4; HLS remux remains available for lab compare.
+Sideloadable SceneGraph channel that lists sheep from Jellyfin with **poster tiles** (`FlockItem`). Tiles use `ImageTags.Primary` only — empty tag shows the **No poster** placeholder (`stills/.ignore` JPEGs are not Primaries). **Ambient loop** defaults to Static MP4; HLS remux remains available for lab compare.
 
 ## Playback
 

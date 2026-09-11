@@ -7,10 +7,11 @@ Usage:
   python -m pipeline.backfill_posters --config configs/jellyflam3.yaml --limit 20
 
 Assumptions: Sidecar ``*.jellyflam3.json`` tracks completion; soft-fails leave partial sidecar
-state. Stills ride the same path as posters (never from tuples). Operator backfill
-force-extracts stills and replaces Jellyfin Backdrops. Does not walk
-``_refactor-quarantine/`` or ``_refactor-preview/`` (stills always land under
-live ``by-generation/{gen}/stills/{stem}/``).
+state. ``local_primary`` is not complete (stills/.ignore). Disk frames are not Backdrops —
+``jellyfin_stills`` must be ``uploaded``. Stills ride the same path as posters (never from
+tuples). Operator backfill force-extracts stills and replaces Jellyfin Backdrops. Does not
+walk ``_refactor-quarantine/`` or ``_refactor-preview/`` (stills always land under live
+``by-generation/{gen}/stills/{stem}/``).
 """
 
 from __future__ import annotations
@@ -85,6 +86,23 @@ def write_sidecar(mp4: Path, sidecar: dict[str, Any]) -> None:
     path.write_text(json.dumps(sidecar, indent=2) + "\n", encoding="utf-8")
 
 
+def _primary_upload_complete(img: dict[str, Any]) -> bool:
+    """True when sidecar records a live Images API Primary (not stills/.ignore leftover)."""
+    status = str(img.get("status") or "")
+    if status == "local_primary":
+        return False
+    return img.get("ok") is True or status == "uploaded"
+
+
+def _backdrop_upload_complete(sidecar: dict[str, Any]) -> bool:
+    """True when sidecar records Backdrop Images API upload (disk frames are not Backdrops)."""
+    jf = sidecar.get("jellyfin_stills") or {}
+    status = str(jf.get("status") or "")
+    if status == "skipped_tuple":
+        return True
+    return jf.get("ok") is True or status == "uploaded"
+
+
 def needs_backfill(
     mp4: Path,
     sidecar: dict[str, Any],
@@ -100,20 +118,17 @@ def needs_backfill(
     has_poster = poster.is_file() and poster.stat().st_size > 0
     img = sidecar.get("jellyfin_image") or {}
     meta = sidecar.get("jellyfin_metadata") or {}
-    img_ok = img.get("ok") is True or img.get("status") in (
-        "uploaded",
-        "local_primary",
-    )
+    img_ok = _primary_upload_complete(img)
     meta_ok = meta.get("ok") is True or meta.get("status") in ("enriched", "tags_only")
     if has_poster and img_ok and meta_ok:
         if is_tuple_catalog(mp4, sidecar):
             return False, "already_complete"
-        sc = stills_cfg({})
-        # stills count from caller cfg is checked in run_backfill; here only sidecar/poster.
         stills_block = sidecar.get("stills") or {}
         if stills_block.get("status") in ("extracted", "already_complete") or stills_block.get(
             "screensaver_safe"
         ):
+            if not _backdrop_upload_complete(sidecar):
+                return True, "missing_backdrops"
             return False, "already_complete"
         return True, "missing_stills"
     if not has_poster:

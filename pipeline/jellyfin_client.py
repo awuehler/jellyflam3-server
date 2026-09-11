@@ -1,14 +1,16 @@
-"""Purpose: Minimal Jellyfin API client for library refresh, tags, and Primary image upload.
+"""Purpose: Minimal Jellyfin API client for library refresh, tags, and image upload.
 
 Requirements: jellyfin.url + api_key; user_id for item search; optional library_id scope.
 
 Usage: ``JellyfinClient.from_config(cfg)`` then refresh / find_item / enrich / upload_primary_image.
 
 Assumptions: Soft-fail results for ingest; sidecar remains license source of truth when Tags API fails.
+Jellyfin 10.9+ ImageController base64-decodes POST bodies (``encode_image_upload_body``).
 """
 
 from __future__ import annotations
 
+import base64
 import json
 import logging
 import time
@@ -97,6 +99,14 @@ def image_content_type(path: Path) -> str:
     if suf == ".webp":
         return "image/webp"
     return "application/octet-stream"
+
+
+def encode_image_upload_body(blob: bytes) -> bytes:
+    """Jellyfin ImageController wraps POST bodies in FromBase64Transform.
+
+    Raw JPEG/PNG bytes 500 with FormatException on 10.9+ (lab 10.11.11).
+    """
+    return base64.b64encode(blob)
 
 
 def normalize_media_path(path: str | Path) -> str:
@@ -199,7 +209,7 @@ class JellyfinClient:
         content_type: str,
         timeout: float = 60,
     ) -> tuple[int, bytes]:
-        """HTTP request with a raw body (e.g. image bytes). Returns (status, body)."""
+        """HTTP request with a raw body. Image uploads pass base64 bytes. Returns (status, body)."""
         headers = {
             "Authorization": f'MediaBrowser Token="{self.api_key}"',
             "Accept": "*/*",
@@ -234,7 +244,7 @@ class JellyfinClient:
         backoff_sec: float = 1.0,
         sleep: Callable[[float], None] = time.sleep,
     ) -> ImageAttachResult:
-        """POST Primary image bytes with retry/backoff (library refresh race).
+        """POST Primary image as base64 with retry/backoff (library refresh race).
 
         Soft-fails: returns ``ImageAttachResult`` instead of raising, so the
         worker ingest path can continue after a permanent upload failure.
@@ -258,7 +268,7 @@ class JellyfinClient:
                 error=f"image not found or empty: {path}",
             )
 
-        blob = path.read_bytes()
+        blob = encode_image_upload_body(path.read_bytes())
         ctype = image_content_type(path)
         api_path = f"/Items/{item_id}/Images/Primary"
         attempts = max(1, int(retries))
@@ -341,7 +351,7 @@ class JellyfinClient:
         backoff_sec: float = 1.0,
         sleep: Callable[[float], None] = time.sleep,
     ) -> ImageAttachResult:
-        """POST item image bytes (Primary or Backdrop). Soft-fail like Primary upload."""
+        """POST item image as base64 (Primary or Backdrop). Soft-fail like Primary upload."""
         kind = (image_type or "Primary").strip() or "Primary"
         if kind.lower() == "primary" and index is None:
             return self.upload_primary_image(
@@ -368,7 +378,7 @@ class JellyfinClient:
                 status="missing_file",
                 error=f"image not found or empty: {path}",
             )
-        blob = path.read_bytes()
+        blob = encode_image_upload_body(path.read_bytes())
         ctype = image_content_type(path)
         if index is None:
             api_path = f"/Items/{item_id}/Images/{kind}"

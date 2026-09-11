@@ -102,6 +102,10 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "maybeRepollStills" in ss
     assert "maybeWrapRefetchStills" in ss
     assert "rotateUrlsPast" in ss
+    assert "function currentStillUri() as string" in ss
+    assert "m.awaitingNewMix" in ss
+    assert "m.wrapRefetch" in ss
+    assert "rotateUrlsPast(showing)" in ss
     assert "function flockRepollMinSec() as integer" in ss
     ss_reg = (SS / "components" / "RegistryPresets.brs").read_text(encoding="utf-8")
     assert 'reg.write("shuffleFlock"' not in ss_reg

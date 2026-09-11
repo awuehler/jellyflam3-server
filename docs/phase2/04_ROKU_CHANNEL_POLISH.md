@@ -20,7 +20,7 @@ Path 2 channel is playable (list → play → settings; ambient MP4 / optional H
 
 | Piece | Status | Notes |
 |---|---|---|
-| **A** Poster RowList item UI | Done (Owner OK 2026-08-01) | Channel 1.0.16: `FlockItem` posters; Primary thumbnails + HLS/MP4 loops confirmed on sideload |
+| **A** Poster RowList item UI | Done (Owner OK 2026-08-01) | Channel 1.0.16: `FlockItem` posters from `ImageTags.Primary` only (empty tag → **No poster**; `stills/.ignore` JPEGs are not Primaries) + HLS/MP4 loops confirmed on sideload |
 | **B** Metadata fields on items | Done (Owner OK 2026-08-02) | Channel 1.0.17: duration/generation/license/pedigree + status `metaLine` on focus |
 | **C** Focus / detail chrome | Done (Owner OK 2026-08-02) | Channel 1.0.18: detail panel + tile meta; sideload focus confirmed |
 | **D** Empty / loading / error UX | Done (Owner OK 2026-08-02) | Channel 1.0.19: Loading/empty/error + Retry; streamMode validate; Focus footer |

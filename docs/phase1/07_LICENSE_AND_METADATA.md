@@ -174,8 +174,8 @@ File: `{stem}.jellyflam3.json` next to the catalog MP4. Code list: `pipeline.sti
 | `edition` | worker | e.g. `gold_sheep_lite` |
 | `signals`, `duration_meta` | worker | Dynamic duration (Phase 2). Nested: `signals.orbit_frozen`, `signals.effective_animate_count`; `duration_meta.still_loop` when the worker skipped animate |
 | `palette` | worker | Optional OkLCh harmony |
-| `jellyfin_image` | flock artwork | Poster / Items Primary status |
-| `jellyfin_stills` | flock artwork | Backdrop upload status (non-tuple) |
+| `jellyfin_image` | flock artwork | Poster / Items Primary status (`uploaded` = live ImageTag; `local_primary` is stale after `stills/.ignore`) |
+| `jellyfin_stills` | flock artwork | Backdrop upload status (non-tuple). Disk frames are not Backdrops until `uploaded` |
 | `refactor` | worker merge / refactor | Pathway history array |
 | `stills` / `screensaver_safe` | poster pipeline / stills | Screensaver frame index; never written for tuples |
 

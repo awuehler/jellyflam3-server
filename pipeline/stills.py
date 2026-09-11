@@ -9,8 +9,9 @@ Usage (operator re-extract; ingest also runs this from ``apply_flock_artwork``):
 
 Assumptions: Frames land under ``by-generation/{gen}/stills/{stem}/frame_XX.jpg``
 next to ``{stem}-poster.jpg`` (Shears cascade) and are uploaded as Jellyfin
-Backdrops with posters. ``stills/.ignore`` hides that tree from Jellyfin.
-Never extract from tuple MP4s, ``_refactor-quarantine/``, or ``_refactor-preview/``.
+Backdrops with posters (base64 Images POST; ``stills/.ignore`` hides that tree
+so disk JPEGs are not Backdrops). Never extract from tuple MP4s,
+``_refactor-quarantine/``, or ``_refactor-preview/``.
 Tag stills as screensaver-safe in sidecar.
 Extraction respects idle-gate when enabled so TV playback stays responsive.
 """

@@ -5,6 +5,7 @@ from pipeline.jellyfin_client import (
     JellyfinClient,
     build_flock_overview,
     build_flock_sort_name,
+    encode_image_upload_body,
     image_content_type,
     normalize_media_path,
     pick_best_item,
@@ -101,6 +102,26 @@ def test_image_content_type():
     assert image_content_type(Path("a.PNG")) == "image/png"
 
 
+def test_upload_primary_sends_base64_body(tmp_path: Path):
+    """Jellyfin 10.11 GetFromBase64Stream: raw JPEG bytes 500."""
+    client = JellyfinClient(url="http://jf", api_key="k")
+    img = tmp_path / "sheep-poster.jpg"
+    raw = b"\xff\xd8\xfffake"
+    img.write_bytes(raw)
+    seen: list[bytes] = []
+
+    def _raw(method, path, data, *, content_type, timeout=60):  # noqa: ARG001
+        seen.append(data)
+        assert content_type == "image/jpeg"
+        return 204, b""
+
+    client.request_raw = _raw  # type: ignore[method-assign]
+    result = client.upload_primary_image("item-1", img, retries=1, sleep=lambda _s: None)
+    assert result.ok
+    assert seen == [encode_image_upload_body(raw)]
+    assert seen[0] != raw
+
+
 def test_upload_primary_retries_404_then_succeeds(tmp_path: Path):
     client = JellyfinClient(url="http://jf", api_key="k")
     img = tmp_path / "sheep-poster.jpg"
@@ -181,6 +202,7 @@ def test_upload_item_image_backdrop(tmp_path: Path):
 
     def _raw(method, path, data, *, content_type, timeout=60):  # noqa: ARG001
         seen.append(path)
+        assert data == encode_image_upload_body(b"\xff\xd8\xfffake")
         return 204, b""
 
     client.request_raw = _raw  # type: ignore[method-assign]

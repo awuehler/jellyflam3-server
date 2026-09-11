@@ -11,7 +11,7 @@ Ingested MP4s often lack useful Primary images; Jellyfin and jellyfin-roku show 
 ## Guidelines (locked)
 
 1. After successful encode in `pipeline/worker.py`, extract a **mid-loop** frame with `ffmpeg` when posters are in effect (`jellyfin.attach_posters`: **auto** skips a standalone furnace; **auto** creates when 2+ furnaces are live on Tailscale/Syncthing; `true` / `false` override).
-2. Write a poster file under `/media/sheep/by-generation/{gen}/stills/{stem}/{stem}-poster.jpg` (same folder as screensaver frames; `stills/.ignore` hides JPEGs from the library scan) **and** upload via Jellyfin Images API (`POST .../Items/{id}/Images/Primary`) with **retry/backoff** after `refresh_library` (item Id race).
+2. Write a poster file under `/media/sheep/by-generation/{gen}/stills/{stem}/{stem}-poster.jpg` (same folder as screensaver frames; `stills/.ignore` hides JPEGs from the library scan) **and** upload via Jellyfin Images API (`POST .../Items/{id}/Images/Primary`, **base64** body — Jellyfin `GetFromBase64Stream`; raw JPEG bytes 500) with **retry/backoff** after `refresh_library` (item Id race).
 3. Enrich `*.jellyflam3.json` sidecar; best-effort Items Overview / SortName / tags.
 4. Provide a **backfill** path for existing catalog MP4s (one-shot script or worker flag).
 5. Verify in Jellyfin web **and** stock jellyfin-roku (custom channel is guide 03).
@@ -28,7 +28,7 @@ Ingested MP4s often lack useful Primary images; Jellyfin and jellyfin-roku show 
 |---|---|---|
 | **A** Mid-loop poster extract | Done | [`pipeline/poster.py`](../../pipeline/poster.py) — `{stem}-poster.jpg` in `stills/{stem}/` |
 | **B** Safer item lookup | Done | `JellyfinClient.find_item_for_media` — library-scoped Path/Name scoring; `find_item_by_path_name` delegates |
-| **C** Images API upload + retry | Done | `JellyfinClient.upload_primary_image` — binary `POST .../Images/Primary`, retry/backoff on 404/race, soft-fail `ImageAttachResult` |
+| **C** Images API upload + retry | Done | `JellyfinClient.upload_primary_image` — base64 `POST .../Images/Primary` (Jellyfin `GetFromBase64Stream`), retry/backoff on 404/race, soft-fail `ImageAttachResult` |
 | **D** Wire into new ingest | Done | [`pipeline/flock_artwork.py`](../../pipeline/flock_artwork.py) via `worker.process_genome` — extract → refresh → resolve → Primary; sidecar `poster` / `poster_path` / `jellyfin_image`. Default **auto**: no poster on standalone; poster when 2+ mesh furnaces. |
 | **E** Metadata enrich | Done | `enrich_item_metadata` — Overview / SortName / Tags via Item GET+POST; tags-only fallback; sidecar `jellyfin_metadata` |
 | **F** Backfill flock | Done | `python -m pipeline.backfill_posters` — scan catalog MP4s; idle-gate aware; rate-limited; `--dry-run` / `--limit` / `--force` / `--poster-only` |
@@ -45,9 +45,9 @@ python -m pipeline.backfill_posters --config configs/jellyflam3.yaml --limit 10 
 python -m pipeline.backfill_posters --config configs/jellyflam3.yaml --interval-sec 1
 ```
 
-Skips sheep whose sidecar already shows poster + Primary (`uploaded` / `local_primary`) + metadata enrich + stills (non-tuple; use `--force` to redo). Tuples are complete without stills. One Library/Refresh at batch start (not per item). Backfill **always extracts** posters and stills even when ingest `attach_posters` is `auto` or `false`. Stills ride this same path (Jellyfin Backdrop upload; never from tuples).
+Skips sheep whose sidecar already shows poster + Images API Primary (`uploaded`) + metadata enrich + stills **and** Backdrop upload (`jellyfin_stills` `uploaded`; non-tuple; use `--force` to redo). Stale ``local_primary`` (from sibling JPEGs before `stills/.ignore`) is **not** complete — backfill uploads Primary. Disk `stills/` frames without `jellyfin_stills` `uploaded` are **not** complete — backfill uploads Backdrops. Tuples are complete without stills. One Library/Refresh at batch start (not per item). Backfill **always extracts** posters and stills even when ingest `attach_posters` is `auto` or `false`. Stills ride this same path (Jellyfin Backdrop upload; never from tuples).
 
-**Ops note (lab):** Jellyfin must be able to write media folders and `MetadataPath` (`/var/lib/jellyflam3` on the Pi). Add `jellyfin` to the `jellyflam3` group and `g+rwX` (setgid) on `/media/sheep/by-generation` + MetadataPath, then restart Jellyfin. `stills/.ignore` hides poster/frame JPEGs from the library scan so the console lists MP4s (and sidecars) only. Client prefers user-scoped Item GET and treats `ImageTags.Primary` as success (`local_primary`) before Images API upload.
+**Ops note (lab):** Jellyfin must be able to write media folders and `MetadataPath` (`/var/lib/jellyflam3` on the Pi). Add `jellyfin` to the `jellyflam3` group and `g+rwX` (setgid) on `/media/sheep/by-generation` + MetadataPath, then restart Jellyfin. `stills/.ignore` hides poster/frame JPEGs from the library scan so the console lists MP4s (and sidecars) only. Primary thumbnails and screensaver Backdrops require the Images API upload (`POST .../Images/Primary` and `POST .../Images/Backdrop/{index}`); a disk JPEG under `stills/` is not a Jellyfin Primary or Backdrop. Lab Jellyfin 10.11 wraps those POST bodies in `FromBase64Transform` — send `base64.b64encode(jpeg)` with `Content-Type: image/jpeg` (`encode_image_upload_body`). Raw JPEG bytes 500 with `FormatException`.
 
 ## Artifacts
 
@@ -58,7 +58,7 @@ Skips sheep whose sidecar already shows poster + Primary (`uploaded` / `local_pr
 | `pipeline/jellyfin_client.py` | pipeline | Item lookup + Primary / Backdrop Images API |
 | `pipeline/backfill_posters.py` | pipeline | One-shot flock poster + stills + metadata backfill |
 | `ffmpeg` | binary | Mid-loop frame grab + screensaver stills |
-| `jellyfin` Images API | binary | Primary and Backdrop attach |
+| `jellyfin` Images API | API | Primary and Backdrop attach (base64 POST body) |
 
 ## Exit criteria
 

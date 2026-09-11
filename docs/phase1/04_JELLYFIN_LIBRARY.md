@@ -22,7 +22,7 @@ Jellyfin server + library + API credentials — **stop before** worker automatio
 
 ### Catalog permissions (trickplay / group write)
 
-Jellyfin runs as user `jellyfin` and must be in group `jellyflam3`. It writes **`{stem}.trickplay/`** beside each MP4 when “Save trickplay images next to media” is on.
+Jellyfin runs as user `jellyfin` and must be in group `jellyflam3`. It writes **`{stem}.trickplay/`** beside each MP4 when “Save trickplay images next to media” is on. Catalog posters/frames live under `by-generation/{gen}/stills/` with `stills/.ignore` so they are **not** extra library items and **not** local Primaries — attach via Images API ([phase2/02](../phase2/02_JELLYFIN_FLOCK_UX.md)).
 
 | Path | Mode | Why |
 |---|---|---|

@@ -271,7 +271,7 @@ Jellyfin `POST /Items/{id}/PlaybackInfo` — reports DirectPlay / DirectStream /
 
 ### Stills
 
-Phase 3: JPEG frames extracted from catalog MP4s (poster pipeline / `pipeline/stills.py`) under `by-generation/…/stills/{stem}/` beside `{stem}-poster.jpg`, uploaded as Jellyfin Backdrops for **Roku Screensaver**. Never generated from tuple videos. `stills/.ignore` keeps those JPEGs out of the Jellyfin library scan.
+Phase 3: JPEG frames extracted from catalog MP4s (poster pipeline / `pipeline/stills.py`) under `by-generation/…/stills/{stem}/` beside `{stem}-poster.jpg`, uploaded as Jellyfin Backdrops for **Roku Screensaver**. Never generated from tuple videos. `stills/.ignore` keeps those JPEGs out of the Jellyfin library scan — screensaver URLs come from `ImageTags.Primary` and `BackdropImageTags` only. Images POST bodies are **base64** (Jellyfin 10.9+ `GetFromBase64Stream`).
 
 ---
 
@@ -287,7 +287,7 @@ The Sheep **library** in Jellyfin — curated MP4s, posters, metadata, tags. Sin
 
 ### Poster / Primary
 
-Mid-loop JPEG in `by-generation/{gen}/stills/{stem}/{stem}-poster.jpg` and/or Jellyfin **Primary** image via Images API. Screensaver stills (non-tuple JPEG frames → Jellyfin **Backdrop**) ride the same ingest switch (`stills.enabled`, default true). After encode, **auto** (default): skip on a standalone furnace; create when **2+** furnaces are live on Tailscale/Syncthing. Override with `jellyfin.attach_posters: true` / `false`. Operator backfill always extracts posters and stills and relocates leftover sibling `*-poster.jpg` into the stills folder. Phase 2 flock UX (`pipeline/flock_artwork.py`, `backfill_posters.py`). Layer 2: [Catalog posters](USER_GUIDE_AND_RUNBOOK.md#catalog-posters-after-render).
+Mid-loop JPEG in `by-generation/{gen}/stills/{stem}/{stem}-poster.jpg` **and** Jellyfin **Primary** via Images API (base64 POST). `stills/.ignore` means the JPEG is not a local Primary — VoD tiles need `ImageTags.Primary`. Screensaver stills (non-tuple JPEG frames → Jellyfin **Backdrop**) ride the same ingest switch (`stills.enabled`, default true). After encode, **auto** (default): skip on a standalone furnace; create when **2+** furnaces are live on Tailscale/Syncthing. Override with `jellyfin.attach_posters: true` / `false`. Operator backfill always extracts posters and stills and relocates leftover sibling `*-poster.jpg` into the stills folder; skip is complete only when sidecar Primary is `uploaded` (not `local_primary`) and `jellyfin_stills` is `uploaded`. Phase 2 flock UX (`pipeline/flock_artwork.py`, `backfill_posters.py`). Layer 2: [Catalog posters](USER_GUIDE_AND_RUNBOOK.md#catalog-posters-after-render).
 
 ### Commercial mode
 
@@ -337,7 +337,7 @@ Roku HTTP control on port **8060** — launch, query player (`/launch/dev`, `/qu
 
 ### RunScreenSaver()
 
-Roku screensaver entry point only — separate package from VoD `Main()`. JellyFlam3 Screensaver **1.0.9**: Primary + Backdrop slideshow (skip tuple; always rotate; `commercialMode`; 404 re-poll; [shuffle wrap](#shuffle-wrap) re-fetch; 313 URL cap).
+Roku screensaver entry point only — separate package from VoD `Main()`. JellyFlam3 Screensaver **1.0.9**: Primary + Backdrop slideshow (skip tuple; always rotate; `commercialMode`; 404 re-poll; [shuffle wrap](#shuffle-wrap) re-fetch; 313 **URL** cap). Mix is Primaries only until Backdrop tags exist.
 
 ### Kodi ES screensaver
 

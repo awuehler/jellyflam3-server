@@ -108,7 +108,7 @@ Config: `paths.refactor_preview_root` optional; default `media_library/_refactor
 | Stage preview genome + short encode | under `/media/sheep/_refactor-preview/<id>/` | Retinted `.flam3` + palette-pole proxy MP4; not live `by-generation/…` |
 | Preview poster | `pipeline.poster.extract_mid_loop_poster` → `<id>-preview-poster.jpg` | Jellyfin-friendly sibling name beside preview MP4 |
 | Library refresh | `pipeline.jellyfin_client.refresh_library` (or item refresh when Id known) | Required so console shows the new folder/item |
-| Optional Images API | `upload_primary_image` on the **preview** item (not live sheep) | Belt-and-suspenders if filesystem poster scan lags |
+| Optional Images API | `upload_primary_image` on the **preview** item (not live sheep) | Preview sibling JPEG *can* be scanned; live catalog `stills/.ignore` cannot. Images POST is **base64** |
 | Report | JSON: `preview_dir`, `preview_mp4`, `preview_poster`, `jellyfin_item_id?`, `palette_after` | Live catalog Primary unchanged until Pathway B |
 
 **Do not** temporarily overwrite the live sheep’s Primary for preview (confuses flock clients and loses prior art unless carefully backed up). Prefer the dedicated preview library.

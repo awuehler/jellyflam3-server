@@ -137,7 +137,7 @@ def extract_mid_loop_poster(
 ) -> Path:
     """Write a mid-loop JPEG into the stills folder (or to ``dest``) and return its path.
 
-    Does not upload to Jellyfin (Images API is a later flock-UX piece).
+    Does not upload to Jellyfin (Images API is ``flock_artwork`` / ``backfill_posters``).
     """
     mp4 = Path(mp4)
     if not mp4.is_file():
