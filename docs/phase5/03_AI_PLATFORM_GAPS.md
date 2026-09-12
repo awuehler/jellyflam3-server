@@ -12,7 +12,7 @@ Honest gaps between Arduino’s **edge-AI** story and **deployment B** (LLM Agen
 |---|---|---|
 | Hexagon NPU, 40 dense TOPS | **Not used.** flam3 is CPU | **This is the product role** |
 | Local LLM / VLM / ASR / TTS | **Must not** run here as a service | Load here; advise A over LAN |
-| Adreno GPU | N/A on Pi path (`libx264`) | Optional vision decode on B; not Jellyfin transcode |
+| Adreno GPU | N/A on Pi path (`libx264`) | LLM fallback / vision; concurrent HTP+GPU is [G18](#g18--hexagon--adreno-during-one-llm-runtime-investigation), not assumed |
 | STM32H5 / ROS 2 / CAN-FD | Unused | Unused in MVP |
 | App Lab + AI Hub | Do not install on A | Optional bench on B; need **headless** path |
 | Pi HAT header | NVMe HAT + USB flock | Irrelevant to flock disks |
@@ -25,9 +25,13 @@ If the only goal is **faster sheep**, do not buy a Ventuno — cool the Pi and k
 
 flam3 does not run on B and does not use Hexagon. A “neural flam3” would be a different product. **Accept.**
 
-### G2 — 16 GB on B is for models, not the flock
+### G2 — 16 GB on B is for **one** hot 7–8B INT4
 
-LPDDR5 on Ventuno is shared by CPU, GPU, and NPU. Size models so Ubuntu + VLM fit **without** Jellyfin or PNG dumps (those live on A). Measure RSS on B before enabling unattended briefs.
+LPDDR5 is shared by CPU, GPU, and NPU. **INT4** 7–8B (~6 GB + OS) is the budget. INT16/FP16 7–8B fills RAM before KV. Two 7B INT4 graphs + both KV caches (~12–13 GB + OS) is technically loadable and **practically OOM**. Hexagon is one accelerator — “parallel” = sequential session switch ([02](02_LLM_INTEGRATION.md#model-session-switch)), not two inferences at once. Measure RSS on B before unattended briefs.
+
+### G2b — Conversion pipeline, not `transformers`
+
+Arbitrary Hugging Face checkpoints do not run. Workflow remains: AI Hub curated list → export → INT8/INT4 → compile for Hexagon → QNN or LiteRT. Ubuntu/Debian on the MPU is an advantage vs Android phone stacks; **days** go to drivers/tooling, not picking among Llama / Qwen / Mistral.
 
 ### G3 — Thermal and power on B
 
@@ -43,7 +47,7 @@ AI Hub / App Lab / GenieX vs portable llama.cpp GGUF. Hub may be faster on Hexag
 
 ### G6 — Vision input quality
 
-Naming-from-poster uses JPEGs **from A** ([phase2/02](../phase2/02_JELLYFIN_FLOCK_UX.md)). Washed-out / orbit-frozen sheep ([phase3/09](../phase3/09_SHEEP_REFACTOR.md)) yield garbage names — A should not auto-apply LLM aliases on quarantined stems.
+Naming-from-poster uses JPEGs **from A** ([phase2/02](../phase2/02_JELLYFIN_FLOCK_UX.md)). The three Instruct INT4 graphs are **text**: they need a Hexagon VLM ([T1](#additional-goals-tbd)) or a caption step. Washed-out / orbit-frozen sheep ([phase3/09](../phase3/09_SHEEP_REFACTOR.md)) yield garbage names — A should not auto-apply LLM aliases on quarantined stems.
 
 ### G7 — Genome XML is a bad prompt
 
@@ -89,12 +93,77 @@ If A is offline, B must not invent sidecar writes. If B is offline, A must keep 
 
 Agent SSH/token to A is a new secret. Do not copy furnace `secrets.env` onto B wholesale (Jellyfin API key for Images maybe; no need for Hammer paths).
 
+### G18 — Hexagon + Adreno during one LLM runtime (investigation)
+
+**Question:** Can deployment B use the Hexagon NPU **and** the Adreno 623 GPU together while serving agentic briefs, or is one accelerator idle?
+
+**Not MVP.** Agentic work has no chat SLA ([00](00_OVERVIEW.md)); HTP INT4 alone is the first RC. This gap exists so the first lab unit records what the Ubuntu/QAIRT stack actually does, instead of assuming “40 TOPS + GPU = add them.”
+
+#### What the silicon can do vs what the stack exposes
+
+CPU, Adreno, and Hexagon sit on the **same 16 GB LPDDR5**. Extra FLOPs from a second engine still compete for bandwidth and for the same weight/KV pages. Hybrid that copies activations between HTP SRAM and GPU OpenCL buffers can **lose** to HTP-only.
+
+Vendor / OSS facts to re-check on the IQ-8275 image (dates and SKUs move):
+
+| Path | HTP + GPU in **one** forward pass? | Notes |
+|---|---|---|
+| QNN / QAIRT session (`backend_type` HTP vs GPU) | **No — exclusive** | ONNX Runtime QNN EP: HTP **or** GPU for that EP; Qualcomm’s GPU-backend note is explicit ([May 2025](https://www.qualcomm.com/developer/blog/2025/05/unlocking-power-of-qualcomm-qnn-execution-provider-gpu-backend-onnx-runtime)). |
+| Genie `backend::type` | **No — exclusive** | `QnnHtp` **or** `QnnGpu` **or** transformer/CPU in the dialog JSON ([Genie](https://docs.qualcomm.com/doc/80-70023-15B/topic/use-genai-model-with-genie.html)). |
+| AI Hub / QAIRT compiled LLM bundle | **NPU-only** | Fastest curated path; GPU/CPU aliases typically coerce to HTP. |
+| GenieX `llama_cpp` GGUF | **Not HTP+GPU** | Aliases: `npu`, `gpu`, `cpu`, `hybrid`. Documented `hybrid` is llama.cpp **HTP + CPU** per-tensor scheduling, not Adreno+Hexagon ([GenieX platforms](https://geniex.aihub.qualcomm.com/en/get-started/platforms)). |
+| Research HeteroLLM / HeteroInfer | **Yes, custom engine** | Layer- and tensor-split GPU+NPU on Snapdragon 8 Gen 3; OpenCL kernels + QNN ops; W4A16; not a supported IQ8 Ubuntu product ([arXiv 2501.14794](https://arxiv.org/html/2501.14794v2)). |
+
+ORT can still fall **unsupported ops to CPU** while HTP runs the rest. That is HTP+CPU fallback, not a designed Adreno+Hexagon LLM.
+
+#### Combinations worth labbing (if possible)
+
+Treat these as **hypotheses**. Record tok/s, RSS, SoC temp, and PSU watts. Fail closed if the image has no second backend.
+
+| ID | Pattern | How it would work | Likely outcome on IQ8 |
+|---|---|---|---|
+| H1 | **HTP-only INT4** (baseline) | One QNN/Genie context | Default; measure first |
+| H2 | **GPU-only** (FP16 / W8A16 if Hub allows) | `QnnGpu` or OpenCL llama.cpp | Fallback if HTP graph fails; RAM tighter; Adreno 623 is not an X Elite GPU |
+| H3 | **Prefill on one, decode on the other** | Two compiled graphs, host copies KV | Research pattern; vendor session is one backend; DIY is a science project |
+| H4 | **Pipeline, not one graph** | Small VLM / decode on GPU or ISP; 7B text on HTP | **Most plausible product combo** — sequential jobs, shared RAM still G2 |
+| H5 | **Unsupported-op spill** | HTP graph + CPU (or GPU if a future EP allows) for leftover nodes | Common; measure PCIe/DMA-style copies on-die |
+| H6 | **Custom HeteroLLM-class split** | Own OpenCL + QNN runtime | Out of scope unless Owner funds a research fork |
+
+**Do not** interpret H3–H6 as “two 7B models, one on GPU and one on NPU.” Weights still live in the same 16 GB ([G2](#g2--16-gb-on-b-is-for-one-hot-7-8b-int4)).
+
+#### Lab protocol (when a Ventuno exists)
+
+1. Confirm which backends the vendor Ubuntu image actually loads (`libQnnHtp`, `libQnnGpu`, OpenCL ICD).
+2. Run the **same** Qwen2.5 7B INT4 (or Hub equivalent) HTP-only vs GPU-only vs any `hybrid` flag the SDK exposes. Log prefill vs decode separately (agentic briefs are prefill-heavy).
+3. Repeat with a tiny vision graph on GPU while the 7B is hot on HTP (H4) — this is the still-analysis path, not dual-LLM.
+4. Watch RSS: GPU runtimes often keep FP16 activations; HTP INT4 may still pin weights. OOM here kills hybrid before tok/s matters.
+5. Write the result into this section: **accept HTP-only** / **enable H4** / **defer H3**.
+
+#### Provisional verdict
+
+**Possible in research and in sequential pipelines; not a checkbox in the stock QNN/Genie LLM session.** MVP stays Hexagon INT4. GPU is the fallback engine and the likely home for a small vision graph, not a second 7B. Promoting hybrid LLM into DoD requires lab numbers on **this** IQ-8275 board, not Snapdragon phone papers.
+
 ## Open questions (Owner)
 
-1. MVP runner on B: llama.cpp, GenieX, or App Lab-export only?
+1. MVP runner on B: llama.cpp, GenieX/QNN, or App Lab-export only?
 2. Apply path: SSH from B→A vs small authenticated sink **on A**?
-3. May A’s idle-breed call B unattended, or naming-only until 08 votes exist?
+3. May A’s idle-breed call B unattended, or naming-only until share/breed-weight from 08 exists?
 4. One agent per household vs one agent per furnace?
+5. Default hot `model_id`: Qwen2.5 7B INT4 (structured JSON) vs Llama 3.1 8B INT4 (general agent)?
+6. After G18 lab: HTP-only, GPU fallback, or sequential VLM-on-GPU + LLM-on-HTP? Do **not** assume concurrent HTP+GPU on one Genie session.
+
+## Additional goals (TBD)
+
+Parked until Owner opens implementation. Not DoD for first RC unless promoted.
+
+| ID | Goal | Notes |
+|---|---|---|
+| T1 | Small VLM (Qwen2-VL class) **or** caption→LLM for still analysis | Spectra 692 + Hexagon; naming MVP can stay caption/text |
+| T2 | Optional always-resident **3B** INT4 next to the hot 7B | Routing/classification; **not** a second 7B |
+| T3 | Compile-cache on NVMe so session switch is load, not re-quantize | Scratch dir in [01](01_VENTUNO_Q_HOST.md) BOM |
+| T4 | Healthz reports `model_id` + RSS so A can fail-open with a reason | Furnace logs, not sidecar SoT |
+| T5 | Eval set: alias uniqueness + breed JSON schema vs the three Instruct graphs | Mechanical [G8](#g8--evaluation); no “good name” metric |
+| T6 | Headless QNN/LiteRT on Ubuntu without App Lab | Blocker if App Lab is the only loader ([G13](#g13--app-lab-vs-headless-agent)) |
+| T7 | Lab Hexagon + Adreno during LLM runtime | [G18](#g18--hexagon--adreno-during-one-llm-runtime-investigation); sequential VLM∥LLM more likely than one-session HTP+GPU |
 
 ## Non-goals
 
@@ -106,7 +175,8 @@ Agent SSH/token to A is a new secret. Do not copy furnace `secrets.env` onto B w
 ## Exit criteria (when opened)
 
 - [ ] Lab notes for G3/G4 (thermals, kernel, model load) **on B**
-- [ ] Written runner choice for G5
+- [ ] Written runner choice for G5; INT4 session switch labbed (one hot 7–8B)
+- [ ] G18: HTP vs GPU vs any hybrid flag measured on IQ-8275; verdict written (accept / H4 / defer)
 - [ ] G16: A continues if B is stopped; B refuses writes if A is gone
 - [ ] This list triaged: accept / fix in 01 / fix in 02 / defer
 

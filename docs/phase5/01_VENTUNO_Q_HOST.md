@@ -12,7 +12,29 @@ Depends on a reachable furnace (SSH, Jellyfin URL, catalog posters) and on [00](
 
 ## Intent
 
-Ventuno Q is Arduino’s Linux SBC with a Qualcomm Dragonwing IQ8 (octa-core Kryo, 16 GB LPDDR5, Hexagon NPU up to 40 dense TOPS, STM32H5 MCU), Ubuntu, M.2 NVMe Gen 4, USB 3, 2.5 GbE. Phase 5 uses that silicon as an **agent platform**: local LLM/VLM inference that **talks to** a Pi furnace over the LAN.
+Ventuno Q is Arduino’s Linux SBC. Phase 5 uses that silicon as an **agent platform**: local LLM/VLM inference that **talks to** a Pi furnace over the LAN. Workload is **agentic API** (batch briefs, no interactive-chat SLA).
+
+### Silicon (vendor sheet — verify before purchase)
+
+| Block | Spec |
+|---|---|
+| MPU | Qualcomm Dragonwing **IQ8 (IQ-8275)** |
+| CPU | 8-core Qualcomm Kryo |
+| GPU | Qualcomm Adreno 623 — LLM fallback / possible vision decode; **not** assumed concurrent with Hexagon on one QNN session ([03](03_AI_PLATFORM_GAPS.md#g18--hexagon--adreno-during-one-llm-runtime-investigation)) |
+| NPU | Qualcomm Hexagon, **40 dense TOPS** |
+| ISP | Qualcomm Spectra 692 |
+| MCU | STM32H5F5 (Cortex-M33 @ 250 MHz, 4 MB flash, 1.5 MB RAM) — Zephyr / Arduino core; unused in MVP |
+| RAM | **16 GB LPDDR5** |
+| On-board storage | **64 GB eMMC** (OS only) |
+| Expansion | M.2 **NVMe Gen 4** |
+| OS (MPU) | Ubuntu or Debian upstream |
+| LAN | Wi-Fi 6 (2.4/5/6 GHz), BT 5.3, **1× 2.5 GbE** RJ45 |
+| Video | HDMI (muxed with MIPI DSI on JMEDIA); USB-C DP Alt Mode |
+| USB | 1× USB-C (host/device + video); 2× USB 3 Type-A; 2× USB 3 on JOMEGA |
+| Power | USB-C 5 V / 3 A (**15 W — not for inference**); **5.5×2.1 mm jack 12–24 V**; screw terminal 7–24 V; 7–24 V on JOMEGA |
+| Board | ~160 × 100 × 25.8 mm |
+
+Qualcomm AI Hub / QNN / LiteRT is the expected compile path (not `pip install transformers` of an arbitrary Hub checkpoint). 16 GB makes **one** 7–8B **INT4** graph comfortable; two 7B INT4 graphs co-resident is OOM-fragile ([03](03_AI_PLATFORM_GAPS.md) G2).
 
 | Concern | A — Furnace (Pi 5) | B — Agent platform (Ventuno Q) |
 |---|---|---|
@@ -43,12 +65,28 @@ Use [phase2/09](../phase2/09_PI_FROM_SCRATCH.md): Pi 5 + cooler + HAT + 1 TB NVM
 |---|---|---:|---:|---|
 | 1 | **Arduino Ventuno Q** | 1 | **300–350** | Store intro ~€299 (VAT incl.); IQ8 + STM32H5; 16 GB; 64 GB eMMC |
 | 2 | **12–24 V PSU** (60–90 W class) | 1 | 25–45 | Barrel 5.5×2.1 mm or screw terminal. **Do not** run inference on USB-C 5 V / 3 A (15 W) |
-| 3 | **NVMe SSD 1 TB** (M.2) | 1 | 70–110 | GGUF / Hub models + agent scratch. Not `/var/cache/jellyflam3/frames` |
+| 3 | **NVMe SSD 1 TB** (M.2) | 1 | 70–110 | **Model store** (see storage math). Not `/var/cache/jellyflam3/frames` |
 | 4 | **Active cooling** | 1 | 20–50 | SoC + NPU + NVMe; no official Pi-style cooler playbook |
 | 5 | **Case / stand + standoffs** | 1 | 20–40 | Board ~160×100 mm; keep airflow |
 | 6 | **Cat6 patch** | 1 | 5–10 | 2.5 GbE to the LAN / furnace |
 
-**Agent-platform subtotal (required): ~$440–$605.** No USB sheep disk. Do not reuse the 16a USB SSD on B.
+**Agent-platform subtotal (required): ~$440–$605.** Board ~$300; the rest is PSU + cooler + NVMe so INT4 graphs actually load. No USB sheep disk. Do not reuse the 16a USB SSD on B.
+
+### LLM storage math (why NVMe, not eMMC)
+
+eMMC (64 GB) is Ubuntu + apt only. Weights and QNN/LiteRT compile scratch live on **NVMe**. Planning figures for **one hot graph** (resident) and **three cold copies** on disk (session switch — [02](02_LLM_INTEGRATION.md#model-session-switch)):
+
+| Asset | On disk (order of magnitude) | In RAM when hot |
+|---|---|---|
+| Llama 3.1 8B Instruct **INT4** | ~4–5 GB compiled | ~4–5 GB weights + 1–2 GB KV @ 8K ≈ **6–7 GB** |
+| Qwen2.5 7B Instruct **INT4** | ~4–5 GB | same class ≈ **6 GB** |
+| Mistral 7B Instruct **INT4** | ~4–5 GB | same class ≈ **6 GB** |
+| Three INT4 graphs stored | **~15 GB** | **one** of them + KV |
+| Ubuntu + agent runtime + I/O | — | **~2–3 GB** |
+| QNN / LiteRT export + quantize scratch | **20–40 GB** during a convert | not resident |
+| Prompt / eval logs | grow; cap like furnace log hygiene | — |
+
+**Do not** plan INT16/FP16 7–8B (~14–16 GB weights alone) — OS + KV will OOM. **Do not** keep two 7B INT4 graphs + both KV caches resident (~12–13 GB + OS ≈ 14–16 GB). Homelab **1 TB** NVMe is the “don’t think about it” size (three graphs, convert workspace, logs, a later VLM). Floor if buying smaller: **≥128 GB** usable NVMe; 64 GB eMMC is not the model store.
 
 ### Nice-to-have / lab
 
@@ -76,7 +114,7 @@ Official product refs (vendor; verify before purchase): [Arduino VENTUNO Q](http
 | Mount (B) | Disk | Contents |
 |---|---|---|
 | `/` | 64 GB eMMC | Ubuntu + apt; **not** flock |
-| `/var/lib/jellyflam3-agent` (name TBD) | 1 TB NVMe | Models, agent config, prompt logs |
+| `/var/lib/jellyflam3-agent` (name TBD) | 1 TB NVMe | `models/` (three INT4 graphs) + `scratch/convert/` + agent config + prompt logs |
 | `/media/sheep` | **must not exist as catalog SoT** | If an operator plugs a disk here by habit, bring-up **fails** |
 
 Furnace mounts (`/media/sheep`, `/var/cache/jellyflam3`, bind `/var/lib/jellyflam3`) stay **only on A**. Agent reads posters via Jellyfin Images API or SSH from the furnace — [02](02_LLM_INTEGRATION.md).
@@ -101,9 +139,10 @@ These are **agent-platform** tasks, not a port of the Pi furnace playbook. Each 
 |---|---|---|---|
 | B1 | Ubuntu 64-bit; SSH keys; NTP | operator | Vendor image |
 | B2 | Local model runtime (llama.cpp **or** GenieX / AI Hub — choose in [03](03_AI_PLATFORM_GAPS.md)) | packages | Headless; App Lab optional |
-| B3 | systemd unit for the agent (name TBD) — **must not** be `jellyflam3-worker` | `deploy/` | |
+| B3 | systemd unit for the agent (name TBD) — **must not** be `jellyflam3-worker` | `deploy/` | Stop / start is the **model session switch** ([02](02_LLM_INTEGRATION.md#model-session-switch)) |
 | B4 | **Forbid** furnace stack: no `install_flam3.sh`, no `install_jellyfin.sh`, no idle-gate, no worker units | check script | Fail closed if `flam3-animate` or `jellyfin` is present |
 | B5 | Python 3 + tests for **agent** adapters only (fake runner in CI) | `tests/` | Furnace pytest stays on Pi / GHA |
+| B6 | NVMe layout: `models/{llama31-8b-int4,qwen25-7b-int4,mistral-7b-int4}/` + `scratch/convert/` | fstab | One `model_id` in agent yaml; three graphs on disk |
 
 ### C — Network to A
 
@@ -152,7 +191,7 @@ These are **agent-platform** tasks, not a port of the Pi furnace playbook. Each 
 ## Exit criteria (when opened)
 
 - [ ] SSH to `ventuno-jellyflam3-agent`; furnace stack **not** installed
-- [ ] NVMe holds models; **no** `/media/sheep` catalog SoT
+- [ ] NVMe holds **three** INT4 graphs on disk and **one** loaded; **no** `/media/sheep` catalog SoT
 - [ ] Local model loads; LAN ping/SSH/Jellyfin reach to **A**
 - [ ] Barrel PSU in use; BOM matches purchase (or is corrected)
 - [ ] Tasks A–C closed or deferred to [03](03_AI_PLATFORM_GAPS.md)
