@@ -6,7 +6,7 @@ Private **JellyFlam3 ↔ JellyFlam3** genome sync: [Syncthing](https://syncthing
 
 Phase 2 delivers the **model, host-service contract, templates, and operator docs**. It does **not** require a full Channel Store–grade UX; a local CLI/systemd “host service” is enough for DoD.
 
-**Status:** **complete** for Phase 2 DoD — fixture promote + sheep tax on `rpi-jellyflam3-08a` 2026-08-08. **Lab flock mesh** (`rpi-jellyflam3-16a` / `08a` / `04a`): Tailscale Opt In (`tag:jellyflam3`), Syncthing folder `jellyflam3-peers-inbox`, cross-host land + gated promote smoked 2026-08-11 (pedigree breed → peers inbox → promote on 04a 2026-08-11).
+**Status:** **complete** for Phase 2 DoD — fixture promote + sheep tax on `rpi-jellyflam3-08a` 2026-08-08. **Lab flock mesh** (`rpi-jellyflam3-16a` / `08a` / `04a`): Tailscale Opt In (`tag:jellyflam3`), Syncthing folder `jellyflam3-peers-inbox`, cross-host land + gated promote smoked 2026-08-11 (pedigree breed → peers inbox → promote on 04a 2026-08-11). Phase 5’s Ventuno joins this **same tailnet** as `tag:jellyflam3-agent` and **must not** Opt In as a Syncthing peer ([phase5/01](../phase5/01_VENTUNO_Q_HOST.md#tailscale-flock-tailnet)).
 
 ## Clean model (locked)
 

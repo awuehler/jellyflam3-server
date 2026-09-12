@@ -22,11 +22,11 @@ Architecture SoT remains [Pi5_Flam3_VoD_Pipeline.md](../Pi5_Flam3_VoD_Pipeline.m
   Pasture (Roku / Kodi)
         ▲  Direct Play / remux
         │
-  A  JellyFlam3 Furnace (Pi 5)
-        │  LAN: posters, sidecars, SSH/CLI, optional agent HTTP
+  A…  JellyFlam3 Furnaces (Pi 5, 1..N)  ← Tailscale tag:jellyflam3 + Syncthing when N≥2
+        │  tailnet (and/or LAN): posters, sidecars, SSH/CLI, Jellyfin
         ▼
-  B  LLM Agent Platform (Ventuno Q)
-        │  proposes alias / breed brief / ops text
+  B  LLM Agent Platform (Ventuno Q)  ← Tailscale tag:jellyflam3-agent (no Syncthing)
+        │  proposes alias / breed brief / ops text  (one B → many A)
         ▼
   A  applies (sidecar, pipeline.breed, Shears confirm) — still the factory
 ```
@@ -48,9 +48,10 @@ Stand up **deployment B** next to an existing **deployment A**, so that:
 
 1. The **furnace** keeps rendering **Gold Sheep Lite** exactly as today (16/08/04 overlays, `libx264`, Jellyfin, idle-gate).
 2. The **agent platform** hosts a **local, opt-in** stack: **one** hot 7–8B Instruct INT4 on Hexagon, plus a **small** VLM (2B–3B INT4) on Adreno. Vision path is **pixels → caption text → Instruct JSON** ([02](02_LLM_INTEGRATION.md#vision-pipeline)). Frame source is **Jellyfin VoD as a virtual camera** (Images snapshot; optional Static Direct Play peek; follow pasture NowPlaying) — not MIPI CSI and not catalog files on B ([02](02_LLM_INTEGRATION.md#vod-as-camera)). Switch Instruct graphs with service stop → config → start. No chat SLA. It **advises**; the furnace **does**.
-3. Writes use existing contracts only: catalog sidecar (`alias` / `alias_source=llm`), `pipeline.breed` / idle-breed **on the furnace**, Shears / refactor CLIs **on the furnace**, operator-facing briefs.
+3. Writes use existing contracts only: catalog sidecar (`alias` / `alias_source=llm`), `pipeline.breed` / idle-breed **on the furnace**, Shears / refactor CLIs **on the furnace**, operator-facing briefs. One agent may advise **1..N** furnaces; each furnace remains SoT for its own catalog.
 4. Defaults **offline** on B. Cloud model calls are a config kill-switch, never the MVP path.
 5. **No colocation:** a host is furnace **or** agent platform, never both.
+6. When **two or more** furnaces share sheep ([phase2/05](../phase2/05_SYNCTHING_GENOME_PEERING.md)), B **joins the same flock Tailscale tailnet** so it can reach every A. B does **not** run Syncthing.
 
 This is the deferred **LLM-assisted pedigree** note from [phase2/07](../phase2/07_PEDIGREE_BREEDING.md) and [phase3/00](../phase3/00_OVERVIEW.md), plus [phase4/09](../phase4/09_SHEEP_NAMING.md) work item **D** (LLM poster naming), on silicon that can run the models **without** sharing a board with `flam3-animate`.
 
@@ -78,10 +79,11 @@ Execute **01 before 02**. Guide 03 is the honesty check for the agent platform. 
 9. **One hot 7–8B INT4 Instruct.** Do not co-resident two 7B Instruct graphs in 16 GB. Store Llama 3.1 8B / Qwen2.5 7B / Mistral 7B (all INT4) on NVMe; load **one** per session. INT16/FP16 7–8B is out of RAM budget.
 10. **Vision pipeline, small VLM co-resident.** Posters/stills: **pixels → text → Instruct JSON**. A 2B–3B INT4 VLM (Adreno) may stay loaded **in parallel** with the hot Instruct (Hexagon) as two sessions. Do **not** feed pixels into the 7B, and do **not** run a 7B VLM beside a 7B Instruct. Per sheep the stages are sequential; the graphs stay resident. See [02](02_LLM_INTEGRATION.md#vision-pipeline).
 11. **VoD is the camera, not MIPI.** B samples furnace Jellyfin as a remote sensor for **single-sheep** loops only (Images API; optional `stream.mp4?Static=true` frame grab; follow TV `NowPlayingItem` when that item is one loop). Spectra 692 stays unused. B must **not** look like a TV client (idle-gate), must **not** force transcode, must **not** mount `/media/sheep`. Dynamic sampling is for follow-up tasks after naming MVP. See [02](02_LLM_INTEGRATION.md#vod-as-camera).
+12. **One agent, many furnaces.** Deployment B serves **1..N** Raspberry Pi furnaces. Tailscale enroll (`tag:jellyflam3-agent`) is **required** when N≥2 (sheep-sharing fleet) or when any A is not on the same L2 as B. B never Opt-In as a Syncthing peer. See [01](01_VENTUNO_Q_HOST.md#tailscale-flock-tailnet).
 
 ## In scope (when opened)
 
-1. [01_VENTUNO_Q_HOST.md](01_VENTUNO_Q_HOST.md) — Ubuntu agent-platform bring-up (models + LAN to furnace). Explicit **non-install** of the furnace stack.
+1. [01_VENTUNO_Q_HOST.md](01_VENTUNO_Q_HOST.md) — Ubuntu agent-platform bring-up (models + LAN/Tailscale to **1..N** furnaces). Explicit **non-install** of the furnace stack.
 2. [02_LLM_INTEGRATION.md](02_LLM_INTEGRATION.md) — adapters that call **furnace** CLIs/APIs; default off.
 3. [03_AI_PLATFORM_GAPS.md](03_AI_PLATFORM_GAPS.md) — keep the gap list honest as silicon/drivers land on **B**.
 
@@ -96,11 +98,12 @@ Execute **01 before 02**. Guide 03 is the honesty check for the agent platform. 
 - Colocating A and B “to save a board”
 - Using MIPI/USB cameras as the naming/VoD sample path (ISP toys only; sensor is furnace Jellyfin)
 - Tuple (loop+edge+loop) VoD as a VLM camera target — single-sheep loops only
+- One Ventuno per Pi (one B advises the household fleet)
 
 ## Prerequisites
 
 - Phase 3 complete ([../phase3/00_OVERVIEW.md](../phase3/00_OVERVIEW.md))
-- At least one live **furnace** (16a class preferred) per [../phase2/09_PI_FROM_SCRATCH.md](../phase2/09_PI_FROM_SCRATCH.md)
+- At least one live **furnace** (16a class preferred) per [../phase2/09_PI_FROM_SCRATCH.md](../phase2/09_PI_FROM_SCRATCH.md); B must support **additional** furnaces on the same tailnet
 - RNG aliases shipped so `alias` / `alias_source` are real sidecar fields ([../phase4/09_SHEEP_NAMING.md](../phase4/09_SHEEP_NAMING.md))
 - Owner waiver to open this slice **without** waiting for remaining Phase 4 products
 
@@ -109,8 +112,9 @@ Execute **01 before 02**. Guide 03 is the honesty check for the agent platform. 
 Phase 5 is complete for a first RC when:
 
 - [ ] One **furnace** (Pi) still satisfies existing 16/08/04 healthcheck; no LLM units added there
-- [ ] One **agent platform** (Ventuno) boots Ubuntu, loads a local model, and reaches the furnace on LAN
-- [ ] Worker / flam3 / Jellyfin Sheep are **absent** on the Ventuno (`bringup` check fails closed if they appear)
+- [ ] One **agent platform** (Ventuno) boots Ubuntu, loads a local model, and reaches **each** configured furnace (LAN and/or Tailscale)
+- [ ] Worker / flam3 / Jellyfin Sheep / Syncthing **absent** on the Ventuno (`bringup` check fails closed if they appear)
+- [ ] When N≥2 furnaces: B on flock tailnet as `tag:jellyflam3-agent`; ping/SSH/Jellyfin to more than one A; no Syncthing on B
 - [ ] Agent can propose an alias that the **furnace** writes as `alias_source=llm` without overwriting `human`
 - [ ] Breed brief schema → **furnace** `pipeline.breed`; tax + NC still hold; flam3-genome remains the mutator
 - [ ] One hot INT4 7–8B; session switch (stop → `model_id` → start) labbed; two 7Bs not co-resident

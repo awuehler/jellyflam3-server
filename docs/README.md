@@ -10,7 +10,7 @@
 | [phase2/00_OVERVIEW.md](phase2/00_OVERVIEW.md) | Phase 2 scope, reading order, definition of done — **complete** |
 | [phase3/00_OVERVIEW.md](phase3/00_OVERVIEW.md) | Phase 3 scope, reading order, definition of done — **complete** |
 | [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md) | Phase 4 synopsis, future features to be determined — **parked** |
-| [phase5/00_OVERVIEW.md](phase5/00_OVERVIEW.md) | Phase 5 synopsis — furnace (Pi) vs LLM Agent Platform (Ventuno); one hot INT4 7–8B + small GPU VLM — **parked** |
+| [phase5/00_OVERVIEW.md](phase5/00_OVERVIEW.md) | Phase 5 synopsis — 1..N furnaces (Pi) vs one LLM Agent Platform (Ventuno); Tailscale agent tag; one hot INT4 7–8B + small GPU VLM — **parked** |
 |||
 | [glossary.md](glossary.md) | Terms, keywords, and definitions for project + collateral vocabulary |
 
@@ -74,7 +74,7 @@ Overview: [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md).
 
 ## Phase 5 guides (synopsis — two deployments; parked)
 
-1. [01_VENTUNO_Q_HOST.md](phase5/01_VENTUNO_Q_HOST.md) — LLM Agent Platform host (Ventuno Q BOM, INT4 storage math, bring-up; **not** a furnace)
+1. [01_VENTUNO_Q_HOST.md](phase5/01_VENTUNO_Q_HOST.md) — LLM Agent Platform host (Ventuno Q BOM, INT4 storage math, Tailscale flock join, 1..N furnaces; **not** a furnace)
 2. [02_LLM_INTEGRATION.md](phase5/02_LLM_INTEGRATION.md) — Instruct INT4; session switch; pixels → Instruct JSON; **VoD-as-camera** (single sheep)
 3. [03_AI_PLATFORM_GAPS.md](phase5/03_AI_PLATFORM_GAPS.md) — NPU / RAM / conversion / Hexagon+Adreno H4 lab / TBD goals **on the agent platform**
 

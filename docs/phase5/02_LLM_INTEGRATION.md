@@ -93,6 +93,10 @@ model_id: qwen25-7b-int4          # Hexagon; session switch restarts the unit
 vlm_id: qwen2vl-2b-int4           # Adreno; leave loaded across Instruct switches if RSS allows
 vision_pipeline: pixels_then_json # locked; no pixels_into_instruct
 vision_source: jellyfin_vod       # [VoD as camera](#vod-as-camera); not MIPI / flock mount
+furnaces:                         # 1..N; Tailscale MagicDNS when N≥2 or off-L2
+  - id: 16a
+    ssh: jellyflam3@rpi-jellyflam3-16a
+    jellyfin_url: http://rpi-jellyflam3-16a:8096
 ```
 
 If the first lab OOM-kills with both resident, drop to **load VLM on demand** (still pixels → text → JSON; lose parallel residency). Do not change the stage order. Do not put the VLM on Hexagon and the 7B on GPU as MVP (HTP is the Instruct workhorse).
@@ -101,7 +105,7 @@ Non-pixel briefs (sidecar JSON parse, drain explain, Shears NL) skip the VLM and
 
 ## VoD as camera
 
-**Implementation goal** ([00](00_OVERVIEW.md) decision 11): treat furnace **Jellyfin VoD** as the VLM’s remote sensor — the job a MIPI camera + Spectra 692 would do (deliver RGB/JPEG frames), without CSI, without ISP, and without catalog files on B.
+**Implementation goal** ([00](00_OVERVIEW.md) decision 11): treat **each configured furnace’s** **Jellyfin VoD** as the VLM’s remote sensor — the job a MIPI camera + Spectra 692 would do (deliver RGB/JPEG frames), without CSI, without ISP, and without catalog files on B. One B may shutter **several** A’s; each request names a furnace `id`.
 
 **Scope: one rendered sheep (one loop MP4).** Naming MVP stays **Images snapshot** of that Item. Peek + follow-pasture are the **flexible/dynamic** sample route for follow-up tasks (live wall, missed phase, refactor burst) on the **same** single-sheep Item.
 
@@ -188,7 +192,8 @@ Do **not** hot-swap two QNN Instruct contexts to fake parallelism on one NPU as 
 10. **Commercial / NC** still enforced on A ([phase1/07](../phase1/07_LICENSE_AND_METADATA.md)).
 11. **Uniqueness** of aliases is computed against **A’s catalog** ([phase4/09](../phase4/09_SHEEP_NAMING.md) rule 3).
 12. **Vision pipeline.** Pixels → text → Instruct JSON. Small VLM on GPU may stay loaded with the hot Instruct; see [vision pipeline](#vision-pipeline).
-13. **VoD as camera.** Frames from furnace Jellyfin **single-sheep** Items only ([vod-as-camera](#vod-as-camera)). B is not a pasture client.
+13. **VoD as camera.** Frames from **a chosen furnace’s** Jellyfin **single-sheep** Items only ([vod-as-camera](#vod-as-camera)). B is not a pasture client.
+14. **One B, many A.** Agent yaml lists **1..N** furnaces (`id`, MagicDNS/`100.x`, Jellyfin URL, SSH). VoD shutter and apply (alias / breed / Shears) are **per furnace**. Uniqueness is against **that A’s** catalog. B must not Opt In/Out peering ([01](01_VENTUNO_Q_HOST.md#tailscale-flock-tailnet)).
 
 ## Integration map (prior phases)
 
@@ -200,7 +205,7 @@ Do **not** hot-swap two QNN Instruct contexts to fake parallelism on one NPU as 
 
 1. **B** samples **one loop** via [VoD as camera](#vod-as-camera): Images Primary (and optional Backdrops) for that Jellyfin Item. Disk `stills/{stem}/` is A’s feedstock, not B’s mount.
 2. **B** runs the [vision pipeline](#vision-pipeline): small VLM caption → hot Instruct proposes an alias; optional rationale in **B** logs (or a sidecar field only if [phase1/07](../phase1/07_LICENSE_AND_METADATA.md) grows a reserved key).
-3. **A** applies: `python3 -m pipeline.sheep_naming set-alias --source llm` (illustrative) after uniqueness check.
+3. **That A** applies: `python3 -m pipeline.sheep_naming set-alias --source llm` (illustrative) after uniqueness check on **its** catalog.
 4. Pasture filename-vs-alias **toggle** stays Phase 4 / 09 C. Pasture still talks to **A**.
 
 Furnace ingest must **not** block on B (timeout → keep `alias_source=auto`).
@@ -244,7 +249,8 @@ Chat on **B** (“name this poster”, “breed something like `frosty_swirles`�
 2. **Three Instruct INT4 graphs on disk**, **one** hot (default Qwen2.5 7B Instruct). Session switch: stop → `model_id` → start. **Do not** load Qwen 7B and Mistral 7B together.
 3. systemd agent unit on **B** only.
 4. **Vision pipeline:** small Adreno VLM co-resident with the hot HTP Instruct; pixels → text → Instruct JSON ([vision pipeline](#vision-pipeline)). Lab RSS ([03](03_AI_PLATFORM_GAPS.md#g18--hexagon--adreno-during-one-llm-runtime-investigation) H4). Not one-session HTP+GPU.
-5. **VoD as camera:** Images shutter MVP on **single-sheep** Items; `jf3agent-vlm` + A ignore pattern; peek/follow-nowplaying default off ([vod-as-camera](#vod-as-camera)).
+5. **VoD as camera:** Images shutter MVP on **single-sheep** Items **per furnace**; `jf3agent-vlm` + ignore pattern **on each A**; peek/follow-nowplaying default off ([vod-as-camera](#vod-as-camera)).
+6. **Furnace list:** `furnaces[]` on B ([01](01_VENTUNO_Q_HOST.md#agent-config-for-many-furnaces)). Reach over LAN or Tailscale; never `pipeline.peering opt-in` on B.
 
 ### 2 — Naming adapter
 
@@ -262,7 +268,7 @@ Chat on **B** (“name this poster”, “breed something like `frosty_swirles`�
 
 1. Read-only against A: `healthcheck`, `status_report`, `sheep_naming resolve`, `library_disk check`.
 2. Write: naming accept + breed on A; Shears/refactor behind confirms.
-3. Deny: Hammer, `secrets.env` dump, peering Opt Out.
+3. Deny: Hammer, `secrets.env` dump, peering Opt Out / Opt In.
 
 ## Artifacts (planned)
 
@@ -286,6 +292,8 @@ Chat on **B** (“name this poster”, “breed something like `frosty_swirles`�
 - Catalog MP4 file ingest or MIPI/USB as the naming sensor
 - Agent Sessions/Playing or transcode grabs
 - Tuple / edge VoD as a camera target (single-sheep loops only)
+- One Ventuno per Pi (one B serves the household fleet)
+- Syncthing or `pipeline.peering` on B
 
 ## Exit criteria (when opened)
 
@@ -294,7 +302,7 @@ Chat on **B** (“name this poster”, “breed something like `frosty_swirles`�
 - [ ] Furnace has **no** LLM systemd unit; Ventuno has **no** worker
 - [ ] Session switch documented and labbed: Qwen ↔ Llama (or Mistral) via stop / config / start; one RSS 7–8B Instruct
 - [ ] Vision pipeline: small GPU VLM + hot Instruct; pixels → caption → JSON; both resident or documented on-demand fallback
-- [ ] VoD-as-camera: Images snapshot of a **single sheep** labbed without closing idle-gate; peek/follow flags default off
+- [ ] VoD-as-camera: Images snapshot of a **single sheep** labbed without closing idle-gate; peek/follow flags default off; yaml can list **N** furnaces
 - [ ] Unit tests use fake A/B (CI offline) — fake caption string, no live VLM
 - [ ] Cross-links from [phase4/09](../phase4/09_SHEEP_NAMING.md) § D and [phase2/07](../phase2/07_PEDIGREE_BREEDING.md) stay accurate
 

@@ -12,7 +12,7 @@ Depends on a reachable furnace (SSH, Jellyfin URL, catalog posters) and on [00](
 
 ## Intent
 
-Ventuno Q is Arduino’s Linux SBC. Phase 5 uses that silicon as an **agent platform**: local LLM/VLM inference that **talks to** a Pi furnace over the LAN. Workload is **agentic API** (batch briefs, no interactive-chat SLA). Posters/stills use a **small GPU VLM** plus the **hot Hexagon Instruct** graph ([02](02_LLM_INTEGRATION.md#vision-pipeline)).
+Ventuno Q is Arduino’s Linux SBC. Phase 5 uses that silicon as an **agent platform**: local LLM/VLM inference that **talks to one or more** Pi furnaces. Workload is **agentic API** (batch briefs, no interactive-chat SLA). Posters/stills use a **small GPU VLM** plus the **hot Hexagon Instruct** graph ([02](02_LLM_INTEGRATION.md#vision-pipeline)). When the household has **two or more** furnaces sharing sheep, B joins the **same flock Tailscale tailnet** as those Pis ([tailscale](#tailscale-flock-tailnet)) — it does **not** become a Syncthing node.
 
 ### Silicon (vendor sheet — verify before purchase)
 
@@ -39,12 +39,12 @@ Qualcomm AI Hub / QNN / LiteRT is the expected compile path (not `pip install tr
 | Concern | A — Furnace (Pi 5) | B — Agent platform (Ventuno Q) |
 |---|---|---|
 | Role | Render + Jellyfin + worker | Local LLM / VLM + agent daemons |
-| Hostname (proposed) | `rpi-jellyflam3-16a` (existing) | `ventuno-jellyflam3-agent` (letter suffix `a`,`b`,… if several) |
+| Hostname (proposed) | `rpi-jellyflam3-16a` (existing; 08a / 04a / …) | `ventuno-jellyflam3-agent` (one per household; letter suffix only if several **agents**) |
 | RAM | 4 / 8 / 16 GB per class | 16 GB LPDDR5 — models, not PNG dumps |
 | OS disk | microSD | 64 GB eMMC |
 | Fast disk | 1 TB NVMe scratch + state | NVMe for **model weights** + agent logs (not flam3 frames) |
 | Flock disk | 1 TB USB → `/media/sheep` | **None** — read posters from furnace / Jellyfin |
-| LAN | Lab often WiFi STA | Prefer **2.5 GbE** to the furnace |
+| LAN | Lab often WiFi STA; Tailscale when Opt In | Prefer **2.5 GbE** on-site; **Tailscale** to reach every A when N≥2 |
 | Power | 5 V / 5 A USB-C | **12–24 V** barrel / screw terminal — not USB-C 15 W |
 | Overlay | `rpi-jellyflam3-{16,08,04}` | **No** furnace hw_profile |
 | Extra silicon | — | NPU is the point of B; MCU unused in MVP |
@@ -68,7 +68,7 @@ Use [phase2/09](../phase2/09_PI_FROM_SCRATCH.md): Pi 5 + cooler + HAT + 1 TB NVM
 | 3 | **NVMe SSD 1 TB** (M.2) | 1 | 70–110 | **Model store** (see storage math). Not `/var/cache/jellyflam3/frames` |
 | 4 | **Active cooling** | 1 | 20–50 | SoC + NPU + NVMe; no official Pi-style cooler playbook |
 | 5 | **Case / stand + standoffs** | 1 | 20–40 | Board ~160×100 mm; keep airflow |
-| 6 | **Cat6 patch** | 1 | 5–10 | 2.5 GbE to the LAN / furnace |
+| 6 | **Cat6 patch** | 1 | 5–10 | 2.5 GbE on-site; Tailscale when N≥2 |
 
 **Agent-platform subtotal (required): ~$440–$605.** Board ~$300; the rest is PSU + cooler + NVMe so INT4 graphs actually load. No USB sheep disk. Do not reuse the 16a USB SSD on B.
 
@@ -124,6 +124,70 @@ Furnace mounts (`/media/sheep`, `/var/cache/jellyflam3`, bind `/var/lib/jellyfla
 
 **Power (B):** 12–24 V. Sustained NPU inference is not a 15 W USB-C workload. Confirm draw on the first lab unit.
 
+## Tailscale (flock tailnet)
+
+The flock’s private underlay is **Tailscale**, not a campus VLAN. When **two or more** Raspberry Pi furnaces Opt In to share genomes ([phase2/05](../phase2/05_SYNCTHING_GENOME_PEERING.md)), they already live on that tailnet (`tag:jellyflam3`). The LLM Agent Platform **must join the same tailnet** so one B can reach every A (SSH, Jellyfin Images / Static VoD, display-sink) even when the Pis are not on one Ethernet switch.
+
+**B is not a furnace peer.** Do not install Syncthing. Do not run `python3 -m pipeline.peering opt-in` / `opt-out`. Do not advertise `tag:jellyflam3`. Genome land stays `genomes/peers/inbox` **on each A**.
+
+Required when: N≥2 furnaces, or any furnace is off the Ventuno’s L2 (remote site, guest Wi-Fi, CGNAT). Optional but useful for N=1 so MagicDNS names stay stable.
+
+### Admin (tailnet, once)
+
+1. Paste the Phase 5 fragment in [`deploy/peering/tailscale-acl.example.json`](../../deploy/peering/tailscale-acl.example.json) into the tailnet ACL (keep furnace `tag:jellyflam3` ↔ `tag:jellyflam3:*`).
+2. Create a **reusable tagged pre-auth key** for `tag:jellyflam3-agent` only. Store as `TS_AUTHKEY_AGENT` on **B** (not in git; do not copy furnace `secrets.env` wholesale — [03](03_AI_PLATFORM_GAPS.md) G17).
+3. Confirm furnaces stay on `tag:jellyflam3` via existing Opt In. Agent ACL is SSH **22**, Jellyfin **8096**, display-sink **8791** toward furnaces — not Syncthing **22000**.
+
+### On the Ventuno (B)
+
+```bash
+# Ubuntu — https://tailscale.com/download/linux
+curl -fsSL https://tailscale.com/install.sh | sh
+
+# Enroll as agent, not as a furnace
+sudo tailscale up --auth-key="$TS_AUTHKEY_AGENT" \
+  --hostname=ventuno-jellyflam3-agent \
+  --advertise-tags=tag:jellyflam3-agent
+# Do not: --advertise-exit-node, subnet routes, tag:jellyflam3
+
+tailscale status
+tailscale ip -4
+# MagicDNS: ventuno-jellyflam3-agent.<tailnet>.ts.net  (or short name if enabled)
+```
+
+4. From B, `ping` / `tailscale ping` each furnace MagicDNS or `100.x` address (`rpi-jellyflam3-16a`, `08a`, `04a`, …).
+5. SSH as user `jellyflam3` to each A (key from C2). Jellyfin URL per furnace: `http://<magicdns-or-100.x>:8096` (or the LAN URL when on-site).
+6. `jf3agent-vlm` Images/VoD client still must not match idle-gate TV patterns ([C4](#c--network-to-a)); ignore pattern **on each A**.
+7. Bring-up **fails closed** if `syncthing` or `jellyflam3-syncthing.service` is present.
+
+Logout (agent only — does **not** Opt Out the Pis):
+
+```bash
+sudo tailscale logout   # or: sudo tailscale down
+```
+
+Furnace `pipeline.tailscale_watch` stays **on A**. Do not install that cron on B as a Syncthing healer.
+
+### Agent config for many furnaces
+
+Illustrative ([02](02_LLM_INTEGRATION.md) applies per furnace):
+
+```yaml
+# /etc/jellyflam3-agent/agent.yaml  — B only
+furnaces:
+  - id: 16a
+    ssh: jellyflam3@rpi-jellyflam3-16a
+    jellyfin_url: http://rpi-jellyflam3-16a:8096
+  - id: 08a
+    ssh: jellyflam3@rpi-jellyflam3-08a
+    jellyfin_url: http://rpi-jellyflam3-08a:8096
+  - id: 04a
+    ssh: jellyflam3@rpi-jellyflam3-04a
+    jellyfin_url: http://rpi-jellyflam3-04a:8096
+```
+
+Use Tailscale MagicDNS (or `100.x`) when L2 does not reach. Each A still has its own sidecar SoT, idle-gate, and `ignore_client_patterns`.
+
 ## Bring-up / “porting” tasks
 
 These are **agent-platform** tasks, not a port of the Pi furnace playbook. Each row is work for when Owner opens 01.
@@ -151,11 +215,12 @@ These are **agent-platform** tasks, not a port of the Pi furnace playbook. Each 
 
 | # | Task | Touches | Prior doc |
 |---|---|---|---|
-| C1 | Ethernet to same LAN as furnace; document furnace hostname / Jellyfin URL | operator | [phase1/04](../phase1/04_JELLYFIN_LIBRARY.md) |
-| C2 | SSH key **agent → furnace** for CLI apply (or token to a small furnace sink) | `authorized_keys` on **A** | [phase1/09](../phase1/09_RUNTIME_AND_OPS.md) |
+| C1 | Ethernet to same LAN when on-site; document **each** furnace hostname / Jellyfin URL | operator | [phase1/04](../phase1/04_JELLYFIN_LIBRARY.md) |
+| C2 | SSH key **agent → each furnace** for CLI apply (or token to a small sink **on each A**) | `authorized_keys` on **every A** | [phase1/09](../phase1/09_RUNTIME_AND_OPS.md) |
 | C3 | Virtual-camera fetch: Images Primary/Backdrop on **single-sheep** Items; optional silent `stream.mp4?Static=true` grab | [02](02_LLM_INTEGRATION.md#vod-as-camera) | [phase2/02](../phase2/02_JELLYFIN_FLOCK_UX.md), [phase2/03](../phase2/03_HLS_CLIENT_STREAMING.md) |
-| C4 | Jellyfin client id `jf3agent-vlm` (not `jellyflam3-*`); A `idle_gate.ignore_client_patterns` | furnace yaml | Must not close the gate ([phase1/06](../phase1/06_IDLE_GATE.md)) |
+| C4 | Jellyfin client id `jf3agent-vlm` (not `jellyflam3-*`); **each** A `idle_gate.ignore_client_patterns` | furnace yaml | Must not close the gate ([phase1/06](../phase1/06_IDLE_GATE.md)) |
 | C5 | Thermal log under VLM load (not flam3) | runbook | |
+| C6 | Tailscale enroll `tag:jellyflam3-agent` when N≥2 (or off-L2); **no** Syncthing | [tailscale](#tailscale-flock-tailnet) | [phase2/05](../phase2/05_SYNCTHING_GENOME_PEERING.md); ACL example |
 
 ### D — Explicit non-tasks (do not “port”)
 
@@ -163,7 +228,7 @@ These are **agent-platform** tasks, not a port of the Pi furnace playbook. Each 
 |---|---|
 | `bootstrap_pi.sh` / three-disk fstab | Furnace layout |
 | `ventuno-jellyflam3-16.yaml` overlay | Would imply B is a 16-class renderer |
-| Tailscale Syncthing as a **fourth furnace** | Peering is genome land on **A** ([phase2/05](../phase2/05_SYNCTHING_GENOME_PEERING.md)) |
+| Tailscale Syncthing as a **fourth furnace** | Peering is genome land on **A**; B may join the **tailnet only** ([tailscale](#tailscale-flock-tailnet)) |
 | Archive-seed / idle-breed crons on B | Those crons run on **A**; B may be **called** by A ([02](02_LLM_INTEGRATION.md)) |
 | Client preset zips built on Ventuno | Package on the **furnace** ([phase3/08](../phase3/08_JELLYFIN_ID_DUMP.md)) |
 | `link_capacity` eth-2.5g as a furnace uplink substitute | `N_max` is still the **furnace** hop to TVs ([phase4/07](../phase4/07_CONCURRENT_CLIENTS.md)) |
@@ -191,12 +256,14 @@ These are **agent-platform** tasks, not a port of the Pi furnace playbook. Each 
 - Raising furnace quality because B has 40 TOPS
 - Requiring App Lab for headless inference
 - Using B as a spare furnace during Pi maintenance
+- `pipeline.peering opt-in` on the Ventuno
 
 ## Exit criteria (when opened)
 
 - [ ] SSH to `ventuno-jellyflam3-agent`; furnace stack **not** installed
 - [ ] NVMe holds **three** Instruct INT4 graphs + **one** small VLM on disk; **one** Instruct loaded on HTP; VLM may be co-resident on GPU; **no** `/media/sheep` catalog SoT
-- [ ] Local model loads; LAN ping/SSH/Jellyfin reach to **A**
+- [ ] Local model loads; reach **each** configured A (LAN and/or Tailscale MagicDNS / `100.x`)
+- [ ] N≥2: B on `tag:jellyflam3-agent`; Syncthing **absent**; ACL allows 22/8096/8791 to furnaces only
 - [ ] Barrel PSU in use; BOM matches purchase (or is corrected)
 - [ ] Tasks A–C closed or deferred to [03](03_AI_PLATFORM_GAPS.md)
 - [ ] Operator docs state A vs B in one paragraph

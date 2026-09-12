@@ -6,7 +6,7 @@
 |---|---|
 | User surface | CLI: `python3 -m pipeline.peering {status\|opt-in\|opt-out\|publish\|promote\|gen-keys\|trust-key}` |
 | Tailscale auth | **Pre-auth key** in `secrets.env` as `TS_AUTHKEY` (never commit) |
-| Tag | `tag:jellyflam3` (see `tailscale-acl.example.json`) |
+| Tag | `tag:jellyflam3` (furnaces). Phase 5 agent: `tag:jellyflam3-agent` — [phase5/01](../../docs/phase5/01_VENTUNO_Q_HOST.md#tailscale-flock-tailnet) |
 | Syncthing share | Folder root = `genomes/peers/inbox` (config `peering.peers_inbox`); `.stignore` = this directory’s `stignore` |
 | Sync glob | `*.flam3` + optional `*-poster.jpg` + integrity sidecars (`*.flam3.sha256`, `*.flam3.jellyflam3.sig`) |
 | Share security | Ed25519 preferred; SHA-256 fallback — see [phase3/05](../../docs/phase3/05_SHARED_SHEEP_SECURITY.md) |

@@ -59,7 +59,7 @@ No metric for a “good” alias. MVP is mechanical: schema, uniqueness **on A**
 
 ### G9 — Privacy and peering
 
-Local models on B keep posters on-LAN (good) if fetch is from A, not the cloud. Cloud fallback on B would upload household art. Peering stays genome land on **A** ([phase2/05](../phase2/05_SYNCTHING_GENOME_PEERING.md), [phase3/05](../phase3/05_SHARED_SHEEP_SECURITY.md)). B is not a Syncthing furnace node.
+Local models on B keep posters on-LAN (good) if fetch is from A, not the cloud. Cloud fallback on B would upload household art. Peering stays genome land on **A** ([phase2/05](../phase2/05_SYNCTHING_GENOME_PEERING.md), [phase3/05](../phase3/05_SHARED_SHEEP_SECURITY.md)). B **joins the flock Tailscale tailnet** (`tag:jellyflam3-agent`) so it can reach every furnace when N≥2; it is **not** a Syncthing node and must not Opt In ([01](01_VENTUNO_Q_HOST.md#tailscale-flock-tailnet)).
 
 ### G10 — Jellyfin is not on B
 
@@ -91,7 +91,7 @@ If A is offline, B must not invent sidecar writes. If B is offline, A must keep 
 
 ### G17 — Credential spread
 
-Agent SSH/token to A is a new secret. Do not copy furnace `secrets.env` onto B wholesale (Jellyfin API key for Images maybe; no need for Hammer paths).
+Agent SSH/token to A is a new secret. Tailscale enroll on B uses a **separate** tagged pre-auth key `TS_AUTHKEY_AGENT` — not furnace `TS_AUTHKEY`. Do not copy furnace `secrets.env` onto B wholesale (Jellyfin API key for Images maybe; no need for Hammer paths).
 
 ### G18 — Hexagon + Adreno during one LLM runtime (investigation)
 
@@ -149,7 +149,7 @@ Treat these as **hypotheses**. Record tok/s, RSS, SoC temp, and PSU watts. Fail 
 1. MVP runner on B: llama.cpp, GenieX/QNN, or App Lab-export only?
 2. Apply path: SSH from B→A vs small authenticated sink **on A**?
 3. May A’s idle-breed call B unattended, or naming-only until share/breed-weight from 08 exists?
-4. One agent per household vs one agent per furnace?
+4. **Locked:** one agent per household / fleet, **1..N** furnaces ([00](00_OVERVIEW.md) decision 12). Not one Ventuno per Pi.
 5. Default hot `model_id`: Qwen2.5 7B INT4 (structured JSON) vs Llama 3.1 8B INT4 (general agent)?
 6. H4 lab: co-resident small VLM + hot Instruct, or on-demand VLM? Do **not** assume concurrent HTP+GPU inside one Genie session.
 
@@ -166,7 +166,8 @@ Parked until Owner opens implementation. Not DoD for first RC unless promoted.
 | T5 | Eval set: alias uniqueness + breed JSON schema vs the three Instruct graphs | Mechanical [G8](#g8--evaluation); no “good name” metric |
 | T6 | Headless QNN/LiteRT on Ubuntu without App Lab | Blocker if App Lab is the only loader ([G13](#g13--app-lab-vs-headless-agent)) |
 | T7 | Lab Hexagon + Adreno as **two sessions** (H4) | [G18](#g18--hexagon--adreno-during-one-llm-runtime-investigation); co-resident VLM vs on-demand |
-| T8 | VoD as virtual camera (Images; optional Static peek; follow NowPlaying) | **Single-sheep loops only** ([02](02_LLM_INTEGRATION.md#vod-as-camera)). Not MIPI. |
+| T8 | VoD as virtual camera (Images; optional Static peek; follow NowPlaying) | **Single-sheep loops only** ([02](02_LLM_INTEGRATION.md#vod-as-camera)). Not MIPI. Per furnace `id`. |
+| T9 | Tailscale `tag:jellyflam3-agent` on B when N≥2 | Same tailnet as Opt-In furnaces; no Syncthing ([01](01_VENTUNO_Q_HOST.md#tailscale-flock-tailnet)) |
 
 ## Non-goals
 
@@ -175,6 +176,7 @@ Parked until Owner opens implementation. Not DoD for first RC unless promoted.
 - Treating 40 TOPS as a flam3 quality multiplier
 - Dual-use of one board as A **and** B
 - Tuple VoD as a VLM camera target
+- Treating B as a fourth Syncthing furnace
 
 ## Exit criteria (when opened)
 

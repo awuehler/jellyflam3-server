@@ -243,7 +243,7 @@ Arduino **VENTUNO Q** SBC (Qualcomm Dragonwing IQ8 / IQ-8275 + STM32H5): 16 GB L
 
 ### LLM Agent Platform
 
-Phase 5 **deployment B** ([phase5/00](phase5/00_OVERVIEW.md)): local INT4 Instruct models on Ventuno **advise** (aliases, breed briefs, operator CLIs); the **furnace** (deployment A, Pi) still **does**. One hot 7–8B Instruct at a time (session switch). Poster/still path: small GPU VLM **then** Instruct JSON; Jellyfin VoD is the virtual camera for **single-sheep** loops ([phase5/02](phase5/02_LLM_INTEGRATION.md#vod-as-camera)). Separate host; default off; furnace fail-open if the agent is down.
+Phase 5 **deployment B** ([phase5/00](phase5/00_OVERVIEW.md)): local INT4 Instruct models on Ventuno **advise** (aliases, breed briefs, operator CLIs); **1..N furnaces** (deployment A, Pi) still **do**. One hot 7–8B Instruct at a time (session switch). Poster/still path: small GPU VLM **then** Instruct JSON; each furnace’s Jellyfin VoD is a virtual camera for **single-sheep** loops ([phase5/02](phase5/02_LLM_INTEGRATION.md#vod-as-camera)). Joins the flock **Tailscale** tailnet as `tag:jellyflam3-agent` (no Syncthing). Separate host; default off; furnace fail-open if the agent is down.
 
 ### Direct Play
 
@@ -367,7 +367,7 @@ User-facing peering switch via `python3 -m pipeline.peering opt-in|opt-out`. Sta
 
 ### Tailscale
 
-WireGuard-based **tailnet** underlay for peer Syncthing — no public discovery. Tag example: `tag:jellyflam3`.
+WireGuard-based **tailnet** underlay for peer Syncthing — no public discovery. Furnace tag: `tag:jellyflam3`. Phase 5 agent (no Syncthing): `tag:jellyflam3-agent` ([phase5/01](phase5/01_VENTUNO_Q_HOST.md#tailscale-flock-tailnet)).
 
 ### Syncthing
 
@@ -554,4 +554,4 @@ Terms you will see in upstream docs and community material:
 
 ---
 
-*Last expanded: 2026-09-10 — Phase 5 split: furnace (Pi) vs LLM Agent Platform (Ventuno).*
+*Last expanded: 2026-09-12 — Phase 5: one agent, many furnaces; Tailscale `tag:jellyflam3-agent`.*
