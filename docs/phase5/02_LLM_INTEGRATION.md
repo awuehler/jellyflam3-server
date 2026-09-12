@@ -20,8 +20,8 @@ Models on **B advise** (names, parent briefs, operator actions). **flam3-genome*
 | **Share brief** | Propose candidates; Opt In + share-security still on **A** | [phase2/05](../phase2/05_SYNCTHING_GENOME_PEERING.md), [phase3/05](../phase3/05_SHARED_SHEEP_SECURITY.md), [phase4/01](../phase4/01_PEER_SHARE_PATH.md) |
 
 ```text
-  A  Furnace catalog  (poster / sidecar / genomes/done)
-           │  fetch over LAN (Jellyfin Images, SSH)
+  A  Furnace Jellyfin  (VoD camera: Item Id / NowPlaying)
+           │  frames over LAN (Images; optional Static MP4 grab)
            ▼
   B  pixels → text → Instruct JSON  (opt-in)
            │  small VLM (Adreno) captions JPEG
@@ -60,7 +60,7 @@ All three are **Instruct INT4**, Hub/QNN-converted, **one hot at a time**. They 
 
 ## Vision pipeline
 
-**Locked goal** ([00](00_OVERVIEW.md) decision 10): keep a **small VLM resident on Adreno** in **parallel** with the **hot Instruct on Hexagon**, and run stills as:
+**Locked goal** ([00](00_OVERVIEW.md) decision 10): keep a **small VLM resident on Adreno** in **parallel** with the **hot Instruct on Hexagon**, and caption **one loop** as:
 
 ```text
   A  {stem}-poster.jpg (or still)  ──LAN──►  B
@@ -92,11 +92,64 @@ Illustrative config (names TBD):
 model_id: qwen25-7b-int4          # Hexagon; session switch restarts the unit
 vlm_id: qwen2vl-2b-int4           # Adreno; leave loaded across Instruct switches if RSS allows
 vision_pipeline: pixels_then_json # locked; no pixels_into_instruct
+vision_source: jellyfin_vod       # [VoD as camera](#vod-as-camera); not MIPI / flock mount
 ```
 
 If the first lab OOM-kills with both resident, drop to **load VLM on demand** (still pixels → text → JSON; lose parallel residency). Do not change the stage order. Do not put the VLM on Hexagon and the 7B on GPU as MVP (HTP is the Instruct workhorse).
 
 Non-pixel briefs (sidecar JSON parse, drain explain, Shears NL) skip the VLM and hit Instruct only.
+
+## VoD as camera
+
+**Implementation goal** ([00](00_OVERVIEW.md) decision 11): treat furnace **Jellyfin VoD** as the VLM’s remote sensor — the job a MIPI camera + Spectra 692 would do (deliver RGB/JPEG frames), without CSI, without ISP, and without catalog files on B.
+
+**Scope: one rendered sheep (one loop MP4).** Naming MVP stays **Images snapshot** of that Item. Peek + follow-pasture are the **flexible/dynamic** sample route for follow-up tasks (live wall, missed phase, refactor burst) on the **same** single-sheep Item.
+
+| MIPI (unused) | Jellyfin stand-in | Into the VLM |
+|---|---|---|
+| CSI + lens | 2.5 GbE to furnace Jellyfin | Network, not JMEDIA |
+| What the sensor faces | Single-sheep Item Id or TV `NowPlayingItem` when that item is one loop | Which sheep |
+| Spectra 692 ISP | Already-baked Lite + Images/ffmpeg | JPEG / few RGB frames |
+| V4L2 `/dev/videoN` | `GET …/Videos/{id}/stream.mp4?Static=true` | Decode on B, then N frames |
+| Snapshot | Images **Primary** or **Backdrop/{i}** (no Playing) | Default shutter |
+| Preview burst | ffmpeg 1–4 frames from Static MP4, then drop socket | Only if Images miss the phase |
+| USB camera | Closer analog than MIPI for HTTP decode | Not the product sensor |
+
+Ambient default is Direct Play MP4 ([phase2/03](../phase2/03_HLS_CLIENT_STREAMING.md) `streamMode=mp4`). HLS remux `.ts` and any `TranscodingInfo` path are the wrong firmware.
+
+### Three lens modes
+
+1. **Snapshot (MVP)** — HTTP GET Primary (mid-loop poster) and optionally up to four Backdrops (`stills.count`) for **one loop**. No `NowPlayingItem` from B. Fail-open naming.
+2. **Peek the stream (follow-up)** — silent ffmpeg grab from Static Direct Play of that **same** single-sheep Item when a poster/Backdrop missed the phase. DeviceName **`jf3agent-vlm`** (must **not** match `tv_client_patterns` `roku|jellyflam3`). Add `idle_gate.ignore_client_patterns` on A like the screensaver. **Never** POST `/Sessions/Playing`. **Never** force transcode on A.
+3. **Follow the pasture (follow-up)** — read TV Sessions `NowPlayingItem`; if it is a **single sheep**, snapshot that id (mode 1). Skip if the playing item is not one loop. Do not Direct Play a second TV-class copy.
+
+### Must not
+
+| Do not | Why |
+|---|---|
+| Mount `/media/sheep` and open `{stem}.mp4` | Catalog SoT stays on A |
+| Feed a whole loop into the VLM | Camera pipelines sample frames; QNN wants static N×JPEG |
+| Route HTTP through Spectra 692 | ISP is MIPI-only |
+| Name the Jellyfin client `jellyflam3-*` without ignore | Gate `active_tv_client` pauses flam3 |
+| HLS remux / transcode as the grabber | `block_on_any_transcode`; competes with encode |
+
+### Frame budget
+
+Agentic briefs have no chat SLA — do not run a 30 fps CSI preview. Default **1× Primary**. After H4 RSS, **Primary + ≤4 Backdrops** if the compiled VLM arity is N>1. Stream peek only when Images are not enough, then close the socket. Concurrent Static peeks count toward `N_max` if they overlap TVs ([phase4/07](../phase4/07_CONCURRENT_CLIENTS.md)).
+
+Illustrative (names TBD):
+
+```yaml
+# /etc/jellyflam3-agent/agent.yaml  — B only
+vision_source: jellyfin_vod       # not mipi, not usb, not flock_mount
+vod_camera:
+  shutter: images                 # MVP: Primary / Backdrop of one loop
+  peek_static: false              # follow-up: stream.mp4?Static=true (same Item)
+  follow_nowplaying: false        # follow-up: Sessions → snapshot if single sheep
+  client_name: jf3agent-vlm
+```
+
+On A, ignore that client the way screensaver is ignored ([phase1/06](../phase1/06_IDLE_GATE.md)).
 
 ## Model session switch
 
@@ -135,6 +188,7 @@ Do **not** hot-swap two QNN Instruct contexts to fake parallelism on one NPU as 
 10. **Commercial / NC** still enforced on A ([phase1/07](../phase1/07_LICENSE_AND_METADATA.md)).
 11. **Uniqueness** of aliases is computed against **A’s catalog** ([phase4/09](../phase4/09_SHEEP_NAMING.md) rule 3).
 12. **Vision pipeline.** Pixels → text → Instruct JSON. Small VLM on GPU may stay loaded with the hot Instruct; see [vision pipeline](#vision-pipeline).
+13. **VoD as camera.** Frames from furnace Jellyfin **single-sheep** Items only ([vod-as-camera](#vod-as-camera)). B is not a pasture client.
 
 ## Integration map (prior phases)
 
@@ -144,7 +198,7 @@ Do **not** hot-swap two QNN Instruct contexts to fake parallelism on one NPU as 
 
 **This slice adds:**
 
-1. **B** fetches catalog `{stem}-poster.jpg` from `stills/{stem}/` (preferred) or a still ([phase2/02](../phase2/02_JELLYFIN_FLOCK_UX.md), [phase3/01](../phase3/01_SCREENSAVERS_AND_STILLS.md)). Never tuple stills if the stills pipeline excludes tuples.
+1. **B** samples **one loop** via [VoD as camera](#vod-as-camera): Images Primary (and optional Backdrops) for that Jellyfin Item. Disk `stills/{stem}/` is A’s feedstock, not B’s mount.
 2. **B** runs the [vision pipeline](#vision-pipeline): small VLM caption → hot Instruct proposes an alias; optional rationale in **B** logs (or a sidecar field only if [phase1/07](../phase1/07_LICENSE_AND_METADATA.md) grows a reserved key).
 3. **A** applies: `python3 -m pipeline.sheep_naming set-alias --source llm` (illustrative) after uniqueness check.
 4. Pasture filename-vs-alias **toggle** stays Phase 4 / 09 C. Pasture still talks to **A**.
@@ -174,6 +228,7 @@ Do **not** implement cloud-API pedigree **on the Pi** as a substitute for B.
 | **Library disk** | Read A’s `library_disk check` | Auto-purge (parked in 06) | [phase4/06](../phase4/06_LIBRARY_DISK_ROTATE.md) |
 | **Share / promote** | Flag candidates after 08 | Bypass Opt Out / tax / Ed25519 on A | [phase4/01](../phase4/01_PEER_SHARE_PATH.md) |
 | **Display profiles** | Read A’s TV probe JSON | Auto-escalate 4K | [phase2/04](../phase2/04_ROKU_CHANNEL_POLISH.md) |
+| **VoD camera** | Images snapshot; optional Static peek; follow NowPlaying **single sheep** | Playing POST; transcode; flock MP4 mount; MIPI as SoT; non-loop Items | [vod-as-camera](#vod-as-camera) |
 | **Hammer** | Refuse | Any Hammer from a model | [phase3/07](../phase3/07_JELLYFLAM3_HAMMER.md) |
 | **DeepDream** | Out of scope | Second renderer on A or B | [phase2/00](../phase2/00_OVERVIEW.md) |
 
@@ -189,6 +244,7 @@ Chat on **B** (“name this poster”, “breed something like `frosty_swirles`�
 2. **Three Instruct INT4 graphs on disk**, **one** hot (default Qwen2.5 7B Instruct). Session switch: stop → `model_id` → start. **Do not** load Qwen 7B and Mistral 7B together.
 3. systemd agent unit on **B** only.
 4. **Vision pipeline:** small Adreno VLM co-resident with the hot HTP Instruct; pixels → text → Instruct JSON ([vision pipeline](#vision-pipeline)). Lab RSS ([03](03_AI_PLATFORM_GAPS.md#g18--hexagon--adreno-during-one-llm-runtime-investigation) H4). Not one-session HTP+GPU.
+5. **VoD as camera:** Images shutter MVP on **single-sheep** Items; `jf3agent-vlm` + A ignore pattern; peek/follow-nowplaying default off ([vod-as-camera](#vod-as-camera)).
 
 ### 2 — Naming adapter
 
@@ -227,6 +283,9 @@ Chat on **B** (“name this poster”, “breed something like `frosty_swirles`�
 - STM32 as idle-gate
 - In-process LLM inside `jellyflam3-worker`
 - Pixels into the 7B Instruct graph; 7B VLM co-resident with 7B Instruct
+- Catalog MP4 file ingest or MIPI/USB as the naming sensor
+- Agent Sessions/Playing or transcode grabs
+- Tuple / edge VoD as a camera target (single-sheep loops only)
 
 ## Exit criteria (when opened)
 
@@ -235,6 +294,7 @@ Chat on **B** (“name this poster”, “breed something like `frosty_swirles`�
 - [ ] Furnace has **no** LLM systemd unit; Ventuno has **no** worker
 - [ ] Session switch documented and labbed: Qwen ↔ Llama (or Mistral) via stop / config / start; one RSS 7–8B Instruct
 - [ ] Vision pipeline: small GPU VLM + hot Instruct; pixels → caption → JSON; both resident or documented on-demand fallback
+- [ ] VoD-as-camera: Images snapshot of a **single sheep** labbed without closing idle-gate; peek/follow flags default off
 - [ ] Unit tests use fake A/B (CI offline) — fake caption string, no live VLM
 - [ ] Cross-links from [phase4/09](../phase4/09_SHEEP_NAMING.md) § D and [phase2/07](../phase2/07_PEDIGREE_BREEDING.md) stay accurate
 

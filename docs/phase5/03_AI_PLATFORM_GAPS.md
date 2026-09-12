@@ -63,7 +63,7 @@ Local models on B keep posters on-LAN (good) if fetch is from A, not the cloud. 
 
 ### G10 — Jellyfin is not on B
 
-No V4L2/VAAPI transcode work on Ventuno. Direct Play remains A’s path ([phase2/03](../phase2/03_HLS_CLIENT_STREAMING.md)). **Accept** (out of B’s job).
+No V4L2/VAAPI transcode work on Ventuno. Direct Play remains A’s path for TVs ([phase2/03](../phase2/03_HLS_CLIENT_STREAMING.md)). B may **consume** Static MP4 as a silent frame grabber for **one loop** ([02](02_LLM_INTEGRATION.md#vod-as-camera)) without becoming a TV session. **Accept** (B is not a flock server).
 
 ### G11 — MCU idle
 
@@ -166,6 +166,7 @@ Parked until Owner opens implementation. Not DoD for first RC unless promoted.
 | T5 | Eval set: alias uniqueness + breed JSON schema vs the three Instruct graphs | Mechanical [G8](#g8--evaluation); no “good name” metric |
 | T6 | Headless QNN/LiteRT on Ubuntu without App Lab | Blocker if App Lab is the only loader ([G13](#g13--app-lab-vs-headless-agent)) |
 | T7 | Lab Hexagon + Adreno as **two sessions** (H4) | [G18](#g18--hexagon--adreno-during-one-llm-runtime-investigation); co-resident VLM vs on-demand |
+| T8 | VoD as virtual camera (Images; optional Static peek; follow NowPlaying) | **Single-sheep loops only** ([02](02_LLM_INTEGRATION.md#vod-as-camera)). Not MIPI. |
 
 ## Non-goals
 
@@ -173,6 +174,7 @@ Parked until Owner opens implementation. Not DoD for first RC unless promoted.
 - Documenting Ventuno as a Pi 5 substitute
 - Treating 40 TOPS as a flam3 quality multiplier
 - Dual-use of one board as A **and** B
+- Tuple VoD as a VLM camera target
 
 ## Exit criteria (when opened)
 

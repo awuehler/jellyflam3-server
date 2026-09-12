@@ -243,7 +243,7 @@ Arduino **VENTUNO Q** SBC (Qualcomm Dragonwing IQ8 / IQ-8275 + STM32H5): 16 GB L
 
 ### LLM Agent Platform
 
-Phase 5 **deployment B** ([phase5/00](phase5/00_OVERVIEW.md)): local INT4 Instruct models on Ventuno **advise** (aliases, breed briefs, operator CLIs); the **furnace** (deployment A, Pi) still **does**. One hot 7–8B Instruct at a time (session switch). Poster/still path: small GPU VLM **then** Instruct JSON ([phase5/02](phase5/02_LLM_INTEGRATION.md#vision-pipeline)). Separate host; default off; furnace fail-open if the agent is down.
+Phase 5 **deployment B** ([phase5/00](phase5/00_OVERVIEW.md)): local INT4 Instruct models on Ventuno **advise** (aliases, breed briefs, operator CLIs); the **furnace** (deployment A, Pi) still **does**. One hot 7–8B Instruct at a time (session switch). Poster/still path: small GPU VLM **then** Instruct JSON; Jellyfin VoD is the virtual camera for **single-sheep** loops ([phase5/02](phase5/02_LLM_INTEGRATION.md#vod-as-camera)). Separate host; default off; furnace fail-open if the agent is down.
 
 ### Direct Play
 

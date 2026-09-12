@@ -22,7 +22,7 @@ Ventuno Q is Arduino’s Linux SBC. Phase 5 uses that silicon as an **agent plat
 | CPU | 8-core Qualcomm Kryo |
 | GPU | Qualcomm Adreno 623 — home for the **small VLM** (poster/still pixels); LLM fallback if HTP fails. Two sessions (GPU VLM + HTP Instruct), not one QNN graph ([03](03_AI_PLATFORM_GAPS.md#g18--hexagon--adreno-during-one-llm-runtime-investigation)) |
 | NPU | Qualcomm Hexagon, **40 dense TOPS** |
-| ISP | Qualcomm Spectra 692 |
+| ISP | Qualcomm Spectra 692 — **unused for VoD sampling**; CSI is not a Jellyfin terminator ([02](02_LLM_INTEGRATION.md#vod-as-camera)) |
 | MCU | STM32H5F5 (Cortex-M33 @ 250 MHz, 4 MB flash, 1.5 MB RAM) — Zephyr / Arduino core; unused in MVP |
 | RAM | **16 GB LPDDR5** |
 | On-board storage | **64 GB eMMC** (OS only) |
@@ -105,7 +105,8 @@ eMMC (64 GB) is Ubuntu + apt only. Weights and QNN/LiteRT compile scratch live o
 | Pi 5 furnace stack | **Deployment A** — buy/run via guide 09 |
 | 1 TB USB flock SSD on Ventuno | Furnace-only |
 | Roku / Kodi pasture | Point at **furnace** Jellyfin, not B |
-| MIPI cameras | Optional VLM toys; naming MVP uses **furnace posters** |
+| MIPI cameras | Out of naming/VoD sample path; optional bench toys only |
+| USB camera | Closer analog to HTTP decode than MIPI; still not the product sensor |
 | Hailo / USB NPU | On-board Hexagon is the NPU |
 | Second Ventuno “as 16a” | Out of scope — B is not a furnace |
 
@@ -119,7 +120,7 @@ Official product refs (vendor; verify before purchase): [Arduino VENTUNO Q](http
 | `/var/lib/jellyflam3-agent` (name TBD) | 1 TB NVMe | `models/` (three Instruct INT4 + one small VLM) + `scratch/convert/` + agent config + prompt logs |
 | `/media/sheep` | **must not exist as catalog SoT** | If an operator plugs a disk here by habit, bring-up **fails** |
 
-Furnace mounts (`/media/sheep`, `/var/cache/jellyflam3`, bind `/var/lib/jellyflam3`) stay **only on A**. Agent reads posters via Jellyfin Images API or SSH from the furnace — [02](02_LLM_INTEGRATION.md).
+Furnace mounts (`/media/sheep`, `/var/cache/jellyflam3`, bind `/var/lib/jellyflam3`) stay **only on A**. Agent samples pixels via Jellyfin as a **virtual camera** (Images API; optional Static Direct Play grab) — [02](02_LLM_INTEGRATION.md#vod-as-camera). Never open catalog MP4s from a flock mount on B.
 
 **Power (B):** 12–24 V. Sustained NPU inference is not a 15 W USB-C workload. Confirm draw on the first lab unit.
 
@@ -152,8 +153,9 @@ These are **agent-platform** tasks, not a port of the Pi furnace playbook. Each 
 |---|---|---|---|
 | C1 | Ethernet to same LAN as furnace; document furnace hostname / Jellyfin URL | operator | [phase1/04](../phase1/04_JELLYFIN_LIBRARY.md) |
 | C2 | SSH key **agent → furnace** for CLI apply (or token to a small furnace sink) | `authorized_keys` on **A** | [phase1/09](../phase1/09_RUNTIME_AND_OPS.md) |
-| C3 | Read-only fetch of posters/stills (Jellyfin Images or `scp`) | [02](02_LLM_INTEGRATION.md) | [phase2/02](../phase2/02_JELLYFIN_FLOCK_UX.md) |
-| C4 | Thermal log under VLM load (not flam3) | runbook | |
+| C3 | Virtual-camera fetch: Images Primary/Backdrop on **single-sheep** Items; optional silent `stream.mp4?Static=true` grab | [02](02_LLM_INTEGRATION.md#vod-as-camera) | [phase2/02](../phase2/02_JELLYFIN_FLOCK_UX.md), [phase2/03](../phase2/03_HLS_CLIENT_STREAMING.md) |
+| C4 | Jellyfin client id `jf3agent-vlm` (not `jellyflam3-*`); A `idle_gate.ignore_client_patterns` | furnace yaml | Must not close the gate ([phase1/06](../phase1/06_IDLE_GATE.md)) |
+| C5 | Thermal log under VLM load (not flam3) | runbook | |
 
 ### D — Explicit non-tasks (do not “port”)
 
