@@ -38,7 +38,7 @@ Architecture SoT remains [Pi5_Flam3_VoD_Pipeline.md](../Pi5_Flam3_VoD_Pipeline.m
 | Phase 5 products | **Parked** (2026-09-10) — docs only |
 | A — Furnace | **Shipped** on Pi — not re-specified here; see [phase2/09](../phase2/09_PI_FROM_SCRATCH.md) |
 | B — LLM Agent Platform host | Parked — [01](01_VENTUNO_Q_HOST.md) (Ventuno BOM + INT4 model store, bring-up, **non-furnace**) |
-| Agent ↔ furnace contracts | Parked — [02](02_LLM_INTEGRATION.md) (naming, breeding, other vectors; **one hot INT4 7–8B**; session switch) |
+| Agent ↔ furnace contracts | Parked — [02](02_LLM_INTEGRATION.md) (naming, breeding; **one hot INT4 7–8B**; pixels → text → Instruct JSON) |
 | Agent-platform gaps | Parked — [03](03_AI_PLATFORM_GAPS.md) |
 | Phase 4 products | Unchanged — [../phase4/00_OVERVIEW.md](../phase4/00_OVERVIEW.md) |
 
@@ -47,7 +47,7 @@ Architecture SoT remains [Pi5_Flam3_VoD_Pipeline.md](../Pi5_Flam3_VoD_Pipeline.m
 Stand up **deployment B** next to an existing **deployment A**, so that:
 
 1. The **furnace** keeps rendering **Gold Sheep Lite** exactly as today (16/08/04 overlays, `libx264`, Jellyfin, idle-gate).
-2. The **agent platform** hosts a **local, opt-in LLM/VLM** (Hexagon NPU; Adreno as fallback / vision — [03](03_AI_PLATFORM_GAPS.md#g18--hexagon--adreno-during-one-llm-runtime-investigation)). Default workload is **agentic API** (no chat SLA): still analysis, sidecar XML/JSON, breed/ops briefs. **One** 7–8B INT4 graph hot at a time; switch models with service stop → config → start ([02](02_LLM_INTEGRATION.md#model-session-switch)). It **advises**; the furnace **does**.
+2. The **agent platform** hosts a **local, opt-in** stack: **one** hot 7–8B Instruct INT4 on Hexagon, plus a **small** VLM (2B–3B INT4) on Adreno for posters/stills. Vision path is **pixels → caption text → Instruct JSON** ([02](02_LLM_INTEGRATION.md#vision-pipeline)). Switch Instruct graphs with service stop → config → start ([02](02_LLM_INTEGRATION.md#model-session-switch)). No chat SLA. It **advises**; the furnace **does**.
 3. Writes use existing contracts only: catalog sidecar (`alias` / `alias_source=llm`), `pipeline.breed` / idle-breed **on the furnace**, Shears / refactor CLIs **on the furnace**, operator-facing briefs.
 4. Defaults **offline** on B. Cloud model calls are a config kill-switch, never the MVP path.
 5. **No colocation:** a host is furnace **or** agent platform, never both.
@@ -60,7 +60,7 @@ This is the deferred **LLM-assisted pedigree** note from [phase2/07](../phase2/0
 |---|---|---|
 | 00 | This file | Two-deployment split / parked DoD |
 | 01 | [01_VENTUNO_Q_HOST.md](01_VENTUNO_Q_HOST.md) | Deployment B BOM, power/disks, bring-up — **not** a furnace port |
-| 02 | [02_LLM_INTEGRATION.md](02_LLM_INTEGRATION.md) | Agent → furnace integration map |
+| 02 | [02_LLM_INTEGRATION.md](02_LLM_INTEGRATION.md) | Agent → furnace map; **vision pipeline** |
 | 03 | [03_AI_PLATFORM_GAPS.md](03_AI_PLATFORM_GAPS.md) | NPU / RAM / thermal / driver / eval / **Hexagon+GPU** gaps **on B** |
 
 Execute **01 before 02**. Guide 03 is the honesty check for the agent platform. There is no Phase 5 acceptance guide until Owner opens implementation. Do **not** start from [phase2/09](../phase2/09_PI_FROM_SCRATCH.md) expecting to land models on the Pi.
@@ -75,7 +75,8 @@ Execute **01 before 02**. Guide 03 is the honesty check for the agent platform. 
 6. **License / NC unchanged.** Model suggestions cannot flip Creative Commons or commercial-safe policy ([phase1/07](../phase1/07_LICENSE_AND_METADATA.md), [phase2/07](../phase2/07_PEDIGREE_BREEDING.md)).
 7. **Phase 4 products stay on Phase 4.** Vote overlay, auto-promote, pasture filename/alias toggle, library rotate are **not** pulled into this slice.
 8. **16-class quality is a furnace concern only.** Agent-platform sizing does not change `quality` / supersample / VoD bands on A.
-9. **One hot 7–8B INT4.** Do not co-resident two 7B Instruct graphs in 16 GB. Store Llama 3.1 8B / Qwen2.5 7B / Mistral 7B (all INT4) on NVMe; load **one** per session. INT16/FP16 7–8B is out of RAM budget.
+9. **One hot 7–8B INT4 Instruct.** Do not co-resident two 7B Instruct graphs in 16 GB. Store Llama 3.1 8B / Qwen2.5 7B / Mistral 7B (all INT4) on NVMe; load **one** per session. INT16/FP16 7–8B is out of RAM budget.
+10. **Vision pipeline, small VLM co-resident.** Posters/stills: **pixels → text → Instruct JSON**. A 2B–3B INT4 VLM (Adreno) may stay loaded **in parallel** with the hot Instruct (Hexagon) as two sessions. Do **not** feed pixels into the 7B, and do **not** run a 7B VLM beside a 7B Instruct. Per sheep the stages are sequential; the graphs stay resident. See [02](02_LLM_INTEGRATION.md#vision-pipeline).
 
 ## In scope (when opened)
 
@@ -110,6 +111,7 @@ Phase 5 is complete for a first RC when:
 - [ ] Agent can propose an alias that the **furnace** writes as `alias_source=llm` without overwriting `human`
 - [ ] Breed brief schema → **furnace** `pipeline.breed`; tax + NC still hold; flam3-genome remains the mutator
 - [ ] One hot INT4 7–8B; session switch (stop → `model_id` → start) labbed; two 7Bs not co-resident
+- [ ] Vision pipeline labbed: small GPU VLM caption → hot Instruct JSON; RSS with both resident stays under ~14 GB
 - [ ] Gap list in [03](03_AI_PLATFORM_GAPS.md) triaged (accept / fix / defer)
 - [ ] Docs + glossary; no secrets in-repo
 

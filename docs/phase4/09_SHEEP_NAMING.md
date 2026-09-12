@@ -68,9 +68,9 @@ Keys **`alias`** and **`alias_source`** (`auto` \| `human` \| `llm`) are in [pha
 
 ### D — LLM poster naming (Phase 5)
 
-Moved: [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md) § A (VLM on the **LLM Agent Platform**; sidecar write on the **furnace**; default off). This guide keeps `alias_source=llm` reserved/sticky so Phase 5 can write it **on A**.
+Moved: [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md) § A and [vision pipeline](../phase5/02_LLM_INTEGRATION.md#vision-pipeline) (small GPU VLM **then** hot Instruct JSON on the **LLM Agent Platform**; sidecar write on the **furnace**; default off). This guide keeps `alias_source=llm` reserved/sticky so Phase 5 can write it **on A**.
 
-1. Input: catalog poster JPEG (or a still); output: proposed `adjective_surname`-shaped string or free phrase normalized to alias form.
+1. Input: catalog poster JPEG (or a still) → B VLM caption → B Instruct JSON → proposed `adjective_surname`-shaped string (or free phrase normalized to alias form). Instruct does not consume pixels.
 2. Gate: operator accept, or auto-apply only when `alias_source=auto` and policy allows `llm`.
 3. Privacy / offline: default off; no cloud calls unless configured.
 

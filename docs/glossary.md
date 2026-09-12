@@ -163,7 +163,7 @@ Phase 4 design ([phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md)): Roku VoD **1.0.
 
 ### Sheep naming / alias
 
-Phase 4 design ([phase4/09](phase4/09_SHEEP_NAMING.md)): furnace auto-generates a short memorable **alias** (`adjective_surname`, e.g. `frosty_swirles`) on the catalog sidecar (hash-seed from stem; `python3 -m pipeline.sheep_naming`); human override sticky. Peer clients may later toggle **filename vs alias** display (parked). **LLM poster naming** (`alias_source=llm`) is Phase 5 ([phase5/02](phase5/02_LLM_INTEGRATION.md)). Not the same as flam3 XML **`nick`** (designer credit for license).
+Phase 4 design ([phase4/09](phase4/09_SHEEP_NAMING.md)): furnace auto-generates a short memorable **alias** (`adjective_surname`, e.g. `frosty_swirles`) on the catalog sidecar (hash-seed from stem; `python3 -m pipeline.sheep_naming`); human override sticky. Peer clients may later toggle **filename vs alias** display (parked). **LLM poster naming** (`alias_source=llm`) is Phase 5: small GPU VLM caption then Instruct JSON ([phase5/02](phase5/02_LLM_INTEGRATION.md#vision-pipeline)). Not the same as flam3 XML **`nick`** (designer credit for license).
 
 ### flam3-genome maximum attempts warning
 
@@ -239,11 +239,11 @@ Frame count for animate = `round(duration_sec × fps)`. Drives render time and s
 
 ### Ventuno Q
 
-Arduino **VENTUNO Q** SBC (Qualcomm Dragonwing IQ8 / IQ-8275 + STM32H5): 16 GB LPDDR5, 64 GB eMMC, M.2 NVMe Gen 4, 2.5 GbE, Hexagon 40 dense TOPS. Phase 5 parked host for the **LLM Agent Platform** only ([phase5/01](phase5/01_VENTUNO_Q_HOST.md)). **Not** a furnace. Agentic INT4 7–8B (one hot; three on disk).
+Arduino **VENTUNO Q** SBC (Qualcomm Dragonwing IQ8 / IQ-8275 + STM32H5): 16 GB LPDDR5, 64 GB eMMC, M.2 NVMe Gen 4, 2.5 GbE, Hexagon 40 dense TOPS + Adreno 623. Phase 5 parked host for the **LLM Agent Platform** only ([phase5/01](phase5/01_VENTUNO_Q_HOST.md)). **Not** a furnace. Agentic INT4 7–8B Instruct (one hot; three on disk) plus a small GPU VLM for posters.
 
 ### LLM Agent Platform
 
-Phase 5 **deployment B** ([phase5/00](phase5/00_OVERVIEW.md)): local INT4 Instruct models on Ventuno **advise** (aliases, breed briefs, operator CLIs); the **furnace** (deployment A, Pi) still **does**. One hot 7–8B at a time (session switch). Separate host; default off; furnace fail-open if the agent is down.
+Phase 5 **deployment B** ([phase5/00](phase5/00_OVERVIEW.md)): local INT4 Instruct models on Ventuno **advise** (aliases, breed briefs, operator CLIs); the **furnace** (deployment A, Pi) still **does**. One hot 7–8B Instruct at a time (session switch). Poster/still path: small GPU VLM **then** Instruct JSON ([phase5/02](phase5/02_LLM_INTEGRATION.md#vision-pipeline)). Separate host; default off; furnace fail-open if the agent is down.
 
 ### Direct Play
 

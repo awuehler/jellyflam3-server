@@ -10,7 +10,7 @@
 | [phase2/00_OVERVIEW.md](phase2/00_OVERVIEW.md) | Phase 2 scope, reading order, definition of done — **complete** |
 | [phase3/00_OVERVIEW.md](phase3/00_OVERVIEW.md) | Phase 3 scope, reading order, definition of done — **complete** |
 | [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md) | Phase 4 synopsis, future features to be determined — **parked** |
-| [phase5/00_OVERVIEW.md](phase5/00_OVERVIEW.md) | Phase 5 synopsis — furnace (Pi) vs LLM Agent Platform (Ventuno); one hot INT4 7–8B — **parked** |
+| [phase5/00_OVERVIEW.md](phase5/00_OVERVIEW.md) | Phase 5 synopsis — furnace (Pi) vs LLM Agent Platform (Ventuno); one hot INT4 7–8B + small GPU VLM — **parked** |
 |||
 | [glossary.md](glossary.md) | Terms, keywords, and definitions for project + collateral vocabulary |
 
@@ -75,7 +75,7 @@ Overview: [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md).
 ## Phase 5 guides (synopsis — two deployments; parked)
 
 1. [01_VENTUNO_Q_HOST.md](phase5/01_VENTUNO_Q_HOST.md) — LLM Agent Platform host (Ventuno Q BOM, INT4 storage math, bring-up; **not** a furnace)
-2. [02_LLM_INTEGRATION.md](phase5/02_LLM_INTEGRATION.md) — Llama 3.1 8B / Qwen2.5 7B / Mistral 7B INT4 vs furnace contracts; stop → config → start session switch
-3. [03_AI_PLATFORM_GAPS.md](phase5/03_AI_PLATFORM_GAPS.md) — NPU / RAM / conversion / Hexagon+Adreno investigation / TBD goals **on the agent platform**
+2. [02_LLM_INTEGRATION.md](phase5/02_LLM_INTEGRATION.md) — Instruct INT4 comparison; session switch; **pixels → text → Instruct JSON** (small GPU VLM co-resident with hot 7B)
+3. [03_AI_PLATFORM_GAPS.md](phase5/03_AI_PLATFORM_GAPS.md) — NPU / RAM / conversion / Hexagon+Adreno H4 lab / TBD goals **on the agent platform**
 
 Overview: [phase5/00_OVERVIEW.md](phase5/00_OVERVIEW.md). Does not replace remaining Phase 4 products. Furnace playbook stays [phase2/09](phase2/09_PI_FROM_SCRATCH.md).

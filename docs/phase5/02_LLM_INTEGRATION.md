@@ -12,7 +12,7 @@ Models on **B advise** (names, parent briefs, operator actions). **flam3-genome*
 
 | Surface | Where it runs | Prior SoT |
 |---|---|---|
-| **LLM poster naming** | VLM on **B**; `set-alias` / sidecar write on **A** | [phase4/09](../phase4/09_SHEEP_NAMING.md) § D; [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) |
+| **LLM poster naming** | Small GPU VLM → caption → hot Instruct JSON on **B**; `set-alias` / sidecar write on **A** | [phase4/09](../phase4/09_SHEEP_NAMING.md) § D; [vision pipeline](#vision-pipeline) |
 | **LLM-assisted pedigree** | Brief on **B**; `pipeline.breed` / idle-breed on **A** | [phase2/07](../phase2/07_PEDIGREE_BREEDING.md) |
 | **Vote-aware briefs** | Read `viewer_feedback` **from A’s sidecar** (overlay + `/v1/sheep-votes` shipped; share cron / breed weights still parked) | [phase4/08](../phase4/08_VIEWER_FEEDBACK_LOOP.md), [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) |
 | **Shears / refactor agent** | NL on **B** → CLI on **A** with confirm tokens | [phase3/03](../phase3/03_SHEEP_SHEARS.md), [phase3/09](../phase3/09_SHEEP_REFACTOR.md) |
@@ -23,8 +23,9 @@ Models on **B advise** (names, parent briefs, operator actions). **flam3-genome*
   A  Furnace catalog  (poster / sidecar / genomes/done)
            │  fetch over LAN (Jellyfin Images, SSH)
            ▼
-  B  local VLM / LLM  (opt-in)
-           │  structured JSON brief
+  B  pixels → text → Instruct JSON  (opt-in)
+           │  small VLM (Adreno) captions JPEG
+           │  hot 7–8B Instruct (Hexagon) emits schema
            ▼
   A  uniqueness + license + tax gates
            │
@@ -34,28 +35,68 @@ Models on **B advise** (names, parent briefs, operator actions). **flam3-genome*
            └─► operator notes (B logs ≠ sidecar SoT)
 ```
 
-Arduino App Lab / Qualcomm AI Hub / QNN / LiteRT / llama.cpp run on **B**. Canonical flock operators still use `python3 -m pipeline.*` **on A** (or a thin SSH wrapper from B). Hexagon is a **single** accelerator: agentic batches (no chat SLA) tolerate a **cold session switch** between compiled INT4 graphs.
+Arduino App Lab / Qualcomm AI Hub / QNN / LiteRT / llama.cpp run on **B**. Canonical flock operators still use `python3 -m pipeline.*` **on A** (or a thin SSH wrapper from B). Hexagon is a **single** accelerator for Instruct graphs: agentic batches (no chat SLA) tolerate a **cold session switch** between compiled INT4 Instruct models. Adreno holds a **separate** small-VLM session ([vision pipeline](#vision-pipeline)).
 
 ## INT4 7–8B comparison (agentic API → furnace)
 
-All three are **Instruct INT4**, Hub/QNN-converted, **one hot at a time**. They are **text** models: poster/still **pixels** still need a VLM or caption step ([03](03_AI_PLATFORM_GAPS.md) G6). Strengths vs [integration map](#integration-map-prior-phases):
+All three are **Instruct INT4**, Hub/QNN-converted, **one hot at a time**. They are **text** models: they never see JPEG bytes. Poster/still **pixels** go through the [vision pipeline](#vision-pipeline). Strengths vs [integration map](#integration-map-prior-phases):
 
 | | **Llama 3.1 8B Instruct INT4** | **Qwen2.5 7B Instruct INT4** | **Mistral 7B Instruct INT4** |
 |---|---|---|---|
 | **Fit on 16 GB (one hot)** | Yes — ~6–7 GB weights+KV; OS ~2–3 GB | Yes — ~6 GB class | Yes — ~6 GB class |
 | **Chat SLA** | Not required. Few tok/s on 40 TOPS is OK for briefs | Same | Same |
 | **Default role** | General agent / NL → CLI intent | **Workhorse** (MVP `model_id`) | Fallback if Hub compile or JSON schema fails |
-| **A — Poster naming** ([phase4/09](../phase4/09_SHEEP_NAMING.md) D) | Rationale / adjective_surname from a **caption** or VLM text | Strong at constrained alias strings | Adequate fallback |
+| **A — Poster naming** ([phase4/09](../phase4/09_SHEEP_NAMING.md) D) | Alias / rationale from **VLM caption** + sidecar cards | Strong at constrained `adjective_surname` + JSON | Adequate fallback |
 | **B — Pedigree brief** ([phase2/07](../phase2/07_PEDIGREE_BREEDING.md)) | Best all-round parent/mode suggestion | Structured `{mode, parents[], method?}` JSON | Solid fallback brief |
 | **Sidecar / XML·JSON parse** | Fine | **Best** JSON-ish extraction (Overview, tags, `viewer_feedback`) | Fine |
 | **Vote-aware briefs** ([phase4/08](../phase4/08_VIEWER_FEEDBACK_LOOP.md)) | Read A’s sidecar integers; do not “remember likes” | Same — structured tally → share_candidate language | Same |
 | **C — Shears / refactor** | NL → propose audit list | Map messy operator notes → pathway ids | Fallback |
 | **C — Ops / drain / disk** | Explain `idle_gate_status.json` / `worker_drain status` | Compact status JSON → human paragraph | Fallback |
 | **C — Share brief** | Propose candidates; apply still on A | Same | Same |
-| **Still image analysis** | Not this graph — VLM/ISP path, or caption → this LLM | Same | Same |
+| **Still image analysis** | Consumes caption / palette tags from the small VLM — not pixels | Same | Same |
 | **Skip** | Unquantized / FP16 8B; 13B+ | Dual-hot with Mistral 7B | Dual-hot with Qwen 7B (redundant, ~12–13 GB + OS) |
 
-**MVP:** compile all three onto NVMe; run **Qwen2.5 7B INT4** as the hot workhorse. Switch to Llama when briefs need more general agentic behavior; switch to Mistral only as a Hub/runtime fallback. Optional later: Qwen2.5 **3B** INT4 co-resident for cheap routing — **not** a second 7B.
+**MVP:** compile all three Instruct graphs onto NVMe; run **Qwen2.5 7B INT4** as the hot workhorse. Switch to Llama when briefs need more general agentic behavior; switch to Mistral only as a Hub/runtime fallback. **Co-resident:** small VLM INT4 on GPU, not a second 7B and not Qwen2.5 3B-as-a-substitute-for-vision (3B Instruct is optional routing — [03](03_AI_PLATFORM_GAPS.md) T2).
+
+## Vision pipeline
+
+**Locked goal** ([00](00_OVERVIEW.md) decision 10): keep a **small VLM resident on Adreno** in **parallel** with the **hot Instruct on Hexagon**, and run stills as:
+
+```text
+  A  {stem}-poster.jpg (or still)  ──LAN──►  B
+                                              │
+                          Adreno  2B–3B INT4 VLM  (session 1, stays loaded)
+                                              │  caption / palette / “orbit frozen?” text
+                                              ▼
+                          Hexagon  hot 7–8B Instruct INT4  (session 2, stays loaded)
+                                              │  Instruct JSON: alias? | breed brief | tags
+                                              ▼
+  A  uniqueness / tax / human-sticky apply
+```
+
+| Rule | Why |
+|---|---|
+| **Two sessions, two engines** | QNN/Genie is HTP **or** GPU per session ([03](03_AI_PLATFORM_GAPS.md#g18--hexagon--adreno-during-one-llm-runtime-investigation) H4). |
+| **Co-resident (“parallel”)** | Avoid reload tax on every poster. RSS target ~11–14 GB ([01](01_VENTUNO_Q_HOST.md#llm-storage-math-why-nvme-not-emmc)). |
+| **Per-request sequential** | Caption must exist before Instruct JSON. Do not wait on a chat SLA; batches can pipeline sheep N+1 on GPU while N is on HTP if RSS allows. |
+| **VLM is small** | 2B–3B INT4 (Hub captioner / Qwen2-VL-class). **Not** Qwen2-VL 7B beside the Instruct 7B. |
+| **Instruct never sees pixels** | JPEG stays on the VLM path; Instruct gets text + sidecar cards (alias, tags, votes). |
+| **VLM does not apply aliases** | It describes. The 7B proposes `adjective_surname` / breed JSON. **A** still writes SoT. |
+| **Fail-open** | VLM down → skip LLM naming (keep `auto`). Instruct down → same. Do not block ingest on A. |
+| **Quarantine** | Do not auto-name washed-out / orbit-frozen stems ([phase3/09](../phase3/09_SHEEP_REFACTOR.md)); VLM may still flag them for Shears. |
+
+Illustrative config (names TBD):
+
+```yaml
+# /etc/jellyflam3-agent/agent.yaml  — B only
+model_id: qwen25-7b-int4          # Hexagon; session switch restarts the unit
+vlm_id: qwen2vl-2b-int4           # Adreno; leave loaded across Instruct switches if RSS allows
+vision_pipeline: pixels_then_json # locked; no pixels_into_instruct
+```
+
+If the first lab OOM-kills with both resident, drop to **load VLM on demand** (still pixels → text → JSON; lose parallel residency). Do not change the stage order. Do not put the VLM on Hexagon and the 7B on GPU as MVP (HTP is the Instruct workhorse).
+
+Non-pixel briefs (sidecar JSON parse, drain explain, Shears NL) skip the VLM and hit Instruct only.
 
 ## Model session switch
 
@@ -78,12 +119,12 @@ sudo systemctl start jellyflam3-agent
 | 3. Start agent unit | B | Loads **one** compiled graph; first request pays compile/load latency — fine for agentic batches |
 | 4. Furnace A | A | `naming.llm` / `breed.llm` stay default off until B healthz; no worker restart |
 
-Do **not** hot-swap two QNN contexts to fake parallelism on one NPU as MVP. Do **not** `systemctl restart jellyflam3-worker` on A for a model change.
+Do **not** hot-swap two QNN Instruct contexts to fake parallelism on one NPU as MVP. Prefer leaving the **VLM session** loaded across an Instruct session switch if RSS allows. Do **not** `systemctl restart jellyflam3-worker` on A for a model change.
 
 ## Locked product rules (design)
 
 1. **A and B stay split.** No worker unit on Ventuno; no LLM unit on the Pi. See [00](00_OVERVIEW.md).
-2. **flam3 stays the renderer (on A).** No “generate a sheep with the NPU.” VLM may look at **posters/stills** fetched from A ([phase1/05](../phase1/05_RENDER_PIPELINE.md)).
+2. **flam3 stays the renderer (on A).** No “generate a sheep with the NPU.” The small VLM looks at **posters/stills** fetched from A; Instruct consumes the caption ([phase1/05](../phase1/05_RENDER_PIPELINE.md), [vision pipeline](#vision-pipeline)).
 3. **Offline default on B.** `naming.llm.enabled` / `breed.llm.enabled` (names TBD) default **false** on the **furnace** side (A ignores B if unset). No cloud unless configured; no API keys in git ([phase4/09](../phase4/09_SHEEP_NAMING.md) rule 8).
 4. **Sidecar SoT is on A.** Models do not get a flock database on B. Votes, aliases, license, pedigree hints stay on `{stem}.jellyflam3.json` beside the MP4 ([phase1/07](../phase1/07_LICENSE_AND_METADATA.md)).
 5. **Human sticky.** Never overwrite `alias_source=human`. LLM apply only when source is `auto` or operator `--accept` **on A**.
@@ -93,6 +134,7 @@ Do **not** hot-swap two QNN contexts to fake parallelism on one NPU as MVP. Do *
 9. **Confirm tokens stay on A.** Shears `DELETE`, refactor `APPLY` / `QUARANTINE` / `BATCH`, Hammer `HAMMER` are never auto-fired from B without the same operator confirm.
 10. **Commercial / NC** still enforced on A ([phase1/07](../phase1/07_LICENSE_AND_METADATA.md)).
 11. **Uniqueness** of aliases is computed against **A’s catalog** ([phase4/09](../phase4/09_SHEEP_NAMING.md) rule 3).
+12. **Vision pipeline.** Pixels → text → Instruct JSON. Small VLM on GPU may stay loaded with the hot Instruct; see [vision pipeline](#vision-pipeline).
 
 ## Integration map (prior phases)
 
@@ -103,7 +145,7 @@ Do **not** hot-swap two QNN contexts to fake parallelism on one NPU as MVP. Do *
 **This slice adds:**
 
 1. **B** fetches catalog `{stem}-poster.jpg` from `stills/{stem}/` (preferred) or a still ([phase2/02](../phase2/02_JELLYFIN_FLOCK_UX.md), [phase3/01](../phase3/01_SCREENSAVERS_AND_STILLS.md)). Never tuple stills if the stills pipeline excludes tuples.
-2. **B** proposes an alias; optional rationale in **B** logs (or a sidecar field only if [phase1/07](../phase1/07_LICENSE_AND_METADATA.md) grows a reserved key).
+2. **B** runs the [vision pipeline](#vision-pipeline): small VLM caption → hot Instruct proposes an alias; optional rationale in **B** logs (or a sidecar field only if [phase1/07](../phase1/07_LICENSE_AND_METADATA.md) grows a reserved key).
 3. **A** applies: `python3 -m pipeline.sheep_naming set-alias --source llm` (illustrative) after uniqueness check.
 4. Pasture filename-vs-alias **toggle** stays Phase 4 / 09 C. Pasture still talks to **A**.
 
@@ -115,7 +157,7 @@ Furnace ingest must **not** block on B (timeout → keep `alias_source=auto`).
 
 **This slice adds:**
 
-1. **Parent picker brief on B** — compact cards from A (stem, alias, tags, duration, optional votes, poster thumb), not raw `.flam3` XML.
+1. **Parent picker brief on B** — compact cards from A (stem, alias, tags, duration, optional votes) plus optional VLM caption of the poster thumb; not raw `.flam3` XML.
 2. **Mode suggestion** — `mutate` / `cross` / `interpolate` (+ `method`).
 3. **Idle policy (optional, default off) on A** — `cron_breed_idle` may **HTTP/SSH to B** for a parent pick, then run `pipeline.breed` **locally**. Gates stay on A: empty inbox, idle-gate, `archive_cron_imminent`, fingerprint dedup ([phase2/07](../phase2/07_PEDIGREE_BREEDING.md#daily-idle-breed-cron)). If B is down, idle-breed falls back to uniform random — furnace must not stall.
 4. **Viewer weights** — A’s sidecar integers (`viewer_feedback`) win over B “remembering likes.” Breed-weight / auto-promote stay Phase 4 parked.
@@ -144,13 +186,13 @@ Chat on **B** (“name this poster”, “breed something like `frosty_swirles`�
 ### 1 — Runtime on B
 
 1. One local stack: llama.cpp GGUF **or** Qualcomm AI Hub / QNN / LiteRT — [03](03_AI_PLATFORM_GAPS.md); headless. Conversion (export → INT4 → Hexagon compile) is the real engineering, not model shopping.
-2. **Three INT4 graphs on disk**, **one** hot (default Qwen2.5 7B Instruct). Session switch: stop → `model_id` → start. **Do not** load Qwen 7B and Mistral 7B together.
+2. **Three Instruct INT4 graphs on disk**, **one** hot (default Qwen2.5 7B Instruct). Session switch: stop → `model_id` → start. **Do not** load Qwen 7B and Mistral 7B together.
 3. systemd agent unit on **B** only.
-4. Hexagon+GPU: do **not** require concurrent HTP+Adreno on one session for RC. Lab [G18](03_AI_PLATFORM_GAPS.md#g18--hexagon--adreno-during-one-llm-runtime-investigation); sequential VLM-on-GPU + LLM-on-HTP is the plausible combo.
+4. **Vision pipeline:** small Adreno VLM co-resident with the hot HTP Instruct; pixels → text → Instruct JSON ([vision pipeline](#vision-pipeline)). Lab RSS ([03](03_AI_PLATFORM_GAPS.md#g18--hexagon--adreno-during-one-llm-runtime-investigation) H4). Not one-session HTP+GPU.
 
 ### 2 — Naming adapter
 
-1. B: `suggest`; A: uniqueness + `--accept` → `alias_source=llm`.
+1. B: VLM caption + Instruct `suggest`; A: uniqueness + `--accept` → `alias_source=llm`.
 2. Tests: sticky human; collision against **fixture catalog**; disabled-by-default; **no live network** in unit tests (fake B + fake A).
 3. Runbook: curator CLI on A; “agent down” fallback.
 
@@ -184,14 +226,16 @@ Chat on **B** (“name this poster”, “breed something like `frosty_swirles`�
 - Training a flock LoRA as MVP
 - STM32 as idle-gate
 - In-process LLM inside `jellyflam3-worker`
+- Pixels into the 7B Instruct graph; 7B VLM co-resident with 7B Instruct
 
 ## Exit criteria (when opened)
 
 - [ ] LLM naming: B proposes, A writes `alias_source=llm`, `human` sticky; A ingest does not hang if B is down
 - [ ] Breed brief → A’s `pipeline.breed`; tax + NC hold
 - [ ] Furnace has **no** LLM systemd unit; Ventuno has **no** worker
-- [ ] Session switch documented and labbed: Qwen ↔ Llama (or Mistral) via stop / config / start; one RSS 7–8B
-- [ ] Unit tests use fake A/B (CI offline)
+- [ ] Session switch documented and labbed: Qwen ↔ Llama (or Mistral) via stop / config / start; one RSS 7–8B Instruct
+- [ ] Vision pipeline: small GPU VLM + hot Instruct; pixels → caption → JSON; both resident or documented on-demand fallback
+- [ ] Unit tests use fake A/B (CI offline) — fake caption string, no live VLM
 - [ ] Cross-links from [phase4/09](../phase4/09_SHEEP_NAMING.md) § D and [phase2/07](../phase2/07_PEDIGREE_BREEDING.md) stay accurate
 
 ## See also
