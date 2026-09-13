@@ -229,6 +229,33 @@ python3 -m pipeline.worker_drain cancel
 
 **Pass:** after `--wait`, `status` shows `"phase": "idle"` and `"drain": true`; healthcheck WARNs drain until cancel. **Fail:** restarting **before** idle still orphans the live `flam3-animate` (today’s restart). The **first** git pull that adds drain still needs one worker restart to load the check — do that between jobs if you can.
 
+### 6 — Vote, then share
+
+**Host:** furnace Pi **Opt In** (`share_live: true`) + Roku VoD **1.0.32** (overlay) with display-sink token set. Votes never pause the clip. They stay on this Pi’s catalog sidecar (LAN only). Screensaver packages do not vote.
+
+1. Play a sheep. In the last **12 seconds**, the banner appears.
+   - **OK** = like
+   - **Fast-forward** = love (counts as a stronger tally; same share path)
+   - **Replay** = plain vote
+   - **Back** = dismiss without voting
+2. On the Pi, confirm the sidecar (stem = MP4 basename):
+
+   ```bash
+   python3 -m pipeline.sheep_votes show --stem electricsheep.247.00505
+   ```
+
+   Expect `share_candidate: true` and `votes` ≥ 1.
+3. Share-out is a **copy** into `genomes/peers/share-out` (tax + integrity). It does **not** drop a genome into this furnace’s worker inbox. Lab cron **06:41** (`scripts/cron_share_votes.sh`). Dry-run:
+
+   ```bash
+   python3 -m pipeline.share_votes --json
+   python3 -m pipeline.share_votes --apply --json   # or wait for cron
+   ```
+
+4. On a **receiver** Pi (after Syncthing): still **`promote --apply`**. Loved NC sheep are not shared when this furnace’s `license.commercial_mode` is on. Opt Out skips the cron (`action=skip`, `reason=opt_out`).
+
+**Pass:** file in publisher `share-out`; receiver `peers/inbox` then inbox/quarantine only after promote. **Fail:** expecting votes to render a new sheep by themselves (they do not); cancel drain if you paused the worker.
+
 ---
 
 ## Layer 2 — Operator runbook
@@ -348,7 +375,8 @@ python3 -m pipeline.worker --config configs/jellyflam3.yaml --once path/to/new.f
 
 | Cron | Script | Role |
 |---|---|---|
-| `11 5 * * *` | `scripts/cron_breed_idle.sh` | Daily idle breed when inbox empty |
+| `11 5 * * *` | `scripts/cron_breed_idle.sh` | Daily idle breed when inbox empty (parents weighted by votes) |
+| `41 6 * * *` | `scripts/cron_share_votes.sh` | Daily liked sheep → `peers/share-out` (not inbox) |
 | Staggered DOM | `scripts/cron_archive_seed.sh` | ~10-day archive seed per host |
 
 Both prepend `/usr/local/bin` for `flam3-*`. Missing real config → **exit 1** (no silent `.yaml.example` fallback).
@@ -932,6 +960,7 @@ python3 -m pipeline.link_capacity   # concurrent-client N_max estimate
 python3 -m pipeline.library_disk    # sheep-mount WARN/BAD
 python3 -m pipeline.sheep_naming    # alias backfill / set / clear / resolve
 python3 -m pipeline.sheep_votes     # sidecar like/love/vote (show / apply)
+python3 -m pipeline.share_votes     # liked sheep → peers/share-out (plan / --apply)
 python3 -m pipeline.display_profiles
 ```
 

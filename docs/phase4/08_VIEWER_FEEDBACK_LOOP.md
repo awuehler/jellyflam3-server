@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — close the **end-user → furnace** feedback loop: during VoD playback the Roku channel shows a **transient overlay** near the end of each sheep MP4 that invites a remote **like / love / vote** without stopping playback. Captured votes on the furnace drive (a) **share promotion** of the corresponding `.flam3` into the Tailscale / Syncthing peer path, and (b) **weighted bias** in daily idle pedigree breeding so well-liked sheep are more likely parents. Complements the existing **~10-day archive-seed** and **daily idle-breed** crons with **one additional cron** that detects shareable (voted) sheep, and enhances the daily breed job with viewer weights.
 
-**Status:** Overlay + sidecar vote sink **shipped** 2026-09-11 (Wave 2). Share cron and idle-breed weights stay parked (Wave 3). Household guide [05](05_END_USER_GUIDE.md) has a short button map; full vote recipes wait on Wave 3.
+**Status:** Overlay + sidecar vote sink **shipped** 2026-09-11 (Wave 2). Share cron + idle-breed weights **shipped** 2026-09-13 (Wave 3). Auto-promote stays parked ([01](01_PEER_SHARE_PATH.md) locked gated `promote --apply`). Household vote/share recipes: [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md#6--vote-then-share).
 
 Depends on Phase 1–2 Roku VoD playback ([../phase1/08_ROKU_BRIGHTSCRIPT.md](../phase1/08_ROKU_BRIGHTSCRIPT.md), [../phase2/04_ROKU_CHANNEL_POLISH.md](../phase2/04_ROKU_CHANNEL_POLISH.md)), pedigree idle breed ([../phase2/07_PEDIGREE_BREEDING.md](../phase2/07_PEDIGREE_BREEDING.md)), and Syncthing-over-Tailscale peering ([../phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_PEERING.md)). Interacts with [01_PEER_SHARE_PATH.md](01_PEER_SHARE_PATH.md) (how votes trigger share-out / promote) and [04_ROKU_PUBLISH.md](04_ROKU_PUBLISH.md) (overlay UX polish for published builds). Does **not** replace archive seed or idle-breed — it **biases and extends** flock evolution with household interest.
 
@@ -41,7 +41,7 @@ Depends on Phase 1–2 Roku VoD playback ([../phase1/08_ROKU_BRIGHTSCRIPT.md](..
 
 ## Sidecar + sink (shipped Wave 2)
 
-Key **`viewer_feedback`** (likes / loves / votes / last_voted_at / share_candidate) is reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Guide [01](01_PEER_SHARE_PATH.md) reads `share_candidate` when share-out is built. Overlay and vote sink write that block on `{stem}.jellyflam3.json` only. Share cron and breed-weight hooks stay parked. Load–mutate–write readers keep unknown JSON; worker ingest copies this block across re-encode (tuples still rewrite `type` / watermark from this encode). Any vote sets `share_candidate: true`; gated `promote --apply` is unchanged.
+Key **`viewer_feedback`** (likes / loves / votes / last_voted_at / share_candidate) is reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Overlay and vote sink write that block on `{stem}.jellyflam3.json` only. Share cron and idle-breed weights **read** the same block (Wave 3). Load–mutate–write readers keep unknown JSON; worker ingest copies this block across re-encode. Any vote sets `share_candidate: true`; gated `promote --apply` is unchanged.
 
 ### Remote map (VoD 1.0.32)
 
@@ -76,27 +76,27 @@ Overlay is visual-only (Video stays focused; playback does not pause). Shown whe
 3. **Unlimited re-vote** — each event increments sidecar counts.
 4. **Resolve genome** — stem via catalog sidecar scan; else mediaPath basename under `paths.media_library`; 404 if no sidecar (never invent JSON).
 
-### C — Share cron (new)
+### C — Share cron (shipped Wave 3)
 
-1. **`scripts/cron_share_votes.sh`** (name TBD) — periodic job (e.g. daily or several times per week, staggered from archive DOM) that:
-   - Selects sheep meeting share threshold (count / love-tier / min votes).
-   - Stages corresponding `.flam3` for **peering publish / share-out** (Tailscale + Syncthing Opt In).
-   - Honors share-security (Phase 3 [05](../phase3/05_SHARED_SHEEP_SECURITY.md)) and Opt In state.
-2. **Gate** — whether auto-publish is allowed vs “mark for operator promote” remains coupled to [01](01_PEER_SHARE_PATH.md); this guide assumes **automation is the goal**, with a config kill-switch.
-3. **Log** — `/var/log/jellyflam3/share_votes.log`; flock-safe lock like other cron wrappers.
+1. **`scripts/cron_share_votes.sh`** — daily lab job **06:41** local (`41 6 * * *`) that runs `python3 -m pipeline.share_votes --apply`.
+   - Selects sheep with sidecar `share_candidate` and `votes` / `loves` over `share_votes.min_votes` / `min_loves`.
+   - Copies corresponding `.flam3` from `genomes_done` (not inbox/quarantine) via `peering.publish` (tax + integrity) into **`peers/share-out`**.
+   - Honors Opt In (`require_opt_in`, default on) and `license.commercial_mode` (NC skipped when commercial-safe).
+2. **Gate** — **does not** auto-promote into `genomes/inbox`. Kill-switch: `share_votes.enabled`.
+3. **Log** — `/var/log/jellyflam3/share_votes.log`; flock lock like other cron wrappers.
 
-### D — Idle-breed weight bias (enhance daily cron)
+### D — Idle-breed weight bias (shipped Wave 3)
 
-1. Extend `pipeline.breed_idle` (and/or `pipeline.breed`) so parent pool selection uses **weights from each catalog sidecar** `viewer_feedback` when present; fall back to uniform when the block is missing or zero.
-2. Config under `breed.idle_breed` (e.g. `vote_bias_enabled`, `vote_weight_power`, `min_votes_for_bias`).
-3. Keep existing gates: empty inbox, idle gate, not imminent archive cron, dedup fingerprints.
-4. Document that archive-seed cron stays **unbiased** feedstock fill; viewer bias applies to **pedigree idle breed** (and optionally manual breed CLI later).
+1. `pipeline.breed_idle` parent picks use **weights from each catalog sidecar** `viewer_feedback.votes` when `breed.idle_breed.vote_bias_enabled` (default on) and `votes >= min_votes_for_bias`; else weight **1** (uniform).
+2. Config: `vote_bias_enabled`, `vote_weight_power`, `min_votes_for_bias`.
+3. Existing gates unchanged: empty inbox, idle gate, not imminent archive cron, dedup fingerprints.
+4. Archive-seed cron stays **unbiased**; viewer bias applies to **pedigree idle breed** only.
 
 ### E — Ops & docs
 
-1. Crontab example alongside archive + idle-breed; PATH / flock patterns match `cron_breed_idle.sh`.
-2. End-user guide snippet ([05](05_END_USER_GUIDE.md)): “how to vote,” privacy (LAN-only), what love does.
-3. Glossary + SoT cross-links; idle-gate ignore pattern if the vote client string appears in Sessions.
+1. Crontab example alongside archive + idle-breed in the runbook and this cron header.
+2. End-user vote/share recipe: [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md#6--vote-then-share).
+3. Glossary + SoT cross-links. Vote POST is still display-sink (not a Playing client).
 
 ## Non-goals
 
@@ -124,10 +124,10 @@ Overlay is visual-only (Video stays focused; playback does not pause). Shown whe
 - [x] Vote-mode / feedback shuffle includes **pedigree** catalog sheep (not archive-gen allowlist only); misc/test still excluded
 - [x] Overlay appears before end of sheep playback without stopping Video
 - [x] Remote vote records on that sheep’s catalog sidecar; same sheep can be re-voted freely
-- [ ] Share cron and idle breed read **only** sidecar `viewer_feedback` (no competing store) — sink writes sidecar only; cron/weights parked
-- [ ] Share cron publishes or stages liked `.flam3` for Tailscale/Syncthing path (Opt In + share-security honored)
-- [ ] Daily idle breed uses vote weights when available; uniform fallback when not
-- [x] Docs: button map, privacy / LAN scope; linked from Phase 4 overview + end-user guide (cron examples wait on Wave 3)
+- [x] Share cron and idle breed read **only** sidecar `viewer_feedback` (no competing store)
+- [x] Share cron publishes or stages liked `.flam3` for Tailscale/Syncthing path (Opt In + share-security honored); inbound still `promote --apply`
+- [x] Daily idle breed uses vote weights when available; uniform fallback when not
+- [x] Docs: button map, privacy / LAN scope, vote/share recipe; linked from Phase 4 overview + end-user guide
 - [x] Idle-gate / Sessions behavior: vote POST is display-sink, not a Playing client
 
 ## See also

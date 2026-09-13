@@ -10,8 +10,9 @@ Usage:
   python3 -m pipeline.sheep_votes show --stem electricsheep.247.00505
 
 Assumptions: The catalog sidecar is the sole metadata SoT. No store under
-  ``/var/lib/jellyflam3/``. Unlimited re-vote. Any event sets ``share_candidate``.
-  Share cron and idle-breed weights stay parked (Wave 3). HTTP lives on the
+  ``/var/lib/jellyflam3/``.   Unlimited re-vote. Any event sets ``share_candidate``.
+  Share cron: ``python3 -m pipeline.share_votes``. Idle-breed reads the same
+  sidecar block for parent weights. HTTP lives on the
   display-profile sink (``POST /v1/sheep-votes``).
 Docs: docs/phase4/08_VIEWER_FEEDBACK_LOOP.md
 """

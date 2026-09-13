@@ -109,6 +109,9 @@ def idle_breed_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
         "min_hours_before_archive": 1.0,
         "include_samples": True,
         "include_pedigree": True,
+        "vote_bias_enabled": True,
+        "vote_weight_power": 1.0,
+        "min_votes_for_bias": 1,
     }
     raw = dict(bc.get("idle_breed") or {})
     merged = {**defaults, **raw}
@@ -169,6 +172,85 @@ def collect_parent_pool(cfg: dict[str, Any]) -> list[Path]:
             add(path)
 
     return pool
+
+
+def parent_vote_weight(cfg: dict[str, Any], flam3: Path) -> float:
+    """Weight ∝ sidecar ``viewer_feedback.votes``; 1.0 when missing or below min."""
+    ib = idle_breed_cfg(cfg)
+    if not ib.get("vote_bias_enabled", True):
+        return 1.0
+    min_votes = int(ib.get("min_votes_for_bias", 1))
+    power = float(ib.get("vote_weight_power", 1.0))
+    try:
+        media = resolve_path(cfg, "media_library")
+    except (KeyError, TypeError):
+        return 1.0
+    from pipeline.sheep_names import stem_of
+    from pipeline.sheep_naming import load_sidecar_for_stem
+    from pipeline.sheep_votes import normalize_feedback
+
+    try:
+        _path, data = load_sidecar_for_stem(media, stem_of(flam3))
+    except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError):
+        return 1.0
+    fb = normalize_feedback(data.get("viewer_feedback"))
+    votes = int(fb.get("votes") or 0)
+    if votes < min_votes:
+        return 1.0
+    try:
+        weight = float(votes) ** power
+    except (OverflowError, ValueError):
+        weight = float(votes)
+    return max(1.0, weight)
+
+
+def _weights_equal(weights: list[float]) -> bool:
+    if not weights:
+        return True
+    first = weights[0]
+    return all(abs(w - first) < 1e-12 for w in weights)
+
+
+def _weighted_pick(pool: list[Path], weights: list[float], rng: random.Random) -> Path:
+    """Pick one path; uniform ``rng.choice`` when weights are equal (test RNG stubs)."""
+    if not pool:
+        raise ValueError("empty pool")
+    if len(pool) == 1 or _weights_equal(weights):
+        return rng.choice(pool)
+    total = sum(weights)
+    if total <= 0:
+        return rng.choice(pool)
+    pick = rng.random() * total
+    acc = 0.0
+    chosen = pool[-1]
+    for item, weight in zip(pool, weights):
+        acc += weight
+        if pick <= acc:
+            chosen = item
+            break
+    return chosen
+
+
+def _weighted_sample_two(
+    pool: list[Path],
+    weights: list[float],
+    rng: random.Random,
+) -> tuple[Path, Path]:
+    if _weights_equal(weights):
+        a, b = rng.sample(pool, 2)
+        return a, b
+    a = _weighted_pick(pool, weights, rng)
+    rest: list[Path] = []
+    rest_w: list[float] = []
+    a_key = a.resolve()
+    for path, weight in zip(pool, weights):
+        if path.resolve() != a_key:
+            rest.append(path)
+            rest_w.append(weight)
+    if len(rest) < 1:
+        return a, a
+    b = _weighted_pick(rest, rest_w, rng)
+    return a, b
 
 
 def parse_dom_list(value: Any) -> list[int]:
@@ -318,13 +400,14 @@ def pick_random_plan(
     if not pool:
         return None
     method = rng.choice(_idle_breed_modes(cfg))
+    weights = [parent_vote_weight(cfg, p) for p in pool] if cfg is not None else [1.0] * len(pool)
     if method == "mutate":
-        return BreedPlan(method="mutate", parents=(rng.choice(pool),))
+        return BreedPlan(method="mutate", parents=(_weighted_pick(pool, weights, rng),))
     if len(pool) < 2:
-        return BreedPlan(method="mutate", parents=(rng.choice(pool),))
+        return BreedPlan(method="mutate", parents=(_weighted_pick(pool, weights, rng),))
     if method == "tuple":
         return _pick_tuple_plan(pool, rng, cfg)
-    a, b = rng.sample(pool, 2)
+    a, b = _weighted_sample_two(pool, weights, rng)
     if method == "blend":
         return BreedPlan(method="blend", parents=(a, b), cross_method="alternate")
     if method == "interpolate":
@@ -342,10 +425,12 @@ def _pick_tuple_plan(
     from pipeline.sheep_tuple import tuple_exists
 
     eligible = [p for p in pool if _tuple_parent_ok(p)]
+    pool_w = [parent_vote_weight(cfg, p) for p in pool] if cfg is not None else [1.0] * len(pool)
     if len(eligible) < 2:
-        return BreedPlan(method="mutate", parents=(rng.choice(pool),))
+        return BreedPlan(method="mutate", parents=(_weighted_pick(pool, pool_w, rng),))
+    el_w = [parent_vote_weight(cfg, p) for p in eligible] if cfg is not None else [1.0] * len(eligible)
     for _ in range(16):
-        a, b = rng.sample(eligible, 2)
+        a, b = _weighted_sample_two(eligible, el_w, rng)
         if rng.random() < 0.5:
             a, b = b, a
         if a.resolve() == b.resolve():
@@ -357,7 +442,7 @@ def _pick_tuple_plan(
             except (KeyError, TypeError):
                 pass
         return BreedPlan(method="tuple", parents=(a, b))
-    return BreedPlan(method="mutate", parents=(rng.choice(pool),))
+    return BreedPlan(method="mutate", parents=(_weighted_pick(pool, pool_w, rng),))
 
 
 def pick_unique_plan(

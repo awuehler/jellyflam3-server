@@ -155,11 +155,11 @@ Short non-catalog test via `scripts/smoke_render.sh` (`JELLYFLAM3_SMOKE=1`, ~13 
 
 ### Cron wrappers
 
-`scripts/cron_archive_seed.sh` (~10-day staggered archive fill) and `scripts/cron_breed_idle.sh` (daily **05:11** idle breed). Both prepend `/usr/local/bin` to `PATH` for **flam3-genome**. Phase 4 adds a planned **share-votes** cron ([phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md)) for liked sheep → peer share-out.
+`scripts/cron_archive_seed.sh` (~10-day staggered archive fill), `scripts/cron_breed_idle.sh` (daily **05:11** idle breed; parent **vote weights** when sidecar tallies exist), and `scripts/cron_share_votes.sh` (daily **06:41** liked sheep → `peers/share-out`). Wrappers prepend `/usr/local/bin` to `PATH` for **flam3-genome**. Receive path is still gated `promote --apply` ([phase4/01](phase4/01_PEER_SHARE_PATH.md)).
 
 ### Idle breed
 
-`pipeline/breed_idle.py` / daily cron. When inbox empty + gate open + not near archive cron: breed **one** pedigree child (mutate/cross/blend/interpolate). History: `breed_idle_history.json`. Per-host archive cron for the `archive_cron_imminent` skip is merged from `configs/profiles/rpi-jellyflam3-{16,08,04}.yaml` via `hw_profile apply`. JSON `--evaluate` output includes `hours_until_archive` (rounded) and `next_archive_at`. Phase 4 may weight parent selection from catalog sidecar `viewer_feedback` ([phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md)).
+`pipeline/breed_idle.py` / daily cron. When inbox empty + gate open + not near archive cron: breed **one** pedigree child (mutate/cross/blend/interpolate). History: `breed_idle_history.json`. Per-host archive cron for the `archive_cron_imminent` skip is merged from `configs/profiles/rpi-jellyflam3-{16,08,04}.yaml` via `hw_profile apply`. JSON `--evaluate` output includes `hours_until_archive` (rounded) and `next_archive_at`. Parent selection weights catalog sidecar `viewer_feedback.votes` when `vote_bias_enabled` ([phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md)).
 
 ### Viewer feedback / sheep vote
 

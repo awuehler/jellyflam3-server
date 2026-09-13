@@ -7,7 +7,8 @@ All notable changes to this project are documented here. Format loosely follows 
 ### Added
 
 - Pasture channel-art prompt pack (hero splash + square mark) for Roku/Kodi chrome: [CLIENT_CHANNEL_ART.md](docs/CLIENT_CHANNEL_ART.md). External generator + operator crop; not catalog posters and not Cesari marks.
-- Phase 4 Wave 2: Roku VoD **1.0.32** like/love/vote overlay (last 12 s, playback continues). `POST /v1/sheep-votes` on `jellyflam3-display-sink` (:8791) writes catalog sidecar `viewer_feedback` only and sets `share_candidate`. CLI `python3 -m pipeline.sheep_votes`. Share cron / breed weights / auto-promote stay parked.
+- Phase 4 Wave 3: lock gated `promote --apply` ([01](docs/phase4/01_PEER_SHARE_PATH.md)). `python3 -m pipeline.share_votes` + `scripts/cron_share_votes.sh` (lab **06:41**) copy liked catalog `.flam3` to `peers/share-out`. Idle-breed weights parents by sidecar `viewer_feedback.votes`. Household recipe in the runbook (example 6). Auto-promote stays parked.
+- Phase 4 Wave 2: Roku VoD **1.0.32** like/love/vote overlay (last 12 s, playback continues). `POST /v1/sheep-votes` on `jellyflam3-display-sink` (:8791) writes catalog sidecar `viewer_feedback` only and sets `share_candidate`. CLI `python3 -m pipeline.sheep_votes`. Screensaver voting parked.
 - Phase 4 Wave 2: private-channel coexistence path ([phase4/04](docs/phase4/04_ROKU_PUBLISH.md#private-channel-path-wave-2)). Roku screensaver **1.0.10** Settings writes Jellyfin credentials so VoD (private channel) and SS (sideload slot) can both stay installed. Channel Store parked.
 - Fleet log hygiene: persistent journald (class-sized) + 72h `jellyflam3-logrotate.timer`; compress file-log backups after 11 days; purge after 23 days (`scripts/enable_log_hygiene.sh`).
 - Opt-In watchdog LAN heal: ping default gateway; rate-limited Wi‑Fi bounce (`nmcli`) before Tailscale re-auth (`peering.watchdog.*`).

@@ -19,7 +19,7 @@ def _read(rel: str) -> str:
 
 
 def test_cron_wrappers_prepend_usr_local_bin():
-    for name in ("cron_breed_idle.sh", "cron_archive_seed.sh"):
+    for name in ("cron_breed_idle.sh", "cron_archive_seed.sh", "cron_share_votes.sh"):
         text = _read(f"scripts/{name}")
         assert PATH_EXPORT in text, f"{name} must prepend /usr/local/bin for cron PATH"
 
@@ -73,6 +73,21 @@ def test_yaml_example_documents_per_host_archive_cron():
     assert "1,11,21" in text
     assert "11 5 * * *" in text
     assert "archive_cron_dom: [3, 13, 23]" in text
+    assert "41 6 * * *" in text
+    assert "share_votes:" in text
+
+
+def test_lab_share_votes_crontab_is_0641():
+    script = _read("scripts/cron_share_votes.sh")
+    assert "41 6 * * *" in script
+    assert "06:41" in script
+    assert "pipeline.share_votes" in script
+    assert "--apply" in script
+    docs = _read("docs/USER_GUIDE_AND_RUNBOOK.md")
+    assert "41 6 * * *" in docs
+    assert "cron_share_votes.sh" in docs
+    yaml = _read("configs/jellyflam3.yaml.example")
+    assert "41 6 * * *" in yaml
 
 
 def test_operator_scripts_have_purpose_headers():

@@ -19,7 +19,8 @@
 # Docs: docs/phase2/07_PEDIGREE_BREEDING.md
 #
 # Assumptions: Inbox must be empty; idle gate open; no live render jobs; parent pool
-# from genomes_done + genomes/samples + genomes/pedigree; dedup vs recent history.
+# from genomes_done + genomes/samples + genomes/pedigree; vote-weighted when sidecar
+# tallies exist; dedup vs recent history.
 # Random mode may be mutate/cross/blend/interpolate or tuple (Phase 4 guide 03).
 #
 # ---------------------------------------------------------------------------

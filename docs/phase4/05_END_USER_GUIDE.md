@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — author a **household / end-user** guide for day-to-day JellyFlam3 operation: common tasks, worked examples, and problem triage. Audience is the person running one or more Pis + Roku(s), not the Phase 1–3 implementer reading feature guides.
 
-**Status:** Baseline complete (Owner OK 2026-09-03). Day-to-day use: **[../USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md)** (Layer 1 + [worked examples](../USER_GUIDE_AND_RUNBOOK.md#worked-examples) + Layer 2 triage). Fridge card: **[../FRIDGE_CARD.md](../FRIDGE_CARD.md)**. Overlay button map is in the user guide (VoD **1.0.32**); fuller vote recipes wait on share cron ([08](08_VIEWER_FEEDBACK_LOOP.md) Wave 3). Alias rename CLI shipped with [09](09_SHEEP_NAMING.md).
+**Status:** Baseline complete (Owner OK 2026-09-03). Day-to-day use: **[../USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md)** (Layer 1 + [worked examples](../USER_GUIDE_AND_RUNBOOK.md#worked-examples) + Layer 2 triage). Fridge card: **[../FRIDGE_CARD.md](../FRIDGE_CARD.md)**. Overlay button map + vote/share recipe: VoD **1.0.32** and [worked example 6](../USER_GUIDE_AND_RUNBOOK.md#6--vote-then-share). Alias rename CLI shipped with [09](09_SHEEP_NAMING.md).
 
 Complements (does not replace):
 
@@ -39,9 +39,9 @@ Complements (does not replace):
 | Play on Roku VoD | Settings IDs via `jellyfin_id_dump.py`; launch / deep link notes |
 | Enable screensaver | SS Settings **1.0.10** writes Jellyfin creds, or furnace zip, or VoD Settings while sharing the developer slot; Theme → Screensavers; fade/dwell. SS always rotates (ignores `shuffleFlock`); Primary + Backdrop; no tuples; **1.0.9** wrap-refetch. Private-channel path: [04](04_ROKU_PUBLISH.md#private-channel-path-wave-2) |
 | Extract stills | Poster ingest / `backfill_posters`; operator `python3 -m pipeline.stills --dry-run` / `--limit N` |
-| Breed / seed | Manual `pipeline.breed` (mutate / cross / blend / interpolate) or daily `cron_breed_idle.sh` when inbox empty → wait for worker (Phase 2 pedigree); Phase 4 may weight parents by viewer votes ([08](08_VIEWER_FEEDBACK_LOOP.md)) |
-| Promote peer share | Opt In status; `promote --apply` gated path (Phase 2/4 peering); Phase 4 share-votes cron may auto-stage liked sheep ([08](08_VIEWER_FEEDBACK_LOOP.md)) |
-| Vote / like a sheep | Roku VoD overlay near end of clip (Phase 4 — [08](08_VIEWER_FEEDBACK_LOOP.md)); playback continues; re-votes allowed |
+| Breed / seed | Manual `pipeline.breed` or daily `cron_breed_idle.sh` when inbox empty; idle-breed **weights parents by sidecar votes** when present ([08](08_VIEWER_FEEDBACK_LOOP.md)) |
+| Promote peer share | Opt In; **gated** `promote --apply` on receive. Liked sheep: `cron_share_votes.sh` copies to `peers/share-out` ([08](08_VIEWER_FEEDBACK_LOOP.md)); auto-promote parked ([01](01_PEER_SHARE_PATH.md)) |
+| Vote / like a sheep | Roku VoD overlay last 12 s ([08](08_VIEWER_FEEDBACK_LOOP.md)); LAN-only POST; re-votes allowed; love is a stronger tally, not a different share path |
 | Rename / alias a sheep | Phase 4 sheep naming ([09](09_SHEEP_NAMING.md)): auto `adjective_surname` or human override; clients may show alias vs filename |
 | Delete a sheep | Shears dry-run → apply (Phase 3 / 03) |
 | Multi-Roku | Same Jellyfin URL on each TV; `display_profiles list` |
@@ -56,6 +56,7 @@ Shipped in [USER_GUIDE_AND_RUNBOOK.md — Worked examples](../USER_GUIDE_AND_RUN
 3. Two Rokus, one Pi: Fetch TV display on both → two profile files → independent prefs.
 4. Peer receive: land in `peers/inbox` → verify → promote → furnace picks up.
 5. Pause the furnace: drain request --wait → optional restart → cancel.
+6. Vote then share: overlay OK/FF/Replay → sidecar `share_candidate` → `share_votes` / cron copies `share-out` → receiver still `promote --apply`.
 
 ### D — Triage cookbook
 

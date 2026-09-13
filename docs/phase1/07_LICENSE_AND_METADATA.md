@@ -190,7 +190,7 @@ File: `{stem}.jellyflam3.json` next to the catalog MP4. Code list: `pipeline.sti
 | `alias` | [09](../phase4/09_SHEEP_NAMING.md) | `adjective_surname` | Display name; filename stays canonical |
 | `alias_source` | [09](../phase4/09_SHEEP_NAMING.md); LLM write path [phase5/02](../phase5/02_LLM_INTEGRATION.md) | `auto` \| `human` \| `llm` | Companion of `alias` |
 
-Vote sink is **shipped** (Wave 2): overlay on VoD **1.0.32**; sidecar-only tallies; share cron / breed weights parked. Tuple edge watermark and 09 RNG aliases are **shipped**.
+Vote sink is **shipped** (Wave 2): overlay on VoD **1.0.32**; sidecar-only tallies. Share cron + idle-breed weights **shipped** (Wave 3). Tuple edge watermark and 09 RNG aliases are **shipped**.
 
 ```json
 {

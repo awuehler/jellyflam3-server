@@ -225,6 +225,15 @@ seed_archive:
 # Sync = *.flam3 + optional *-poster.jpg + integrity sidecars (Phase 3 guide 05).
 # Land = genomes/peers/inbox (Syncthing). Worker does NOT auto-pick — promote --apply → genomes/inbox.
 # CLI: python3 -m pipeline.peering status|opt-in|opt-out|publish|promote|gen-keys|trust-key
+# Voted catalog sheep → share-out (not genomes/inbox): python3 -m pipeline.share_votes
+#   scripts/cron_share_votes.sh  (lab: 41 6 * * *). Kill-switch share_votes.enabled.
+share_votes:
+  enabled: true
+  min_votes: 1
+  min_loves: 0
+  require_opt_in: true
+  require_share_candidate: true
+
 peering:
   share_opt_in: false
   host_service_unit: jellyflam3-peering.service
@@ -303,6 +312,10 @@ breed:
     min_hours_before_archive: 1.0
     include_samples: true
     include_pedigree: true
+    # Wave 3: weight parents by catalog sidecar viewer_feedback.votes (uniform if missing).
+    vote_bias_enabled: true
+    vote_weight_power: 1.0
+    min_votes_for_bias: 1
 
 # Phase 4 tuples — one MP4: loop A + watermarked edge(A→B) + loop B
 # Catalog: /media/sheep/by-generation/tuple/electricsheep.tuple.{from}_to_{to}.mp4

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+import json
 
 import pytest
 
@@ -253,3 +254,80 @@ def test_run_idle_breed_dry_run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     assert result.staged
 
     assert not (tmp_path / "breed_idle_history.json").exists()
+
+
+def _sidecar_votes(tmp_path: Path, stem: str, votes: int) -> None:
+    gen = stem.split(".")[1] if stem.startswith("electricsheep.") else "247"
+    dest = tmp_path / "media" / "by-generation" / gen
+    dest.mkdir(parents=True, exist_ok=True)
+    (dest / f"{stem}.jellyflam3.json").write_text(
+        json.dumps(
+            {
+                "id": stem,
+                "viewer_feedback": {
+                    "likes": votes,
+                    "loves": 0,
+                    "votes": votes,
+                    "share_candidate": votes > 0,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+
+def test_parent_vote_weight_from_sidecar(tmp_path: Path):
+    from pipeline.breed_idle import parent_vote_weight
+
+    cfg = _cfg(tmp_path)
+    hot = tmp_path / "genomes" / "done" / "electricsheep.247.00001.flam3"
+    cold = tmp_path / "genomes" / "done" / "electricsheep.247.00002.flam3"
+    hot.write_text("<flame/>", encoding="utf-8")
+    cold.write_text("<flame/>", encoding="utf-8")
+    _sidecar_votes(tmp_path, "electricsheep.247.00001", 9)
+    _sidecar_votes(tmp_path, "electricsheep.247.00002", 0)
+    assert parent_vote_weight(cfg, hot) == 9.0
+    assert parent_vote_weight(cfg, cold) == 1.0
+
+
+def test_vote_bias_off_is_uniform(tmp_path: Path):
+    from pipeline.breed_idle import parent_vote_weight
+
+    cfg = _cfg(tmp_path, vote_bias_enabled=False)
+    hot = tmp_path / "genomes" / "done" / "electricsheep.247.00001.flam3"
+    hot.write_text("<flame/>", encoding="utf-8")
+    _sidecar_votes(tmp_path, "electricsheep.247.00001", 9)
+    assert parent_vote_weight(cfg, hot) == 1.0
+
+
+def test_weighted_mutate_prefers_voted_parent(tmp_path: Path):
+    from pipeline.breed_idle import collect_parent_pool, pick_random_plan
+
+    cfg = _cfg(tmp_path, include_samples=False, include_pedigree=False)
+    hot = tmp_path / "genomes" / "done" / "electricsheep.247.00001.flam3"
+    cold = tmp_path / "genomes" / "done" / "electricsheep.247.00002.flam3"
+    hot.write_text("<flame/>", encoding="utf-8")
+    cold.write_text("<flame/>", encoding="utf-8")
+    _sidecar_votes(tmp_path, "electricsheep.247.00001", 50)
+    _sidecar_votes(tmp_path, "electricsheep.247.00002", 0)
+    pool = collect_parent_pool(cfg)
+
+    class MutateRng:
+        def choice(self, seq):
+            from pipeline.breed_idle import BREED_MODES
+
+            if seq is BREED_MODES or list(seq) == list(BREED_MODES):
+                return "mutate"
+            return seq[0]
+
+        def random(self):
+            return 0.0  # first (hottest) bin in weighted_pick
+
+        def sample(self, seq, k):
+            return list(seq)[:k]
+
+    plan = pick_random_plan(pool, rng=MutateRng(), cfg=cfg)  # type: ignore[arg-type]
+    assert plan is not None
+    assert plan.method == "mutate"
+    assert plan.parents[0].name == hot.name
+

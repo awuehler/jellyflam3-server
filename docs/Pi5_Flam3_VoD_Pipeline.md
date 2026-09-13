@@ -1692,7 +1692,7 @@ flowchart TD
 
 ### Phase 4 — synopsis (products parked; pre-open slices shipped)
 
-1. Parked products: peer share-path, mesh introduce, **standalone edge files + loop/stills watermark**, **Roku Channel Store**, **08 share cron / breed weights**, pasture filename/alias toggle — [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md). Tuples + edge-stage watermark, 09 RNG aliases, **08 overlay + sidecar sink**, and **04 private-channel path** are **shipped**.
+1. Parked products: peer **auto-promote**, mesh introduce, **standalone edge files + loop/stills watermark**, **Roku Channel Store**, pasture filename/alias toggle — [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md). Tuples + edge-stage watermark, 09 RNG aliases, **08 overlay + share cron + breed weights**, and **04 private-channel path** are **shipped**.
 2. Pre-open (2026-09-03): end-user guide **05 baseline** (Owner OK); library-disk **06 check slice**; concurrent-client **07 estimator** (Owner OK 2026-09-09); sidecar keys reserved in [phase1/07](phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Do **not** implement remaining parked products until Owner opens those slices.
 
 ### Phase 5 — synopsis (two deployments; parked)
