@@ -15,8 +15,8 @@ Terms, keywords, and phrases used across the **jellyflam3-server** project — d
 | [Brood](#brood) | [Display profile sink](#display-profile-sink) | [JellyFlam3 Hammer](#jellyflam3-hammer) | [Promote (peering)](#promote-peering) |
 | [Catalog](#catalog) | [Edge](#edge) / [Tuple](#tuple) | [Jellyfin flock](#jellyfin-flock) | [Quarantine](#quarantine) |
 | [Closed loop](#closed-loop) | [Electric Sheep](#electric-sheep) | [Land (peers)](#land-peers) | [Release candidate (RC)](#release-candidate-rc) |
-| [Commercial mode](#commercial-mode) | [Flock](#flock) | [Loop (VoD)](#loop-vod) | [Sheep Shears](#sheep-shears) |
-| [ContentNode](#contentnode) | [flam3](#flam3) | [OkLCh palette](#oklch-palette) | [Sheep tax](#sheep-tax) |
+| [Commercial mode](#commercial-mode) | [Flock](#flock) | [Loop (VoD)](#loop-vod) | [Sheep Shears](#sheep-shears) / [Sheep tax](#sheep-tax) |
+| [ContentNode](#contentnode) | [flam3](#flam3) | [OkLCh palette](#oklch-palette) | [Channel art](#channel-art) |
 | [Cron wrappers](#cron-wrappers) | [Free Sheep](#free-sheep) | [Opt In / Opt Out](#opt-in--opt-out) | [Sidecar](#sidecar) |
 | [Deep link](#deep-link) | [Furnace](#furnace) | [Path 1 / Path 2](#path-1--path-2) | [Stills](#stills) |
 | [Display probe](#display-probe) | [Genome](#genome) | [Period snap](#period-snap) | [Syncthing](#syncthing) |
@@ -132,6 +132,10 @@ Post-render parent pool (`paths.genomes_done`, default `genomes/done`). Successf
 ### Catalog
 
 Finished VoD on disk: `/media/sheep/by-generation/{gen}/electricsheep.{gen}.{id}.mp4` (+ sidecar). Poster and screensaver frames live together under `by-generation/{gen}/stills/{stem}/` (Jellyfin `stills/.ignore`). Live Jellyfin **Sheep** library points at `/media/sheep/by-generation` (not the mount root).
+
+### Channel art
+
+Roku splash / Home icon and Kodi add-on icon / fanart. Operators may generate originals from prompts in [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md). Not catalog posters, not Cesari watermark files, not Phase 5 VLM output.
 
 ### by-generation
 
@@ -554,4 +558,4 @@ Terms you will see in upstream docs and community material:
 
 ---
 
-*Last expanded: 2026-09-12 — Phase 5: one agent, many furnaces; Tailscale `tag:jellyflam3-agent`.*
+*Last expanded: 2026-09-12 — pasture channel-art prompts; Phase 5 one-agent / Tailscale.*

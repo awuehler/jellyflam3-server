@@ -13,6 +13,7 @@
 | [phase5/00_OVERVIEW.md](phase5/00_OVERVIEW.md) | Phase 5 synopsis — 1..N furnaces (Pi) vs one LLM Agent Platform (Ventuno); Tailscale agent tag; one hot INT4 7–8B + small GPU VLM — **parked** |
 |||
 | [glossary.md](glossary.md) | Terms, keywords, and definitions for project + collateral vocabulary |
+| [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md) | Generative prompts for Roku/Kodi splash + icon (operator post-prod) |
 
 ## Phase 1 guides (execute in order of furnace setup) — complete
 

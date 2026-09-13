@@ -17,7 +17,7 @@ Custom JellyFlam3 channel only — not jellyfin-roku, not screensaver.
 | `components/PlayerScreen.*` | Single `Video` (`loop=true`); default `streamFormat=hls`; stop before restart |
 | `components/JellyfinTask.*` | Jellyfin Items + HLS/`main.m3u8` stream URLs (off UI thread) |
 | `components/SettingsScreen.*` / `SettingRow.*` | Registry editor for credentials |
-| `images/` | `mm_icon_focus_hd.png` (290×218), `splash-screen.png` |
+| `images/` | `mm_icon_focus_hd.png` (290×218), `splash-screen.png` (1280×720). Generative refresh: [CLIENT_CHANNEL_ART.md](../CLIENT_CHANNEL_ART.md) |
 
 Settings registry section `JellyFlam3`: `baseUrl`, `apiKey`, `userId`, `libraryId`, `commercialMode`.
 

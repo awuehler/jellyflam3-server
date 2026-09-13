@@ -133,4 +133,4 @@ kodi-screensaver/screensaver.jellyflam3/
 
 ## See also
 
-[Guide 02](../docs/phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) · [Jellyfin ID dump](../docs/phase3/08_JELLYFIN_ID_DUMP.md) · [Roku channel Settings](../roku-channel/README.md)
+[Guide 02](../docs/phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) · [Jellyfin ID dump](../docs/phase3/08_JELLYFIN_ID_DUMP.md) · [Roku channel Settings](../roku-channel/README.md) · [Channel art prompts](../docs/CLIENT_CHANNEL_ART.md)

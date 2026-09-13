@@ -95,6 +95,10 @@ If a sheep disappears mid-session (quarantine / Shears), the client **drops that
 | Screensaver shows video | **No** on Roku SS — images only |
 | Gold Sheep / paid ES masters | **Never** ingested — personal viewing only |
 
+### Channel splash and icon (optional)
+
+Sideload packages already ship a splash and Home/add-on icon. To make **your** household mark, paste the prompts in [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md) into any image generator, crop, then ask the operator to [swap the files and rebuild the zips](CLIENT_CHANNEL_ART.md#operator-swap-into-client-trees). Do not use the Electric Sheep logo files as a channel badge.
+
 ### End-user triage (no SSH)
 
 | Symptom | What to try | Escalate to operator when… |
@@ -561,6 +565,8 @@ powershell -NoProfile -File scripts/lab_smoke05_fleet.ps1
 
 Each furnace Pi produces zips pointed at **its own** Jellyfin (`http://<that-pi-lan-ip>:8096`). Do not commit preset JSON or distribute zips outside the household — they contain the API key.
 
+Splash / icon refresh: prompts + **file swap** in [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md#operator-swap-into-client-trees).
+
 Kodi packaging needs **Pillow** (`python3-pil` via apt or `pip install -r requirements.txt`).
 
 ```bash
@@ -945,8 +951,8 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | License / Cesari watermark | [NOTICE](../NOTICE), [phase1/07](phase1/07_LICENSE_AND_METADATA.md), [watermark README](media/watermark/README.md), [Private vs public](#private-vs-public-furnace), [Use your own PNG](#use-your-own-png-private-and-public) |
 | Catalog posters / stills | [Catalog posters](#catalog-posters-after-render) — `jellyfin.attach_posters` + `stills.enabled`; Roku SS Primary + Backdrop |
 | Roku screensaver | `roku-screensaver/`, [phase3/01](phase3/01_SCREENSAVERS_AND_STILLS.md) |
-| Roku client | `roku-channel/`, `docs/phase1/08_ROKU_BRIGHTSCRIPT.md` |
-| Kodi screensaver | `kodi-screensaver/`, [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) |
+| Roku client | `roku-channel/`, `docs/phase1/08_ROKU_BRIGHTSCRIPT.md`, [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md) |
+| Kodi screensaver | `kodi-screensaver/`, [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md), [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md) |
 | Architecture | `docs/Pi5_Flam3_VoD_Pipeline.md` |
 
 ---
@@ -985,6 +991,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | Peering | [phase2/05_SYNCTHING_GENOME_PEERING.md](phase2/05_SYNCTHING_GENOME_PEERING.md) |
 | Phase 3 feature guides | [phase3/00_OVERVIEW.md](phase3/00_OVERVIEW.md) |
 | Kodi screensaver (detail) | [kodi-screensaver/README.md](../kodi-screensaver/README.md) · [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) |
+| Channel splash / icon prompts | [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md) |
 | RC / acceptance | [phase3/10_TESTING_AND_ACCEPTANCE.md](phase3/10_TESTING_AND_ACCEPTANCE.md) |
 
 ---

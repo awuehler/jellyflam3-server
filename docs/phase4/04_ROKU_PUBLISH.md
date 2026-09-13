@@ -45,7 +45,7 @@ Do not merge VoD and screensaver into one zip (Roku policy: no `RunScreenSaver` 
 
 ### A — Brand & storefront assets
 
-1. **Icons / logos** — replace placeholder `mm_icon_focus_*`, splash, and any Store poster / screenshot set for **both** packages (distinct VoD vs Dreams screensaver identity). Use **original JellyFlam3 art**. Do **not** use `docs/media/watermark/Electric-Sheep-Icon*.png` or `Electric-Sheep-Logo.svg` as channel/Store marks (Cesari / Spotworks brand — [NOTICE](../../NOTICE)).
+1. **Icons / logos** — replace placeholder `mm_icon_focus_*`, splash, and any Store poster / screenshot set for **both** packages (distinct VoD vs Dreams screensaver identity). Use **original JellyFlam3 art**. Prompt pack + crop sizes: [CLIENT_CHANNEL_ART.md](../CLIENT_CHANNEL_ART.md). Do **not** use `docs/media/watermark/Electric-Sheep-Icon*.png` or `Electric-Sheep-Logo.svg` as channel/Store marks (Cesari / Spotworks brand — [NOTICE](../../NOTICE)).
 2. Manifest **title** / **screensaver_title** / subtitle copy pass; version scheme aligned with Store builds (not only sideload `1.0.x` bumps).
 3. Optional FHD/SD asset matrix per [Roku channel packaging](https://developer.roku.com/docs/developer-program/getting-started/developer-setup.md) / Store checklist.
 

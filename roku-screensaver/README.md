@@ -86,3 +86,5 @@ python3 -m pipeline.stills --dry-run
 python3 -m pipeline.stills --limit 5
 python3 -m pipeline.backfill_posters   # upload Backdrops for catalog already on disk
 ```
+
+Splash / Home icon prompts (same household mark as VoD): [docs/CLIENT_CHANNEL_ART.md](../docs/CLIENT_CHANNEL_ART.md).

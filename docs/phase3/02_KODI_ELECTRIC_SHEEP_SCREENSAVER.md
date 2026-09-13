@@ -125,4 +125,4 @@ Furnace / Jellyfin remains on the render fleet (`rpi-jellyflam3-16a`, `-08a`, `-
 
 ## See also
 
-[00_OVERVIEW.md](00_OVERVIEW.md) · [01_SCREENSAVERS_AND_STILLS.md](01_SCREENSAVERS_AND_STILLS.md) (Roku/stills only) · [../phase4/03_EDGES_AND_WATERMARK.md](../phase4/03_EDGES_AND_WATERMARK.md) · classic client [electricsheep](https://github.com/scottdraves/electricsheep) · architecture [Pi5_Flam3_VoD_Pipeline.md](../Pi5_Flam3_VoD_Pipeline.md)
+[00_OVERVIEW.md](00_OVERVIEW.md) · [01_SCREENSAVERS_AND_STILLS.md](01_SCREENSAVERS_AND_STILLS.md) (Roku/stills only) · [../CLIENT_CHANNEL_ART.md](../CLIENT_CHANNEL_ART.md) · [../phase4/03_EDGES_AND_WATERMARK.md](../phase4/03_EDGES_AND_WATERMARK.md) · classic client [electricsheep](https://github.com/scottdraves/electricsheep) · architecture [Pi5_Flam3_VoD_Pipeline.md](../Pi5_Flam3_VoD_Pipeline.md)

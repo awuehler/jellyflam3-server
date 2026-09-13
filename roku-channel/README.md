@@ -88,7 +88,7 @@ Developer mode holds **one** sideloaded package. Installing the screensaver zip 
 
 **Screensaver depends on Jellyfin registry keys** (`baseUrl` / `apiKey` / `userId` / `libraryId`). While both packages share the developer slot, VoD Settings populate them and the zip swap keeps them. Private-channel VoD does **not** share registry with sideload SS — use SS Settings **1.0.10** or a furnace-built SS zip. See [`roku-screensaver/README.md`](../roku-screensaver/README.md) and [docs/phase3/08_JELLYFIN_ID_DUMP.md](../docs/phase3/08_JELLYFIN_ID_DUMP.md).
 
-See [docs/phase1/08_ROKU_BRIGHTSCRIPT.md](../docs/phase1/08_ROKU_BRIGHTSCRIPT.md) and [docs/phase2/03_HLS_CLIENT_STREAMING.md](../docs/phase2/03_HLS_CLIENT_STREAMING.md).
+See [docs/phase1/08_ROKU_BRIGHTSCRIPT.md](../docs/phase1/08_ROKU_BRIGHTSCRIPT.md) and [docs/phase2/03_HLS_CLIENT_STREAMING.md](../docs/phase2/03_HLS_CLIENT_STREAMING.md). Splash / Home icon prompts: [docs/CLIENT_CHANNEL_ART.md](../docs/CLIENT_CHANNEL_ART.md).
 
 ## Deep link
 
