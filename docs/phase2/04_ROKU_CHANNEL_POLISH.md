@@ -69,7 +69,7 @@ Households will have **more than one** ambient screen. The Pi sink must **track 
    - `GET /v1/display-profiles` — list summaries
    - `GET /healthz`
 3. Channel **1.0.22+**: after **Fetch TV display**, POSTs profile with `client=JellyFlam3` and `deviceId` from `GetChannelClientId()`; sink URL defaults to `http://{baseUrl-host}:8791` (override registry `displaySinkUrl`). Roku `FormatJson` lowercases AA keys (`deviceid`); the sink accepts case-insensitive field names and stores camelCase.
-4. **`DISPLAY_SINK_TOKEN` is required** for the systemd unit (`--host 0.0.0.0`). Set it in that furnace’s `secrets.env` (unique per Pi; never copy). Roku registry `displaySinkToken` → header `X-JellyFlam3-Token`. Empty token → sink exits 2 and crash-loops (`Restart=on-failure`). `--allow-unauthenticated` is lab-only and is not in the unit file.
+4. **`DISPLAY_SINK_TOKEN` is required** for the systemd unit (`--host 0.0.0.0`). **When:** before `enable --now` (or when the unit crash-loops). **Where:** this furnace’s `secrets.env`. **How:** `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'` — paste into `DISPLAY_SINK_TOKEN=` and into Roku registry `displaySinkToken` (VoD Settings has no token row). Never copy another Pi. Empty token → sink exits 2 and crash-loops (`Restart=on-failure`). `--allow-unauthenticated` is lab-only and is not in the unit file. Household steps: [USER_GUIDE](../USER_GUIDE_AND_RUNBOOK.md#display-sink-token-how--where--when).
 5. **Kodi / 3rd screens:** same schema via CLI (no Roku UI required):
    ```bash
    python3 -m pipeline.display_profiles upsert --client Kodi --device-id living-room --file profile.json
@@ -83,8 +83,9 @@ Households will have **more than one** ambient screen. The Pi sink must **track 
 ./scripts/package_roku_channel.ps1
 # Upload zip via Roku developer installer; Settings → Fetch TV display → expect "Pi OK …json"
 
-# Pi: enable sink (once). DISPLAY_SINK_TOKEN must already be set in secrets.env
-# (unique per furnace). Enabling without it crash-loops the unit.
+# Pi: enable sink (once). Generate DISPLAY_SINK_TOKEN on THIS furnace first:
+#   python3 -c 'import secrets; print(secrets.token_urlsafe(32))'
+# Paste into secrets.env; enabling without it crash-loops the unit.
 sudo mkdir -p /var/lib/jellyflam3/display_profiles
 sudo chown jellyflam3:jellyflam3 /var/lib/jellyflam3/display_profiles
 sudo cp /opt/jellyflam3-server/deploy/systemd/jellyflam3-display-sink.service /etc/systemd/system/

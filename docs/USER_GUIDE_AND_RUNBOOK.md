@@ -167,11 +167,13 @@ Run Pi commands from `/opt/jellyflam3-server` unless noted.
 
 **Host:** one furnace Pi (`jellyflam3-display-sink` active) + two Roku devices. Same Jellyfin URL on both.
 
-1. Confirm the sink. **`DISPLAY_SINK_TOKEN` must be set** in this furnace’s `secrets.env` (unique per Pi). The unit binds LAN `0.0.0.0:8791`; without a token it exits 2 and crash-loops. Roku `displaySinkToken` must match this furnace.
+1. **Capture a sink token on this Pi** (once per furnace) — [Display sink token](#display-sink-token-how--where--when). Print `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'`, paste into this furnace’s `secrets.env` as `DISPLAY_SINK_TOKEN=`, put the **same** string in each Roku’s registry `displaySinkToken`, then confirm the unit:
 
    ```bash
    systemctl is-active jellyflam3-display-sink   # expect: active (not activating)
    ```
+
+   Without that token the unit binds LAN `0.0.0.0:8791`, exits 2, and crash-loops. Do not copy another Pi’s token.
 
 2. On **Roku A**: VoD Settings (same `baseUrl` as the Pi LAN) → **Fetch TV display**. Channel should report **Pi OK** and a `*.json` name.
 3. Repeat **Fetch TV display** on **Roku B**.
@@ -242,6 +244,18 @@ python3 -m pipeline.worker_drain cancel
 | Hostname class | `rpi-jellyflam3-{16,08,04}a` — run `python3 -m pipeline.hw_profile apply {16a\|08a\|04a}` |
 
 Full bring-up: [phase2/09_PI_FROM_SCRATCH.md](phase2/09_PI_FROM_SCRATCH.md) · staged checklist: `./scripts/bringup_check.sh` (FAIL → exit 1; `--strict` also fails on WARN).
+
+### Display sink token (how / where / when)
+
+Households that use **Fetch TV display** or the vote overlay need `jellyflam3-display-sink` on the furnace. That unit binds LAN `0.0.0.0:8791`, so **`DISPLAY_SINK_TOKEN` must already be in this Pi’s `secrets.env`**. Generate it on the Pi; do not invent a short password and do not copy another furnace’s `secrets.env`.
+
+| | |
+|---|---|
+| **When** | First bring-up, after `cp secrets.env.example secrets.env` and **before** `systemctl enable --now jellyflam3-display-sink`. Also if the unit is `activating` / crash-looping. |
+| **Where** | `/opt/jellyflam3-server/secrets.env` on **this** Pi, line `DISPLAY_SINK_TOKEN=…`. Same string on each Roku that talks to this Pi: registry section `JellyFlam3`, key `displaySinkToken` (VoD Settings has no token row). |
+| **How** | On the furnace: `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'` — print once, paste that line into `secrets.env`, then into the Roku registry. Then `sudo systemctl reset-failed jellyflam3-display-sink` (if it was looping) and `sudo systemctl restart jellyflam3-display-sink`. Expect `active` and `curl -sS http://127.0.0.1:8791/healthz`. |
+
+Never commit `secrets.env`. Never paste the token into chat or issues. Detail: [phase2/04](phase2/04_ROKU_CHANNEL_POLISH.md) · crash-loop row in [Operator triage](#operator-triage).
 
 ### Daily health (5 minutes)
 
@@ -835,7 +849,7 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 | No new sheep | `healthcheck.sh`; `gate` in status JSON; inbox count | Open gate / fix worker / seed or breed. If Jellyfin already has the item, wait for a client **wrap** ([Flock mix](#flock-mix-shuffle-wrap)) |
 | Gate stuck closed | Jellyfin Sessions; Roku still “Playing”? | Stop playback; wait `idle_delay_sec` |
 | Worker quiet, gate open | `ls genomes/inbox/*.flam3`; journal `-u jellyflam3-worker`; `python3 -m pipeline.worker_drain status` | Seed inbox; inspect quarantine; **cancel** drain if `drain: true` |
-| `jellyflam3-display-sink` crash-loop (`activating` / `NRestarts` climbing) | journal: `DISPLAY_SINK_TOKEN required when binding a non-loopback host` | Set a **unique** `DISPLAY_SINK_TOKEN` in that Pi’s `secrets.env`; `systemctl reset-failed` + restart the unit. Do not copy another furnace’s token. Rokus that POST to this Pi need matching `displaySinkToken`. |
+| `jellyflam3-display-sink` crash-loop (`activating` / `NRestarts` climbing) | journal: `DISPLAY_SINK_TOKEN required when binding a non-loopback host` | On **this** Pi: `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'` → `DISPLAY_SINK_TOKEN=` in `secrets.env`; `systemctl reset-failed` + restart. Same string → Roku `displaySinkToken`. Do not copy another furnace. See [Display sink token](#display-sink-token-how--where--when). |
 | healthcheck exit 1 | Read script sections (units, tools, status file, **peering share_live**, **library disk BAD**) | See [offline peering](#opt-in-vs-share-live-do-not-confuse-them); `opt-in` or `opt-out`; free space on `/media/sheep` |
 | Sheep disk WARN / BAD | `python3 -m pipeline.library_disk check`; `df -h /media/sheep` | Delete with Shears (no auto-rotate yet); do not Hammer unless wiping the factory |
 | Empty flock with commercial-safe on | Items Tags missing | `jellyfin_id_dump.py --items`; [private vs public](#private-vs-public-furnace) step 2 |

@@ -22,7 +22,7 @@ Repository scaffold + config schema — **stop before** compiling flam3.
    cp secrets.env.example secrets.env
    ```
 4. Edit `configs/jellyflam3.yaml` paths if mounts differ.
-5. Confirm `.gitignore` excludes `secrets.env`, filled `configs/jellyflam3.yaml`, scratch, and MP4s.
+5. Fill `secrets.env` from `secrets.env.example`. After Jellyfin IDs, **generate** `DISPLAY_SINK_TOKEN` on this Pi (`python3 -c 'import secrets; print(secrets.token_urlsafe(32))'`) **before** enabling `jellyflam3-display-sink` ([user guide](../USER_GUIDE_AND_RUNBOOK.md#display-sink-token-how--where--when)).
 6. **Secrets hygiene (required):**
    - `secrets.env` and `configs/jellyflam3.yaml` are **host-local** — one API key / library ID set per Pi.
    - Never `git add` them; never commit; never push. Prefer `cp *.example` then edit on the Pi only.
@@ -47,7 +47,7 @@ Repository scaffold + config schema — **stop before** compiling flam3.
 | Artifact | Kind | Role |
 |---|---|---|
 | `configs/jellyflam3.yaml.example` → `configs/jellyflam3.yaml` | config | Local runtime config (paths, vod, idle_gate, jellyfin, license, encode) |
-| `secrets.env.example` → `secrets.env` | config | Jellyfin URL / API key / user / library (gitignored) |
+| `secrets.env.example` → `secrets.env` | config | Jellyfin URL / API key / user / library + **generated** `DISPLAY_SINK_TOKEN` (gitignored) |
 | `.gitignore` | config | Exclude secrets, scratch, catalog MP4s |
 | `docs/Pi5_Flam3_VoD_Pipeline.md` | config | Architecture SoT |
 | `docs/phase1/*` | config | Phase 1 numbered guides |

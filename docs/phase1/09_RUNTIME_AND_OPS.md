@@ -22,6 +22,8 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now jellyflam3-idlegate jellyflam3-worker
 # Guide 04 F — per-screen TV display profile sink + sheep votes (port 8791; accepts Roku FormatJson lowercase keys)
 # Required first: DISPLAY_SINK_TOKEN in this host's secrets.env (unique per furnace).
+# When: before enable --now. How: python3 -c 'import secrets; print(secrets.token_urlsafe(32))'
+# Where: /opt/jellyflam3-server/secrets.env. Same string → Roku displaySinkToken.
 # The unit binds 0.0.0.0; missing token → exit 2 → Restart=on-failure crash-loop.
 sudo mkdir -p /var/lib/jellyflam3/display_profiles
 sudo chown jellyflam3:jellyflam3 /var/lib/jellyflam3/display_profiles

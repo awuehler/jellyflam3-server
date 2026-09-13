@@ -303,7 +303,7 @@ Jellyfin scan after ingest or Hammer/Shears — `Library/Refresh` API.
 
 ### Display profile sink
 
-`pipeline/display_profile_sink` on port **8791** — LAN HTTP upsert of per-screen TV profiles (Roku **display probe**) and `POST /v1/sheep-votes`. The systemd unit binds **0.0.0.0**, so **`DISPLAY_SINK_TOKEN` in that furnace’s `secrets.env` is required**. Missing or empty token → process exits 2 → `Restart=on-failure` crash-loop. Unique per Pi (do not copy). Roku `displaySinkToken` / header `X-JellyFlam3-Token` must match. Loopback-only or `--allow-unauthenticated` are not the production unit.
+`pipeline/display_profile_sink` on port **8791** — LAN HTTP upsert of per-screen TV profiles (Roku **display probe**) and `POST /v1/sheep-votes`. The systemd unit binds **0.0.0.0**, so **`DISPLAY_SINK_TOKEN` in that furnace’s `secrets.env` is required**. Generate on the Pi: `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'` — [how / where / when](USER_GUIDE_AND_RUNBOOK.md#display-sink-token-how--where--when). Missing or empty token → process exits 2 → `Restart=on-failure` crash-loop. Unique per Pi (do not copy). Roku `displaySinkToken` / header `X-JellyFlam3-Token` must match. Loopback-only or `--allow-unauthenticated` are not the production unit.
 
 ### Display probe
 

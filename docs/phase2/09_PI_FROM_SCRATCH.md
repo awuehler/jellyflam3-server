@@ -184,7 +184,8 @@ cp configs/jellyflam3.yaml.example configs/jellyflam3.yaml
 cp secrets.env.example secrets.env
 # Never commit secrets.env or a filled jellyflam3.yaml with LAN secrets.
 python3 -m pipeline.hw_profile apply 04a   # or 08a / 16a — MUST match hostname class
-# Edit secrets.env after Jellyfin wizard (step 5)
+# Edit secrets.env after Jellyfin wizard (step 5): JELLYFIN_* plus DISPLAY_SINK_TOKEN
+# (generate on this Pi before step 6: python3 -c 'import secrets; print(secrets.token_urlsafe(32))')
 ./scripts/bootstrap_pi.sh                  # safe to re-run after clone
 ./scripts/bringup_check.sh
 ls /opt/jellyflam3-server/secrets.env /opt/jellyflam3-server/configs/jellyflam3.yaml
@@ -231,6 +232,13 @@ Appendix: [../phase1/04_JELLYFIN_LIBRARY.md](../phase1/04_JELLYFIN_LIBRARY.md).
 ### 6. Systemd worker + idle-gate (+ display sink)
 
 Set **`DISPLAY_SINK_TOKEN`** in this Pi’s `secrets.env` **before** enabling `jellyflam3-display-sink`. The unit binds `0.0.0.0:8791`; a missing token exits 2 and **crash-loops** (`Restart=on-failure`). Unique per furnace — do not copy another Pi’s `secrets.env`.
+
+```bash
+# How / where / when: on THIS Pi, after secrets.env exists, before enable --now
+python3 -c 'import secrets; print(secrets.token_urlsafe(32))'
+# Paste as DISPLAY_SINK_TOKEN=... in /opt/jellyflam3-server/secrets.env
+# Same string → Roku registry JellyFlam3 / displaySinkToken (Settings has no token row)
+```
 
 ```bash
 sudo cp /opt/jellyflam3-server/deploy/systemd/*.service /etc/systemd/system/

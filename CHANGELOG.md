@@ -26,6 +26,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Fixed
 
+- Docs: how/where/when to **generate** `DISPLAY_SINK_TOKEN` (`python3 -c 'import secrets; print(secrets.token_urlsafe(32))'`) into this Pi’s `secrets.env` before enabling the sink; same string → Roku `displaySinkToken`.
 - Docs: `DISPLAY_SINK_TOKEN` is **required** for `jellyflam3-display-sink` (unit binds `0.0.0.0:8791`). Missing token exits 2 and crash-loops; unique per furnace.
 - Worker catalog perm repair skips chmod on files it does not own (Jellyfin `folder.jpg` / stills posters at `644`). Only owner or root can chmod; those are no longer startup `file_errors`.
 - Idle-gate status JSON: atomic temp + `os.replace`; `is_gate_open` treats corrupt/unreadable files as **closed** so the worker does not crash on a torn write. Remaining gate races are Phase 4 pre-wave 3 ([phase4/00](docs/phase4/00_OVERVIEW.md#furnace-polish-pre-wave-3--idle-gate-remaining)).
