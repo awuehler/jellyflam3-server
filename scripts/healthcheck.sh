@@ -132,7 +132,7 @@ fi
 
 echo "== worker drain =="
 set +e
-drain_json=$(python3 -m pipeline.worker_drain status --config "$CFG" 2>/dev/null)
+drain_json=$(python3 -m pipeline.worker_drain --config "$CFG" status 2>/dev/null)
 drain_rc=$?
 set -e
 if [[ "$drain_rc" -ne 0 || -z "$drain_json" ]]; then
