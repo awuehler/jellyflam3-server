@@ -14,6 +14,7 @@
 |||
 | [glossary.md](glossary.md) | Terms, keywords, and definitions for project + collateral vocabulary |
 | [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md) | Generative prompts for Roku/Kodi splash + icon (operator post-prod) |
+| [media/README.md](media/README.md) | Hardware / demo / watermark file index |
 
 ## Phase 1 guides (execute in order of furnace setup) — complete
 

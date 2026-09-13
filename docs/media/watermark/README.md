@@ -1,6 +1,18 @@
 # Tuple edge watermark assets
 
-Look and timing: [docs/phase4/03_EDGES_AND_WATERMARK.md](../../phase4/03_EDGES_AND_WATERMARK.md#look-and-feel-what-the-viewer-sees).
+Look and timing: [docs/phase4/03_EDGES_AND_WATERMARK.md](../../phase4/03_EDGES_AND_WATERMARK.md#look-and-feel-what-the-viewer-sees). Encode default: `watermark.image` in `configs/jellyflam3.yaml.example` → `Electric-Sheep-Icon-7A8B99.png` (`pipeline.sheep_tuple.DEFAULT_WATERMARK_IMAGE`).
+
+These files are **Spotworks / Electric Sheep brand identity**, not MIT and not Free Sheep CC — [NOTICE](../../../NOTICE). Do **not** use them as Roku/Kodi channel splash or Home icons ([CLIENT_CHANNEL_ART.md](../../CLIENT_CHANNEL_ART.md)).
+
+## Current artifacts
+
+| File | Role |
+|---|---|
+| `Electric-Sheep-Icon-7A8B99.png` | **Private-mixed default overlay** — 180×180 RGBA; white sheep, `#7A8B99` spiral; transparent padding. ffmpeg burns this on the tuple **edge** when `license.commercial_mode: false` and `watermark.style: image` |
+| `Electric-Sheep-Icon.png` | Source 1024×1024 (too large to overlay without scale; keep as art). Do not set `watermark.image` here |
+| `Electric-Sheep-Logo.svg` | Wordmark lockup (ffmpeg on the Pis does **not** decode SVG). Do not overlay |
+
+No other files belong in this folder (no operator household PNG — that lives on the furnace, e.g. `/var/lib/jellyflam3/watermark.png`).
 
 ## Private mixed vs commercial-safe / public
 
@@ -19,11 +31,7 @@ Point `watermark.image` at **your own** RGBA PNG (not `Electric-Sheep-Icon*` / `
 
 Do not point `watermark.image` at the 1024 Cesari icon or the SVG.
 
-| File | Role |
-|---|---|
-| `Electric-Sheep-Icon-7A8B99.png` | Private-mixed default — 180×180 RGBA; white sheep, `#7A8B99` spiral; transparent padding |
-| `Electric-Sheep-Icon.png` | Source 1024×1024 (too large to overlay without scale; keep as art) |
-| `Electric-Sheep-Logo.svg` | Wordmark lockup (ffmpeg on the Pis does not decode SVG) |
+The three files above are the full on-disk set. The table in [Current artifacts](#current-artifacts) is the SoT for names and roles.
 
 ## Addendum — license, trademark, fair use
 
