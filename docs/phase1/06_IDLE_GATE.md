@@ -17,7 +17,7 @@ CPU isolation supervisor only — **does not** own encode logic.
 python3 -m pipeline.idle_gate --config configs/jellyflam3.yaml
 ```
 
-Status: `/var/lib/jellyflam3/idle_gate_status.json` (`gate`, `reason`, `seconds_until_resume`).
+Status: `/var/lib/jellyflam3/idle_gate_status.json` (`gate`, `reason`, `seconds_until_resume`). Writes are temp + `os.replace`. Corrupt or unreadable JSON is **closed** (worker must not crash). Remaining hardening (supervisor-only writer, persist `idle_delay` across idlegate restart, stale `updated_at`) is Phase 4 **pre-wave 3** — [phase4/00](../phase4/00_OVERVIEW.md#furnace-polish-pre-wave-3--idle-gate-remaining).
 
 ## Artifacts
 

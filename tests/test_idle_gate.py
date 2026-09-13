@@ -149,3 +149,24 @@ def test_ignore_screensaver_client(tmp_path):
     d = should_block_render(sessions, cfg)
     assert d.blocked is False
     assert d.reason == "idle"
+
+
+def test_is_gate_open_corrupt_json_fail_closed(tmp_path, caplog):
+    cfg = _cfg(tmp_path)
+    (tmp_path / "status.json").write_text("{not json", encoding="utf-8")
+    assert is_gate_open(cfg) is False
+
+
+def test_is_gate_open_empty_file_fail_closed(tmp_path):
+    cfg = _cfg(tmp_path)
+    (tmp_path / "status.json").write_text("", encoding="utf-8")
+    assert is_gate_open(cfg) is False
+
+
+def test_supervisor_status_replace_leaves_no_tmp(tmp_path):
+    cfg = _cfg(tmp_path)
+    sup = IdleGateSupervisor(cfg)
+    sup.evaluate(sessions=[])
+    names = {p.name for p in tmp_path.iterdir()}
+    assert "status.json" in names
+    assert not any(n.endswith(".tmp") for n in names)

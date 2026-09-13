@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import re
 import subprocess
 import time
@@ -28,6 +29,18 @@ from typing import Any
 from pipeline.config import load_config, resolve_path
 
 log = logging.getLogger("jellyflam3.idle_gate")
+
+
+def persist_status(path: Path, payload: dict[str, Any]) -> None:
+    """Write gate JSON via same-dir temp + ``os.replace`` so readers never see a torn file."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        tmp.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        os.replace(tmp, path)
+    except Exception:
+        tmp.unlink(missing_ok=True)
+        raise
 
 
 @dataclass
@@ -214,7 +227,7 @@ class IdleGateSupervisor:
             else None,
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }
-        self.status_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        persist_status(self.status_path, payload)
         return payload
 
     def run_forever(self) -> None:
@@ -255,10 +268,17 @@ def is_gate_open(cfg: dict[str, Any]) -> bool:
             "idle_clear_since": None,
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }
-        path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        persist_status(path, payload)
         log.info("gate bootstrap open (no prior status; sessions idle)")
         return True
-    data = json.loads(path.read_text(encoding="utf-8"))
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        log.warning("gate status unreadable (treating closed): %s", exc)
+        return False
+    if not isinstance(data, dict):
+        log.warning("gate status not an object (treating closed)")
+        return False
     return data.get("gate") == "open"
 
 
