@@ -502,8 +502,9 @@ def run_idle_breed(
     *,
     dry_run: bool = False,
     rng: random.Random | None = None,
+    now: datetime | None = None,
 ) -> IdleBreedResult:
-    result = evaluate_idle_breed(cfg)
+    result = evaluate_idle_breed(cfg, now=now)
     if result.action != "breed" or result.plan is None:
         return result
 

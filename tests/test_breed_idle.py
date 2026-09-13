@@ -245,12 +245,10 @@ def test_run_idle_breed_dry_run(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
         lambda cfg, pool, rng=None: BreedPlan("mutate", (parent,)),
     )
 
+    # Freeze time: wall-clock near archive_cron_dom (3/13/23) skips with
+    # archive_cron_imminent (min_hours_before_archive=1).
     now = datetime(2026, 8, 17, 12, 0, tzinfo=timezone.utc)
-    monkeypatch.setattr(
-        "pipeline.breed_idle.evaluate_idle_breed",
-        lambda cfg, now=None: evaluate_idle_breed(cfg, now=now),
-    )
-    result = run_idle_breed(cfg, dry_run=True)
+    result = run_idle_breed(cfg, dry_run=True, now=now)
     assert result.action == "breed"
     assert result.staged
 
