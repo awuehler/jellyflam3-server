@@ -26,7 +26,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Fixed
 
-- Healthcheck drain probe: `--config` is a parent argparse flag (`python3 -m pipeline.worker_drain --config … status`), so drain-on now WARNs with phase instead of “status unavailable”.
+- Healthcheck drain probe: `--config` is a parent argparse flag (`python3 -m pipeline.worker_drain --config … status`), so drain-on now WARNs with phase instead of “status unavailable”. Ops test expects that argv order.
 - Phase 4 pre-wave 3 idle-gate: supervisor-only status SoT; restore `idle_delay` across idlegate restart; stale `open` fail-closed (3× poll); `wait_for_gate` honors `seconds_until_resume` (cap 15 s); drain wait errors if the worker is frozen. Playing still does not pause `flam3-animate`.
 - Docs: how/where/when to **generate** `DISPLAY_SINK_TOKEN` (`python3 -c 'import secrets; print(secrets.token_urlsafe(32))'`) into this Pi’s `secrets.env` before enabling the sink; same string → Roku `displaySinkToken`.
 - Docs: `DISPLAY_SINK_TOKEN` is **required** for `jellyflam3-display-sink` (unit binds `0.0.0.0:8791`). Missing token exits 2 and crash-loops; unique per furnace.

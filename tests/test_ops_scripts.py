@@ -118,7 +118,8 @@ def test_healthcheck_worker_drain_is_warn_not_fail():
     text = _read("scripts/healthcheck.sh")
     assert "== worker drain ==" in text
     section = text.split("== worker drain ==", 1)[1].split("== tools ==", 1)[0]
-    assert "pipeline.worker_drain status" in section
+    # Parent argparse: --config before the subcommand (status --config is invalid).
+    assert 'pipeline.worker_drain --config "$CFG" status' in section
     assert "WARN worker drain" in section
     assert "ERR=1" not in section
 
