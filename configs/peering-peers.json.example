@@ -1,0 +1,22 @@
+{
+  "peers": [
+    {
+      "name": "rpi-jellyflam3-16a",
+      "deviceID": "REPLACE_WITH_16A_SYNCTHING_DEVICE_ID",
+      "tailscaleIP": "100.x.y.z",
+      "introducer": true
+    },
+    {
+      "name": "rpi-jellyflam3-08a",
+      "deviceID": "REPLACE_WITH_08A_SYNCTHING_DEVICE_ID",
+      "tailscaleIP": "100.x.y.z",
+      "introducer": false
+    },
+    {
+      "name": "rpi-jellyflam3-04a",
+      "deviceID": "REPLACE_WITH_04A_SYNCTHING_DEVICE_ID",
+      "tailscaleIP": "100.x.y.z",
+      "introducer": false
+    }
+  ]
+}

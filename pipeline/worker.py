@@ -431,6 +431,14 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
     if free_space_gb(frames_root) < min_free:
         raise RuntimeError(f"insufficient free space under {frames_root} (< {min_free} GiB)")
 
+    from pipeline.library_disk import sheep_mount_should_refuse
+
+    if sheep_mount_should_refuse(cfg):
+        raise RuntimeError(
+            f"sheep library mount BAD — refuse ingest under {media_root} "
+            "(library_disk.worker_refuse_on_sheep_bad)"
+        )
+
     wait_for_gate(cfg)
 
     job_id = uuid.uuid4().hex[:12]

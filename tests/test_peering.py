@@ -1,15 +1,19 @@
 from pathlib import Path
 import json
+import subprocess
 
 from pipeline.peering import (
     assess_peering_readiness,
     count_online_furnace_peers_from_status,
     ensure_layout,
+    ensure_mesh_local,
     furnace_mesh_size,
     hygiene,
     is_opted_in,
     list_inbox_flam3,
     list_peer_junk_files,
+    load_peers_file,
+    mesh_join,
     opt_in,
     opt_out,
     peers_inbox,
@@ -101,6 +105,10 @@ def test_repo_stignore_does_not_share_stills_jpegs():
 
 def _live_share_mocks(monkeypatch):
     monkeypatch.setattr("pipeline.peering.unit_active", lambda _u: "active")
+    monkeypatch.setattr(
+        "pipeline.peering._have",
+        lambda cmd: False if cmd == "syncthing" else __import__("shutil").which(cmd) is not None,
+    )
     monkeypatch.setattr(
         "pipeline.peering._tailscale_status_brief",
         lambda: {
@@ -230,6 +238,10 @@ def test_opt_in_rolls_back_without_live_share(tmp_path: Path, monkeypatch):
     )
     cfg = _cfg(tmp_path)
     monkeypatch.delenv("TS_AUTHKEY", raising=False)
+    monkeypatch.setattr(
+        "pipeline.peering._have",
+        lambda cmd: False if cmd == "syncthing" else __import__("shutil").which(cmd) is not None,
+    )
     monkeypatch.setattr("pipeline.peering.unit_active", lambda _u: "inactive")
     monkeypatch.setattr(
         "pipeline.peering._tailscale_status_brief",
@@ -496,3 +508,114 @@ def test_trust_key_enrolls_pub_with_leading_whitespace_byte(tmp_path: Path):
     trusted = share_security._load_trusted_keys(cfg_local)
     assert enrolled["key_id"] in trusted
     assert trusted[enrolled["key_id"]] == raw
+
+
+def test_load_peers_file_skips_placeholders(tmp_path: Path):
+    example = Path(__file__).resolve().parents[1] / "configs" / "peering-peers.json.example"
+    assert load_peers_file(example) == []
+    peers = tmp_path / "peers.json"
+    peers.write_text(
+        json.dumps(
+            {
+                "peers": [
+                    {
+                        "name": "08a",
+                        "deviceID": "AAAA-BBBB-CCCC",
+                        "tailscaleIP": "100.64.0.8",
+                        "introducer": False,
+                    },
+                    {
+                        "name": "16a",
+                        "deviceID": "REPLACE_WITH_16A_SYNCTHING_DEVICE_ID",
+                        "tailscaleIP": "100.x.y.z",
+                        "introducer": True,
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    rows = load_peers_file(peers)
+    assert len(rows) == 1
+    assert rows[0]["name"] == "08a"
+    assert rows[0]["introducer"] is False
+
+
+def test_ensure_mesh_local_hardens_and_adds_folder(tmp_path: Path, monkeypatch):
+    (tmp_path / "deploy" / "peering").mkdir(parents=True)
+    (tmp_path / "deploy" / "peering" / "stignore").write_text("!*.flam3\n*\n", encoding="utf-8")
+    cfg = _cfg(tmp_path)
+    cfg["peering"]["syncthing"] = {"home": str(tmp_path / "sthome")}
+    seen: list[list[str]] = []
+
+    def fake_run(cmd, *, dry_run=False, env=None, input_text=None):
+        seen.append(list(cmd))
+        stdout = ""
+        if cmd == ["syncthing", "--device-id"]:
+            stdout = "SELFDEVICEID\n"
+        elif cmd[:4] == ["syncthing", "cli", "config", "folders"] and "list" in cmd:
+            stdout = ""
+        return subprocess.CompletedProcess(cmd, 0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr("pipeline.peering._have", lambda cmd: cmd == "syncthing")
+    monkeypatch.setattr("pipeline.peering._run", fake_run)
+    out = ensure_mesh_local(cfg, dry_run=False)
+    assert out["ok"] is True
+    assert out["folder_id"] == "jellyflam3-peers-inbox"
+    joined = [" ".join(c) for c in seen]
+    assert any("global-ann-enabled set false" in j for j in joined)
+    assert any("relays-enabled set false" in j for j in joined)
+    assert any("natenabled set false" in j for j in joined)
+    assert any("folders add-json" in j for j in joined)
+    assert (tmp_path / "genomes" / "peers" / "inbox" / ".stignore").is_file()
+
+
+def test_mesh_join_add_json_devices(tmp_path: Path, monkeypatch):
+    (tmp_path / "deploy" / "peering").mkdir(parents=True)
+    (tmp_path / "deploy" / "peering" / "stignore").write_text("!*.flam3\n*\n", encoding="utf-8")
+    cfg = _cfg(tmp_path)
+    cfg["peering"]["syncthing"] = {"home": str(tmp_path / "sthome")}
+    peers = tmp_path / "peers.json"
+    peers.write_text(
+        json.dumps(
+            {
+                "peers": [
+                    {
+                        "name": "16a",
+                        "deviceID": "DEV16A",
+                        "tailscaleIP": "100.64.0.16",
+                        "introducer": True,
+                    }
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    inputs: list[str] = []
+
+    def fake_run(cmd, *, dry_run=False, env=None, input_text=None):
+        if input_text:
+            inputs.append(input_text)
+        stdout = "jellyflam3-peers-inbox" if "folders" in cmd and "list" in cmd else ""
+        if cmd == ["syncthing", "--device-id"]:
+            stdout = "SELF\n"
+        return subprocess.CompletedProcess(cmd, 0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr("pipeline.peering._have", lambda cmd: cmd == "syncthing")
+    monkeypatch.setattr("pipeline.peering._run", fake_run)
+    out = mesh_join(cfg, peers, dry_run=False)
+    assert out["ok"] is True
+    assert len(out["added"]) == 1
+    assert out["added"][0]["introducer"] is True
+    assert any("DEV16A" in blob and "100.64.0.16" in blob for blob in inputs)
+
+
+def test_ensure_mesh_local_soft_fail_without_binary(tmp_path: Path, monkeypatch):
+    (tmp_path / "deploy" / "peering").mkdir(parents=True)
+    (tmp_path / "deploy" / "peering" / "stignore").write_text("!*.flam3\n*\n", encoding="utf-8")
+    cfg = _cfg(tmp_path)
+    monkeypatch.setattr("pipeline.peering._have", lambda _cmd: False)
+    out = ensure_mesh_local(cfg)
+    assert out["ok"] is True
+    assert out["reason"] == "syncthing_missing"
+

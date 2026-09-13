@@ -1,4 +1,4 @@
-"""Unit tests for pipeline.library_disk (WARN/BAD only; no rotate)."""
+"""Unit tests for pipeline.library_disk (WARN/BAD + worker refuse wiring)."""
 
 from __future__ import annotations
 
@@ -140,11 +140,14 @@ def test_example_yaml_documents_library_disk():
     text = EXAMPLE.read_text(encoding="utf-8")
     assert "library_disk:" in text
     assert "python3 -m pipeline.library_disk" in text
+    assert "rotate_enabled" in text
+    assert "worker_refuse_on_sheep_bad" in text
 
 
-def test_worker_does_not_import_library_disk():
+def test_worker_imports_library_disk_refuse():
     text = (ROOT / "pipeline" / "worker.py").read_text(encoding="utf-8")
-    assert "library_disk" not in text
+    assert "sheep_mount_should_refuse" in text
+    assert "library_disk" in text
 
 
 def test_healthcheck_wires_library_disk_probe():

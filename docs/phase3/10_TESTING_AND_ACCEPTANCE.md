@@ -167,13 +167,13 @@ git log -1 --oneline
 | LLM-assisted pedigree | Beyond flam3-genome tooling |
 | DeepDream / AI backends | Aspirational |
 | Channel Store / Roku publish (VoD + screensaver) | Post-launch ([phase4/04](../phase4/04_ROKU_PUBLISH.md)) |
-| Sheep library disk rotate | Check slice shipped 2026-09-03 (`pipeline.library_disk`); auto-purge parked |
+| Sheep library disk rotate | Rotate + worker refuse shipped 2026-09-13 (`pipeline.library_disk` / `library_rotate`) |
 | Concurrent clients / link capacity | Estimator shipped 2026-09-03 (`pipeline.link_capacity`); Owner OK 2026-09-09 |
 | End-user guide | Baseline complete 2026-09-03 ([phase4/05](../phase4/05_END_USER_GUIDE.md)); vote recipes wait on 08; alias CLI shipped with 09 |
 | Sidecar Phase 4 keys | Names reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema); 09 writes `alias`; 08 vote sink writes `viewer_feedback` |
 | Full social flock network | Aspirational |
 | Continuous / live HLS from shuffled MP4s | Dropped |
-| Peer share path + mesh introduce scripting | Post-launch |
+| Peer share path + mesh introduce scripting | Gated promote locked; mesh A/B/C shipped (Phase 4 / 01–02) |
 | Edges + watermark | Post-launch ([phase4/03](../phase4/03_EDGES_AND_WATERMARK.md); keys reserved) |
 | Sheep naming RNG | Furnace slice shipped 2026-09-09 (`pipeline.sheep_naming`); client filename/alias toggle parked |
 

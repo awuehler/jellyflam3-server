@@ -259,7 +259,7 @@ Integer estimate of concurrent **video** sessions one JellyFlam3-server can carr
 
 ### Library disk check
 
-Operator check of the sheep mount (`paths.media_library`) used % / free GiB. CLI: `python3 -m pipeline.library_disk check`. Healthcheck WARN (exit 0) vs BAD (exit 1). Auto-purge / rotate still parked. Guide: [phase4/06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md).
+Operator check of the sheep mount (`paths.media_library`) used % / free GiB. CLI: `python3 -m pipeline.library_disk check` / `rotate [--apply]`. Healthcheck WARN (exit 0) vs BAD (exit 1). Optional daily wrapper `scripts/cron_library_rotate.sh` is **inactive until needed**. Worker refuses ingest on sheep **BAD**. Guide: [phase4/06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md).
 
 ### Direct Stream
 

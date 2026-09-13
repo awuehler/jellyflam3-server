@@ -19,7 +19,12 @@ def _read(rel: str) -> str:
 
 
 def test_cron_wrappers_prepend_usr_local_bin():
-    for name in ("cron_breed_idle.sh", "cron_archive_seed.sh", "cron_share_votes.sh"):
+    for name in (
+        "cron_breed_idle.sh",
+        "cron_archive_seed.sh",
+        "cron_share_votes.sh",
+        "cron_library_rotate.sh",
+    ):
         text = _read(f"scripts/{name}")
         assert PATH_EXPORT in text, f"{name} must prepend /usr/local/bin for cron PATH"
 
@@ -43,6 +48,8 @@ def test_archive_cron_defaults_skip_catalog():
     assert 'ARCHIVE_SKIP_CATALOG:-1' in text
     assert "CMD+=(--skip-catalog)" in text
     assert "CMD+=(--no-skip-catalog)" in text
+    assert "pipeline.library_disk rotate" in text
+    assert "sheep library still BAD after rotate" in text
 
 
 def test_lab_idle_breed_crontab_is_0511():
@@ -74,7 +81,9 @@ def test_yaml_example_documents_per_host_archive_cron():
     assert "11 5 * * *" in text
     assert "archive_cron_dom: [3, 13, 23]" in text
     assert "41 6 * * *" in text
+    assert "23 5 * * *" in text
     assert "share_votes:" in text
+    assert "rotate_enabled" in text
 
 
 def test_lab_share_votes_crontab_is_0641():
@@ -88,6 +97,25 @@ def test_lab_share_votes_crontab_is_0641():
     assert "cron_share_votes.sh" in docs
     yaml = _read("configs/jellyflam3.yaml.example")
     assert "41 6 * * *" in yaml
+
+
+def test_lab_library_rotate_crontab_inactive_until_needed():
+    script = _read("scripts/cron_library_rotate.sh")
+    assert "23 5 * * *" in script
+    assert "05:23" in script
+    assert "NOT installed" in script
+    assert "inactive until needed" in script
+    assert "pipeline.library_disk rotate" in script
+    assert "--apply" in script
+    yaml = _read("configs/jellyflam3.yaml.example")
+    assert "23 5 * * *" in yaml
+    assert "inactive until needed" in yaml
+    docs = _read("docs/phase4/06_LIBRARY_DISK_ROTATE.md")
+    assert "cron_library_rotate.sh" in docs
+    assert "inactive until needed" in docs
+    runbook = _read("docs/USER_GUIDE_AND_RUNBOOK.md")
+    assert "cron_library_rotate.sh" in runbook
+    assert "inactive until needed" in runbook
 
 
 def test_operator_scripts_have_purpose_headers():

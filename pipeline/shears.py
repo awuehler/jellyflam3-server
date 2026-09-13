@@ -603,6 +603,32 @@ def apply_delete(
     return report
 
 
+def drop_git_feedstock_from_cascade(cfg: dict[str, Any], report: CascadeReport) -> CascadeReport:
+    """Strip in-repo samples/pedigree paths so rotate cannot delete git feedstock."""
+    roots: list[Path] = []
+    for d in _git_genome_dirs(cfg):
+        try:
+            roots.append(d.resolve())
+        except OSError:
+            roots.append(d)
+
+    def _keep(path: Path) -> bool:
+        try:
+            resolved = path.resolve()
+        except OSError:
+            resolved = path
+        for root in roots:
+            try:
+                resolved.relative_to(root)
+                return False
+            except ValueError:
+                continue
+        return True
+
+    report.genomes = [p for p in report.genomes if _keep(p)]
+    return report
+
+
 def shears_add(
     cfg: dict[str, Any],
     src: Path,

@@ -74,7 +74,7 @@ Symptom-oriented table (extend as lab learns):
 | Screensaver replaced VoD | One sideload slot | Re-sideload VoD or use private/Store ([04](04_ROKU_PUBLISH.md)) |
 | Peering empty | Opt In? Syncthing? trust keys? | Peering README; share-security verify |
 | Healthcheck mount fail | USB/NVMe | Phase 2 from-scratch mounts |
-| Sheep disk WARN / BAD | `library_disk check`; `df` | Shears delete (no auto-rotate yet) ([06](06_LIBRARY_DISK_ROTATE.md)) |
+| Sheep disk WARN / BAD | `library_disk check`; `df` | `library_disk rotate --apply` (rotate cron **inactive until needed**); Shears for one sheep ([06](06_LIBRARY_DISK_ROTATE.md)) |
 | Transcode hammering Pi / several TVs stutter | streamMode / `link_capacity estimate` | Prefer DirectPlay MP4; Ethernet for WiFi STA Pi; stay at/under N_max ([07](07_CONCURRENT_CLIENTS.md)) |
 
 ### E — Remaining (waits on 08)
@@ -91,7 +91,7 @@ Vote / like recipes in the user guide when [08](08_VIEWER_FEEDBACK_LOOP.md) ship
 ## Non-goals
 
 - Rewriting Phase 1–3 feature specs
-- Full Syncthing mesh introduce automation ([02](02_MESH_INTRODUCE_SCRIPTING.md))
+- Mesh admin UI ([02](02_MESH_INTRODUCE_SCRIPTING.md) is CLI A/B/C only)
 - Video tutorials / marketing site
 - Embedding secrets or live lab IPs as canonical examples
 

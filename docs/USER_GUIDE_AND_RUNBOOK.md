@@ -293,6 +293,7 @@ cd /opt/jellyflam3-server
 git log -1 --oneline                    # know what rev is live
 ./scripts/healthcheck.sh                # exit 0 = healthy; library-disk WARN allowed, BAD fails
 python3 -m pipeline.library_disk check  # sheep/scratch used % + free GiB
+python3 -m pipeline.library_disk rotate # plan oldest catalog retire (Shears)
 ./scripts/status_report.sh              # flock/inbox/thermals snapshot
 cat /var/lib/jellyflam3/idle_gate_status.json | python3 -m json.tool
 ```
@@ -376,8 +377,9 @@ python3 -m pipeline.worker --config configs/jellyflam3.yaml --once path/to/new.f
 | Cron | Script | Role |
 |---|---|---|
 | `11 5 * * *` | `scripts/cron_breed_idle.sh` | Daily idle breed when inbox empty (parents weighted by votes) |
+| _not installed_ | `scripts/cron_library_rotate.sh` | Oldest-catalog Shears rotate — **inactive until needed** (example `23 5 * * *`) |
 | `41 6 * * *` | `scripts/cron_share_votes.sh` | Daily liked sheep → `peers/share-out` (not inbox) |
-| Staggered DOM | `scripts/cron_archive_seed.sh` | ~10-day archive seed per host |
+| Staggered DOM | `scripts/cron_archive_seed.sh` | ~10-day archive seed per host (skips fetch if sheep still BAD) |
 
 Both prepend `/usr/local/bin` for `flam3-*`. Missing real config → **exit 1** (no silent `.yaml.example` fallback).
 
@@ -881,7 +883,7 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 | Worker quiet, gate open | `ls genomes/inbox/*.flam3`; journal `-u jellyflam3-worker`; `python3 -m pipeline.worker_drain status` | Seed inbox; inspect quarantine; **cancel** drain if `drain: true` |
 | `jellyflam3-display-sink` crash-loop (`activating` / `NRestarts` climbing) | journal: `DISPLAY_SINK_TOKEN required when binding a non-loopback host` | On **this** Pi: `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'` → `DISPLAY_SINK_TOKEN=` in `secrets.env`; `systemctl reset-failed` + restart. Same string → Roku `displaySinkToken`. Do not copy another furnace. See [Display sink token](#display-sink-token-how--where--when). |
 | healthcheck exit 1 | Read script sections (units, tools, status file, **peering share_live**, **library disk BAD**) | See [offline peering](#opt-in-vs-share-live-do-not-confuse-them); `opt-in` or `opt-out`; free space on `/media/sheep` |
-| Sheep disk WARN / BAD | `python3 -m pipeline.library_disk check`; `df -h /media/sheep` | Delete with Shears (no auto-rotate yet); do not Hammer unless wiping the factory |
+| Sheep disk WARN / BAD | `python3 -m pipeline.library_disk check`; `df -h /media/sheep` | `python3 -m pipeline.library_disk rotate --apply` (daily rotate cron is **inactive until needed**); Shears for one sheep; do not Hammer unless wiping the factory |
 | Empty flock with commercial-safe on | Items Tags missing | `jellyfin_id_dump.py --items`; [private vs public](#private-vs-public-furnace) step 2 |
 | Blank Roku SS | VoD Settings ever saved on this device? | Sideload VoD → Settings → re-sideload SS |
 | VoD **No poster** tiles | Items lack `ImageTags.Primary` (stills JPEGs are ignored) | `backfill_posters` (base64 Images POST); relaunch VoD |
@@ -950,14 +952,14 @@ python3 -m pipeline.sheep_tuple     # stage loop A + edge + loop B genome
 python3 -m pipeline.shears          # add/modify/delete/audit/sweep
 python3 -m pipeline.hammer         # nuclear local reset
 python3 -m pipeline.refactor        # quality scan/preview/apply/quarantine/batch
-python3 -m pipeline.peering         # opt-in/out, publish, promote, keys
+python3 -m pipeline.peering         # opt-in/out, mesh-join, publish, promote, keys
 python3 -m pipeline.stills          # operator re-extract of screensaver frames
 python3 -m pipeline.backfill_posters  # posters + stills + Jellyfin images
 python3 -m pipeline.media_layout    # catalog dir modes 2775/664
 python3 -m pipeline.job_recovery    # orphan job reclaim
 python3 -m pipeline.hw_profile      # apply 16a/08a/04a profile
 python3 -m pipeline.link_capacity   # concurrent-client N_max estimate
-python3 -m pipeline.library_disk    # sheep-mount WARN/BAD
+python3 -m pipeline.library_disk    # sheep-mount WARN/BAD + rotate
 python3 -m pipeline.sheep_naming    # alias backfill / set / clear / resolve
 python3 -m pipeline.sheep_votes     # sidecar like/love/vote (show / apply)
 python3 -m pipeline.share_votes     # liked sheep → peers/share-out (plan / --apply)
@@ -993,7 +995,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | TV-port / palette | `pipeline/tv_optimize.py`, `pipeline/palette_harmony.py` |
 | Share security | `pipeline/share_security.py`, `docs/phase3/05_SHARED_SHEEP_SECURITY.md` |
 | Link capacity / N_max | `pipeline/link_capacity.py`, `docs/phase4/07_CONCURRENT_CLIENTS.md` |
-| Library disk check | `pipeline/library_disk.py`, `docs/phase4/06_LIBRARY_DISK_ROTATE.md` |
+| Library disk check / rotate | `pipeline/library_disk.py`, `pipeline/library_rotate.py`, `docs/phase4/06_LIBRARY_DISK_ROTATE.md` |
 | Sheep aliases | `pipeline/sheep_naming.py`, `docs/phase4/09_SHEEP_NAMING.md` (LLM: [phase5/02](phase5/02_LLM_INTEGRATION.md) on agent platform) |
 | License / Cesari watermark | [NOTICE](../NOTICE), [phase1/07](phase1/07_LICENSE_AND_METADATA.md), [watermark README](media/watermark/README.md), [Private vs public](#private-vs-public-furnace), [Use your own PNG](#use-your-own-png-private-and-public) |
 | Catalog posters / stills | [Catalog posters](#catalog-posters-after-render) — `jellyfin.attach_posters` + `stills.enabled`; Roku SS Primary + Backdrop |

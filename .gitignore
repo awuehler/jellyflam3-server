@@ -35,6 +35,10 @@ genomes/quarantine/*
 !genomes/quarantine/.gitkeep
 genomes/done/*
 !genomes/done/.gitkeep
+# Host-local Syncthing device IDs / Tailscale IPs (never commit real IDs)
+configs/peering-peers.json
+!configs/peering-peers.json.example
+
 # Peers runtime (managed .stignore / OPT_IN / Syncthing marker — template is deploy/peering/stignore)
 genomes/peers/inbox/*
 !genomes/peers/inbox/.gitkeep

@@ -3,7 +3,7 @@
 Requirements: configs/jellyflam3.yaml peering.*; optional systemctl, Tailscale, Syncthing units;
 deploy/peering/stignore; ``pipeline.share_security`` for pre/post share integrity.
 
-Usage: ``python3 -m pipeline.peering status|opt-in|opt-out|publish|promote|ensure-layout|hygiene|gen-keys|trust-key``
+Usage: ``python3 -m pipeline.peering status|opt-in|opt-out|publish|promote|ensure-layout|ensure-mesh-local|mesh-join|hygiene|gen-keys|trust-key``
 
 Assumptions: Default is Opt Out. Sync = ``*.flam3`` + optional ``*-poster.jpg`` + integrity
 sidecars via managed ``.stignore`` under peers/inbox; promote is gated (share security then
@@ -28,6 +28,7 @@ from pipeline.config import load_config, resolve_path
 log = logging.getLogger("jellyflam3.peering")
 
 STIGNORE_NAME = ".stignore"
+PEERS_FOLDER_ID = "jellyflam3-peers-inbox"
 OPT_IN_NAME = "OPT_IN"
 STATUS_DEFAULT = Path("/var/lib/jellyflam3/peering_status.json")
 REPO_STIGNORE = Path("deploy/peering/stignore")
@@ -126,11 +127,209 @@ def ensure_layout(cfg: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def syncthing_home(cfg: dict[str, Any]) -> Path:
+    """Managed Syncthing HOME (config under ``$HOME/.local/state/syncthing``)."""
+    raw = (peering_cfg(cfg).get("syncthing") or {}).get("home") or "/var/lib/jellyflam3/syncthing"
+    path = Path(str(raw))
+    if not path.is_absolute():
+        path = Path(cfg.get("_repo_root") or ".") / path
+    return path
+
+
+def _syncthing_env(cfg: dict[str, Any]) -> dict[str, str]:
+    env = os.environ.copy()
+    env["HOME"] = str(syncthing_home(cfg))
+    return env
+
+
+def _syncthing_cli(
+    cfg: dict[str, Any],
+    args: list[str],
+    *,
+    dry_run: bool = False,
+    input_text: str | None = None,
+) -> subprocess.CompletedProcess[str]:
+    return _run(
+        ["syncthing", "cli", *args],
+        dry_run=dry_run,
+        env=_syncthing_env(cfg),
+        input_text=input_text,
+    )
+
+
+def ensure_mesh_local(cfg: dict[str, Any], *, dry_run: bool = False) -> dict[str, Any]:
+    """Option A: dirs + .stignore + discovery harden + local folder id (no peer IDs)."""
+    layout = ensure_layout(cfg)
+    steps: list[str] = ["layout"]
+    inbox = str(peers_inbox(cfg).resolve())
+    out: dict[str, Any] = {
+        "ok": True,
+        "action": "ensure-mesh-local",
+        "layout": layout,
+        "folder_id": PEERS_FOLDER_ID,
+        "folder_path": inbox,
+        "steps": steps,
+        "dry_run": dry_run,
+    }
+    if not _have("syncthing"):
+        steps.append("syncthing missing")
+        out["ok"] = True
+        out["reason"] = "syncthing_missing"
+        return out
+
+    for flag in ("global-ann-enabled", "relays-enabled", "natenabled"):
+        proc = _syncthing_cli(
+            cfg, ["config", "options", flag, "set", "false"], dry_run=dry_run
+        )
+        steps.append(f"{flag} rc={proc.returncode}")
+
+    listed = _syncthing_cli(cfg, ["config", "folders", "list"], dry_run=dry_run)
+    already = PEERS_FOLDER_ID in (listed.stdout or "")
+    if already:
+        steps.append("folder exists")
+        return out
+
+    my_id_proc = _run(
+        ["syncthing", "--device-id"],
+        dry_run=dry_run,
+        env=_syncthing_env(cfg),
+    )
+    my_id = (my_id_proc.stdout or "").strip()
+    folder_doc = {
+        "id": PEERS_FOLDER_ID,
+        "label": PEERS_FOLDER_ID,
+        "path": inbox,
+        "type": "sendreceive",
+        "devices": ([{"deviceID": my_id}] if my_id else []),
+    }
+    add = _syncthing_cli(
+        cfg,
+        ["config", "folders", "add-json"],
+        dry_run=dry_run,
+        input_text=json.dumps(folder_doc),
+    )
+    steps.append(f"folders add-json rc={add.returncode}")
+    if add.returncode != 0 and not dry_run:
+        err = (add.stderr or add.stdout or "")[:400]
+        if "duplicate" in err.lower() or "already" in err.lower():
+            steps.append("folder already present")
+        else:
+            out["ok"] = False
+            out["reason"] = err or "folders_add_failed"
+    return out
+
+
+def load_peers_file(path: Path) -> list[dict[str, Any]]:
+    """Parse gitignored peer list (JSON object with ``peers`` or a JSON array)."""
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(raw, dict):
+        items = raw.get("peers") or raw.get("devices") or []
+    else:
+        items = raw
+    if not isinstance(items, list):
+        raise ValueError("peers file must be a list or {peers: [...]}")
+    out: list[dict[str, Any]] = []
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        did = str(item.get("deviceID") or item.get("device_id") or "").strip()
+        ip = str(item.get("tailscaleIP") or item.get("tailscale_ip") or "").strip()
+        name = str(item.get("name") or did[:8] or "peer").strip()
+        if not did or did.startswith("REPLACE") or not ip or ip.startswith("100.x"):
+            continue
+        out.append(
+            {
+                "name": name,
+                "deviceID": did,
+                "tailscaleIP": ip,
+                "introducer": bool(item.get("introducer")),
+            }
+        )
+    return out
+
+
+def mesh_join(
+    cfg: dict[str, Any],
+    peers_file: Path,
+    *,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """Option B: add-json devices + share folder from a host-local peers file."""
+    local = ensure_mesh_local(cfg, dry_run=dry_run)
+    payload: dict[str, Any] = {
+        "ok": True,
+        "action": "mesh-join",
+        "peers_file": str(peers_file),
+        "local": local,
+        "added": [],
+        "skipped": [],
+        "dry_run": dry_run,
+    }
+    if not peers_file.is_file():
+        payload["ok"] = False
+        payload["reason"] = "peers_file_missing"
+        return payload
+    try:
+        peers = load_peers_file(peers_file)
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        payload["ok"] = False
+        payload["reason"] = str(exc)
+        return payload
+    if not peers:
+        payload["reason"] = "no_usable_peers"
+        return payload
+    if not _have("syncthing"):
+        payload["reason"] = "syncthing_missing"
+        payload["ok"] = True
+        return payload
+
+    for peer in peers:
+        doc = {
+            "deviceID": peer["deviceID"],
+            "name": peer["name"],
+            "addresses": [f"tcp://{peer['tailscaleIP']}:22000"],
+            "introducer": peer["introducer"],
+        }
+        proc = _syncthing_cli(
+            cfg,
+            ["config", "devices", "add-json"],
+            dry_run=dry_run,
+            input_text=json.dumps(doc),
+        )
+        rec = {**peer, "rc": proc.returncode}
+        err = (proc.stderr or proc.stdout or "")[:200]
+        if proc.returncode != 0 and "duplicate" not in err.lower() and "already" not in err.lower():
+            rec["error"] = err
+            payload["skipped"].append(rec)
+        else:
+            payload["added"].append(rec)
+            _syncthing_cli(
+                cfg,
+                [
+                    "config",
+                    "folders",
+                    PEERS_FOLDER_ID,
+                    "devices",
+                    "add",
+                    "--device-id",
+                    peer["deviceID"],
+                ],
+                dry_run=dry_run,
+            )
+    return payload
+
+
 def is_opted_in(cfg: dict[str, Any]) -> bool:
     return opt_in_ack_path(cfg).is_file()
 
 
-def _run(cmd: list[str], *, dry_run: bool = False) -> subprocess.CompletedProcess[str]:
+def _run(
+    cmd: list[str],
+    *,
+    dry_run: bool = False,
+    env: dict[str, str] | None = None,
+    input_text: str | None = None,
+) -> subprocess.CompletedProcess[str]:
     """Run a command (or no-op on dry-run); never raises on non-zero exit."""
     # Never log secrets (e.g. --auth-key=tskey-…).
     safe = []
@@ -142,7 +341,14 @@ def _run(cmd: list[str], *, dry_run: bool = False) -> subprocess.CompletedProces
     log.info("%s%s", "DRY-RUN " if dry_run else "", " ".join(safe))
     if dry_run:
         return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
-    return subprocess.run(cmd, capture_output=True, text=True, check=False)
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        check=False,
+        env=env,
+        input=input_text,
+    )
 
 
 def _systemctl(*args: str, dry_run: bool = False) -> subprocess.CompletedProcess[str]:
@@ -354,6 +560,16 @@ def opt_in(cfg: dict[str, Any], *, dry_run: bool = False) -> dict[str, Any]:
             steps.append(f"enable/start {unit}")
     else:
         steps.append("systemctl missing")
+
+    try:
+        mesh = ensure_mesh_local(cfg, dry_run=dry_run)
+        steps.append(
+            "ensure-mesh-local ok="
+            + str(mesh.get("ok"))
+            + (" reason=" + str(mesh["reason"]) if mesh.get("reason") else "")
+        )
+    except Exception as exc:  # noqa: BLE001
+        steps.append(f"ensure-mesh-local skipped: {exc}")
 
     ack = opt_in_ack_path(cfg)
     if not dry_run:
@@ -737,6 +953,24 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("status", help="Show Opt In / unit / Tailscale status", parents=[parent])
     sub.add_parser("ensure-layout", help="Create peers dirs + .stignore", parents=[parent])
+    p_mesh = sub.add_parser(
+        "ensure-mesh-local",
+        help="Option A: layout + discovery harden + local folder id (no peer IDs)",
+        parents=[parent],
+    )
+    p_mesh.add_argument("--dry-run", action="store_true")
+    p_join = sub.add_parser(
+        "mesh-join",
+        help="Option B: add-json devices from a gitignored peers file",
+        parents=[parent],
+    )
+    p_join.add_argument(
+        "--peers-file",
+        type=Path,
+        default=Path("configs/peering-peers.json"),
+        help="Host-local JSON (never commit real device IDs)",
+    )
+    p_join.add_argument("--dry-run", action="store_true")
 
     p_in = sub.add_parser(
         "opt-in", help="Opt In: Tailscale enroll + start Syncthing", parents=[parent]
@@ -834,6 +1068,16 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(ensure_layout(cfg), indent=2))
         write_status(cfg, {"last_action": "ensure-layout"})
         return 0
+    if args.cmd == "ensure-mesh-local":
+        payload = ensure_mesh_local(cfg, dry_run=args.dry_run)
+        print(json.dumps(payload, indent=2))
+        write_status(cfg, {"last_action": "ensure-mesh-local", "mesh": payload})
+        return 0 if payload.get("ok") else 1
+    if args.cmd == "mesh-join":
+        payload = mesh_join(cfg, args.peers_file, dry_run=args.dry_run)
+        print(json.dumps(payload, indent=2))
+        write_status(cfg, {"last_action": "mesh-join", "mesh": payload})
+        return 0 if payload.get("ok") else 1
     if args.cmd == "opt-in":
         print(json.dumps(opt_in(cfg, dry_run=args.dry_run), indent=2))
         return 0

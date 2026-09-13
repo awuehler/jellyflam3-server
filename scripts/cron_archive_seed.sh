@@ -4,6 +4,7 @@
 #          (Phase 2 guide 01). Pairs with daily cron_breed_idle.sh for 24x7 furnace work.
 # Pre-fill gate: skip/shrink fetch when inbox cannot drain before the next cron event
 # (conservative wall-clock hours/sheep, Gold Sheep Lite + idle-gate pauses).
+# Guide 06: rotate catalog first; skip fetch if sheep mount is still BAD.
 # Requirements: bash, python3, PyYAML, flock; pipeline.seed_inbox; writable inbox + lock.
 #          flam3 is not required here (fetch + TV-port); worker render uses flam3 later.
 #
@@ -139,6 +140,20 @@ INTERVAL_HOURS=$((INTERVAL_DAYS * 24))
 MAX_CLEARABLE=$((INTERVAL_HOURS / EST_HOURS_PER_SHEEP))
 if [[ "$MAX_CLEARABLE" -lt 1 ]]; then
   MAX_CLEARABLE=1
+fi
+
+# Guide 06 C.3 — rotate first; skip fetch if the sheep mount is still BAD.
+cd "$ROOT"
+set +e
+python3 -m pipeline.library_disk rotate --config "$CFG" --apply
+set -e
+set +e
+python3 -m pipeline.library_disk check --config "$CFG"
+disk_rc=$?
+set -e
+if [[ "$disk_rc" -eq 2 ]]; then
+  log "SKIP archive seed: sheep library still BAD after rotate (guide 06)"
+  exit 0
 fi
 
 log "inbox=$INBOX count=$INBOX_COUNT interval_days=$INTERVAL_DAYS est_h/sheep=$EST_HOURS_PER_SHEEP max_clearable=$MAX_CLEARABLE"

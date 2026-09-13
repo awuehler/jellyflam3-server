@@ -4,7 +4,7 @@
 
 | Decision | Choice |
 |---|---|
-| User surface | CLI: `python3 -m pipeline.peering {status\|opt-in\|opt-out\|publish\|promote\|gen-keys\|trust-key}` |
+| User surface | CLI: `python3 -m pipeline.peering {status\|opt-in\|opt-out\|publish\|promote\|ensure-mesh-local\|mesh-join\|gen-keys\|trust-key}` |
 | Tailscale auth | **Pre-auth key** in `secrets.env` as `TS_AUTHKEY` (never commit) |
 | Tag | `tag:jellyflam3` (furnaces). Phase 5 agent: `tag:jellyflam3-agent` — [phase5/01](../../docs/phase5/01_VENTUNO_Q_HOST.md#tailscale-flock-tailnet) |
 | Syncthing share | Folder root = `genomes/peers/inbox` (config `peering.peers_inbox`); `.stignore` = this directory’s `stignore` |
@@ -57,7 +57,10 @@ python3 -m pipeline.peering status --config configs/jellyflam3.yaml
 # Config: peering.watchdog.* in jellyflam3.yaml.example
 
 # One-time (per host / new peer): Syncthing folder + device introduce
-# — see “Syncthing first-time mesh introduce” below. Opt In alone does not mesh.
+# Option A (local folder) runs from opt-in / ensure-mesh-local.
+# Option B: copy configs/peering-peers.json.example → configs/peering-peers.json
+#   (gitignored), fill real IDs, then mesh-join. Option C: introducer: true on 16a.
+# Manual add-json remains valid — see “Syncthing first-time mesh introduce” below.
 
 # Peer land: Syncthing writes into genomes/peers/inbox only.
 # The render worker does NOT watch that folder — promote is required.
@@ -204,20 +207,26 @@ under `genomes/peers/inbox` and is **not** in `genomes/inbox` until `promote --a
 GUI alternative: SSH tunnel to `127.0.0.1:8384` and add the same folder/devices
 (still prefer Tailscale `tcp://100.x:22000` addresses).
 
-## Scripting options (deferred — Phase 4)
+## Mesh introduce scripting (Phase 4 / 02)
 
-**Do not implement during Phase 3 feature work.** Revisit when Phase 4 opens — see [docs/phase4/02_MESH_INTRODUCE_SCRIPTING.md](../../docs/phase4/02_MESH_INTRODUCE_SCRIPTING.md) and [docs/phase4/00_OVERVIEW.md](../../docs/phase4/00_OVERVIEW.md). Until then, use the manual runbook above.
+See [docs/phase4/02_MESH_INTRODUCE_SCRIPTING.md](../../docs/phase4/02_MESH_INTRODUCE_SCRIPTING.md).
 
-| Option | What it would do | Notes |
+| Option | What it does | Notes |
 |---|---|---|
-| **A. Local folder ensure** | Extend `opt-in` (or `peering ensure-mesh-local`) to create folder `jellyflam3-peers-inbox`, write `.stignore`, apply discovery harden flags via `syncthing cli` | Safe automation; no cross-host secrets |
-| **B. Peer list file** | Host-local JSON/YAML of `{name, deviceID, tailscaleIP}` (gitignored); CLI `mesh-join --peers-file=…` runs `add-json` for devices + folder shares | Best lab DX; never commit the file |
-| **C. Introducer-assisted join** | New host only introduces to one introducer device ID; Syncthing propagates the rest | Still needs one mutual introduce + folder accept |
-| **D. Stay manual** | Keep this runbook; Opt In/Out remain lifecycle only | **Current stance** through Phase 3; revisit in Phase 4 |
+| **A. Local folder ensure** | `ensure-mesh-local` (also from `opt-in`) | Folder id, `.stignore`, discovery harden; no peer IDs |
+| **B. Peer list file** | `mesh-join --peers-file configs/peering-peers.json` | Gitignored; never commit real IDs |
+| **C. Introducer** | `"introducer": true` on the 16a row in B’s file | Still one mutual introduce |
+| **D. Stay manual** | add-json runbook above | Still valid |
 
-Also deferred with the same revisit: whether gated promote (land ≠ worker ingest) should stay explicit or change (e.g. auto-promote / timer).
+```bash
+python3 -m pipeline.peering ensure-mesh-local --config configs/jellyflam3.yaml
+python3 -m pipeline.peering mesh-join --config configs/jellyflam3.yaml \
+    --peers-file configs/peering-peers.json
+```
 
-**Non-goals (still):** mesh admin UI; committing device IDs; re-opening global discovery/relays for flock share.
+Gated promote (land ≠ worker ingest) stays explicit — auto-promote is still parked.
+
+**Non-goals:** mesh admin UI; committing device IDs; re-opening global discovery/relays for flock share.
 
 ## Smoke test (fixture)
 

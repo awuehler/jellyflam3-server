@@ -8,12 +8,12 @@
 #
 # When to run: After git pull / unit install / RC acceptance (docs/phase3/10_TESTING_AND_ACCEPTANCE.md).
 # Success: exit 0 — required units active, flam3+ffmpeg present, idle-gate status readable,
-#          sheep mount not BAD (WARN is allowed).
+#          sheep mount not BAD (WARN is allowed). Rotate cron + worker refuse on BAD (guide 06).
 # Fail: exit 1 — missing tools (often PATH), units down, status file missing, Opt In without live share,
 #       or library disk BAD (used>=95% or free<4G defaults).
 #
 # Assumptions: Run on the JellyFlam3 host; STATUS_FILE defaults to /var/lib/jellyflam3/idle_gate_status.json.
-#              Library disk WARN does not fail (guide 06 slice — no auto-purge).
+#              Library disk WARN does not fail (rotate + worker refuse on BAD — guide 06).
 
 set -euo pipefail
 
@@ -29,13 +29,13 @@ ERR=0
 echo "== mounts =="
 df -h /media/sheep /var/cache/jellyflam3 /var/lib/jellyflam3 2>/dev/null || df -h
 
-echo "== library disk (guide 06 slice) =="
+echo "== library disk (guide 06) =="
 set +e
 python3 -m pipeline.library_disk check --config "$CFG"
 disk_rc=$?
 set -e
 if [[ "$disk_rc" -eq 1 ]]; then
-  : # WARN — healthcheck stays green (no auto-purge / no worker refuse)
+  : # WARN — healthcheck stays green (rotate is cron / library_disk rotate --apply)
 elif [[ "$disk_rc" -ne 0 ]]; then
   ERR=1
 fi

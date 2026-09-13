@@ -125,7 +125,7 @@ On **Opt In**, the host service SHALL:
 5. **Start** Syncthing (`jellyflam3-syncthing.service`) with HOME under `/var/lib/jellyflam3/syncthing`.
 6. **Record** Opt-In ack + `peering_status.json`; surface in `status_report.sh` / `healthcheck.sh`.
 
-**Out of scope for Opt In today:** creating folder id `jellyflam3-peers-inbox`, adding peer device IDs / Tailscale `tcp://100.x:22000` addresses, introducer flags, or discovery/relay hardening. Those are the one-time mesh introduce in [`deploy/peering/README.md`](../../deploy/peering/README.md#syncthing-first-time-mesh-introduce-lab-runbook).
+**Phase 4 / 02:** `opt-in` also runs `ensure-mesh-local` (folder id `jellyflam3-peers-inbox`, discovery harden). Peer device IDs / Tailscale `tcp://100.x:22000` addresses remain `mesh-join` or the manual add-json runbook in [`deploy/peering/README.md`](../../deploy/peering/README.md#syncthing-first-time-mesh-introduce-lab-runbook).
 
 ## Opt Out (host service)
 
@@ -195,10 +195,11 @@ Smoked on `16a` / `08a` / `04a` (2026-08-11):
 | Tailscale enroll / logout | `pipeline.peering opt-in` / `opt-out` | Every Opt In / Out |
 | `.stignore` write + Syncthing unit start/stop | host service | Every Opt In / Out |
 | Tailscale / Syncthing stay-alive while Opt In | `pipeline.tailscale_watch` + `cron_tailscale_watch.sh` | Poll (~5 min); if LAN gateway unreachable, rate-limited Wi‑Fi bounce; then heal `tailscaled` + `tailscale up` + Syncthing unit |
-| Folder create + peer introduce + discovery harden | **Operator** (CLI/GUI runbook) | **Once** per host / new peer |
+| Folder create + discovery harden | `ensure-mesh-local` (from `opt-in`) | Once per host |
+| Peer device IDs / introducer | `mesh-join --peers-file` or manual add-json | Once per host / new peer |
 | Gated promote | Operator (`promote --apply`) | Whenever land should enter the furnace |
 
-Scripting options to shrink the one-time mesh introduce are listed in [`deploy/peering/README.md`](../../deploy/peering/README.md#scripting-options-deferred--phase-4) — **deferred to Phase 4** (not Phase 2/3 debt; no mesh admin UI now).
+Scripting for first-time mesh introduce is **shipped** in Phase 4 / [02](../phase4/02_MESH_INTRODUCE_SCRIPTING.md) (`ensure-mesh-local`, `mesh-join`). Manual add-json remains in [`deploy/peering/README.md`](../../deploy/peering/README.md#syncthing-first-time-mesh-introduce-lab-runbook).
 
 ## Guidelines
 

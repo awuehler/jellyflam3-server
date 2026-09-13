@@ -76,16 +76,23 @@ link_capacity:
   headroom: 0.30                    # leave 30% unused so retries/bursts do not stall players
   # usable_mbps: 35                 # optional: overwrite after bench-recv on YOUR hop
 
-# Sheep library mount capacity (Phase 4 / 06 slice). WARN/BAD in healthcheck only.
+# Sheep library mount capacity (Phase 4 / 06). WARN/BAD in healthcheck; rotate + worker refuse.
 #   python3 -m pipeline.library_disk check
-# No auto-purge and no worker refuse — rotate stays parked. Scratch encode floor is still
-# render.free_space_gb_min (worker). Same-device sheep+scratch is reported once.
+#   python3 -m pipeline.library_disk rotate [--apply]
+#   scripts/cron_library_rotate.sh   (example 23 5 * * *; NOT installed — inactive until needed)
+# Scratch encode floor is still render.free_space_gb_min. Same-device sheep+scratch
+# is reported once. Rotate uses Shears cascade (not Hammer); git samples/pedigree stay.
 library_disk:
   warn_used_pct: 80
   bad_used_pct: 95
   warn_free_gb: 16
   bad_free_gb: 4
   check_scratch: true
+  rotate_enabled: true
+  rotate_floor: 1                 # never delete the last playable catalog MP4
+  rotate_max_per_run: 8
+  rotate_until: ok                # ok = purge while WARN/BAD; warn = purge only while BAD
+  worker_refuse_on_sheep_bad: true
 
 idle_gate:
   enabled: true
@@ -224,7 +231,7 @@ seed_archive:
 # User-facing surface = host service Opt In / Opt Out only (see docs/phase2/05_SYNCTHING_GENOME_PEERING.md).
 # Sync = *.flam3 + optional *-poster.jpg + integrity sidecars (Phase 3 guide 05).
 # Land = genomes/peers/inbox (Syncthing). Worker does NOT auto-pick — promote --apply → genomes/inbox.
-# CLI: python3 -m pipeline.peering status|opt-in|opt-out|publish|promote|gen-keys|trust-key
+# CLI: python3 -m pipeline.peering status|opt-in|opt-out|publish|promote|ensure-mesh-local|mesh-join|gen-keys|trust-key
 # Voted catalog sheep → share-out (not genomes/inbox): python3 -m pipeline.share_votes
 #   scripts/cron_share_votes.sh  (lab: 41 6 * * *). Kill-switch share_votes.enabled.
 share_votes:
@@ -254,11 +261,11 @@ peering:
   syncthing:
     enabled_when_opted_in: true
     unit: jellyflam3-syncthing.service
-    # config lives under HOME=/var/lib/jellyflam3/syncthing (managed unit)
-    # First-time folder/device introduce is operator runbook (not opt-in):
-    #   folder id jellyflam3-peers-inbox → peers_inbox path; see deploy/peering/README.md
-    # Optional later (Phase 4): mesh-ensure / gitignored peer-list CLI
-    #   — see deploy/peering/README.md + docs/phase4/00_OVERVIEW.md
+    home: /var/lib/jellyflam3/syncthing   # HOME for syncthing cli (managed unit)
+    # Option A: opt-in / ensure-mesh-local creates folder id jellyflam3-peers-inbox
+    # Option B: gitignored configs/peering-peers.json + mesh-join --peers-file
+    # Option C: set introducer: true on the 16a row in that file
+    # Manual add-json still valid — see deploy/peering/README.md + docs/phase4/02
   tailscale:
     enabled_when_opted_in: true
     tag: tag:jellyflam3

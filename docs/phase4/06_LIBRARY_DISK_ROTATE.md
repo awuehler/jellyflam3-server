@@ -2,9 +2,9 @@
 
 ## Boundary
 
-Keep the **on-disk Sheep library** from filling the media mount: periodic **filesystem free-space check**, then (later) **auto-purge / rotate** catalog sheep with a Shears-grade cascade.
+Keep the **on-disk Sheep library** from filling the media mount: periodic **filesystem free-space check**, then **auto-purge / rotate** catalog sheep with a Shears-grade cascade (not Hammer).
 
-**Status:** Check **slice shipped** 2026-09-03 (healthcheck WARN/BAD). Auto-purge, worker refuse, and rotate cron stay **parked**.
+**Status:** Check + rotate + worker refuse **shipped** 2026-09-13. Daily `cron_library_rotate.sh` exists but is **inactive until needed** (not in lab crontab). Archive seed (existing ~10-day job) still rotates before fetch and skips fetch if the sheep mount is still BAD.
 
 Complements (does not replace):
 
@@ -20,10 +20,10 @@ Poison-genome quarantine remains a worker/tax concern; this guide is **capacity*
 | Need | Why |
 |---|---|
 | **Free-space check** | Detect the media library (and optionally scratch) approaching full **before** encode/ingest fails mid-job |
-| **Auto-purge / rotate** | Reclaim space by retiring oldest catalog sheep with a **Shears-grade cascade** — **not this slice** |
+| **Auto-purge / rotate** | Reclaim space by retiring oldest catalog sheep with a **Shears-grade cascade** |
 | **Keep furnace 24×7** | Daily idle-breed + ~10-day archive fill assume room on `/media/sheep` |
 
-## Slice (shipped) vs parked
+## Slice
 
 | Piece | State |
 |---|---|
@@ -31,12 +31,12 @@ Poison-genome quarantine remains a worker/tax concern; this guide is **capacity*
 | Config warn / bad thresholds | **Shipped** — `library_disk.*` |
 | `healthcheck.sh` WARN (exit 0) / BAD (exit 1) | **Shipped** |
 | `status_report.sh` bytes / % / level | **Shipped** |
-| Worker refuse new renders | **Parked** — scratch floor remains `render.free_space_gb_min` only |
-| Auto-rotate / cron / Shears cascade | **Parked** |
+| Worker refuse new renders | **Shipped** — sheep mount **BAD** only (`library_disk.worker_refuse_on_sheep_bad`, default on). Scratch floor remains `render.free_space_gb_min` |
+| Auto-rotate / cron / Shears cascade | **Shipped** — CLI `library_disk rotate [--apply]`; wrapper `scripts/cron_library_rotate.sh` (**not installed** on lab fleet until needed) |
 
 ## Work items
 
-### A — Check (shipped)
+### A — Check
 
 ```bash
 cd /opt/jellyflam3-server
@@ -58,66 +58,69 @@ Thresholds (`configs/jellyflam3.yaml.example`):
 
 Python `shutil.disk_usage` (same as status_report) — not `df` Use% (reserved blocks differ).
 
-Worker encode preflight is still **scratch-only** (`render.free_space_gb_min`, 8 GiB / 4 GiB on `-04`). This slice does **not** stop ingest on a full sheep disk.
+### B — Rotate policy (implemented)
 
-### B — Rotate policy (paper; not implemented)
+1. Keep space under threshold (`rotate_until: ok` purges while WARN/BAD; `warn` purges only while BAD).
+2. **Candidate order:** oldest catalog MP4 **mtime** (ingest age). Unpublished / `_refactor-*` / edges skipped.
+3. Never delete the only remaining playable loop (**floor ≥ 1**, `rotate_floor`).
+4. Same cascade as Shears delete, then **drop git** `genomes/samples` and `genomes/pedigree`.
+5. Plan by default; `--apply` / cron apply. `rotate_max_per_run` (default 8). Kill-switch `rotate_enabled`.
 
-When Phase 4 opens rotate:
+```bash
+python3 -m pipeline.library_disk rotate           # plan
+python3 -m pipeline.library_disk rotate --apply   # Shears deletes
+./scripts/cron_library_rotate.sh                  # flock + --apply
+./scripts/cron_library_rotate.sh --dry-run        # plan only
+```
 
-1. Keep **N GiB free** (or drop below warn); purge until under threshold or a **floor** of retained sheep.
-2. **Default candidate order (locked on paper):** oldest catalog MP4 **mtime** (ingest age). LRU last-played and oldest-generation are later options; commercial-safe vs NC is a filter, not a DoD blocker.
-3. Never delete the only remaining playable loop (**floor ≥ 1**).
-4. Same cascade as Shears delete (no orphan Jellyfin rows, no leftover stills/posters).
-5. Dry-run first; `--apply` / cron apply; log every retired sheep id.
+Example crontab (user `jellyflam3`) — **do not install until needed** (lab sheep disks are far below WARN):
 
-### C — Hook points (parked)
+```cron
+# inactive until needed — not on 16a / 08a / 04a
+23 5 * * *  /opt/jellyflam3-server/scripts/cron_library_rotate.sh \
+    >>/var/log/jellyflam3/library_rotate.log 2>&1
+```
 
-1. Worker preflight on the **sheep** mount (clear error, no half-written job).
-2. `scripts/cron_library_rotate.sh` after archive seed / idle-breed.
-3. Pause archive seed when rotate cannot free enough space.
+### C — Hook points
+
+1. Worker preflight on the **sheep** mount: refuse ingest when BAD (`RuntimeError`); WARN still renders.
+2. `scripts/cron_library_rotate.sh` — **inactive until needed** (example 05:23; not in lab crontab). Run the wrapper by hand when a host is WARN/BAD.
+3. `cron_archive_seed.sh` runs rotate `--apply` then **skips fetch** if check still exits 2 (BAD).
 
 ## Lab (2026-09-03)
 
-All three furnaces **OK** (far below warn). Sheep is a separate USB/SATA volume; cache+lib share NVMe.
-
-| Host | Sheep total | Sheep used | Sheep free | Scratch used |
-|---|---:|---:|---:|---:|
-| 16a | 879.1 G | 0.2 G (0.0%) | 834.2 G | 0.4% of 916 G |
-| 08a | 439.0 G | 0.2 G (0.1%) | 416.4 G | 0.2% of 468 G |
-| 04a | 219.0 G | 0.1 G (0.0%) | 207.7 G | 0.3% of 234 G |
-
-No BAD/WARN in lab. Do not fill living-room disks as a soak test.
+All three furnaces **OK** (far below warn). Sheep is a separate USB/SATA volume; cache+lib share NVMe. Do not fill living-room disks as a soak test. Rotate is tested with injected usage + tiny catalog trees in pytest.
 
 ## Guidelines
 
-1. Rotate (when built) is **not** Hammer and **not** the human Shears CLI — an automated valve that **reuses** Shears cascade code.
+1. Rotate is **not** Hammer and **not** the human Shears CLI — an automated valve that **reuses** Shears cascade code.
 2. Prefer deleting **catalog outputs** the furnace can re-create.
 3. Git pedigree / samples under the repo are **not** rotation targets.
-4. Test rotate on a lab Pi with a tiny floor + fake threshold before fleet cron.
+4. `library_disk.rotate_enabled: false` to stop cron apply without uninstalling crontab.
 
-## Non-goals (this slice)
+## Non-goals
 
-- Auto-purge / Shears cascade from cron
-- Worker refuse on `media_library`
 - Filling the disk on purpose as a soak test
 - Cross-host “mesh rotate”
 - Using Hammer `--apply` as rotate
+- LRU last-played / commercial-safe filters (later options)
 
 ## Artifacts
 
 | Artifact | Kind | Role |
 |---|---|---|
-| `pipeline/library_disk.py` | pipeline | Classify + CLI |
-| `library_disk.*` in yaml example | config | Warn / bad thresholds |
-| `healthcheck.sh` / `status_report.sh` | ops | Surface free space + level |
-| This guide | docs | Slice vs parked rotate |
+| `pipeline/library_disk.py` | pipeline | Classify + CLI `check` / `rotate` |
+| `pipeline/library_rotate.py` | pipeline | Oldest-mtime Shears rotate |
+| `scripts/cron_library_rotate.sh` | ops | Optional daily flock + `--apply` (**inactive until needed**) |
+| `library_disk.*` in yaml example | config | Warn / bad / rotate / refuse |
+| This guide | docs | Check + rotate |
 
 ## Exit criteria
 
-- [x] Configurable free-space check on the sheep library mount (slice)
-- [ ] Auto-rotate dry-run + apply reclaims space without orphaning Jellyfin/catalog artifacts
-- [ ] Worker refuses new renders when below stop-ingest threshold (sheep mount)
-- [x] Health/status shows disk free (level; last rotate N/A until rotate ships)
+- [x] Configurable free-space check on the sheep library mount
+- [x] Auto-rotate dry-run + apply reclaims catalog without deleting git feedstock
+- [x] Worker refuses new renders when sheep mount is BAD
+- [x] Health/status shows disk free; rotate cron documented
 - [ ] Owner OK
 
 ### Sign-off

@@ -5,9 +5,10 @@ Requirements: ``paths.media_library``; optional ``library_disk.*`` thresholds in
 Usage:
   python3 -m pipeline.library_disk check
   python3 -m pipeline.library_disk check --json
+  python3 -m pipeline.library_disk rotate
+  python3 -m pipeline.library_disk rotate --apply
 
-Assumptions: Ops only — no auto-purge, no worker ingest refuse (Phase 4 / 06
-full rotate). Exit 0=ok, 1=warn, 2=bad. healthcheck fails only on bad.
+Assumptions: Ops check plus optional rotate/refuse (Phase 4 / 06). Exit 0=ok, 1=warn, 2=bad. healthcheck fails only on bad.
 """
 
 from __future__ import annotations
@@ -203,6 +204,30 @@ def assess_config(
     return DiskReport(checks=checks, worst=worst, thresholds=thr)
 
 
+def sheep_check(cfg: dict[str, Any] | None, *, usage_for: dict[str, Any] | None = None) -> DiskCheck | None:
+    """Return the sheep-mount row, or None if it was not assessed."""
+    report = assess_config(cfg, usage_for=usage_for)
+    for row in report.checks:
+        if row.role == "sheep":
+            return row
+    return None
+
+
+def sheep_mount_should_refuse(
+    cfg: dict[str, Any] | None,
+    *,
+    usage_for: dict[str, Any] | None = None,
+) -> bool:
+    """True when the sheep library is BAD and worker refuse is enabled."""
+    block = (cfg or {}).get("library_disk") or {}
+    if isinstance(block, dict) and not bool(block.get("worker_refuse_on_sheep_bad", True)):
+        return False
+    row = sheep_check(cfg, usage_for=usage_for)
+    if row is None:
+        return True
+    return row.level == "bad"
+
+
 def format_check(check: DiskCheck) -> str:
     """One healthcheck-style line."""
     tag = check.level.upper()
@@ -222,7 +247,7 @@ def format_report(report: DiskReport) -> str:
     lines.append(
         f"thresholds warn>={t['warn_used_pct']:g}% or free<{t['warn_free_gb']:g}G; "
         f"bad>={t['bad_used_pct']:g}% or free<{t['bad_free_gb']:g}G "
-        "(no auto-purge; no worker refuse)"
+        "(rotate: library_disk rotate; worker refuse on sheep BAD)"
     )
     return "\n".join(lines)
 
@@ -245,16 +270,26 @@ def _load_cfg(config_path: Path) -> dict[str, Any]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """CLI: print sheep/scratch disk level; exit 0/1/2 for ok/warn/bad."""
+    """CLI: check sheep/scratch, or rotate catalog when WARN/BAD."""
     ap = argparse.ArgumentParser(
-        description="Sheep-library free-space check (WARN/BAD only; no rotate)"
+        description="Sheep-library free-space check and optional Shears rotate"
     )
     sub = ap.add_subparsers(dest="cmd", required=True)
     p = sub.add_parser("check", help="Assess media_library (and scratch if other device)")
     p.add_argument("--config", default="configs/jellyflam3.yaml")
     p.add_argument("--json", action="store_true")
+    r = sub.add_parser("rotate", help="Retire oldest catalog sheep until under threshold")
+    r.add_argument("--config", default="configs/jellyflam3.yaml")
+    r.add_argument("--apply", action="store_true", help="Run Shears deletes (default: plan)")
+    r.add_argument("--json", action="store_true")
     args = ap.parse_args(argv)
     cfg = _load_cfg(Path(args.config))
+    if args.cmd == "rotate":
+        from pipeline.library_rotate import run_rotate
+
+        payload = run_rotate(cfg, apply=args.apply)
+        print(json.dumps(payload, indent=2))
+        return 0 if payload.get("ok") else 1
     report = assess_config(cfg)
     if args.json:
         print(
