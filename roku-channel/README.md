@@ -38,7 +38,7 @@ Section `JellyFlam3` (edit in-channel via **Settings** button, **\* Options**, o
 | `deviceModel` / `deviceModelName` | Roku model strings |
 | `capturedAt` / `displaySummary` | Probe timestamp + one-line summary |
 
-Display keys are **hints only**. **Fetch TV display** also POSTs to `http://{baseUrl-host}:8791/v1/display-profiles` (**one JSON file per screen**). Roku `FormatJson` lowercases AA keys; the Pi sink accepts case-insensitive field names. Override with registry `displaySinkUrl`; optional `displaySinkToken`. Kodi/other clients: `python3 -m pipeline.display_profiles upsert --client Kodi --device-id …`.
+Display keys are **hints only**. **Fetch TV display** also POSTs to `http://{baseUrl-host}:8791/v1/display-profiles` (**one JSON file per screen**). Roku `FormatJson` lowercases AA keys; the Pi sink accepts case-insensitive field names. Override with registry `displaySinkUrl`. Furnace systemd sink **requires** `DISPLAY_SINK_TOKEN` in that Pi’s `secrets.env`; set Roku `displaySinkToken` to match (header `X-JellyFlam3-Token`). Kodi/other clients: `python3 -m pipeline.display_profiles upsert --client Kodi --device-id …`.
 
 ## Flock item metadata
 

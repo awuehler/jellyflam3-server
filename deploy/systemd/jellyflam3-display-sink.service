@@ -3,6 +3,8 @@ Description=JellyFlam3 display-profile + sheep-vote sink (:8791)
 After=network-online.target
 Wants=network-online.target
 
+# DISPLAY_SINK_TOKEN in secrets.env is required: this unit binds 0.0.0.0.
+# Empty token → exit 2 → Restart=on-failure crash-loop. Unique per furnace.
 [Service]
 Type=simple
 User=jellyflam3

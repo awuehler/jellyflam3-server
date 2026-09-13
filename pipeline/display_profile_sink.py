@@ -1,7 +1,9 @@
 """Purpose: LAN HTTP sink for display profiles and sidecar sheep votes.
 
 Requirements: Writable display_profiles dir; catalog media_library for votes;
-  DISPLAY_SINK_TOKEN in secrets.env for non-loopback binds (or --allow-unauthenticated).
+  DISPLAY_SINK_TOKEN in secrets.env when binding a non-loopback host (the systemd
+  unit uses 0.0.0.0). Missing token → exit 2; with Restart=on-failure that is a
+  crash loop. --allow-unauthenticated is lab-only and is not in the unit file.
 
 Usage:
   python3 -m pipeline.display_profile_sink --config configs/jellyflam3.yaml

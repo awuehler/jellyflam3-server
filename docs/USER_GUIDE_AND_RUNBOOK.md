@@ -167,10 +167,10 @@ Run Pi commands from `/opt/jellyflam3-server` unless noted.
 
 **Host:** one furnace Pi (`jellyflam3-display-sink` active) + two Roku devices. Same Jellyfin URL on both.
 
-1. Confirm the sink:
+1. Confirm the sink. **`DISPLAY_SINK_TOKEN` must be set** in this furnace’s `secrets.env` (unique per Pi). The unit binds LAN `0.0.0.0:8791`; without a token it exits 2 and crash-loops. Roku `displaySinkToken` must match this furnace.
 
    ```bash
-   systemctl is-active jellyflam3-display-sink   # expect: active
+   systemctl is-active jellyflam3-display-sink   # expect: active (not activating)
    ```
 
 2. On **Roku A**: VoD Settings (same `baseUrl` as the Pi LAN) → **Fetch TV display**. Channel should report **Pi OK** and a `*.json` name.
@@ -270,7 +270,8 @@ python3 -m pytest tests/ -q             # ~3s unit suite on Pi
 
 ```bash
 systemctl is-active jellyflam3-worker jellyflam3-idlegate jellyfin
-# Optional (guide 04 F): jellyflam3-display-sink
+# Guide 04 F: jellyflam3-display-sink — requires DISPLAY_SINK_TOKEN in secrets.env
+# (unique per furnace). Missing token crash-loops the unit (exit 2 / Restart=on-failure).
 sudo systemctl enable --now jellyflam3-idlegate jellyflam3-worker
 ```
 
@@ -834,6 +835,7 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 | No new sheep | `healthcheck.sh`; `gate` in status JSON; inbox count | Open gate / fix worker / seed or breed. If Jellyfin already has the item, wait for a client **wrap** ([Flock mix](#flock-mix-shuffle-wrap)) |
 | Gate stuck closed | Jellyfin Sessions; Roku still “Playing”? | Stop playback; wait `idle_delay_sec` |
 | Worker quiet, gate open | `ls genomes/inbox/*.flam3`; journal `-u jellyflam3-worker`; `python3 -m pipeline.worker_drain status` | Seed inbox; inspect quarantine; **cancel** drain if `drain: true` |
+| `jellyflam3-display-sink` crash-loop (`activating` / `NRestarts` climbing) | journal: `DISPLAY_SINK_TOKEN required when binding a non-loopback host` | Set a **unique** `DISPLAY_SINK_TOKEN` in that Pi’s `secrets.env`; `systemctl reset-failed` + restart the unit. Do not copy another furnace’s token. Rokus that POST to this Pi need matching `displaySinkToken`. |
 | healthcheck exit 1 | Read script sections (units, tools, status file, **peering share_live**, **library disk BAD**) | See [offline peering](#opt-in-vs-share-live-do-not-confuse-them); `opt-in` or `opt-out`; free space on `/media/sheep` |
 | Sheep disk WARN / BAD | `python3 -m pipeline.library_disk check`; `df -h /media/sheep` | Delete with Shears (no auto-rotate yet); do not Hammer unless wiping the factory |
 | Empty flock with commercial-safe on | Items Tags missing | `jellyfin_id_dump.py --items`; [private vs public](#private-vs-public-furnace) step 2 |

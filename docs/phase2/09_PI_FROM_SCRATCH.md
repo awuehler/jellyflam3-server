@@ -230,6 +230,8 @@ Appendix: [../phase1/04_JELLYFIN_LIBRARY.md](../phase1/04_JELLYFIN_LIBRARY.md).
 
 ### 6. Systemd worker + idle-gate (+ display sink)
 
+Set **`DISPLAY_SINK_TOKEN`** in this Pi’s `secrets.env` **before** enabling `jellyflam3-display-sink`. The unit binds `0.0.0.0:8791`; a missing token exits 2 and **crash-loops** (`Restart=on-failure`). Unique per furnace — do not copy another Pi’s `secrets.env`.
+
 ```bash
 sudo cp /opt/jellyflam3-server/deploy/systemd/*.service /etc/systemd/system/
 sudo systemctl daemon-reload
@@ -237,6 +239,7 @@ sudo mkdir -p /var/lib/jellyflam3/display_profiles
 sudo chown jellyflam3:jellyflam3 /var/lib/jellyflam3/display_profiles   # or "$USER"
 sudo systemctl enable --now jellyflam3-idlegate jellyflam3-worker jellyflam3-display-sink
 systemctl is-active jellyflam3-worker jellyflam3-idlegate jellyflam3-display-sink jellyfin
+# sink must be "active". "activating" + journal "DISPLAY_SINK_TOKEN required" = token missing.
 ```
 
 Units assume **`WorkingDirectory=/opt/jellyflam3-server`** and user/group **`jellyflam3`**. If your login user differs, edit the unit `User=`/`Group=` or create that account.
