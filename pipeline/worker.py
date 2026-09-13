@@ -874,11 +874,12 @@ def main(argv: list[str] | None = None) -> int:
         media = resolve_path(cfg, "media_library")
         stats = repair_by_generation_perms(media)
         log.info(
-            "catalog perms: dirs=%s files=%s dir_errors=%s file_errors=%s",
+            "catalog perms: dirs=%s files=%s dir_errors=%s file_errors=%s skipped=%s",
             stats["dirs"],
             stats["files"],
             stats["dir_errors"],
             stats["file_errors"],
+            stats.get("skipped", 0),
         )
     except Exception as exc:  # noqa: BLE001
         log.warning("catalog perms repair skipped: %s", exc)

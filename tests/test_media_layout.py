@@ -56,6 +56,21 @@ def test_repair_by_generation_perms(tmp_path: Path):
     assert stat.S_IMODE(mp4.stat().st_mode) == CATALOG_FILE_MODE
 
 
+def test_repair_skips_chmod_when_not_owner(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    media = tmp_path / "sheep"
+    gen = media / "by-generation" / "243"
+    gen.mkdir(parents=True)
+    mp4 = gen / "electricsheep.243.1.mp4"
+    mp4.write_bytes(b"mp4")
+    mp4.chmod(0o644)
+
+    monkeypatch.setattr("pipeline.media_layout._owns_for_chmod", lambda _p: False)
+    stats = repair_by_generation_perms(media)
+    assert stats["file_errors"] == 0
+    assert stats["skipped"] >= 1
+    assert stat.S_IMODE(mp4.stat().st_mode) == 0o644
+
+
 def test_ensure_refactor_preview_dir(tmp_path: Path):
     media = tmp_path / "sheep"
     media.mkdir()

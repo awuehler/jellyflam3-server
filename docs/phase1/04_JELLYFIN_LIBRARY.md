@@ -29,6 +29,8 @@ Jellyfin runs as user `jellyfin` and must be in group `jellyflam3`. It writes **
 | `/media/sheep/by-generation` and gen folders (`243`, …) | **`2775`** (setgid + `rwxrwxr-x`) | Group can create `.trickplay` dirs |
 | Catalog files (`*.mp4`, `stills/{stem}/*-poster.jpg`, `*.jellyflam3.json`) | **`664`** | Group-readable/writable |
 
+Worker startup (`repair_by_generation_perms`) chmod's only files it **owns**. Jellyfin-created `folder.jpg` / some stills stay `jellyfin:jellyflam3` `644` — group members cannot chmod; those are skipped, not `file_errors`. Trickplay trees are not walked.
+
 `umask 022` + setgid parent alone yields **`2755`** (no group write) — that produces `UnauthorizedAccessException` on `.trickplay` in Jellyfin logs.
 
 Repair / enforce:

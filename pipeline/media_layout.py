@@ -89,11 +89,25 @@ def ensure_refactor_quarantine_dir(media_root: Path) -> Path:
     return q
 
 
+def _owns_for_chmod(path: Path) -> bool:
+    """True when this process may chmod ``path`` (owner or root). Group write is not enough."""
+    try:
+        st = path.stat()
+    except OSError:
+        return False
+    if os.name == "nt" or not hasattr(os, "geteuid"):
+        return True
+    euid = os.geteuid()
+    return euid == 0 or st.st_uid == euid
+
+
 def _try_chmod_dir(path: Path) -> bool:
     """Best-effort set CATALOG_DIR_MODE on an existing directory; log and return False on OSError."""
     try:
         if not path.is_dir():
             return False
+        if not _owns_for_chmod(path):
+            return True
         if stat.S_IMODE(path.stat().st_mode) != CATALOG_DIR_MODE:
             path.chmod(CATALOG_DIR_MODE)
         return True
@@ -118,9 +132,15 @@ def ensure_catalog_dir(path: Path) -> Path:
 
 
 def ensure_catalog_file_mode(path: Path) -> None:
-    """Best-effort ``664`` on a catalog file (MP4 / poster / sidecar)."""
+    """Best-effort ``664`` on a catalog file (MP4 / poster / sidecar).
+
+    Jellyfin-owned ``644`` files (``folder.jpg``, some stills) cannot be chmod'd
+    by the worker — only owner or root may chmod. Skip those without warning.
+    """
     path = Path(path)
     if not path.is_file():
+        return
+    if not _owns_for_chmod(path):
         return
     try:
         if stat.S_IMODE(path.stat().st_mode) != CATALOG_FILE_MODE:
@@ -135,7 +155,13 @@ def repair_by_generation_perms(media_root: Path) -> dict[str, int]:
     Skips ``lost+found``. Returns counts of dirs/files considered and errors.
     """
     root = Path(media_root) / "by-generation"
-    stats = {"dirs": 0, "files": 0, "dir_errors": 0, "file_errors": 0}
+    stats = {
+        "dirs": 0,
+        "files": 0,
+        "dir_errors": 0,
+        "file_errors": 0,
+        "skipped": 0,
+    }
     if not root.is_dir():
         return stats
 
@@ -168,6 +194,10 @@ def repair_by_generation_perms(media_root: Path) -> dict[str, int]:
             fp = p / name
             try:
                 if not fp.is_file():
+                    continue
+                if not _owns_for_chmod(fp):
+                    stats["skipped"] += 1
+                    stats["files"] += 1
                     continue
                 if stat.S_IMODE(fp.stat().st_mode) != CATALOG_FILE_MODE:
                     fp.chmod(CATALOG_FILE_MODE)
@@ -203,7 +233,8 @@ def main(argv: list[str] | None = None) -> int:
     print(
         f"repaired {media / 'by-generation'}: "
         f"dirs={stats['dirs']} files={stats['files']} "
-        f"dir_errors={stats['dir_errors']} file_errors={stats['file_errors']}"
+        f"dir_errors={stats['dir_errors']} file_errors={stats['file_errors']} "
+        f"skipped={stats.get('skipped', 0)}"
     )
     print(f"ensured preview dir {preview} (Jellyfin Rework Poster library root)")
     return 1 if stats["dir_errors"] or stats["file_errors"] else 0
