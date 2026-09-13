@@ -1,8 +1,13 @@
-import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from pipeline.idle_gate import IdleGateSupervisor, is_gate_open, should_block_render
+from pipeline.idle_gate import (
+    IdleGateSupervisor,
+    closed_wait_seconds,
+    is_gate_open,
+    persist_status,
+    should_block_render,
+)
 
 
 def _cfg(tmp_path: Path):
@@ -79,16 +84,88 @@ def test_supervisor_delay_after_tv(tmp_path):
     assert st3["gate"] == "open"
 
 
-def test_is_gate_open_bootstrap_idle(tmp_path, monkeypatch):
+def test_is_gate_open_missing_file_fail_closed(tmp_path, monkeypatch):
     cfg = _cfg(tmp_path)
     monkeypatch.setattr(
         "pipeline.idle_gate.fetch_sessions",
-        lambda _cfg: [{"Client": "Web", "IsActive": True}],
+        lambda _cfg: (_ for _ in ()).throw(RuntimeError("must not probe")),
+    )
+    assert is_gate_open(cfg) is False
+    assert not (tmp_path / "status.json").is_file()
+
+
+def test_is_gate_open_fresh_open(tmp_path):
+    cfg = _cfg(tmp_path)
+    persist_status(
+        tmp_path / "status.json",
+        {
+            "gate": "open",
+            "reason": "idle",
+            "seconds_until_resume": 0,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        },
     )
     assert is_gate_open(cfg) is True
-    status = json.loads((tmp_path / "status.json").read_text(encoding="utf-8"))
-    assert status["gate"] == "open"
-    assert status["reason"] == "bootstrap"
+
+
+def test_is_gate_open_stale_open_fail_closed(tmp_path):
+    cfg = _cfg(tmp_path)
+    stale = (datetime.now(timezone.utc) - timedelta(seconds=10)).isoformat()
+    persist_status(
+        tmp_path / "status.json",
+        {
+            "gate": "open",
+            "reason": "idle",
+            "seconds_until_resume": 0,
+            "updated_at": stale,
+        },
+    )
+    assert is_gate_open(cfg) is False
+
+
+def test_closed_wait_seconds_uses_eta_capped(tmp_path):
+    cfg = _cfg(tmp_path)
+    persist_status(
+        tmp_path / "status.json",
+        {
+            "gate": "closed",
+            "reason": "idle_delay",
+            "seconds_until_resume": 80,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+    assert closed_wait_seconds(cfg) == 15
+    persist_status(
+        tmp_path / "status.json",
+        {
+            "gate": "closed",
+            "reason": "idle_delay",
+            "seconds_until_resume": 4,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+    assert closed_wait_seconds(cfg) == 4
+
+
+def test_supervisor_hydrates_idle_delay(tmp_path):
+    cfg = _cfg(tmp_path)
+    cfg["idle_gate"]["idle_delay_sec"] = 100
+    started = datetime.now(timezone.utc) - timedelta(seconds=40)
+    persist_status(
+        tmp_path / "status.json",
+        {
+            "gate": "closed",
+            "reason": "idle_delay",
+            "seconds_until_resume": 60,
+            "idle_clear_since": started.isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+    sup = IdleGateSupervisor(cfg)
+    st = sup.evaluate(sessions=[])
+    assert st["gate"] == "closed"
+    assert st["reason"] == "idle_delay"
+    assert 50 <= int(st["seconds_until_resume"]) <= 70
 
 
 def test_is_gate_open_bootstrap_blocks_tv(tmp_path, monkeypatch):

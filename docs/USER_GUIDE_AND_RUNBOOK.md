@@ -294,9 +294,11 @@ Units assume `WorkingDirectory=/opt/jellyflam3-server`. Missing symlink → `CHD
 ### Idle gate behavior
 
 - **Closes** when Jellyfin sees TV-class **Playing** or **Transcoding**.
-- **Opens** after `idle_delay_sec` (default ~10 min) with no blockers.
+- **Opens** after `idle_delay_sec` (default ~10 min) with no blockers (hold survives an idlegate restart).
+- A leftover `open` is ignored if `updated_at` is older than 3× the poll interval (dead supervisor).
+- Playing does **not** pause a live `flam3-animate`; the worker only checks between stages.
 - JellyFlam3 Roku **1.0.9+** reports playback via Jellyfin Sessions API so Direct Play closes the gate.
-- Status file: `/var/lib/jellyflam3/idle_gate_status.json` — fields `gate`, `reason`, `seconds_until_resume`.
+- Status file: `/var/lib/jellyflam3/idle_gate_status.json` — fields `gate`, `reason`, `seconds_until_resume`, `idle_clear_since`, `updated_at`.
 
 ```bash
 python3 -m pipeline.idle_gate --config configs/jellyflam3.yaml   # foreground debug

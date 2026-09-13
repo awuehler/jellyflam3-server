@@ -48,7 +48,7 @@ from pipeline.sheep_tuple import (
 from pipeline.config import load_config, resolve_path
 from pipeline.cpu_limit import effective_cpus, ffmpeg_thread_args, flam3_nthreads, wrap_cmd
 from pipeline.flock_artwork import apply_flock_artwork
-from pipeline.idle_gate import is_gate_open
+from pipeline.idle_gate import closed_wait_seconds, is_gate_open
 from pipeline.job_recovery import reclaim_orphans
 from pipeline.worker_drain import is_drain_requested
 from pipeline.license_filter import infer_tags_from_genome
@@ -378,8 +378,9 @@ def wait_for_gate(cfg: dict[str, Any], *, abort_if_drain: bool = False) -> None:
         if abort_if_drain and is_drain_requested(cfg):
             log.info("worker drain: leaving gate wait without claiming")
             return
-        log.info("gate closed; sleeping 15s")
-        time.sleep(15)
+        wait = closed_wait_seconds(cfg)
+        log.info("gate closed; sleeping %ss", wait)
+        time.sleep(wait)
 
 
 def sheep_basename(src: Path) -> str:

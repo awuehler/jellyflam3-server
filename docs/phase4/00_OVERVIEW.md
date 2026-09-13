@@ -81,20 +81,18 @@ Sidecar key names for [01](01_PEER_SHARE_PATH.md) / [03](03_EDGES_AND_WATERMARK.
 
 **Not this slice:** checkpoint/resume inside `flam3-animate`; SIGSTOP of a live animate as “pause”; killing the current job on purpose (that is today’s restart without drain). Drain is **pause before the next inbox render**, not mid-frame. The first pull of this code still needs one worker restart to load the poll check — do that between jobs if you can.
 
-### Furnace polish (pre-wave 3 — idle-gate remaining)
+### Furnace polish (pre-wave 3 — idle-gate **shipped**)
 
-P1 **shipped:** atomic `idle_gate_status.json` (`persist_status` temp + `os.replace`); `is_gate_open` treats corrupt/unreadable JSON as **closed**. Guide [06](../phase1/06_IDLE_GATE.md).
+P1 + remaining races **shipped** (Owner OK 2026-09-13). Guide [06](../phase1/06_IDLE_GATE.md).
 
-Parked until Owner opens this slice (before Wave 3 share cron / breed weights):
-
-| Item | Why |
+| Item | Status |
 |---|---|
-| Supervisor-only SoT writer | Worker bootstrap still probes Sessions and may write `reason: bootstrap` if the status file is missing |
-| Restore `idle_delay` after idlegate restart | `_seen_block` / `_clear_since` are RAM-only; systemd restart can skip the remaining hold |
-| Stale `updated_at` | If the supervisor is dead, a leftover `open` never re-probes Jellyfin |
-| `wait_for_gate` vs `seconds_until_resume` | Worker sleeps a fixed 15 s; can lag gate-open by up to one poll + one sleep |
-| `freeze_worker` vs drain | Keep `freeze_worker: false`. Freeze + `worker_drain wait` can wait forever while the cgroup is frozen |
-| Mid-animate CPU | Gate is checked at stage boundaries only; Playing does not pause `flam3-animate` without freeze |
+| Supervisor-only SoT writer | Readers never write. Missing file = closed. Hammer unlinks status (no fake `open`) |
+| Restore `idle_delay` after idlegate restart | Hydrate `_seen_block` / `_clear_since` from `idle_clear_since` when `reason=idle_delay` |
+| Stale `updated_at` | `open` older than **3×** `poll_interval_sec` (60 s at default 20 s poll) is closed |
+| `wait_for_gate` vs `seconds_until_resume` | Sleep `min(15, max(1, eta))` when eta > 0; else 15 s |
+| `freeze_worker` vs drain | Keep `freeze_worker: false`. `worker_drain wait` errors if the unit is frozen |
+| Mid-animate CPU | **Locked:** Playing does not pause `flam3-animate`; gate is stage boundaries only |
 
 ## Out of scope
 

@@ -30,7 +30,7 @@ from pipeline.flock_artwork import (
     attach_stills_backdrops,
     extract_poster_for_mp4,
 )
-from pipeline.idle_gate import is_gate_open
+from pipeline.idle_gate import closed_wait_seconds, is_gate_open
 from pipeline.jellyfin_client import JellyfinClient
 from pipeline.media_layout import is_unpublished_media_path
 from pipeline.poster import probe_duration_sec, relocate_legacy_poster, resolve_poster_path
@@ -160,8 +160,9 @@ def wait_for_gate(cfg: dict[str, Any], *, sleep: Any = time.sleep) -> None:
     if not ig.get("enabled", True):
         return
     while not is_gate_open(cfg):
-        log.info("idle-gate closed; waiting 15s before backfill continues")
-        sleep(15)
+        wait = closed_wait_seconds(cfg)
+        log.info("idle-gate closed; waiting %ss before backfill continues", wait)
+        sleep(wait)
 
 
 def backfill_one(

@@ -23,7 +23,6 @@ import socket
 import subprocess
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -440,7 +439,7 @@ def apply_plan(cfg: dict[str, Any], plan: HammerPlan, *, dry_run: bool) -> dict[
         _safe_empty(cls.root)
         result["removed"].append(str(cls.root) + "/*")
 
-    # Recreate worker dirs + idle-gate bootstrap so cold start is open.
+    # Recreate worker dirs. Do not write a fake open gate — idlegate is SoT.
     resolve_path(cfg, "jobs_dir").mkdir(parents=True, exist_ok=True)
     resolve_path(cfg, "frames_scratch").mkdir(parents=True, exist_ok=True)
     inbox = resolve_path(cfg, "genomes_inbox")
@@ -449,16 +448,10 @@ def apply_plan(cfg: dict[str, Any], plan: HammerPlan, *, dry_run: bool) -> dict[
     genomes_done_dir(cfg).mkdir(parents=True, exist_ok=True)
     if "status_file" in (cfg.get("paths") or {}):
         status = resolve_path(cfg, "status_file")
-        status.parent.mkdir(parents=True, exist_ok=True)
-        payload = {
-            "gate": "open",
-            "reason": "hammer",
-            "seconds_until_resume": 0,
-            "last_tv_activity": None,
-            "idle_clear_since": None,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }
-        status.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        try:
+            status.unlink(missing_ok=True)
+        except OSError as exc:
+            log.warning("idle-gate status unlink failed %s: %s", status, exc)
 
     if plan.jellyfin_refresh:
         result["jellyfin"] = _refresh_jellyfin(cfg)

@@ -104,7 +104,8 @@ idle_gate:
     - "(?i)screensaver"
   block_on_any_transcode: true
   block_non_tv_playback: false
-  # Last resort: systemd freeze/thaw of worker unit while gate closed
+  # Last resort: systemd freeze/thaw of worker unit while gate closed.
+  # Keep false: freeze + worker_drain wait can hang. Drain wait errors if frozen.
   freeze_worker: false
   worker_unit: jellyflam3-worker.service
 

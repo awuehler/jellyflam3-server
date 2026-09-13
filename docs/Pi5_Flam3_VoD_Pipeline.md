@@ -854,15 +854,15 @@ stateDiagram-v2
 1. **Poll** Jellyfin `GET /Sessions?activeWithinSeconds=…` on a short interval (e.g. 15–30s).
 2. **Active TV client** = session with `NowPlayingItem` (or recent `LastPlaybackCheckIn`) whose `Client` / `DeviceName` / `DeviceType` matches TV-class clients (at least: Roku / jellyfin-roku / JellyFlam3 channel; configurable allowlist/patterns).
 3. **Active transcode** (belt-and-suspenders) = any session with `TranscodingInfo` present, even if not classified as TV — also blocks new render work.
-4. **While busy:** do not start new `flam3-animate` / encode jobs. **Graceful pause:** finish the current frame or current sheep clip if nearly done; otherwise stop between jobs (SIGSTOP/cgroup freeze only as a last resort for runaway encodes). Never start a new genome while gated.
-5. **Resume:** when no matching TV sessions (and no active transcodes) have been seen for **`idle_delay`** (configurable; default e.g. **10 minutes**), set the gate open and continue the render queue.
-6. **Config** (env or `jellyflam3.yaml`): `idle_delay`, poll interval, TV client match patterns, whether non-TV playback also blocks, API key / base URL for Sessions.
+4. **While busy:** do not **start** new `flam3-animate` / encode jobs. The worker checks the gate at stage boundaries (claim, sequence, animate, encode). A live `flam3-animate` is **not** paused when Playing starts (`freeze_worker: false`; no SIGSTOP). Drain is pause-before-next-inbox, not mid-frame.
+5. **Resume:** when no matching TV sessions (and no active transcodes) have been seen for **`idle_delay`** (configurable; default **10 minutes**), set the gate open and continue the render queue. The remaining delay is stored in status JSON and restored if idlegate restarts.
+6. **Config** (env or `jellyflam3.yaml`): `idle_delay_sec`, poll interval, TV client match patterns, whether non-TV playback also blocks, API key / base URL for Sessions. Keep `freeze_worker: false`.
 
 ### Implementation sketch
 
 - Small **render supervisor** (systemd service or side process) wraps the batch queue.
 - Uses Jellyfin Sessions API ([docs](https://api.jellyfin.org/) · endpoint `GET /Sessions`) with an API key.
-- Exposes status: `gate=open|closed`, `last_tv_activity`, `seconds_until_resume`.
+- Exposes status: `gate=open|closed`, `last_tv_activity`, `seconds_until_resume`, `idle_clear_since`, `updated_at`. Only the supervisor writes the file; readers fail closed on missing/stale `open`.
 - Logs every pause/resume for ops debugging.
 - Unit-testable pure function: `sessions → shouldBlockRender(bool)`.
 

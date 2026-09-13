@@ -58,7 +58,7 @@ Confirm token is `HAMMER` or this host’s hostname. Wrong token → exit 2, no 
 | **HLS/transcode cache** | `/var/cache/jellyflam3/transcodes`, `live-hls/` | `--all` if present, or `--transcode-cache` |
 | **Render output** | `paths.media_library` → `/media/sheep/by-generation/` | Delete flock tree (keep mount root); recreate `by-generation/` |
 | **Done archive** | `paths.genomes_done` | Empty on `--outputs` / `--all` (not git samples) |
-| **History / state** | `paths.log_dir`, `paths.status_file` | Truncate/delete; rewrite idle-gate `gate=open` reason `hammer` |
+| **History / state** | `paths.log_dir`, `paths.status_file` | Truncate/delete idle-gate status (do **not** write a fake `open`; idlegate is SoT) |
 | **Jellyfin DB items** | Sheep library Items pointing at removed files | `Library/Refresh` after disk wipe |
 
 ### Tiers

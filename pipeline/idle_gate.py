@@ -5,9 +5,12 @@ Requirements: Jellyfin url + api_key; writable status_file; optional systemd fre
 Usage:
   python -m pipeline.idle_gate --once
   python -m pipeline.idle_gate   # supervisor loop
-  Worker polls ``is_gate_open(cfg)``.
+  Worker polls ``is_gate_open(cfg)`` (read-only).
 
-Assumptions: Gate stays closed for idle_delay_sec after the last block; cold start opens immediately when idle.
+Assumptions: Only this supervisor writes status_file. Gate stays closed for
+idle_delay_sec after the last block (hydrated from JSON across restart).
+Cold start opens immediately when idle. Playing does not pause flam3-animate
+mid-job; the worker checks the gate at stage boundaries only.
 """
 
 from __future__ import annotations
@@ -24,11 +27,13 @@ import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
-
 from pipeline.config import load_config, resolve_path
 
 log = logging.getLogger("jellyflam3.idle_gate")
+
+GATE_SLEEP_MIN_SEC = 1
+GATE_SLEEP_MAX_SEC = 15
+STALE_POLL_MULT = 3
 
 
 def persist_status(path: Path, payload: dict[str, Any]) -> None:
@@ -41,6 +46,68 @@ def persist_status(path: Path, payload: dict[str, Any]) -> None:
     except Exception:
         tmp.unlink(missing_ok=True)
         raise
+
+
+def poll_interval_sec(cfg: dict[str, Any]) -> int:
+    """Supervisor poll from yaml (default 20)."""
+    try:
+        return max(1, int((cfg.get("idle_gate") or {}).get("poll_interval_sec", 20)))
+    except (TypeError, ValueError):
+        return 20
+
+
+def stale_after_sec(cfg: dict[str, Any]) -> int:
+    """Open status older than 3× poll is treated closed (dead supervisor)."""
+    return STALE_POLL_MULT * poll_interval_sec(cfg)
+
+
+def parse_gate_timestamp(value: Any) -> datetime | None:
+    """Parse status ISO timestamps (``Z`` or offset). Naive values are UTC."""
+    if not value or not isinstance(value, str):
+        return None
+    raw = value.strip()
+    if raw.endswith("Z"):
+        raw = raw[:-1] + "+00:00"
+    try:
+        dt = datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
+def load_gate_status(cfg: dict[str, Any]) -> dict[str, Any] | None:
+    """Read status JSON. None when missing, unreadable, or not an object."""
+    try:
+        path = resolve_path(cfg, "status_file")
+    except (KeyError, TypeError, ValueError):
+        return None
+    if not path.is_file():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        log.warning("gate status unreadable (treating closed): %s", exc)
+        return None
+    if not isinstance(data, dict):
+        log.warning("gate status not an object (treating closed)")
+        return None
+    return data
+
+
+def closed_wait_seconds(cfg: dict[str, Any]) -> int:
+    """How long ``wait_for_gate`` should sleep while closed (1–15 s)."""
+    data = load_gate_status(cfg)
+    if not data:
+        return GATE_SLEEP_MAX_SEC
+    try:
+        eta = int(data.get("seconds_until_resume") or 0)
+    except (TypeError, ValueError):
+        eta = 0
+    if eta > 0:
+        return max(GATE_SLEEP_MIN_SEC, min(GATE_SLEEP_MAX_SEC, eta))
+    return GATE_SLEEP_MAX_SEC
 
 
 @dataclass
@@ -153,6 +220,26 @@ class IdleGateSupervisor:
         # idle_delay applies only after we have observed a blocking session
         self._seen_block = False
         self.status_path.parent.mkdir(parents=True, exist_ok=True)
+        self._hydrate_from_status()
+
+    def _hydrate_from_status(self) -> None:
+        """Restore delay RAM from status_file after systemd restart."""
+        if not self.status_path.is_file():
+            return
+        try:
+            data = json.loads(self.status_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            return
+        if not isinstance(data, dict):
+            return
+        if data.get("gate") != "closed":
+            return
+        self._seen_block = True
+        if (data.get("reason") or "") != "idle_delay":
+            return
+        parsed = parse_gate_timestamp(data.get("idle_clear_since"))
+        if parsed is not None:
+            self._clear_since = parsed.timestamp()
 
     def evaluate(self, sessions: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         """One poll cycle: update status file and return the gate payload."""
@@ -177,7 +264,7 @@ class IdleGateSupervisor:
         if self._clear_since is None:
             self._clear_since = now
         elapsed = now - self._clear_since
-        remaining = max(0, int(self.idle_delay - elapsed))
+        remaining = min(self.idle_delay, max(0, int(self.idle_delay - elapsed)))
         if remaining > 0:
             payload = self._write(
                 open_gate=False,
@@ -244,42 +331,28 @@ class IdleGateSupervisor:
 
 
 def is_gate_open(cfg: dict[str, Any]) -> bool:
-    """Worker helper: read status_file, or bootstrap with a live session probe if missing."""
-    path = resolve_path(cfg, "status_file")
-    if not path.is_file():
-        if not (cfg.get("idle_gate") or {}).get("enabled", True):
-            return True
-        # Bootstrap: no status yet — probe Jellyfin live instead of failing
-        # closed forever when the idle-gate supervisor has not written yet.
-        try:
-            decision = should_block_render(fetch_sessions(cfg), cfg)
-        except Exception as exc:  # noqa: BLE001
-            log.warning("gate bootstrap probe failed (treating closed): %s", exc)
-            return False
-        if decision.blocked:
-            log.info("gate bootstrap closed: %s", decision.reason)
-            return False
-        path.parent.mkdir(parents=True, exist_ok=True)
-        payload = {
-            "gate": "open",
-            "reason": "bootstrap",
-            "seconds_until_resume": 0,
-            "last_tv_activity": None,
-            "idle_clear_since": None,
-            "updated_at": datetime.now(timezone.utc).isoformat(),
-        }
-        persist_status(path, payload)
-        log.info("gate bootstrap open (no prior status; sessions idle)")
+    """Read-only: True when status says open and ``updated_at`` is fresh.
+
+    Missing, corrupt, non-object, or stale ``open`` is **closed**. This helper
+    never writes the status file (supervisor-only SoT).
+    """
+    ig = cfg.get("idle_gate") or {}
+    if not ig.get("enabled", True):
         return True
-    try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
-        log.warning("gate status unreadable (treating closed): %s", exc)
+    data = load_gate_status(cfg)
+    if data is None:
         return False
-    if not isinstance(data, dict):
-        log.warning("gate status not an object (treating closed)")
+    if data.get("gate") != "open":
         return False
-    return data.get("gate") == "open"
+    updated = parse_gate_timestamp(data.get("updated_at"))
+    if updated is None:
+        log.warning("gate status missing updated_at (treating closed)")
+        return False
+    age = (datetime.now(timezone.utc) - updated).total_seconds()
+    if age > stale_after_sec(cfg):
+        log.warning("gate status stale (treating closed): age=%.0fs", age)
+        return False
+    return True
 
 
 def main(argv: list[str] | None = None) -> int:

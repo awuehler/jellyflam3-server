@@ -136,9 +136,7 @@ def test_worker_tier_keeps_inbox_and_media(tmp_path: Path, monkeypatch):
     assert not (frames / "job1").exists()
     assert jobs.is_dir()
     status = Path(cfg["paths"]["status_file"])
-    data = json.loads(status.read_text(encoding="utf-8"))
-    assert data["gate"] == "open"
-    assert data["reason"] == "hammer"
+    assert not status.exists()
 
 
 def test_all_empties_inbox_media_keeps_samples(tmp_path: Path, monkeypatch):

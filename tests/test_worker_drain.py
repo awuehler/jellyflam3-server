@@ -129,6 +129,43 @@ def test_wait_for_gate_aborts_on_drain(tmp_path: Path, monkeypatch):
     assert slept == [15]
 
 
+def test_wait_for_gate_sleeps_eta(tmp_path: Path, monkeypatch):
+    cfg = _cfg(tmp_path)
+    from datetime import datetime, timezone
+
+    from pipeline.idle_gate import persist_status
+
+    persist_status(
+        Path(cfg["paths"]["status_file"]),
+        {
+            "gate": "closed",
+            "reason": "idle_delay",
+            "seconds_until_resume": 4,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+    slept: list[float] = []
+
+    def sleep_then_open(sec: float) -> None:
+        slept.append(sec)
+        monkeypatch.setattr("pipeline.worker.is_gate_open", lambda _cfg: True)
+
+    monkeypatch.setattr("pipeline.worker.is_gate_open", lambda _cfg: False)
+    monkeypatch.setattr("pipeline.worker.time.sleep", sleep_then_open)
+    wait_for_gate(cfg, abort_if_drain=False)
+    assert slept == [4]
+
+
+def test_wait_until_idle_errors_when_worker_frozen(tmp_path: Path, monkeypatch):
+    cfg = _cfg(tmp_path)
+    request_drain(cfg)
+    monkeypatch.setattr(
+        "pipeline.worker_drain.worker_freezer_state", lambda _cfg: "frozen"
+    )
+    with pytest.raises(RuntimeError, match="frozen"):
+        wait_until_idle(cfg, timeout_sec=0)
+
+
 def test_cli_status_wait_cancel(tmp_path: Path, capsys):
     jobs = tmp_path / "jobs"
     jobs.mkdir()

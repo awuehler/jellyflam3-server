@@ -13,7 +13,8 @@ Usage:
 
 Assumptions: Drain is pause-before-next-inbox, not mid-frame. Flag persists across
 worker restart until cancel. Distinct from idle-gate (TV Playing) and from an
-empty inbox (seed/breed may still refill). ``--once`` is explicit and still runs.
+empty inbox (seed/breed may still refill). ``freeze_worker`` plus drain wait can
+hang — wait errors if the worker unit is frozen. ``--once`` is explicit and still runs.
 Docs: docs/phase4/00_OVERVIEW.md (furnace polish), docs/phase1/05_RENDER_PIPELINE.md
 """
 
@@ -23,6 +24,7 @@ import argparse
 import json
 import logging
 import os
+import subprocess
 import time
 from pathlib import Path
 from typing import Any
@@ -36,6 +38,7 @@ DEFAULT_NAME = "worker_drain.json"
 EXIT_OK = 0
 EXIT_TIMEOUT = 1
 EXIT_NOT_REQUESTED = 2
+EXIT_FROZEN = 3
 
 
 def drain_path(cfg: dict[str, Any]) -> Path:
@@ -168,13 +171,37 @@ def cancel_drain(cfg: dict[str, Any]) -> dict[str, Any]:
     return status_payload(cfg)
 
 
+def worker_freezer_state(cfg: dict[str, Any]) -> str | None:
+    """systemd FreezerState for the worker unit, or None if systemctl is missing."""
+    unit = (cfg.get("idle_gate") or {}).get("worker_unit") or "jellyflam3-worker.service"
+    try:
+        proc = subprocess.run(
+            ["systemctl", "show", str(unit), "-p", "FreezerState", "--value"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
+        return None
+    return (proc.stdout or "").strip() or None
+
+
 def wait_until_idle(
     cfg: dict[str, Any],
     *,
     timeout_sec: float | None = None,
     poll_sec: float = 2.0,
 ) -> dict[str, Any]:
-    """Block until phase is idle. Raises TimeoutError; ValueError if drain is off."""
+    """Block until phase is idle. Raises TimeoutError; ValueError if drain is off.
+
+    Raises RuntimeError if freeze_worker left the unit frozen (wait would hang).
+    """
+    frozen = worker_freezer_state(cfg)
+    if frozen and frozen.lower() == "frozen":
+        raise RuntimeError(
+            "worker unit is frozen (idle_gate.freeze_worker); thaw before drain wait"
+        )
     start = time.monotonic()
     interval = max(0.0, float(poll_sec))
     while True:
@@ -248,6 +275,10 @@ def main(argv: list[str] | None = None) -> int:
             snap = wait_until_idle(
                 cfg, timeout_sec=args.timeout_sec, poll_sec=args.poll_sec
             )
+        except RuntimeError as exc:
+            print(json.dumps(status_payload(cfg), indent=2))
+            log.error("%s", exc)
+            return EXIT_FROZEN
         except TimeoutError as exc:
             print(json.dumps(status_payload(cfg), indent=2))
             log.error("%s", exc)
@@ -263,6 +294,10 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(status_payload(cfg), indent=2))
             log.error("%s", exc)
             return EXIT_NOT_REQUESTED
+        except RuntimeError as exc:
+            print(json.dumps(status_payload(cfg), indent=2))
+            log.error("%s", exc)
+            return EXIT_FROZEN
         except TimeoutError as exc:
             print(json.dumps(status_payload(cfg), indent=2))
             log.error("%s", exc)

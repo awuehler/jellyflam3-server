@@ -475,7 +475,7 @@ Supervisor (`pipeline/idle_gate.py`) polling Jellyfin **Sessions**. Closes **gat
 
 ### Gate open / gate closed
 
-Status in `/var/lib/jellyflam3/idle_gate_status.json`. Worker checks before starting jobs. **Worker drain** is a separate flag (`worker_drain.json`) for pause-until-cancel.
+Status in `/var/lib/jellyflam3/idle_gate_status.json`. Only **idlegate** writes it. Worker / stills / breed **read** it (missing or stale `open` = closed). Checks are at **stage boundaries**, not mid-`flam3-animate`. **Worker drain** is a separate flag (`worker_drain.json`) for pause-until-cancel.
 
 ### Playing API
 
