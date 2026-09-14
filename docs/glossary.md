@@ -471,7 +471,7 @@ Ops scripts: pass/fail health vs informational snapshot (inbox, thermals, gate).
 
 ### Idle gate
 
-Supervisor (`pipeline/idle_gate.py`) polling Jellyfin **Sessions**. Closes **gate** when TV-class client is **Playing** or transcoding; worker pauses new renders until `idle_delay_sec` clear.
+Supervisor (`pipeline/idle_gate.py`) polling Jellyfin **Sessions**. Closes **gate** when a TV-class client has **Playing** / recent `LastPlaybackCheckIn` (VoD Home can count) or transcoding; worker and `backfill_posters` wait until `idle_delay_sec` (**600**) clear. Log `waiting 15s` is the retry cap. Layer 2: [Idle gate behavior](USER_GUIDE_AND_RUNBOOK.md#idle-gate-behavior).
 
 ### Gate open / gate closed
 

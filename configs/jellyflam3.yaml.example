@@ -100,6 +100,9 @@ library_disk:
 idle_gate:
   enabled: true
   poll_interval_sec: 20
+  # Keep gate closed this long after the last TV-class session (VoD Home can
+  # stamp LastPlaybackCheckIn without Playing). CLI backfill waits here;
+  # "waiting 15s" in the log is only the retry cap. See runbook Idle gate.
   idle_delay_sec: 600
   active_within_seconds: 60
   # Match Jellyfin Sessions Client / DeviceName / DeviceType

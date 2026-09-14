@@ -322,18 +322,34 @@ Units assume `WorkingDirectory=/opt/jellyflam3-server`. Missing symlink → `CHD
 
 ### Idle gate behavior
 
-- **Closes** when Jellyfin sees TV-class **Playing** or **Transcoding**.
-- **Opens** after `idle_delay_sec` (default ~10 min) with no blockers (hold survives an idlegate restart).
+- **Closes** when Jellyfin sees a TV-class session with `NowPlayingItem` **or** a recent `LastPlaybackCheckIn`, or any **Transcoding**.
+- **Opens** only after `idle_delay_sec` (**600** s / 10 min default) with no blockers. That hold survives an idlegate restart (`reason=idle_delay` in the status file).
+- Opening the **JellyFlam3 VoD** channel can stamp `LastPlaybackCheckIn` even when the TV is on the flock Home grid (no sheep playing). Screensaver client `JellyFlam3-Screensaver` is **ignored**.
 - A leftover `open` is ignored if `updated_at` is older than 3× the poll interval (dead supervisor).
 - Playing does **not** pause a live `flam3-animate`; the worker only checks between stages.
 - JellyFlam3 Roku **1.0.9+** reports playback via Jellyfin Sessions API so Direct Play closes the gate.
 - Status file: `/var/lib/jellyflam3/idle_gate_status.json` — fields `gate`, `reason`, `seconds_until_resume`, `idle_clear_since`, `updated_at`.
 
 ```bash
+python3 -m json.tool /var/lib/jellyflam3/idle_gate_status.json
 python3 -m pipeline.idle_gate --config configs/jellyflam3.yaml   # foreground debug
 ```
 
-Screensaver client pattern `JellyFlam3-Screensaver` is **ignored** by the gate (by design).
+**CLI while the gate is closed.** ffmpeg extract (`python3 -m pipeline.backfill_posters`, and the worker between stages) honors the gate. There is **no** `--skip-gate`. You will see:
+
+```text
+INFO idle-gate closed; waiting 15s before backfill continues
+```
+
+The **15 s** is only the sleep cap between retries (`wait_for_gate` uses `seconds_until_resume`, max 15). It is **not** the remaining hold. Read `reason` and `seconds_until_resume` in the JSON:
+
+| `reason` | Meaning |
+|---|---|
+| `active_tv_client` | Roku / `JellyFlam3` session still looks active (Playing **or** recent check-in) |
+| `active_transcode` | Some Jellyfin session is transcoding |
+| `idle_delay` | Playback already quiet; waiting out `idle_delay_sec` (**600**) |
+
+Ctrl+C and rerun after `gate` is `open`, or leave the command running — it continues when the hold expires.
 
 ### Worker drain (pause before next sheep)
 
@@ -403,7 +419,7 @@ Default is `jellyfin.attach_posters: auto` in the example yaml. Live `configs/je
 
 Screensaver stills (JPEG frames + Jellyfin Backdrops) ride the **same ingest switch**. When posters extract, they land with the frames under `by-generation/{gen}/stills/{stem}/` (`{stem}-poster.jpg` plus `frame_XX.jpg`). Tuples get a poster in that stills folder but never generate frames (watermarked edge mid-file is not screensaver-safe). `stills/.ignore` keeps those JPEGs out of the Jellyfin library scan — VoD tiles and the Roku screensaver only see **Images API** Primary / Backdrop tags, not the files. Peering still shares only `*.flam3` + optional `*-poster.jpg` beside genomes — not catalog stills JPEGs.
 
-`python3 -m pipeline.backfill_posters` always extracts posters **and** stills (operator one-shot). It does not follow ingest auto/never, and it does **not** walk `_refactor-quarantine/` or `_refactor-preview/` (stills always land under live `by-generation/{gen}/stills/{stem}/`). Leftover sibling `{stem}-poster.jpg` files next to the MP4 are moved into that stills folder. `python3 -m pipeline.stills` remains an operator re-extract CLI for disk frames only.
+`python3 -m pipeline.backfill_posters` always extracts posters **and** stills (operator one-shot). It does not follow ingest auto/never, and it does **not** walk `_refactor-quarantine/` or `_refactor-preview/` (stills always land under live `by-generation/{gen}/stills/{stem}/`). Leftover sibling `{stem}-poster.jpg` files next to the MP4 are moved into that stills folder. `python3 -m pipeline.stills` remains an operator re-extract CLI for disk frames only. Live extract waits on the [idle gate](#idle-gate-behavior) (`idle_delay_sec` **600**; log line `idle-gate closed; waiting 15s…` is the retry cap, not the hold). `--dry-run` scans without waiting on ffmpeg.
 
 Check what this furnace will do on the **next** ingest (no worker restart needed for the check):
 
@@ -881,7 +897,8 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 | Symptom | Check | Fix |
 |---|---|---|
 | No new sheep | `healthcheck.sh`; `gate` in status JSON; inbox count | Open gate / fix worker / seed or breed. If Jellyfin already has the item, wait for a client **wrap** ([Flock mix](#flock-mix-shuffle-wrap)) |
-| Gate stuck closed | Jellyfin Sessions; Roku still “Playing”? | Stop playback; wait `idle_delay_sec` |
+| Gate stuck closed | Status JSON `reason`; VoD open even on Home? | Stop VoD / wait `idle_delay_sec` (**600**). Screensaver does not close the gate |
+| `idle-gate closed; waiting 15s before backfill continues` | `cat /var/lib/jellyflam3/idle_gate_status.json` | 15s is the retry cap. `idle_delay` = 10 min hold after last TV-class activity; no `--skip-gate` |
 | Worker quiet, gate open | `ls genomes/inbox/*.flam3`; journal `-u jellyflam3-worker`; `python3 -m pipeline.worker_drain status` | Seed inbox; inspect quarantine; **cancel** drain if `drain: true` |
 | `jellyflam3-display-sink` crash-loop (`activating` / `NRestarts` climbing) | journal: `DISPLAY_SINK_TOKEN required when binding a non-loopback host` | On **this** Pi: `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'` → `DISPLAY_SINK_TOKEN=` in `secrets.env`; `systemctl reset-failed` + restart. Same string → Roku `displaySinkToken`. Do not copy another furnace. See [Display sink token](#display-sink-token-how--where--when). |
 | healthcheck exit 1 | Read script sections (units, tools, status file, **peering share_live**, **library disk BAD**) | See [offline peering](#opt-in-vs-share-live-do-not-confuse-them); `opt-in` or `opt-out`; free space on `/media/sheep` |

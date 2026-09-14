@@ -65,7 +65,7 @@ Symptom-oriented table (extend as lab learns):
 | Symptom | Checks | Likely fix |
 |---|---|---|
 | No new sheep appearing | Worker active? inbox count? gate open? drain off? | Open gate / `worker_drain cancel` / fix worker / seed inbox |
-| Gate stuck closed | Jellyfin Sessions; VoD still Playing? | Stop playback; wait `idle_delay_sec` |
+| Gate stuck closed | Status JSON `reason`; VoD open even on Home? | Stop VoD / wait `idle_delay_sec` (**600**). CLI `waiting 15s` is the retry cap ([runbook](../USER_GUIDE_AND_RUNBOOK.md#idle-gate-behavior)) |
 | Blank screensaver | Empty `JellyFlam3` registry (SS never configured VoD on this box) | Sideload VoD → save Settings → re-sideload SS; then id dump / Primary+Backdrop |
 | VoD **No poster** tiles | No `ImageTags.Primary` (`stills/` JPEGs are ignored) | Images API Primary upload (base64); relaunch VoD |
 | Roku SS posters only | No `BackdropImageTags` | `backfill_posters` until `jellyfin_stills` uploaded |

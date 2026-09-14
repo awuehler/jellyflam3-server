@@ -11,7 +11,8 @@ state. ``local_primary`` is not complete (stills/.ignore). Disk frames are not B
 ``jellyfin_stills`` must be ``uploaded``. Stills ride the same path as posters (never from
 tuples). Operator backfill force-extracts stills and replaces Jellyfin Backdrops. Does not
 walk ``_refactor-quarantine/`` or ``_refactor-preview/`` (stills always land under live
-``by-generation/{gen}/stills/{stem}/``).
+``by-generation/{gen}/stills/{stem}/``). Live extract blocks on idle-gate
+(``idle_delay_sec`` default 600). Log ``waiting 15s`` is the retry cap, not the hold.
 """
 
 from __future__ import annotations
@@ -155,7 +156,12 @@ def resolve_duration_sec(cfg: dict[str, Any], mp4: Path, sidecar: dict[str, Any]
 
 
 def wait_for_gate(cfg: dict[str, Any], *, sleep: Any = time.sleep) -> None:
-    """Block until idle-gate is open (no-op when idle_gate is disabled)."""
+    """Block until idle-gate is open (no-op when idle_gate is disabled).
+
+    Sleeps ``seconds_until_resume`` capped at 15 s. A repeating
+    ``waiting 15s`` log usually means ``idle_delay_sec`` (default 600) still
+    holds after TV-class activity — read ``idle_gate_status.json``.
+    """
     ig = cfg.get("idle_gate") or {}
     if not ig.get("enabled", True):
         return
@@ -382,7 +388,13 @@ def run_backfill(
 def main(argv: list[str] | None = None) -> int:
     """CLI: walk catalog MP4s and backfill missing posters / Jellyfin Primary."""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    p = argparse.ArgumentParser(description="Backfill flock posters + Jellyfin Primary/metadata")
+    p = argparse.ArgumentParser(
+        description=(
+            "Backfill flock posters + Jellyfin Primary/metadata. "
+            "Honors idle-gate (idle_delay_sec default 600; no --skip-gate). "
+            "Log 'waiting 15s' is the retry cap — see idle_gate_status.json."
+        )
+    )
     p.add_argument("--config", default="configs/jellyflam3.yaml")
     p.add_argument("--dry-run", action="store_true", help="Scan and report only")
     p.add_argument("--force", action="store_true", help="Re-process even if sidecar looks complete")
