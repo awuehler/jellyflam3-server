@@ -62,14 +62,14 @@ Parallel after **02**: `03` (HLS) anytime; `04` once Primary images exist. `05`�
 
 ## Phase 4 guides (synopsis — products parked; pre-open slices noted)
 
-1. [01_PEER_SHARE_PATH.md](phase4/01_PEER_SHARE_PATH.md) — gated promote vs auto-promote (parked)
+1. [01_PEER_SHARE_PATH.md](phase4/01_PEER_SHARE_PATH.md) — gated `promote --apply` (**locked**; auto-promote **cancelled**)
 2. [02_MESH_INTRODUCE_SCRIPTING.md](phase4/02_MESH_INTRODUCE_SCRIPTING.md) — Syncthing introduce options (parked)
-3. [03_EDGES_AND_WATERMARK.md](phase4/03_EDGES_AND_WATERMARK.md) — **tuples shipped** 2026-09-05 (standalone edges / loop watermark parked)
+3. [03_EDGES_AND_WATERMARK.md](phase4/03_EDGES_AND_WATERMARK.md) — **tuples shipped** 2026-09-05; standalone edges / loop watermark **cancelled** 2026-09-13
 4. [04_ROKU_PUBLISH.md](phase4/04_ROKU_PUBLISH.md) — private-channel path (**shipped** 2026-09-11); Store parked
 5. [05_END_USER_GUIDE.md](phase4/05_END_USER_GUIDE.md) — household guide (**baseline complete** 2026-09-03)
 6. [06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md) — disk check (**slice shipped**); rotate parked
-7. [07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md) — `link_capacity` (**estimator shipped**; Owner OK 2026-09-09)
-8. [08_VIEWER_FEEDBACK_LOOP.md](phase4/08_VIEWER_FEEDBACK_LOOP.md) — vote overlay + sidecar sink + share cron + idle-breed weights (**shipped**); auto-promote parked
+7. [07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md) — `link_capacity` (**estimator shipped**; Owner OK 2026-09-09; no Jellyfin cap / Ethernet lab DoD)
+8. [08_VIEWER_FEEDBACK_LOOP.md](phase4/08_VIEWER_FEEDBACK_LOOP.md) — vote overlay + sidecar sink + share cron + idle-breed weights (**shipped**); auto-promote **cancelled**; screensaver voting **cancelled**
 9. [09_SHEEP_NAMING.md](phase4/09_SHEEP_NAMING.md) — RNG aliases (**slice shipped** 2026-09-09; client toggle parked)
 
 Overview: [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md).

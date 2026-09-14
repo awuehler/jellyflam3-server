@@ -224,7 +224,7 @@ python3 -m pipeline.peering mesh-join --config configs/jellyflam3.yaml \
     --peers-file configs/peering-peers.json
 ```
 
-Gated promote (land ≠ worker ingest) stays explicit — auto-promote is still parked.
+Gated promote (land ≠ worker ingest) stays explicit — **auto-promote cancelled** ([docs/phase4/01](../../docs/phase4/01_PEER_SHARE_PATH.md)).
 
 **Non-goals:** mesh admin UI; committing device IDs; re-opening global discovery/relays for flock share.
 

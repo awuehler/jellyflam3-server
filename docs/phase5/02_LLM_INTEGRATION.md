@@ -14,7 +14,7 @@ Models on **B advise** (names, parent briefs, operator actions). **flam3-genome*
 |---|---|---|
 | **LLM poster naming** | Small GPU VLM → caption → hot Instruct JSON on **B**; `set-alias` / sidecar write on **A** | [phase4/09](../phase4/09_SHEEP_NAMING.md) § D; [vision pipeline](#vision-pipeline) |
 | **LLM-assisted pedigree** | Brief on **B**; `pipeline.breed` / idle-breed on **A** | [phase2/07](../phase2/07_PEDIGREE_BREEDING.md) |
-| **Vote-aware briefs** | Read `viewer_feedback` **from A’s sidecar** (overlay + `/v1/sheep-votes` + share cron / breed weights shipped; auto-promote parked) | [phase4/08](../phase4/08_VIEWER_FEEDBACK_LOOP.md), [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) |
+| **Vote-aware briefs** | Read `viewer_feedback` **from A’s sidecar** (overlay + `/v1/sheep-votes` + share cron / breed weights shipped; auto-promote **cancelled** — `promote --apply`) | [phase4/08](../phase4/08_VIEWER_FEEDBACK_LOOP.md), [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) |
 | **Shears / refactor agent** | NL on **B** → CLI on **A** with confirm tokens | [phase3/03](../phase3/03_SHEEP_SHEARS.md), [phase3/09](../phase3/09_SHEEP_REFACTOR.md) |
 | **Ops agent** | Explain gate/inbox using **A** JSON; later request drain on **A** | [phase1/09](../phase1/09_RUNTIME_AND_OPS.md), [phase4/00](../phase4/00_OVERVIEW.md#furnace-polish-shipped-drain), [idle-gate](../phase4/00_OVERVIEW.md#furnace-polish-pre-wave-3--idle-gate-shipped) |
 | **Share brief** | Propose candidates; Opt In + share-security still on **A** | [phase2/05](../phase2/05_SYNCTHING_GENOME_PEERING.md), [phase3/05](../phase3/05_SHARED_SHEEP_SECURITY.md), [phase4/01](../phase4/01_PEER_SHARE_PATH.md) |
@@ -219,7 +219,7 @@ Furnace ingest must **not** block on B (timeout → keep `alias_source=auto`).
 1. **Parent picker brief on B** — compact cards from A (stem, alias, tags, duration, optional votes) plus optional VLM caption of the poster thumb; not raw `.flam3` XML.
 2. **Mode suggestion** — `mutate` / `cross` / `interpolate` (+ `method`).
 3. **Idle policy (optional, default off) on A** — `cron_breed_idle` may **HTTP/SSH to B** for a parent pick, then run `pipeline.breed` **locally**. Gates stay on A: empty inbox, idle-gate, `archive_cron_imminent`, fingerprint dedup ([phase2/07](../phase2/07_PEDIGREE_BREEDING.md#daily-idle-breed-cron)). If B is down, idle-breed falls back to uniform random — furnace must not stall.
-4. **Viewer weights** — A’s sidecar integers (`viewer_feedback`) win over B “remembering likes.” Breed-weight / auto-promote stay Phase 4 parked.
+4. **Viewer weights** — A’s sidecar integers (`viewer_feedback`) win over B “remembering likes.” Breed-weight is on A (Phase 4). Auto-promote is **cancelled** on A (`promote --apply`).
 
 Do **not** implement cloud-API pedigree **on the Pi** as a substitute for B.
 

@@ -16,8 +16,8 @@ Usage:
 
 Assumptions: Default delete is dry-run. Never touches secrets.env, jellyflam3.yaml,
 or Syncthing/Tailscale device config. Stills dirs (poster pipeline) cascade with
-the sheep; Jellyfin Backdrops go with the item. Edges remain optional until
-standalone edge files ship.
+the sheep; Jellyfin Backdrops go with the item. Tuple MP4s cascade with parents;
+standalone edge files will not ship.
 """
 
 from __future__ import annotations

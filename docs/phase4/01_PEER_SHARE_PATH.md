@@ -1,36 +1,35 @@
-# 01 — Peer share path revisit
+# 01 — Peer share path (gated promote)
 
 ## Boundary
 
-Phase 4 synopsis — decide whether to **keep or change** the locked Phase 2 receive path:
+Phase 2 receive path stays:
 
 **stage → `genomes/peers/inbox` → gated `promote --apply`** (land ≠ worker ingest).
 
-**Status:** **Locked Wave 3 (2026-09-13)** — keep gated `promote --apply` (land ≠ worker ingest). Auto-promote stays parked. Share-out of voted sheep is `python3 -m pipeline.share_votes` / `scripts/cron_share_votes.sh` → `peers/share-out` only. Household receive + vote/share recipes: [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md#worked-examples).
-
-## Locked today (Phase 2)
+**Status:** **Locked Wave 3 (2026-09-13).** **Auto-promote cancelled** as a goal 2026-09-13 (same class as `N_max` / screensaver voting): there will not be a silent drain of `peers/inbox` into the furnace. Share-out of voted sheep is `python3 -m pipeline.share_votes` / `scripts/cron_share_votes.sh` → `peers/share-out` only. Receivers still `promote --apply`. Household recipes: [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md#worked-examples).
 
 Contract: [phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_PEERING.md#pi--pi-receive-path-locked).
 
-## Wave 3 lock
+## Product (locked)
 
 | Question | Decision |
 |---|---|
-| Path into `genomes/inbox` | **Gated `promote --apply` only** (Phase 2 contract) |
-| Auto-promote after tax + share-security | **Parked** — own Owner OK if ever opened |
+| Path into `genomes/inbox` | **Gated `promote --apply` only** |
+| Auto-promote after tax + share-security | **Cancelled** 2026-09-13 — tax/verify still run **inside** `promote --apply`; no cron without `--apply` |
 | Folder IDs / layout | Unchanged |
 | Votes → share | Cron **copies** liked `.flam3` to `peers/share-out`; receivers still `promote --apply` |
 
-## Sidecar reservation (pre-open)
+`promote --apply` is the operator gate: share-security → sheep tax → `genomes/inbox` or quarantine. Listing without `--apply` stays the dry view.
 
-Share-out automation (when built) reads **`viewer_feedback.share_candidate`** on `{stem}.jellyflam3.json`. That block is reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) with the rest of `viewer_feedback`. Guide 01 does **not** add its own top-level key.
+## Sidecar
 
-Vote sink (Wave 2) sets `share_candidate` on like/love/vote. Share cron (Wave 3) reads that block and stages **share-out** only. Worker ingest copies reserved sidecar keys (`viewer_feedback` included) across re-encode. Auto-promote stays parked.
+Share-out reads **`viewer_feedback.share_candidate`** on `{stem}.jellyflam3.json` ([phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema)). Vote sink sets it; share cron stages **share-out** only. Worker ingest copies reserved sidecar keys across re-encode. That does **not** skip promote.
 
-## Non-goals (until opened)
+## Non-goals (cancelled / out of product)
 
-- Silent drain of peers/inbox into the furnace without an explicit gate
+- Silent drain of `peers/inbox` into the furnace without an explicit `promote --apply`
 - Remote wipe of peer copies
+- Vote-driven auto-queue of a render (votes bias **share-out** and **idle-breed weights** only)
 
 ## See also
 

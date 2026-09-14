@@ -74,7 +74,7 @@ Execute **01 before 02**. Guide 03 is the honesty check for the agent platform. 
 4. **Sidecar SoT stays on the furnace.** LLM output is applied **on A** (`{stem}.jellyflam3.json`, breed/Shears). B may keep prompt logs; those are not flock SoT ([phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema)).
 5. **Human override sticky.** `alias_source=human` wins over `llm` and `auto` ([phase4/09](../phase4/09_SHEEP_NAMING.md)).
 6. **License / NC unchanged.** Model suggestions cannot flip Creative Commons or commercial-safe policy ([phase1/07](../phase1/07_LICENSE_AND_METADATA.md), [phase2/07](../phase2/07_PEDIGREE_BREEDING.md)).
-7. **Phase 4 products stay on Phase 4.** Vote overlay, auto-promote, pasture filename/alias toggle, library rotate are **not** pulled into this slice.
+7. **Phase 4 products stay on Phase 4.** Vote overlay, pasture filename/alias toggle, library rotate are **not** pulled into this slice. Auto-promote is cancelled on A (`promote --apply`).
 8. **16-class quality is a furnace concern only.** Agent-platform sizing does not change `quality` / supersample / VoD bands on A.
 9. **One hot 7–8B INT4 Instruct.** Do not co-resident two 7B Instruct graphs in 16 GB. Store Llama 3.1 8B / Qwen2.5 7B / Mistral 7B (all INT4) on NVMe; load **one** per session. INT16/FP16 7–8B is out of RAM budget.
 10. **Vision pipeline, small VLM co-resident.** Posters/stills: **pixels → text → Instruct JSON**. A 2B–3B INT4 VLM (Adreno) may stay loaded **in parallel** with the hot Instruct (Hexagon) as two sessions. Do **not** feed pixels into the 7B, and do **not** run a 7B VLM beside a 7B Instruct. Per sheep the stages are sequential; the graphs stay resident. See [02](02_LLM_INTEGRATION.md#vision-pipeline).

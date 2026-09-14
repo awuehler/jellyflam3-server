@@ -4,7 +4,7 @@
 
 Phase 4 — generate a **tuple**: one catalog MP4 that plays **loop A → edge(A→B) → loop B** with a seamless genetic morph, and bake the Electric Sheep watermark **only on the edge stage**.
 
-**Status: shipped** (2026-09-05). Standalone `type: edge` clips, client-side loop→edge→loop sequencers, and watermark-on-loops/stills stay parked.
+**Status: shipped** (2026-09-05). **Cancelled 2026-09-13:** standalone `type: edge` clips, client-side loop→edge→loop sequencers, and watermark on loops/stills — tuples already deliver the full journey as one catalog MP4.
 
 This guide is the **single home** for tuple encode, edge-stage watermark, and catalog layout under `/media/sheep/by-generation/tuple/`.
 
@@ -21,7 +21,7 @@ This guide is the **single home** for tuple encode, edge-stage watermark, and ca
 
 - **Loop** — one genome, 360° rotation, periodic → seamless repeat (Phase 1–2 catalog). Unchanged.
 - **Tuple** — two single-flame parents; flam3 `sequence=` with **nframes per stage**; two flames ⇒ three stages (loop A, edge, loop B); catalog `type: tuple`.
-- **Edge (parked as its own file)** — sidecar `type: edge` remains reserved; this slice does **not** emit standalone edge MP4s under `by-generation/*/edges/`.
+- **Edge (not a catalog file)** — genetic morph is the **middle stage of a tuple**. Sidecar `type: edge` stays reserved unused. **Do not** emit standalone edge MP4s under `by-generation/*/edges/` (**cancelled** 2026-09-13).
 
 ### Guidelines
 
@@ -37,13 +37,12 @@ This guide is the **single home** for tuple encode, edge-stage watermark, and ca
 | **Shears** | Deleting a parent cascades matching tuple MP4s, sidecars, stills, and inbox/done genomes |
 | **Idle cron** | `pipeline.breed_idle` may pick **`tuple`** as a random mode beside mutate / cross / blend / interpolate |
 
-### Non-goals (this slice)
+### Non-goals
 
 - Concat of catalog A.mp4 + edge + B.mp4
-- Standalone `type: edge` MP4s or client-side loop→edge→loop sequencers
-- Watermark on loop masters or stills
 - Auto-thaw frozen `animate=0` parents; linear-only / frozen parents are skipped
 - Vote overlay on the edge stage ([08](08_VIEWER_FEEDBACK_LOOP.md))
+- Standalone `type: edge` MP4s, client-side loop→edge→loop sequencers, or watermark on loop masters / stills — **cancelled** 2026-09-13 (tuples close this guide)
 
 ## Commands
 
@@ -120,7 +119,7 @@ See `tuple:` and `watermark:` in [`configs/jellyflam3.yaml.example`](../../confi
 - [x] Duration respects host hard max; idle-gate honored during render
 - [x] Roku shuffle indexes `tuple` and `pedigree`; Kodi recursive flock walk already includes them
 - [x] Shears cascade tuples that name a deleted parent
-- [ ] **Kodi** dedicated loop→edge→loop sequencer for *standalone* edges — still parked (tuples play as one item)
+- [x] ~~**Kodi** dedicated loop→edge→loop sequencer for standalone edges~~ — **cancelled** 2026-09-13 (tuples play as one item)
 
 ### Watermark
 
@@ -130,7 +129,7 @@ See `tuple:` and `watermark:` in [`configs/jellyflam3.yaml.example`](../../confi
 - [x] Disable via `watermark.enabled` / `tuple.watermark_on_edge` (skip overlay)
 - [x] Commercial-safe flock (`commercial_mode: true`) skips Cesari logo PNG → ES attribution sentence
 - [x] Operator PNG (`watermark.image` not a Cesari filename) overlays on private and public flocks
-- [ ] Watermark on loop MP4s and stills — parked
+- [x] ~~Watermark on loop MP4s and stills~~ — **cancelled** 2026-09-13 (edge-stage mark on tuples is the product)
 
 ## See also
 

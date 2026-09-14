@@ -47,7 +47,7 @@ python3 -m pytest tests/ -q
 | Open regression (Step 10 checklist) | **OK** 2026-08-23 — `04a` automated + Owner OK: idle-gate open/closed (HLS active → gate closed), ambient MP4 loop acceptable on lab Roku |
 | Guide 06 Owner OK | **OK** 2026-08-14 |
 | Guide 08 lab dump + Roku Settings paste | **OK** 2026-08-14 (fleet; flock in Jellyfin + Roku) |
-| Guide 02 Kodi ES screensaver (loops-only) | **OK** 2026-08-21 (loop→edge→loop post-launch) |
+| Guide 02 Kodi ES screensaver (loops-only) | **OK** 2026-08-21 (loop→edge→loop as Phase 4 tuples) |
 | Guide 09 Sheep refactor | **OK** 2026-08-21 — pathways A / P / B / C / D + sidecar history; 16a lab smoke |
 | Guide 10 Owner OK (Step 10 / Phase 3 closeout) | **OK** 2026-08-23 — regression + feature checklists; SoT synced; `v0.3.0` at public launch |
 | Other Phase 3 guides in this RC | 01–10 complete; guide 04 (edges) post-launch |
@@ -57,7 +57,7 @@ python3 -m pytest tests/ -q
 | Guide | Status | Notes |
 |---|---|---|
 | 01 Roku stills / Screensaver | **Complete** | Owner OK 2026-08-16 — [01](01_SCREENSAVERS_AND_STILLS.md) |
-| 02 Kodi ES screensaver | **Complete** | Owner OK 2026-08-21 — loops-only; loop→edge→loop post-launch — [02](02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) |
+| 02 Kodi ES screensaver | **Complete** | Owner OK 2026-08-21 — loops-only; loop→edge→loop as Phase 4 tuples — [02](02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) |
 | 03 Sheep Shears | **Complete** | Owner OK 2026-08-16 — [03](03_SHEEP_SHEARS.md) |
 | 04 Edges + watermark | **Post-launch** | Not in v0.3.0 |
 | 05 Shared sheep security | **Complete** | Owner OK 2026-08-16 — [05](05_SHARED_SHEEP_SECURITY.md) |
@@ -113,7 +113,7 @@ Update statuses as each guide ships; RC may ship a **subset** of 01–09 if Owne
 Tick only what this RC includes:
 
 - [x] 01 Stills + Roku Screensaver / Backdrop exit met (Owner OK 2026-08-16)
-- [x] 02 Kodi ES screensaver exit met (Owner OK 2026-08-21; loop→edge→loop post-launch)
+- [x] 02 Kodi ES screensaver exit met (Owner OK 2026-08-21; loop→edge→loop as Phase 4 tuples)
 - [x] 03 Shears exit met (Owner OK 2026-08-16)
 - [x] 04 Edges + watermark — **post-launch** (not v0.3.0)
 - [x] 05 Share security exit met (or deferred)

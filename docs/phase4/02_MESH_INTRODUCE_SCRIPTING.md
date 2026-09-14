@@ -32,7 +32,7 @@ Placeholder `REPLACE_…` device IDs and `100.x…` IPs are skipped so an unedit
 - Full mesh admin UI
 - Committing real Syncthing device IDs
 - Re-opening global discovery / relays for the flock share
-- Auto-promote (still [01](01_PEER_SHARE_PATH.md))
+- Auto-promote (cancelled — [01](01_PEER_SHARE_PATH.md) gated `promote --apply`)
 
 ## See also
 

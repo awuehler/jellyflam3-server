@@ -9,7 +9,9 @@ Usage:
   python3 -m pipeline.link_capacity bench-serve --port 18791 --mib 64
   python3 -m pipeline.link_capacity bench-recv --host <Pi_LAN_IP> --port 18791
 
-Assumptions: ``N_max`` is an estimate, not a Jellyfin connection cap. Formula:
+Assumptions: ``N_max`` is an estimate, not a Jellyfin connection cap (will not be
+enforced as max sessions). This lab fleet is WiFi STA (``eth0`` DOWN); live
+profile is ``wifi-pi``. Formula:
 
   N_max = floor( (usable_link_bps * (1 - headroom)) / bps_per_active_session )
 """
@@ -46,7 +48,7 @@ PROFILES: dict[str, dict[str, Any]] = {
         "notes": (
             "Pi as WiFi STA serving WiFi clients (STA to AP to STA). "
             "Lab 2026-09-03: 16a to 08a 35.3 Mbps, 16a to 04a 47.1 Mbps; "
-            "profile uses the slower hop."
+            "profile uses the slower hop. Lab fleet eth0 DOWN — this is the live profile."
         ),
     },
     "wifi-ap-gigabit-backhaul": {
@@ -229,7 +231,7 @@ def estimate(
         "Kodi ES screensaver (video loops) counts as a full session.",
         "Idle-gate still pauses the furnace while any matching TV is Playing.",
         "Estimate is LAN only; Tailscale / WAN is a worse budget.",
-        "N_max is not a Jellyfin connection cap.",
+        "N_max is not a Jellyfin connection cap (ops honor the estimate).",
     ]
     return Estimate(
         n_max=n,

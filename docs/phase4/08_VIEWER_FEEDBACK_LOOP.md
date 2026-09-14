@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — close the **end-user → furnace** feedback loop: during VoD playback the Roku channel shows a **transient overlay** near the end of each sheep MP4 that invites a remote **like / love / vote** without stopping playback. Captured votes on the furnace drive (a) **share promotion** of the corresponding `.flam3` into the Tailscale / Syncthing peer path, and (b) **weighted bias** in daily idle pedigree breeding so well-liked sheep are more likely parents. Complements the existing **~10-day archive-seed** and **daily idle-breed** crons with **one additional cron** that detects shareable (voted) sheep, and enhances the daily breed job with viewer weights.
 
-**Status:** Overlay + sidecar vote sink **shipped** 2026-09-11 (Wave 2). Share cron + idle-breed weights **shipped** 2026-09-13 (Wave 3). Auto-promote stays parked ([01](01_PEER_SHARE_PATH.md) locked gated `promote --apply`). Household vote/share recipes: [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md#6--vote-then-share).
+**Status:** Overlay + sidecar vote sink **shipped** 2026-09-11 (Wave 2). Share cron + idle-breed weights **shipped** 2026-09-13 (Wave 3). **Auto-promote cancelled** 2026-09-13 ([01](01_PEER_SHARE_PATH.md) — gated `promote --apply` is the receive path). **Screensaver voting cancelled** 2026-09-13 — violates Roku screensaver best practices / certification requirements; votes stay on the **VoD** overlay only. Household vote/share recipes: [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md#6--vote-then-share).
 
 Depends on Phase 1–2 Roku VoD playback ([../phase1/08_ROKU_BRIGHTSCRIPT.md](../phase1/08_ROKU_BRIGHTSCRIPT.md), [../phase2/04_ROKU_CHANNEL_POLISH.md](../phase2/04_ROKU_CHANNEL_POLISH.md)), pedigree idle breed ([../phase2/07_PEDIGREE_BREEDING.md](../phase2/07_PEDIGREE_BREEDING.md)), and Syncthing-over-Tailscale peering ([../phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_PEERING.md)). Interacts with [01_PEER_SHARE_PATH.md](01_PEER_SHARE_PATH.md) (how votes trigger share-out / promote) and [04_ROKU_PUBLISH.md](04_ROKU_PUBLISH.md) (overlay UX polish for published builds). Does **not** replace archive seed or idle-breed — it **biases and extends** flock evolution with household interest.
 
@@ -33,11 +33,11 @@ Depends on Phase 1–2 Roku VoD playback ([../phase1/08_ROKU_BRIGHTSCRIPT.md](..
 1. **Overlay must not stop or pause** the Video node — prompt is decorative / input-only; seek/loop behavior unchanged.
 2. **Any remote key that maps to vote** records feedback; other keys may dismiss the overlay without voting (Back) or leave playback controls as today.
 3. **Re-votes are unrestricted** — no “one vote per sheep per device” gate in MVP; each event increments sidecar tallies.
-4. **Screensaver package is out of scope** for this guide — votes happen in the **VoD channel** during MP4/HLS playback, not in `roku-screensaver/` (image-only, no interactive chrome while saving).
+4. **Screensaver voting is cancelled** (2026-09-13) — interactive chrome while a screensaver is running violates Roku best practices and Channel Store requirements. Votes happen only in the **VoD channel** during MP4/HLS playback, never in `roku-screensaver/` or the Kodi screensaver.
 5. **Idle-gate** — vote HTTP must stay light (no Sessions Playing as a second client); prefer a small host-service / sink like display-profile upsert, not a fake playback session.
 6. **License / commercial-safe** — share cron and breed bias still respect NC / commercial filters; a loved NC sheep does not bypass Opt Out or commercial Mode policy.
 7. **Sidecar is the sole metadata SoT** for a catalog sheep — `{stem}.jellyflam3.json` beside the MP4. License, tags, duration/signals, poster/stills index, pedigree hints, **and viewer vote tallies** live there. **No parallel vote store** under `/var/lib/jellyflam3/` (no `sheep_vote_weights.json` as competing truth). Jellyfin Items Tags / Overview are derived caches only. Binary artifacts stay themselves: `.mp4` (video), `.flam3` (genome), poster/stills **files** (sidecar indexes them). Optional append-only log is debug-only and must not be read for share/breed decisions.
-8. **VoD shuffle already includes pedigree and tuple** (channel 1.0.28+; skips `misc`/`test`). Roku screensaver ignores `shuffleFlock` and always rotates stills (no tuples). Vote overlay (when built) uses the VoD shuffle pool, not the screensaver.
+8. **VoD shuffle already includes pedigree and tuple** (channel 1.0.28+; skips `misc`/`test`). Roku screensaver ignores `shuffleFlock` and always rotates stills (no tuples, **no votes**).
 
 ## Sidecar + sink (shipped Wave 2)
 
@@ -82,7 +82,7 @@ Overlay is visual-only (Video stays focused; playback does not pause). Shown whe
    - Selects sheep with sidecar `share_candidate` and `votes` / `loves` over `share_votes.min_votes` / `min_loves`.
    - Copies corresponding `.flam3` from `genomes_done` (not inbox/quarantine) via `peering.publish` (tax + integrity) into **`peers/share-out`**.
    - Honors Opt In (`require_opt_in`, default on) and `license.commercial_mode` (NC skipped when commercial-safe).
-2. **Gate** — **does not** auto-promote into `genomes/inbox`. Kill-switch: `share_votes.enabled`.
+2. **Gate** — **does not** auto-promote into `genomes/inbox` (**cancelled** as a goal). Kill-switch: `share_votes.enabled`.
 3. **Log** — `/var/log/jellyflam3/share_votes.log`; flock lock like other cron wrappers.
 
 ### D — Idle-breed weight bias (shipped Wave 3)
@@ -102,10 +102,10 @@ Overlay is visual-only (Video stays focused; playback does not pause). Shown whe
 
 - Stopping, pausing, or seeking playback as part of the vote UX
 - Requiring unique votes / anti-ballot stuffing in MVP (household re-vote is a feature)
-- Voting inside the Roku or Kodi **screensaver** packages
+- Voting inside the Roku or Kodi **screensaver** packages (**cancelled** 2026-09-13 — Roku best practices / certification)
 - Replacing archive-seed or removing uniform random entirely
 - Public internet vote API or Electric Sheep P2P ratings network
-- Auto-render of new sheep solely because of a vote (votes bias **selection** and **share**, not furnace kick without inbox)
+- Auto-render / auto-promote of new sheep solely because of a vote (votes bias **selection** and **share-out**, not furnace kick without `promote --apply`)
 - A second metadata store for votes (Jellyfin tags, central JSON under `/var/lib`, or genome XML) as source of truth
 
 ## Artifacts (when built)

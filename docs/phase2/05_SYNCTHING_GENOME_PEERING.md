@@ -149,7 +149,7 @@ On **Opt Out**, the host service SHALL:
 
 **No silent queue flood** on Opt In or on Syncthing land — promote is always an explicit operator (or later timer) action. Syncthing land ≠ worker ingest.
 
-**Deferred (Phase 4 / 01 locked):** inbound path stays **stage → `peers/inbox` → gated `promote --apply`**. Voted sheep share-out is a separate cron into `peers/share-out` ([../phase4/08_VIEWER_FEEDBACK_LOOP.md](../phase4/08_VIEWER_FEEDBACK_LOOP.md)). Auto-promote stays parked.
+**Receive path (locked):** inbound stays **stage → `peers/inbox` → gated `promote --apply`**. Voted sheep share-out is a separate cron into `peers/share-out` ([../phase4/08_VIEWER_FEEDBACK_LOOP.md](../phase4/08_VIEWER_FEEDBACK_LOOP.md)). **Auto-promote cancelled** 2026-09-13 ([../phase4/01_PEER_SHARE_PATH.md](../phase4/01_PEER_SHARE_PATH.md)).
 
 ## Smoke test
 

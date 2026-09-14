@@ -78,7 +78,7 @@ The extension should feel like Electric Sheep’s idle canvas, not a VoD browser
 
 **Complete** for Phase 3 loops-only scope — Owner OK 2026-08-21.
 
-**Deferred to Phase 4 (standalone edges):** a client sequencer that plays loop MP4 → edge MP4 → loop MP4. **Tuples** ([03](../phase4/03_EDGES_AND_WATERMARK.md)) already bake that journey into one catalog file; Kodi’s recursive `by-generation/` walk plays them as ordinary flock items. Loops-only shuffle remains the Phase 3 DoD.
+**Cancelled 2026-09-13 (standalone edges):** a client sequencer that plays loop MP4 → edge MP4 → loop MP4 is **not** coming. **Tuples** ([03](../phase4/03_EDGES_AND_WATERMARK.md)) already bake that journey into one catalog file; Kodi’s recursive `by-generation/` walk plays them as ordinary flock items. Loops-only shuffle remains the Phase 3 DoD.
 
 **Shipped polish (Phase 4):** wrap-once re-fetch in **0.2.9** — a wrap is one random permutation of the in-memory list (each sheep once; next clip is not last-played). Then `_load_flock` replaces the list (HTTP Limit 5000, randomly prune to 313 / `flock_limit`). Overnight ~daily ingest appears without exiting the screensaver. Older add-on userdata may still store `flock_limit=200` until Configure is changed. **Shipped in 0.2.7:** if a sheep is **quarantined** (or Shears-deleted) mid-session, a file-not-found / 404 drops that id, re-polls the flock (30s rate limit), and continues — same contract on Roku VoD 1.0.29+ and Roku SS 1.0.8+.
 
@@ -86,7 +86,7 @@ The extension should feel like Electric Sheep’s idle canvas, not a VoD browser
 
 - [x] Add-on installs and appears under Kodi Screensaver settings — Owner OK 2026-08-21
 - [x] Idle start plays Sheep loops fullscreen without interactive chrome — Owner OK 2026-08-21
-- [x] ~~When edges exist, sequencer performs loop→edge→loop~~ — **deferred** for standalone edge files; **tuples** play as one item (Phase 4 / [03](../phase4/03_EDGES_AND_WATERMARK.md)); Owner OK 2026-08-21 (loops-only Phase 3)
+- [x] ~~When edges exist, sequencer performs loop→edge→loop~~ — **cancelled** 2026-09-13 for standalone edge files; **tuples** play as one item (Phase 4 / [03](../phase4/03_EDGES_AND_WATERMARK.md)); Owner OK 2026-08-21 (loops-only Phase 3)
 - [x] License filter honored (e.g. hide NC in commercial-safe mode) — Owner OK 2026-08-21 (0.2.1 client-side filter)
 - [x] Does not trigger Pi furnace renders (idle-gate / Sessions behavior verified) — Owner OK 2026-08-21
 - [x] Install + dogma notes in this guide (or linked README under `kodi-screensaver/`) — README documents Jellyfin URL/API key/user/library IDs + dump/manual collection

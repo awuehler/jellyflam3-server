@@ -4,7 +4,7 @@
 
 How many endpoint devices (Roku, Kodi, VLC, etc.) a single JellyFlam3-server can serve **at once** over the **local** link without saturating it: estimate from measured per-session Jellyfin bandwidth and usable WiFi or Ethernet capacity, with headroom so clients do not spin-wait, buffer, or glitch.
 
-**Status: complete** (estimator + lab note — Owner OK 2026-09-09). `N_max` is an **estimate**, not a Jellyfin connection cap.
+**Status: complete** (estimator + lab note — Owner OK 2026-09-09). `N_max` is an **estimate**, not a Jellyfin connection cap — **cancelled** as a product goal 2026-09-13. This lab’s furnaces stay **WiFi STA** (`eth0 DOWN`); an Ethernet control run is **not** a remaining DoD.
 
 Most important when the Pi’s path to TVs is **WiFi** (airtime, uplink of a WiFi-connected RPi, or a busy household AP). Gigabit Ethernet is usually not the first bottleneck; the calculator still has an `eth-gigabit` profile so operators can compare.
 
@@ -105,13 +105,25 @@ No on-TV stall log this pass (HTTP proxy, not Roku VoD). Idle-gate was not exerc
 
 04a compact 3 Mbps on `wifi-pi` → `N_max=8`.
 
+### Lab scenario (locked 2026-09-13)
+
+The three lab furnaces (**16a / 08a / 04a**) are **wlan0 STA**. **`eth0` is DOWN** on all three — that is the household path, not a temporary gap to close in this guide.
+
+| What operators do | What we will not build |
+|---|---|
+| Honor `N_max` by how many TVs play at once (Direct Play, fewer sessions) | Jellyfin max-sessions / stream refuse keyed off `N_max` |
+| Use `wifi-pi` (measured) as the live number | Bring `eth0` up and re-bench Ethernet as a Phase 4 lab |
+| Keep `eth-gigabit` / `wifi-ap-gigabit-backhaul` as **comparison profiles** | Treat those Mbps as measured on this fleet |
+
+Other houses may plug the Pi into Ethernet; then `bench-recv` + `estimate --usable-mbps` (or `--profile eth-gigabit`) is the right tool. That is optional ops, not unfinished 07 work.
+
 ## Guidelines
 
 1. Prefer **Direct Play MP4** for ambient TV; transcode both heats the Pi and burns more of the link.
 2. Screensaver image clients are out of the video-N count; **Kodi ES screensaver** is in the video-N count when it plays loops.
 3. Idle-gate still pauses the **furnace** while any matching TV is Playing — concurrency here is **playback**, not simultaneous render + play.
 4. Estimates are **LAN**. Tailscale / WAN is a different (usually worse) budget; mention but do not DoD on it.
-5. A **WiFi-uplinked Pi as Jellyfin server** is the tight case. Plug **Ethernet** when several TVs play at once.
+5. This **lab fleet** is a WiFi-uplinked Pi (`eth0 DOWN`). Live `N_max` is `wifi-pi`. Plug Ethernet on deployments that can; do not wait on a wired re-bench here.
 
 ## Non-goals
 
@@ -119,7 +131,8 @@ No on-TV stall log this pass (HTTP proxy, not Roku VoD). Idle-gate was not exerc
 - Per-TV 4K encode retarget
 - Guaranteeing glitch-free WiFi on a saturated 2.4 GHz AP
 - Merging this into Roku Store listing copy ([04](04_ROKU_PUBLISH.md))
-- Enforcing `N_max` as a Jellyfin connection cap
+- Enforcing `N_max` as a Jellyfin connection cap — **cancelled** 2026-09-13 (estimate stays ops guidance)
+- Ethernet control lab on this fleet (`eth0` up, re-measure `eth-gigabit`) — **cancelled** 2026-09-13
 
 ## Artifacts
 
@@ -128,13 +141,13 @@ No on-TV stall log this pass (HTTP proxy, not Roku VoD). Idle-gate was not exerc
 | [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) Layer 2 | docs | Ethernet vs WiFi; Direct Play vs transcode |
 | `pipeline/link_capacity.py` | pipeline | `N_max` CLI + catalog probe + hop bench |
 | `configs/jellyflam3.yaml.example` `link_capacity.*` | config | Profile / headroom; session bps stays encode/`probe` |
-| This guide § D | docs | WiFi lab vs Ethernet profile; concurrent HTTP vs `N_max` |
+| This guide § D | docs | WiFi-STA lab vs **profiled** Ethernet; concurrent HTTP vs `N_max` |
 
 ## Exit criteria
 
 - [x] Documented formula + measured (or profiled) per-session bps for Direct Play ambient loops
 - [x] Calculator outputs integer N_max with explicit headroom and link kind
-- [x] Lab note: WiFi vs Ethernet concurrent playback vs estimated N (stalls / no stalls)
+- [x] Lab note: WiFi STA hop vs **profiled** Ethernet (this fleet: `eth0 DOWN`; no wired control run)
 - [x] Operator docs warn that a WiFi-uplinked Pi is the tight case
 - [x] Owner OK 2026-09-09
 

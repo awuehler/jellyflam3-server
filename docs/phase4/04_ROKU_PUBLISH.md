@@ -79,7 +79,7 @@ Extend Phase 2’s per-screen display-profile sink into a durable **one server �
 |---|---|
 | **Topology** | One Pi (or fleet tip) runs Jellyfin + idle-gate + furnace; many Rokus on the LAN (or Tailscale) point at the same `baseUrl` / library |
 | **Identity** | Stable per-device id (Roku client/device id) → one `display_profiles/{client}-{deviceId}.json` per screen ([Phase 2 / 04](../phase2/04_ROKU_CHANNEL_POLISH.md) piece F); optional human label |
-| **VoD concurrency** | Multiple Rokus may play at once; idle-gate already closes on any matching TV Playing/transcode — confirm behavior is intentional for households (furnace pauses while *any* TV watches). **How many** sessions the LAN/WiFi can carry without stalls: [07](07_CONCURRENT_CLIENTS.md) (**estimator shipped** 2026-09-03; WiFi-STA lab `N_max=6` Direct Play) |
+| **VoD concurrency** | Multiple Rokus may play at once; idle-gate already closes on any matching TV Playing/transcode — confirm behavior is intentional for households (furnace pauses while *any* TV watches). **How many** sessions the LAN/WiFi can carry without stalls: [07](07_CONCURRENT_CLIENTS.md) (`N_max` estimate; WiFi-STA lab **6** Direct Play; **not** a Jellyfin cap; this fleet `eth0 DOWN`) |
 | **Screensaver concurrency** | Image-only SS on several TVs must **not** close the gate; Client=`JellyFlam3-Screensaver` + ignore patterns remain required |
 | **Per-screen prefs** | Registry is already per-device; document / polish which keys are per-TV (streamMode, shuffle, ssFade/dwell, commercialMode) vs shared secrets |
 | **Ops** | `python3 -m pipeline.display_profiles list` (+ optional status UI later) shows all known screens; sink `:8791` remains multi-upsert safe |

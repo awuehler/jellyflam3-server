@@ -66,7 +66,9 @@ encode:
 naming:
   enabled: true
 
-# Concurrent clients / LAN capacity (Phase 4 / 07). Estimate only — not a Jellyfin cap.
+# Concurrent clients / LAN capacity (Phase 4 / 07). Estimate only — not a Jellyfin cap
+# (cancelled as a goal). Lab furnaces are WiFi STA (eth0 DOWN); default wifi-pi.
+# eth-gigabit / wifi-ap-gigabit-backhaul are comparison profiles, not measured here.
 #   python3 -m pipeline.link_capacity estimate --profile wifi-pi --mode directplay
 #   python3 -m pipeline.link_capacity probe
 #   python3 -m pipeline.link_capacity bench-serve   # then bench-recv on another host
@@ -231,6 +233,7 @@ seed_archive:
 # User-facing surface = host service Opt In / Opt Out only (see docs/phase2/05_SYNCTHING_GENOME_PEERING.md).
 # Sync = *.flam3 + optional *-poster.jpg + integrity sidecars (Phase 3 guide 05).
 # Land = genomes/peers/inbox (Syncthing). Worker does NOT auto-pick — promote --apply → genomes/inbox.
+# Auto-promote cancelled (Phase 4 / 01): no silent drain of peers/inbox.
 # CLI: python3 -m pipeline.peering status|opt-in|opt-out|publish|promote|ensure-mesh-local|mesh-join|gen-keys|trust-key
 # Voted catalog sheep → share-out (not genomes/inbox): python3 -m pipeline.share_votes
 #   scripts/cron_share_votes.sh  (lab: 41 6 * * *). Kill-switch share_votes.enabled.

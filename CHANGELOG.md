@@ -7,10 +7,10 @@ All notable changes to this project are documented here. Format loosely follows 
 ### Added
 
 - Pasture channel-art prompt pack (hero splash + square mark) for Roku/Kodi chrome: [CLIENT_CHANNEL_ART.md](docs/CLIENT_CHANNEL_ART.md). External generator + operator crop; not catalog posters and not Cesari marks.
-- Phase 4 Wave 4 slices 1–2: sheep library **rotate** (`python3 -m pipeline.library_disk rotate [--apply]`; `scripts/cron_library_rotate.sh` **inactive until needed**; archive seed skips fetch if sheep still BAD) and worker refuse on sheep **BAD**. Mesh introduce **A/B/C**: `ensure-mesh-local` (from opt-in), gitignored `mesh-join --peers-file`, `introducer` on the 16a example row. Auto-promote and Channel Store stay parked.
-- Phase 4 Wave 3: lock gated `promote --apply` ([01](docs/phase4/01_PEER_SHARE_PATH.md)). `python3 -m pipeline.share_votes` + `scripts/cron_share_votes.sh` (lab **06:41**) copy liked catalog `.flam3` to `peers/share-out`. Idle-breed weights parents by sidecar `viewer_feedback.votes`. Household recipe in the runbook (example 6). Auto-promote stays parked.
+- Phase 4 Wave 4 slices 1–2: sheep library **rotate** (`python3 -m pipeline.library_disk rotate [--apply]`; `scripts/cron_library_rotate.sh` **inactive until needed**; archive seed skips fetch if sheep still BAD) and worker refuse on sheep **BAD**. Mesh introduce **A/B/C**: `ensure-mesh-local` (from opt-in), gitignored `mesh-join --peers-file`, `introducer` on the 16a example row. Channel Store stays parked.
+- Phase 4 Wave 3: lock gated `promote --apply` ([01](docs/phase4/01_PEER_SHARE_PATH.md)). `python3 -m pipeline.share_votes` + `scripts/cron_share_votes.sh` (lab **06:41**) copy liked catalog `.flam3` to `peers/share-out`. Idle-breed weights parents by sidecar `viewer_feedback.votes`. Household recipe in the runbook (example 6). Auto-promote later **cancelled** (gated promote is the product).
 
-- Phase 4 Wave 2: Roku VoD **1.0.32** like/love/vote overlay (last 12 s, playback continues). `POST /v1/sheep-votes` on `jellyflam3-display-sink` (:8791) writes catalog sidecar `viewer_feedback` only and sets `share_candidate`. CLI `python3 -m pipeline.sheep_votes`. Screensaver voting parked.
+- Phase 4 Wave 2: Roku VoD **1.0.32** like/love/vote overlay (last 12 s, playback continues). `POST /v1/sheep-votes` on `jellyflam3-display-sink` (:8791) writes catalog sidecar `viewer_feedback` only and sets `share_candidate`. CLI `python3 -m pipeline.sheep_votes`. Screensaver voting later **cancelled** (Roku best practices).
 - Phase 4 Wave 2: private-channel coexistence path ([phase4/04](docs/phase4/04_ROKU_PUBLISH.md#private-channel-path-wave-2)). Roku screensaver **1.0.10** Settings writes Jellyfin credentials so VoD (private channel) and SS (sideload slot) can both stay installed. Channel Store parked.
 - Fleet log hygiene: persistent journald (class-sized) + 72h `jellyflam3-logrotate.timer`; compress file-log backups after 11 days; purge after 23 days (`scripts/enable_log_hygiene.sh`).
 - Opt-In watchdog LAN heal: ping default gateway; rate-limited Wi‑Fi bounce (`nmcli`) before Tailscale re-auth (`peering.watchdog.*`).
@@ -26,6 +26,10 @@ All notable changes to this project are documented here. Format loosely follows 
 - Phase 4 client polish: mid-session 404 / quarantine re-poll — Roku VoD **1.0.29**, Roku screensaver **1.0.8**, Kodi screensaver **0.2.7**. Drop the dead Jellyfin id, re-poll Items (30s rate limit), continue the session. Does not invent a Playing session for the miss.
 - Phase 4 sheep naming RNG: `python3 -m pipeline.sheep_naming` hash-seeds `adjective_surname` on ingest/backfill; `set-alias` / `clear-alias` sticky human override. Pasture filename/alias toggle stays parked. LLM naming moved to Phase 5.
 - Phase 5 synopsis (parked): two deployments — **A** JellyFlam3 Furnace (Pi 5) and **B** LLM Agent Platform (Arduino Ventuno Q). Homelab BOM + INT4 storage math; Llama 3.1 8B / Qwen2.5 7B / Mistral 7B (INT4); **one hot Instruct**; **pixels → text → Instruct JSON** with a small GPU VLM; **Jellyfin VoD as camera** for **single-sheep** loops ([phase5/02](docs/phase5/02_LLM_INTEGRATION.md#vod-as-camera)). **One B → 1..N furnaces**; Tailscale `tag:jellyflam3-agent` when the Pi fleet shares sheep ([phase5/01](docs/phase5/01_VENTUNO_Q_HOST.md#tailscale-flock-tailnet)). [docs/phase5/](docs/phase5/00_OVERVIEW.md).
+
+### Changed
+
+- Cancel Phase 4 leftovers: **standalone edges** / loop-stills watermark / Kodi edge sequencer (tuples already include loop→edge→loop). **Screensaver voting** (Roku screensaver best practices / certification — VoD overlay only). **`N_max` as a Jellyfin cap** and an **Ethernet control lab** (guide 07 — this fleet is WiFi STA, `eth0 DOWN`; estimate stays ops guidance). **Auto-promote** (guide 01 — gated `promote --apply` is the receive path; no silent `peers/inbox` drain).
 
 ### Fixed
 

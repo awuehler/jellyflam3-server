@@ -40,7 +40,7 @@ Complements (does not replace):
 | Enable screensaver | SS Settings **1.0.10** writes Jellyfin creds, or furnace zip, or VoD Settings while sharing the developer slot; Theme → Screensavers; fade/dwell. SS always rotates (ignores `shuffleFlock`); Primary + Backdrop; no tuples; **1.0.9** wrap-refetch. Private-channel path: [04](04_ROKU_PUBLISH.md#private-channel-path-wave-2) |
 | Extract stills | Poster ingest / `backfill_posters`; operator `python3 -m pipeline.stills --dry-run` / `--limit N` |
 | Breed / seed | Manual `pipeline.breed` or daily `cron_breed_idle.sh` when inbox empty; idle-breed **weights parents by sidecar votes** when present ([08](08_VIEWER_FEEDBACK_LOOP.md)) |
-| Promote peer share | Opt In; **gated** `promote --apply` on receive. Liked sheep: `cron_share_votes.sh` copies to `peers/share-out` ([08](08_VIEWER_FEEDBACK_LOOP.md)); auto-promote parked ([01](01_PEER_SHARE_PATH.md)) |
+| Promote peer share | Opt In; **gated** `promote --apply` on receive. Liked sheep: `cron_share_votes.sh` copies to `peers/share-out` ([08](08_VIEWER_FEEDBACK_LOOP.md)); auto-promote **cancelled** ([01](01_PEER_SHARE_PATH.md)) |
 | Vote / like a sheep | Roku VoD overlay last 12 s ([08](08_VIEWER_FEEDBACK_LOOP.md)); LAN-only POST; re-votes allowed; love is a stronger tally, not a different share path |
 | Rename / alias a sheep | Phase 4 sheep naming ([09](09_SHEEP_NAMING.md)): auto `adjective_surname` or human override; clients may show alias vs filename |
 | Delete a sheep | Shears dry-run → apply (Phase 3 / 03) |
@@ -75,7 +75,7 @@ Symptom-oriented table (extend as lab learns):
 | Peering empty | Opt In? Syncthing? trust keys? | Peering README; share-security verify |
 | Healthcheck mount fail | USB/NVMe | Phase 2 from-scratch mounts |
 | Sheep disk WARN / BAD | `library_disk check`; `df` | `library_disk rotate --apply` (rotate cron **inactive until needed**); Shears for one sheep ([06](06_LIBRARY_DISK_ROTATE.md)) |
-| Transcode hammering Pi / several TVs stutter | streamMode / `link_capacity estimate` | Prefer DirectPlay MP4; Ethernet for WiFi STA Pi; stay at/under N_max ([07](07_CONCURRENT_CLIENTS.md)) |
+| Transcode hammering Pi / several TVs stutter | streamMode / `link_capacity estimate` | Prefer DirectPlay MP4; this lab is WiFi STA (`eth0` DOWN) — stay at/under `N_max` (ops, not a Jellyfin cap) ([07](07_CONCURRENT_CLIENTS.md)) |
 
 ### E — Remaining (waits on 08)
 

@@ -83,7 +83,7 @@ XML genome describing one or more **flames** (variation sets). Input to TV-port,
 
 ### flam3-genome
 
-Genome factory binary: random, **mutate**, **cross**, **interpolate**, **sequence** (tuple stages / parked standalone edges), rotate. Used by **breed**, **seed_inbox**, **sheep_tuple**, and the worker.
+Genome factory binary: random, **mutate**, **cross**, **interpolate**, **sequence** (tuple stages), rotate. Used by **breed**, **seed_inbox**, **sheep_tuple**, and the worker.
 
 ### flam3-animate
 
@@ -219,7 +219,7 @@ Same as loop — one full rotation over `nframes` at chosen fps; period-aware **
 
 ### Edge
 
-The **middle stage** of a **tuple**: genetic morph A→B via `flam3-genome sequence=`. Not catalogued as its own MP4 in this slice (standalone `type: edge` files remain parked).
+The **middle stage** of a **tuple**: genetic morph A→B via `flam3-genome sequence=`. Not a separate catalog MP4 — standalone `type: edge` files are **cancelled** (2026-09-13); tuples already include the morph.
 
 ### Tuple
 
@@ -255,7 +255,7 @@ Client plays the static MP4 bytes without re-encode. URL pattern: `…/Videos/{i
 
 ### N_max (link capacity)
 
-Integer estimate of concurrent **video** sessions one JellyFlam3-server can carry on a LAN hop: `floor(usable_bps × (1 − headroom) / session_bps)`. CLI: `python3 -m pipeline.link_capacity`. Not a Jellyfin connection cap. Guide: [phase4/07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md).
+Integer estimate of concurrent **video** sessions one JellyFlam3-server can carry on a LAN hop: `floor(usable_bps × (1 − headroom) / session_bps)`. CLI: `python3 -m pipeline.link_capacity`. **Not** a Jellyfin connection cap (cancelled as a goal). Lab furnaces are WiFi STA (`eth0 DOWN`); live profile is `wifi-pi`. Guide: [phase4/07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md).
 
 ### Library disk check
 
@@ -345,7 +345,7 @@ Roku screensaver entry point only — separate package from VoD `Main()`. JellyF
 
 ### Kodi ES screensaver
 
-Phase 3 `screensaver.jellyflam3` — Electric Sheep **dogma** (video loops; loop→edge→loop post-launch). **Complete** loops-only (Owner OK 2026-08-21). Example pasture host: `rpi-kodi-08a` (LibreELEC). Separate from Roku stills track. **0.2.9:** [shuffle wrap](#shuffle-wrap) re-fetch + 313 session cap (`flock_limit`).
+Phase 3 `screensaver.jellyflam3` — Electric Sheep **dogma** (video loops; loop→edge→loop as Phase 4 **tuples**, not a standalone sequencer). **Complete** loops-only (Owner OK 2026-08-21). Example pasture host: `rpi-kodi-08a` (LibreELEC). Separate from Roku stills track. **0.2.9:** [shuffle wrap](#shuffle-wrap) re-fetch + 313 session cap (`flock_limit`).
 
 ### Shuffle wrap
 
@@ -387,7 +387,7 @@ Files arrive in `genomes/peers/inbox/` via Syncthing — **not** worker-visible 
 
 ### Gated promote
 
-Locked model: peer inbox never auto-drains; operator (or future automation) must promote explicitly.
+Locked model: peer inbox never auto-drains. Operator runs `promote --apply` (tax + share-security). Auto-promote is **cancelled** as a goal ([phase4/01](phase4/01_PEER_SHARE_PATH.md)).
 
 ### Pre-share / post-share
 

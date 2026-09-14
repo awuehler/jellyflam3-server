@@ -16,7 +16,7 @@ Phase 3 scope lock, reading order, and definition of done — **complete** (Owne
 | Guide 05 (shared sheep security) | **Complete** — Owner OK 2026-08-16 |
 | Guide 01 (stills / Roku Screensaver) | **Complete** — Owner OK 2026-08-16 |
 | Guide 07 (Hammer) | **Complete** — Owner OK 2026-08-17 |
-| Guide 02 (Kodi ES screensaver) | **Complete** — Owner OK 2026-08-21 (loops-only; loop→edge→loop post-launch) |
+| Guide 02 (Kodi ES screensaver) | **Complete** — Owner OK 2026-08-21 (loops-only; loop→edge→loop via Phase 4 **tuples**, not a standalone sequencer) |
 | Guide 09 (sheep refactor) | **Complete** — Owner OK 2026-08-21 |
 | Guide 04 (edges + watermark) | **Post-launch** — not in v0.3.0 ([../phase4/03_EDGES_AND_WATERMARK.md](../phase4/03_EDGES_AND_WATERMARK.md)) |
 | Guide 10 (testing / acceptance / RC) | **Complete** — Owner OK 2026-08-23 @ `f37758a` |
@@ -30,7 +30,7 @@ Phase 3 scope lock, reading order, and definition of done — **complete** (Owne
 4. ~~**[05_SHARED_SHEEP_SECURITY.md](05_SHARED_SHEEP_SECURITY.md)**~~ — **complete** (Owner OK 2026-08-16)
 5. ~~**[01_SCREENSAVERS_AND_STILLS.md](01_SCREENSAVERS_AND_STILLS.md)**~~ — **complete** (Owner OK 2026-08-16)
 6. ~~**[07_JELLYFLAM3_HAMMER.md](07_JELLYFLAM3_HAMMER.md)**~~ — **complete** (Owner OK 2026-08-17)
-7. ~~**[02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md)**~~ — **complete** (Owner OK 2026-08-21; loop→edge→loop post-launch)
+7. ~~**[02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md)**~~ — **complete** (Owner OK 2026-08-21; loop→edge→loop as Phase 4 tuples, standalone sequencer cancelled)
 8. ~~**[09_SHEEP_REFACTOR.md](09_SHEEP_REFACTOR.md)**~~ — **complete** (Owner OK 2026-08-21)
 9. ~~**[10_TESTING_AND_ACCEPTANCE.md](10_TESTING_AND_ACCEPTANCE.md)**~~ — **complete** (Owner OK 2026-08-23; `v0.3.0` at public launch)
 
@@ -39,7 +39,7 @@ Phase 3 is **closed**. Post-launch roadmap: [../phase4/00_OVERVIEW.md](../phase4
 ## In scope
 
 1. [01_SCREENSAVERS_AND_STILLS.md](01_SCREENSAVERS_AND_STILLS.md) — poster-pipeline stills; **Roku** Screensaver Primary + Backdrop — **complete** (Owner OK 2026-08-16; Backdrop merge 2026-09-08)
-2. [02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) — **Kodi** screensaver (Electric Sheep dogma; separate from Roku; loops-only) — **complete** (Owner OK 2026-08-21; loop→edge→loop post-launch)
+2. [02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) — **Kodi** screensaver (Electric Sheep dogma; separate from Roku; loops-only) — **complete** (Owner OK 2026-08-21; loop→edge→loop as Phase 4 tuples)
 3. [03_SHEEP_SHEARS.md](03_SHEEP_SHEARS.md) — add/modify/delete `.flam3` + downstream artifacts — **complete** (Owner OK 2026-08-16)
 4. ~~[04_EDGES_AND_WATERMARK.md](04_EDGES_AND_WATERMARK.md)~~ — **post-launch** ([../phase4/03_EDGES_AND_WATERMARK.md](../phase4/03_EDGES_AND_WATERMARK.md))
 5. [05_SHARED_SHEEP_SECURITY.md](05_SHARED_SHEEP_SECURITY.md) — pre/post share integrity against bad actors — **complete** (Owner OK 2026-08-16)
@@ -63,7 +63,7 @@ Phase 3 is complete for a given **RC scope** when:
 
 Phase 1 complete · Phase 2 DoD (posters, peering, sheep tax, HLS, stable Ids) preferred before Shears / screensavers / share security / Hammer / sheep refactor.
 
-**Kodi** ([02](02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md)) **complete** for Phase 3 loops-only; loop→edge→loop journeys are post-launch when edges exist ([../phase4/03_EDGES_AND_WATERMARK.md](../phase4/03_EDGES_AND_WATERMARK.md)).
+**Kodi** ([02](02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md)) **complete** for Phase 3 loops-only; loop→edge→loop journeys are **tuples** ([../phase4/03_EDGES_AND_WATERMARK.md](../phase4/03_EDGES_AND_WATERMARK.md)), not a standalone edge sequencer (cancelled 2026-09-13).
 
 **Sheep refactor** ([09](09_SHEEP_REFACTOR.md)) **complete** (Owner OK 2026-08-21). **Phase 3** closed via [10](10_TESTING_AND_ACCEPTANCE.md) (Owner OK 2026-08-23). Benefits from Phase 2 sheep tax, TV-port/OkLCh, dynamic duration, and Shears-stable Ids so remediation can re-furnace and replace catalog artifacts safely.
 

@@ -523,7 +523,7 @@ python3 -m pipeline.peering promote --apply          # peers/inbox → worker in
 python3 -m pipeline.peering opt-out --config configs/jellyflam3.yaml
 ```
 
-**Receive path:** Syncthing → `peers/inbox` → **`promote --apply`** → `genomes/inbox` or quarantine → worker.
+**Receive path:** Syncthing → `peers/inbox` → **`promote --apply`** → `genomes/inbox` or quarantine → worker. Auto-promote is **not** a product ([phase4/01](phase4/01_PEER_SHARE_PATH.md)).
 
 #### Opt In vs share live (do not confuse them)
 
@@ -855,7 +855,7 @@ Override furnace IPs with `JELLYFLAM3_FLEET_IP_16A` / `_08A` / `_04A` if they ar
 
 ### How many TVs at once (link capacity)
 
-Several Rokus / Kodi boxes against **one** Pi is a **LAN** problem. A **WiFi-uplinked furnace** is the tight case — plug the Pi into Ethernet when more than one or two TVs play video at once. Roku **image** screensaver does **not** count; **Kodi video** screensaver and VoD **Playing** do.
+Several Rokus / Kodi boxes against **one** Pi is a **LAN** problem. This **lab fleet** is Wi‑Fi STA (`eth0` is **DOWN** on 16a / 08a / 04a) — use `--profile wifi-pi` (~6 Direct Play loops). `eth-gigabit` is a comparison table, not a number measured here. Other houses may cable the Pi; then `bench-recv` + `estimate --usable-mbps`. Roku **image** screensaver does **not** count; **Kodi video** screensaver and VoD **Playing** do.
 
 ```bash
 python3 -m pipeline.link_capacity estimate --profile wifi-pi --mode directplay
@@ -863,7 +863,7 @@ python3 -m pipeline.link_capacity estimate --profile eth-gigabit --mode directpl
 python3 -m pipeline.link_capacity probe     # catalog MP4 bit-rate (p50 / p90)
 ```
 
-`N_max` is an **estimate**, not a Jellyfin cap. Formula and lab numbers: [phase4/07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md). Prefer Direct Play MP4 (`streamMode=mp4`); transcode uses more of the link **and** the Pi CPU.
+`N_max` is an **estimate** (ops honor it). Jellyfin will not refuse the extra session. Formula and lab numbers: [phase4/07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md). Prefer Direct Play MP4 (`streamMode=mp4`); transcode uses more of the link **and** the Pi CPU.
 
 To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another host, then `estimate --usable-mbps <printed>`.
 
@@ -894,7 +894,7 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 | Peering stuck (live mesh) | `peering status`; inbox under `peers/inbox` | `promote --apply`; trust keys; share-security verify |
 | Bad palette / encode | `refactor scan` | preview → apply pathway |
 | Black / error after quarantine | Item gone from disk/Jellyfin; client still has old flock list | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id and re-poll (30s rate limit). Overnight new-sheep pickup is wrap-once (VoD 1.0.31 / Roku SS 1.0.9 / Kodi SS 0.2.9) — [Flock mix](#flock-mix-shuffle-wrap) |
-| Playback stutters / several TVs | `python3 -m pipeline.link_capacity estimate`; WiFi STA furnace? | Ethernet for the Pi; Direct Play; stay at/under `N_max` |
+| Playback stutters / several TVs | `python3 -m pipeline.link_capacity estimate --profile wifi-pi`; this lab is WiFi STA (`eth0` DOWN) | Direct Play; fewer TVs — stay at/under `N_max`. Jellyfin will not refuse extras. Cable the Pi only if that host actually has Ethernet |
 | Wipe everything local | — | `hammer --dry-run` then `--confirm HAMMER` (not Shears) |
 
 ### Owner-OK acceptance gates (RC)
