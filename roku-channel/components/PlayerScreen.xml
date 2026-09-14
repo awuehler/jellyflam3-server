@@ -23,7 +23,7 @@
         translation="[80,860]"
         width="1760"
         height="100"
-        color="0x0A0A12CC" />
+        color="0x0A0A12A6" />
       <Label
         id="votePrompt"
         translation="[100,872]"
@@ -31,7 +31,7 @@
         height="36"
         font="font:MediumSystemFont"
         color="0xE8E8F0FF"
-        text="Like this sheep?" />
+        text="Like this sheep:" />
       <Label
         id="voteHint"
         translation="[100,910]"
@@ -39,7 +39,7 @@
         height="36"
         font="font:SmallSystemFont"
         color="0xA0A0B8FF"
-        text="OK like · FF love · Replay vote · Back dismiss" />
+        text="OK like · FF love · REPLAY vote · BACK dismiss" />
     </Group>
     <Label
       id="status"

@@ -24,6 +24,13 @@ def test_addon_xml_screensaver_entry():
     ext = root.find("extension[@point='xbmc.ui.screensaver']")
     assert ext is not None
     assert ext.attrib["library"] == "default.py"
+    desc = root.find("extension[@point='xbmc.addon.metadata']/description")
+    assert desc is not None
+    text = desc.text or ""
+    assert "tuples as one clip" in text
+    assert "session cap 313" in text
+    assert "Does not render flam3 or take votes" in text
+    assert "idle-gate" in text
 
 
 def test_screensaver_entry_files_exist():

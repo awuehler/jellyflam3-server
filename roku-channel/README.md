@@ -89,7 +89,7 @@ cd /opt/jellyflam3-server
 
 Developer mode holds **one** sideloaded package. Installing the screensaver zip replaces this VoD channel on that box; re-sideload this zip to restore. To keep **both** installed, publish VoD as a private/unpublished channel ([docs/phase4/04](../docs/phase4/04_ROKU_PUBLISH.md#private-channel-path-wave-2)).
 
-**Vote overlay (1.0.32):** near the end of each clip a banner appears without pausing. **OK** like · **FF** love · **Replay** vote · **Back** dismiss. The channel POSTs to `http://{Jellyfin-host}:8791/v1/sheep-votes` (same token as display profiles). Playback / Sessions / wrap-once behavior is unchanged.
+**Vote overlay (1.0.32, polish 1.0.35):** near the end of each non-tuple clip a banner appears without pausing. Prompt names the sheep with Settings `titleMode` (alias or filename). **OK** like · **FF** love · **REPLAY** vote · **BACK** dismiss. Tuples skip the overlay. Banner fill is 65% opaque. The channel POSTs to `http://{Jellyfin-host}:8791/v1/sheep-votes` (same token as display profiles). Playback / Sessions / wrap-once behavior is unchanged.
 
 **Title mode (1.0.33):** Settings `titleMode=alias` shows the memorable `adjective_surname` on flock tiles and player status. Default remains the filename. Sideload this package and, for sheep ingested before this slice, run `python3 -m pipeline.sheep_naming backfill --push-jellyfin` so Overview has `Alias:` lines.
 

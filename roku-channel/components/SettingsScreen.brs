@@ -8,6 +8,7 @@ sub init()
   m.keyboard = invalid
   m.streamModeNotice = ""
   m.streamModeCorrected = false
+  m.inputNotice = ""
   m.displaySummary = ""
   m.versionLabel = m.top.findNode("versionLabel")
   refreshVersionLabel()
@@ -55,9 +56,9 @@ function fieldHint(name as string) as string
   else if name = "commercialMode"
     return "true=commercial flock (hide NC; keep CC BY / CC0 / PD); false=show all; CC=Creative Commons; NC=NonCommercial; BY=Attribution; PD=public domain; CC0=no rights reserved"
   else if name = "streamMode"
-    return "mp4=ambient Direct Play loop; hls=Jellyfin remux compare (other values become mp4)"
+    return "mp4=ambient Direct Play loop; hls=Jellyfin remux compare (typos rejected)"
   else if name = "shuffleFlock"
-    return "always true — rotate archive gens + pedigree + tuple (skip misc/test); false is not persisted"
+    return "always true - rotate archive gens + pedigree + tuple (skip misc/test); false is not persisted"
   else if name = "titleMode"
     return "filename=Jellyfin Name (electricsheep.gen.id); alias=sidecar name from Overview Alias: line; missing alias falls back to filename"
   else if name = "probeDisplay"
@@ -79,6 +80,12 @@ function normalizeStreamMode(raw as string) as string
   return "mp4"
 end function
 
+function isValidStreamMode(raw as string) as boolean
+  if raw = invalid then return false
+  v = LCase(raw.Trim())
+  return (v = "mp4" or v = "hls")
+end function
+
 function normalizeBool(raw as string, defaultVal as boolean) as string
   if raw = invalid then raw = ""
   tl = LCase(raw.Trim())
@@ -91,6 +98,12 @@ function normalizeBool(raw as string, defaultVal as boolean) as string
   return "false"
 end function
 
+function isValidBoolToken(raw as string) as boolean
+  if raw = invalid then return false
+  tl = LCase(raw.Trim())
+  return (tl = "true" or tl = "false" or tl = "1" or tl = "0" or tl = "yes" or tl = "no")
+end function
+
 function shuffleFlockDefault() as boolean
   return true
 end function
@@ -99,7 +112,109 @@ function normalizeTitleMode(raw as string) as string
   if raw = invalid then return "filename"
   v = LCase(raw.Trim())
   if v = "alias" then return "alias"
-  return "filename"
+  if v = "filename" then return "filename"
+  return ""
+end function
+
+function isValidTitleMode(raw as string) as boolean
+  v = normalizeTitleMode(raw)
+  return (v = "filename" or v = "alias")
+end function
+
+function isValidBaseUrl(raw as string) as boolean
+  if raw = invalid then return true
+  s = raw.Trim()
+  if s = "" then return true
+  v = LCase(s)
+  if Left(v, 8) <> "https://" and Left(v, 7) <> "http://" then return false
+  return Len(s) > 10
+end function
+
+function isHexDashId(raw as string) as boolean
+  if raw = invalid then return false
+  s = LCase(raw.Trim())
+  if s = "" then return true
+  if Len(s) < 8 then return false
+  hex = "0123456789abcdef-"
+  i = 1
+  while i <= Len(s)
+    if Instr(1, hex, Mid(s, i, 1)) = 0 then return false
+    i = i + 1
+  end while
+  return true
+end function
+
+function isValidApiKey(raw as string) as boolean
+  if raw = invalid then return true
+  s = raw.Trim()
+  if s = "" then return true
+  if Instr(1, s, " ") > 0 then return false
+  return Len(s) >= 8
+end function
+
+function applyEditedValue(name as string, text as string) as boolean
+  if text = invalid then text = ""
+  text = text.Trim()
+  m.inputNotice = ""
+  m.streamModeNotice = ""
+  m.streamModeCorrected = false
+  if name = "streamMode"
+    if isValidStreamMode(text) <> true
+      m.inputNotice = "streamMode invalid (" + text + ") - use mp4 or hls"
+      return false
+    end if
+    m.values[name] = LCase(text)
+    return true
+  else if name = "commercialMode"
+    if isValidBoolToken(text) <> true
+      m.inputNotice = "commercialMode invalid (" + text + ") - use true or false"
+      return false
+    end if
+    m.values[name] = normalizeBool(text, false)
+    return true
+  else if name = "shuffleFlock"
+    if isValidBoolToken(text) <> true
+      m.inputNotice = "shuffleFlock invalid (" + text + ") - use true"
+      return false
+    end if
+    if normalizeBool(text, true) <> "true"
+      m.inputNotice = "shuffleFlock stays true (rotation is always on)"
+      m.values[name] = "true"
+      return false
+    end if
+    m.values[name] = "true"
+    return true
+  else if name = "titleMode"
+    if isValidTitleMode(text) <> true
+      m.inputNotice = "titleMode invalid (" + text + ") - use filename or alias"
+      return false
+    end if
+    m.values[name] = normalizeTitleMode(text)
+    return true
+  else if name = "baseUrl"
+    if isValidBaseUrl(text) <> true
+      m.inputNotice = "baseUrl invalid - use http:// or https:// host (no trailing slash)"
+      return false
+    end if
+    m.values[name] = text
+    return true
+  else if name = "apiKey"
+    if isValidApiKey(text) <> true
+      m.inputNotice = "apiKey invalid - paste the Jellyfin key (no spaces)"
+      return false
+    end if
+    m.values[name] = text
+    return true
+  else if name = "userId" or name = "libraryId"
+    if isHexDashId(text) <> true
+      m.inputNotice = name + " invalid - use a Jellyfin GUID"
+      return false
+    end if
+    m.values[name] = text
+    return true
+  end if
+  m.values[name] = text
+  return true
 end function
 
 function flagStr(v) as string
@@ -131,6 +246,7 @@ end sub
 
 sub openSettings()
   m.streamModeNotice = ""
+  m.inputNotice = ""
   m.displaySummary = readDisplaySummary()
   refreshVersionLabel()
   for each name in m.fields
@@ -147,6 +263,7 @@ sub openSettings()
       val = "true"
     else if name = "titleMode"
       val = normalizeTitleMode(val)
+      if val = "" then val = "filename"
     end if
     m.values[name] = val
     refreshRowLabel(name)
@@ -190,6 +307,9 @@ sub updateFooter()
   line = line + "  " + slot
   if m.streamModeNotice <> "" and name = "streamMode"
     line = line + " | " + m.streamModeNotice
+  end if
+  if m.inputNotice <> ""
+    line = line + " | " + m.inputNotice
   end if
   if name = "probeDisplay" and m.displaySummary <> ""
     line = line + " | " + m.displaySummary
@@ -495,21 +615,7 @@ sub onKeyboardButton()
     text = m.keyboard.text
     if text = invalid then text = ""
     text = text.Trim()
-    if name = "streamMode"
-      text = normalizeStreamMode(text)
-      if m.streamModeCorrected = true
-        m.streamModeNotice = "invalid entry - saved as mp4 (use mp4 or hls)"
-      else
-        m.streamModeNotice = ""
-      end if
-    else if name = "commercialMode"
-      text = normalizeBool(text, false)
-    else if name = "shuffleFlock"
-      text = "true"
-    else if name = "titleMode"
-      text = normalizeTitleMode(text)
-    end if
-    m.values[name] = text
+    applyEditedValue(name, text)
     refreshRowLabel(name)
   end if
   m.top.removeChild(m.keyboard)
@@ -526,13 +632,45 @@ sub saveAndClose()
       while Len(val) > 0 and Right(val, 1) = "/"
         val = Left(val, Len(val) - 1)
       end while
+      if isValidBaseUrl(val) <> true
+        m.inputNotice = "baseUrl invalid - use http:// or https:// host"
+        updateFooter()
+        return
+      end if
+    else if name = "apiKey"
+      if isValidApiKey(val) <> true
+        m.inputNotice = "apiKey invalid - paste the Jellyfin key (no spaces)"
+        updateFooter()
+        return
+      end if
+    else if name = "userId" or name = "libraryId"
+      if isHexDashId(val) <> true
+        m.inputNotice = name + " invalid - use a Jellyfin GUID"
+        updateFooter()
+        return
+      end if
     else if name = "streamMode"
-      val = normalizeStreamMode(val)
+      if isValidStreamMode(val) <> true
+        m.inputNotice = "streamMode invalid - use mp4 or hls"
+        updateFooter()
+        return
+      end if
+      val = LCase(val.Trim())
     else if name = "commercialMode"
+      if isValidBoolToken(val) <> true
+        m.inputNotice = "commercialMode invalid - use true or false"
+        updateFooter()
+        return
+      end if
       val = normalizeBool(val, false)
     else if name = "shuffleFlock"
       val = "true"
     else if name = "titleMode"
+      if isValidTitleMode(val) <> true
+        m.inputNotice = "titleMode invalid - use filename or alias"
+        updateFooter()
+        return
+      end if
       val = normalizeTitleMode(val)
     end if
     m.registry.write(name, val)

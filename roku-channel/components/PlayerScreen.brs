@@ -19,6 +19,7 @@ sub init()
   m.mp4Url = ""
   m.title = ""
   m.alias = ""
+  m.filename = ""
   m.lengthSec = 0
   m.triedAltFallback = false
   m.reloopPending = false
@@ -43,6 +44,25 @@ function resolveStreamMode() as string
   return "mp4"
 end function
 
+function titleModeValue() as string
+  v = m.registry.read("titleMode")
+  if v = invalid then return "filename"
+  tl = LCase(v.Trim())
+  if tl = "alias" then return "alias"
+  return "filename"
+end function
+
+function displayNameForUi() as string
+  if titleModeValue() = "alias" and m.alias <> invalid and m.alias <> "" then return m.alias
+  if m.filename <> invalid and m.filename <> "" and m.filename <> "Untitled" then return m.filename
+  if m.alias <> invalid and m.alias <> "" then return m.alias
+  stem = m.stem
+  if stem = invalid or stem = "" then stem = stemFromPlayback()
+  if stem <> invalid and stem <> "" then return stem
+  if m.title <> invalid and m.title <> "" then return m.title
+  return "sheep"
+end function
+
 function shouldShuffleAdvance() as boolean
   if m.top.allowShuffleAdvance = true then return true
   return false
@@ -65,6 +85,7 @@ sub playSheep(item as object)
   m.mp4Url = ""
   m.title = ""
   m.alias = ""
+  m.filename = ""
   m.lengthSec = 0
   m.mediaPath = ""
   m.sheepId = ""
@@ -81,6 +102,7 @@ sub playSheep(item as object)
     if item.mp4Url <> invalid then m.mp4Url = item.mp4Url
     if item.title <> invalid then m.title = item.title
     if item.alias <> invalid then m.alias = item.alias
+    if item.filename <> invalid then m.filename = item.filename
     if item.length <> invalid then m.lengthSec = item.length
     if item.mediaPath <> invalid then m.mediaPath = item.mediaPath
     if item.sheepId <> invalid then m.sheepId = item.sheepId
@@ -297,8 +319,9 @@ sub onState()
       m.status.visible = false
     else
       m.status.visible = true
-      if m.alias <> invalid and m.alias <> ""
-        m.status.text = m.alias + "(" + UCase(m.streamFormat) + ")"
+      shown = displayNameForUi()
+      if shown <> "" and shown <> "sheep"
+        m.status.text = shown + "(" + UCase(m.streamFormat) + ")"
       else
         m.status.text = "Buffering (" + UCase(m.streamFormat) + ")..."
       end if
@@ -362,19 +385,36 @@ function voteRemainThresholdSec() as float
   return 12.0
 end function
 
+function isTuplePlayback() as boolean
+  path = ""
+  if m.mediaPath <> invalid then path = LCase(m.mediaPath)
+  stem = ""
+  if m.stem <> invalid then stem = LCase(m.stem)
+  if stem = "" then stem = LCase(stemFromPlayback())
+  if Instr(1, path, "/tuple/") > 0 then return true
+  if Instr(1, path, "\tuple\") > 0 then return true
+  if Instr(1, stem, ".tuple.") > 0 then return true
+  return false
+end function
+
 sub maybeShowVoteOverlay(dur as float, cur as float)
   if m.voteDismissed = true then return
   if voteOverlayVisible() then return
   if m.reloopPending = true then return
+  if isTuplePlayback() then return
   remain = dur - cur
   if remain <= voteRemainThresholdSec() and remain > 0.5
     showVoteOverlay()
   end if
 end sub
 
+function votePromptName() as string
+  return displayNameForUi()
+end function
+
 sub showVoteOverlay()
   if m.voteOverlay = invalid then return
-  if m.votePrompt <> invalid then m.votePrompt.text = "Like this sheep?"
+  if m.votePrompt <> invalid then m.votePrompt.text = "Like this sheep: " + votePromptName()
   m.voteOverlay.visible = true
   if m.voteHideTimer <> invalid
     m.voteHideTimer.control = "stop"
@@ -457,6 +497,10 @@ function channelDeviceId() as string
 end function
 
 sub submitSheepVote(kind as string)
+  if isTuplePlayback()
+    hideVoteOverlay()
+    return
+  end if
   if m.stem = "" then m.stem = stemFromPlayback()
   payload = {
     stem: m.stem

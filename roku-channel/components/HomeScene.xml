@@ -103,20 +103,20 @@
     <Label
       id="status"
       text="Loading…"
-      translation="[80,324]"
+      translation="[80,316]"
       width="1200"
       font="font:SmallSystemFont"
       color="0x8888A0FF" />
     <Button
       id="retryBtn"
       text="Retry"
-      translation="[1320,312]"
+      translation="[1320,304]"
       minWidth="200"
       focusable="true"
       visible="false" />
     <FlockRowList
       id="rowList"
-      translation="[80,360]"
+      translation="[80,380]"
       itemComponentName="FlockItem"
       itemSize="[1760,212]"
       rowItemSize="[[320,180]]"
@@ -125,6 +125,8 @@
       numRows="3"
       itemSpacing="[0,12]"
       showRowLabel="[false]"
+      drawFocusFeedback="false"
+      rowFocusAnimationStyle="fixedFocus"
       focusable="true" />
     <BusySpinner
       id="spinner"

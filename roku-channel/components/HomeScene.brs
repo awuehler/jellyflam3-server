@@ -687,6 +687,7 @@ sub playItem(item as object)
     mp4Url: mp4
     title: item.title
     alias: item.alias
+    filename: item.filename
     length: item.length
     id: playId
     mediaPath: mediaPath

@@ -29,7 +29,7 @@ You do **not** need the Pi terminal for normal viewing. Printable one-pager: [FR
 2. **Furnace-built zips are pre-configured:** when packaged on a Pi with `secrets.env`, the zip includes that furnace’s Jellyfin URL, API key, user id, and library id. Launch the channel — credentials apply on first run if the registry is empty; the flock list should load without manual paste.
 3. **Otherwise** (Windows packaging host or empty registry): open the channel → **Settings** → enter Jellyfin connection values. An operator runs `python3 scripts/jellyfin_id_dump.py` on the Pi and gives you `baseUrl`, `apiKey`, `userId`, `libraryId` (never share the API key in chat/email — paste on the TV only) → save Settings.
 
-**Everyday use:** launch JellyFlam3 → pick a sheep → ambient loop plays. Shuffle is always on (channel **1.0.30+**): archive gens plus **pedigree** and **tuple**. After a full mix, **1.0.31** asks Jellyfin again so overnight ingest can appear without leaving the player ([Flock mix](#flock-mix-shuffle-wrap)). Near the end of each clip (**1.0.32**), a banner invites a vote without pausing: **OK** like, **FF** love, **Replay** vote, **Back** dismiss. Votes stay on the Pi (LAN only). A **tuple** is one longer clip: sheep A, then a morph into sheep B. During that middle morph only, a quiet mark sits in the lower-right corner (the Electric Sheep logo PNG on the default private furnace; your own PNG if the operator set one; or the credit “artwork by Scott Draves and the Electric Sheep” on a commercial-safe furnace that still uses the Cesari file). Loops A and B have no mark. That mark is **not** a license to post the clip as official Electric Sheep — operators, see [Private vs public furnace](#private-vs-public-furnace) and [Use your own PNG](#use-your-own-png-private-and-public). When you press **Play**, the Pi **stops rendering** new sheep until the TV has been idle for several minutes (see [idle gate](#idle-gate-behavior) below).
+**Everyday use:** launch JellyFlam3 → pick a sheep → ambient loop plays. Shuffle is always on (channel **1.0.30+**): archive gens plus **pedigree** and **tuple**. After a full mix, **1.0.31** asks Jellyfin again so overnight ingest can appear without leaving the player ([Flock mix](#flock-mix-shuffle-wrap)). Near the end of each clip (**1.0.32**, overlay polish **1.0.35**), a banner invites a vote without pausing: **OK** like, **FF** love, **REPLAY** vote, **BACK** dismiss. **Tuples skip the vote overlay.** Votes stay on the Pi (LAN only). A **tuple** is one longer clip: sheep A, then a morph into sheep B. During that middle morph only, a quiet mark sits in the lower-right corner (the Electric Sheep logo PNG on the default private furnace; your own PNG if the operator set one; or the credit “artwork by Scott Draves and the Electric Sheep” on a commercial-safe furnace that still uses the Cesari file). Loops A and B have no mark. That mark is **not** a license to post the clip as official Electric Sheep — operators, see [Private vs public furnace](#private-vs-public-furnace) and [Use your own PNG](#use-your-own-png-private-and-public). When you press **Play**, the Pi **stops rendering** new sheep until the TV has been idle for several minutes (see [idle gate](#idle-gate-behavior) below).
 
 **Deep link smoke (optional):** after an operator dumps item Guids (`jellyfin_id_dump.py --items`), a specific sheep can be launched with `contentId=<Guid>` via the Roku ECP port (developer mode).
 
@@ -233,11 +233,12 @@ python3 -m pipeline.worker_drain cancel
 
 **Host:** furnace Pi **Opt In** (`share_live: true`) + Roku VoD **1.0.32** (overlay) with display-sink token set. Votes never pause the clip. They stay on this Pi’s catalog sidecar (LAN only). Screensaver packages do not vote.
 
-1. Play a sheep. In the last **12 seconds**, the banner appears.
+1. Play a sheep (not a tuple). In the last **12 seconds**, the banner appears.
    - **OK** = like
-   - **Fast-forward** = love (counts as a stronger tally; same share path)
-   - **Replay** = plain vote
-   - **Back** = dismiss without voting
+   - **FF** = love (counts as a stronger tally; same share path)
+   - **REPLAY** = plain vote
+   - **BACK** = dismiss without voting
+   Tuples play in shuffle but never show the overlay.
 2. On the Pi, confirm the sidecar (stem = MP4 basename):
 
    ```bash

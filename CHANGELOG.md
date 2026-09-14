@@ -6,6 +6,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Roku VoD **1.0.35** vote overlay: skip tuples (no banner / no POST); banner fill **65%** opacity (`0x0A0A12A6`); prompt is **Like this sheep:** plus Settings `titleMode` (alias or filename); remote hints use **OK / FF / REPLAY / BACK**. Flock focus ring no longer covers the **N dreams in flock** line. Settings rejects typos (`mp4`/`hls`, `true`/`false`, `filename`/`alias`, URL/GUID/key).
+- Kodi screensaver add-on description aligned with shipped flock (tuples as one clip, wrap cap 313, no votes, idle-gate ignored).
 - Roku VoD **1.0.34** flock polish: five-column rows wrap the catalog into a vertically scrollable poster grid; tile metadata omits truncated `human` / `brood` pedigree labels; home instructions are clearer; inter-clip buffering shows `{alias}(MP4)` when an alias is available.
 - Phase 4 09 C: Roku VoD **1.0.33** Settings `titleMode` (`filename` default / `alias`) on flock rows and player chrome. Jellyfin `Name` stays the stem; Overview `Alias:` line from ingest and `python3 -m pipeline.sheep_naming` (`set-alias` / `backfill --push-jellyfin`). Missing alias falls back to filename. Kodi / screensaver captions parked.
 - Pasture channel-art prompt pack (hero splash + square mark) for Roku/Kodi chrome: [CLIENT_CHANNEL_ART.md](docs/CLIENT_CHANNEL_ART.md). External generator + operator crop; not catalog posters and not Cesari marks.

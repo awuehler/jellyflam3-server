@@ -37,7 +37,7 @@ Depends on Phase 1–2 Roku VoD playback ([../phase1/08_ROKU_BRIGHTSCRIPT.md](..
 5. **Idle-gate** — vote HTTP must stay light (no Sessions Playing as a second client); prefer a small host-service / sink like display-profile upsert, not a fake playback session.
 6. **License / commercial-safe** — share cron and breed bias still respect NC / commercial filters; a loved NC sheep does not bypass Opt Out or commercial Mode policy.
 7. **Sidecar is the sole metadata SoT** for a catalog sheep — `{stem}.jellyflam3.json` beside the MP4. License, tags, duration/signals, poster/stills index, pedigree hints, **and viewer vote tallies** live there. **No parallel vote store** under `/var/lib/jellyflam3/` (no `sheep_vote_weights.json` as competing truth). Jellyfin Items Tags / Overview are derived caches only. Binary artifacts stay themselves: `.mp4` (video), `.flam3` (genome), poster/stills **files** (sidecar indexes them). Optional append-only log is debug-only and must not be read for share/breed decisions.
-8. **VoD shuffle already includes pedigree and tuple** (channel 1.0.28+; skips `misc`/`test`). Roku screensaver ignores `shuffleFlock` and always rotates stills (no tuples, **no votes**).
+8. **VoD shuffle already includes pedigree and tuple** (channel 1.0.28+; skips `misc`/`test`). **Tuples do not vote** (channel **1.0.35+**): overlay and `POST /v1/sheep-votes` skip `by-generation/tuple/` / `electricsheep.tuple.*`. Roku screensaver ignores `shuffleFlock` and always rotates stills (no tuples, **no votes**).
 
 ## Sidecar + sink (shipped Wave 2)
 
@@ -50,9 +50,9 @@ Overlay is visual-only (Video stays focused; playback does not pause). Shown whe
 | Key | Action |
 |---|---|
 | **OK** | like (`likes++`, `votes++`) |
-| **Fast-forward** | love (`loves++`, `votes++`) |
-| **Replay** | plain vote (`votes++` only) |
-| **Back** (overlay visible) | dismiss overlay; do not exit playback |
+| **FF** | love (`loves++`, `votes++`) |
+| **REPLAY** | plain vote (`votes++` only) |
+| **BACK** (overlay visible) | dismiss overlay; do not exit playback |
 | **Up** | exit playback (same trapdoor as before the overlay) |
 | **\*** / Options / Info | Settings on Home (not consumed during overlay) |
 
@@ -62,8 +62,8 @@ Overlay is visual-only (Video stays focused; playback does not pause). Shown whe
 
 ### A — Roku VoD overlay (shipped 1.0.32)
 
-1. **Timing** — overlay when remaining duration ≤ 12 s; hide on timeout (10 s), vote, Back, or clip advance.
-2. **UI** — transient SceneGraph group over Video (bottom banner); copy for like / love / vote; no Button focus (Video stays focused).
+1. **Timing** — overlay when remaining duration ≤ 12 s; hide on timeout (10 s), vote, BACK, or clip advance.
+2. **UI** — transient SceneGraph group over Video (bottom banner, **65%** opacity in **1.0.35**); prompt is **Like this sheep:** plus Settings `titleMode` (alias when that mode is on and an alias exists, else filename); copy for like / love / vote; no Button focus (Video stays focused). Overlay is skipped on **tuple** clips.
 3. **Mapping** — see Remote map above; shuffle / streamMode / Options keys are not stolen during playback.
 4. **Identity** — stem from `mediaPath` basename (fallback `electricsheep.{generation}.{sheepId}`); Jellyfin item id + optional DeviceId on the event.
 5. **Multi-Roku** — per-device DeviceId optional; household votes aggregate on the furnace sidecar.

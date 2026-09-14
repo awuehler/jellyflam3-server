@@ -65,8 +65,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=34" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.34""' in text
+    assert "build_version=35" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.35""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
@@ -103,6 +103,17 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert 'val = "true"' in settings
     assert "function normalizeTitleMode(raw as string) as string" in settings
     assert 'if v = "alias" then return "alias"' in settings
+    assert "function applyEditedValue(name as string, text as string) as boolean" in settings
+    assert "function isValidStreamMode(raw as string) as boolean" in settings
+    assert "function isValidBoolToken(raw as string) as boolean" in settings
+    assert "function isValidTitleMode(raw as string) as boolean" in settings
+    assert "function isValidBaseUrl(raw as string) as boolean" in settings
+    assert "function isHexDashId(raw as string) as boolean" in settings
+    assert "function isValidApiKey(raw as string) as boolean" in settings
+    assert "titleMode invalid (" in settings
+    assert "streamMode invalid (" in settings
+    assert "commercialMode invalid (" in settings
+    assert "m.inputNotice" in settings
     jf = (VOD / "components" / "JellyfinTask.brs").read_text(encoding="utf-8")
     assert "function overviewKeyedValue(ov as string, key as string)" in jf
     assert "function displayTitle(filename as string, alias as string)" in jf
@@ -138,12 +149,34 @@ def test_roku_vod_wrapped_flock_layout_and_compact_metadata():
     assert "Ambient Sheep - Press OK button to play / Settings - Press * to Open" in scene
     assert 'numRows="3"' in scene
     assert 'showRowLabel="[false]"' in scene
+    assert 'drawFocusFeedback="false"' in scene
+    assert 'rowFocusAnimationStyle="fixedFocus"' in scene
+    assert 'translation="[80,316]"' in scene
+    assert 'translation="[80,380]"' in scene
     assert "itemsPerRow = 5" in home
     assert "column >= itemsPerRow" in home
     assert 'pedigreeLower <> "by human"' in task
     assert 'pedigreeLower <> "by brood"' in task
     assert "alias: item.alias" in home
-    assert 'm.status.text = m.alias + "(" + UCase(m.streamFormat) + ")"' in player
+    assert "function displayNameForUi() as string" in player
+    assert "function titleModeValue() as string" in player
+    assert "shown = displayNameForUi()" in player
+
+
+def test_roku_vod_vote_overlay_skips_tuples_and_softens_banner():
+    player = (VOD / "components" / "PlayerScreen.brs").read_text(encoding="utf-8")
+    xml = (VOD / "components" / "PlayerScreen.xml").read_text(encoding="utf-8")
+    home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
+    assert "function isTuplePlayback() as boolean" in player
+    assert "if isTuplePlayback() then return" in player
+    assert "if isTuplePlayback()" in player
+    assert 'Instr(1, stem, ".tuple.")' in player
+    assert 'color="0x0A0A12A6"' in xml
+    assert "OK like · FF love · REPLAY vote · BACK dismiss" in xml
+    assert "function votePromptName() as string" in player
+    assert "return displayNameForUi()" in player
+    assert '"Like this sheep: " + votePromptName()' in player
+    assert "filename: item.filename" in home
 
 
 def test_roku_screensaver_expands_nested_library_folders():
