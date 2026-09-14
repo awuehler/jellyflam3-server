@@ -13,6 +13,8 @@ Roku VOD **cannot gapless-loop** HTTP MP4/HLS with the Video node (`Video.loop` 
 
 If a sheep is quarantined or Shears-deleted while a clip is queued, **1.0.29+** drops that id after HLS↔MP4 fallback fails, re-polls the flock (30s rate limit), and continues. A failed open does not POST Playing. **1.0.30** always persists `shuffleFlock=true` so an upgrade cannot leave the TV looping one sheep. **1.0.31** treats a wrap as one random permutation of the in-memory list, then re-fetches Jellyfin (HTTP Limit 5000, randomly prune to 313). The new mix is rotated so the first item is not the clip that just finished. Overnight ingest appears without exiting ambient.
 
+The **1.0.34** flock browser wraps every five posters into vertically scrollable rows (three rows visible at once). Tile metadata keeps duration / generation / license / useful pedigree tags, but omits the short `human` / `brood` labels that were truncated. While the next MP4 connects, the lower-left status shows `{alias}(MP4)` when available.
+
 ## Settings version
 
 Settings shows **Version X.Y.Z** from `roAppInfo.GetVersion()` (manifest `major_version` / `minor_version` / `build_version`). Sideload builds append `(sideload)`. Keep Jellyfin auth `Version=` in sync with the manifest on each package.
@@ -30,6 +32,7 @@ Section `JellyFlam3` (edit in-channel via **Settings** button, **\* Options**, o
 | `commercialMode` | `true` / `false` — client-side filter on Items **Tags** only: keep `cc-by` / `cc0` / PD / `cc-by-sa`; hide NC and untagged items. Do **not** use Jellyfin `Tags=` query params. Overview `License:` is display-only |
 | `streamMode` | `mp4` (ambient loop default) or `hls` (remux compare) |
 | `shuffleFlock` | always `true` — rotate archive gens (`247…165`) plus pedigree/tuple at EOF (skips `misc`/`test`). Channel **1.0.30** rewrites this on every launch so sideload cannot leave a leftover `false`. |
+| `titleMode` | `filename` (default) or `alias` — flock rows + player chrome (**1.0.33**). Alias is Overview `Alias:`; missing alias falls back to `Name`. Screensaver does not read this key. |
 | `displayWidth` / `displayHeight` | From Settings **Fetch TV display** (`roDeviceInfo`) |
 | `uiResolution` / `uiWidth` / `uiHeight` | UI resolution name + pixels |
 | `videoMode` | e.g. `1080p`, `2160p60` |
@@ -49,6 +52,8 @@ Each list item carries browse metadata:
 | `durationLabel` | `RunTimeTicks` → e.g. `23s` |
 | `generation` | Tag `generation-N` or `electricsheep.N.*` name/path |
 | `license` | Tags `cc-by` / `cc-by-nc` / … or Overview `License:` line |
+| `alias` | Overview `Alias:` (sidecar display name) |
+| `title` | `Name` or `alias` according to `titleMode` |
 | `pedigree` | Tags `pedigree` / `local_pedigree` / `human` / `brood` |
 | `metaLine` | Joined one-liner, e.g. `23s · gen 247 · cc-by-nc` |
 
@@ -85,6 +90,8 @@ cd /opt/jellyflam3-server
 Developer mode holds **one** sideloaded package. Installing the screensaver zip replaces this VoD channel on that box; re-sideload this zip to restore. To keep **both** installed, publish VoD as a private/unpublished channel ([docs/phase4/04](../docs/phase4/04_ROKU_PUBLISH.md#private-channel-path-wave-2)).
 
 **Vote overlay (1.0.32):** near the end of each clip a banner appears without pausing. **OK** like · **FF** love · **Replay** vote · **Back** dismiss. The channel POSTs to `http://{Jellyfin-host}:8791/v1/sheep-votes` (same token as display profiles). Playback / Sessions / wrap-once behavior is unchanged.
+
+**Title mode (1.0.33):** Settings `titleMode=alias` shows the memorable `adjective_surname` on flock tiles and player status. Default remains the filename. Sideload this package and, for sheep ingested before this slice, run `python3 -m pipeline.sheep_naming backfill --push-jellyfin` so Overview has `Alias:` lines.
 
 **Screensaver depends on Jellyfin registry keys** (`baseUrl` / `apiKey` / `userId` / `libraryId`). While both packages share the developer slot, VoD Settings populate them and the zip swap keeps them. Private-channel VoD does **not** share registry with sideload SS — use SS Settings **1.0.10** or a furnace-built SS zip. See [`roku-screensaver/README.md`](../roku-screensaver/README.md) and [docs/phase3/08_JELLYFIN_ID_DUMP.md](../docs/phase3/08_JELLYFIN_ID_DUMP.md).
 

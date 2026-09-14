@@ -206,7 +206,7 @@ Do **not** hot-swap two QNN Instruct contexts to fake parallelism on one NPU as 
 1. **B** samples **one loop** via [VoD as camera](#vod-as-camera): Images Primary (and optional Backdrops) for that Jellyfin Item. Disk `stills/{stem}/` is A’s feedstock, not B’s mount.
 2. **B** runs the [vision pipeline](#vision-pipeline): small VLM caption → hot Instruct proposes an alias; optional rationale in **B** logs (or a sidecar field only if [phase1/07](../phase1/07_LICENSE_AND_METADATA.md) grows a reserved key).
 3. **That A** applies: `python3 -m pipeline.sheep_naming set-alias --source llm` (illustrative) after uniqueness check on **its** catalog.
-4. Pasture filename-vs-alias **toggle** stays Phase 4 / 09 C. Pasture still talks to **A**.
+4. Pasture filename-vs-alias **toggle** is Phase 4 / 09 C (Roku VoD `titleMode` shipped; Kodi/SS captions parked). Pasture still talks to **A**.
 
 Furnace ingest must **not** block on B (timeout → keep `alias_source=auto`).
 

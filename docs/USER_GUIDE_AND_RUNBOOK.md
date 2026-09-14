@@ -471,12 +471,13 @@ Filename stays `electricsheep.{gen}.{id}`. Sidecar `alias` is `adjective_surname
 ```bash
 python3 -m pipeline.sheep_naming backfill --dry-run
 python3 -m pipeline.sheep_naming backfill
+python3 -m pipeline.sheep_naming backfill --push-jellyfin
 python3 -m pipeline.sheep_naming set-alias --stem electricsheep.247.00505 --alias frosty_swirles
 python3 -m pipeline.sheep_naming clear-alias --stem electricsheep.247.00505
 python3 -m pipeline.sheep_naming resolve frosty_swirles
 ```
 
-Pasture filename vs alias display toggle is not in this slice (Roku/Kodi still show Jellyfin titles).
+Roku VoD **1.0.33+**: Settings → `titleMode` → `filename` (default) or `alias`. Save reloads the flock. Alias comes from the Jellyfin Overview `Alias:` line (ingest writes it; `set-alias` / `backfill --push-jellyfin` refresh existing items). Missing alias shows the filename. Screensaver and Kodi idle chrome stay untitled.
 
 Cascade removes catalog MP4/sidecar/poster, jobs, edges (best-effort), Jellyfin item (soft-fail), peer copies when Opt In. Does **not** touch secrets or Syncthing device config.
 

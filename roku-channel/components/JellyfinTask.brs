@@ -35,7 +35,7 @@ end function
 
 function authHeader() as string
   ' Token in Authorization is what Jellyfin uses to bind Client/Device into /Sessions
-  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.32"", Token=""" + m.top.apiKey + """"
+  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.34"", Token=""" + m.top.apiKey + """"
 end function
 
 ' Lab-verified HLS remux path: prefer main.m3u8 + AudioCodec=aac.
@@ -427,30 +427,51 @@ function extractMeta(it as object) as object
     end if
   end if
 
-  ' Overview lines: "License: cc-by-nc"
-  if license = "" and it.Overview <> invalid
-    ov = it.Overview
-    licKey = "License:"
-    li = Instr(1, ov, licKey)
-    if li = 0 then li = Instr(1, ov, "license:")
-    if li > 0
-      frag = Mid(ov, li + Len(licKey)).Trim()
-      ' first token / line
-      nl = Instr(1, frag, Chr(10))
-      if nl > 0 then frag = Left(frag, nl - 1)
-      frag = frag.Trim()
-      sp = Instr(1, frag, " ")
-      if sp > 0 then frag = Left(frag, sp - 1)
-      if frag <> "" then license = LCase(frag)
-    end if
-  end if
+  ' Overview lines: "License: cc-by-nc" / "Alias: frosty_swirles"
+  ov = ""
+  if it.Overview <> invalid then ov = it.Overview
+  if license = "" then license = overviewKeyedValue(ov, "License:")
+  alias = overviewKeyedValue(ov, "Alias:")
 
   return {
     generation: generation
     license: license
     pedigree: pedigree
     sheepId: sheepId
+    alias: alias
   }
+end function
+
+function overviewKeyedValue(ov as string, key as string) as string
+  if ov = invalid or ov = "" or key = invalid or key = "" then return ""
+  li = Instr(1, ov, key)
+  if li = 0 then li = Instr(1, LCase(ov), LCase(key))
+  if li = 0 then return ""
+  frag = Mid(ov, li + Len(key)).Trim()
+  nl = Instr(1, frag, Chr(10))
+  if nl > 0 then frag = Left(frag, nl - 1)
+  frag = frag.Trim()
+  if LCase(key) = "license:"
+    sp = Instr(1, frag, " ")
+    if sp > 0 then frag = Left(frag, sp - 1)
+    return LCase(frag)
+  end if
+  return frag
+end function
+
+function titleModeValue() as string
+  raw = m.top.titleMode
+  if raw = invalid then raw = ""
+  tl = LCase(raw.Trim())
+  if tl = "alias" then return "alias"
+  return "filename"
+end function
+
+function displayTitle(filename as string, alias as string) as string
+  if titleModeValue() = "alias" and alias <> invalid and alias <> "" then return alias
+  if filename <> invalid and filename <> "" then return filename
+  if alias <> invalid and alias <> "" then return alias
+  return "Untitled"
 end function
 
 function buildMetaLine(durationLabel as string, meta as object) as string
@@ -463,7 +484,10 @@ function buildMetaLine(durationLabel as string, meta as object) as string
     bits.push(meta.license)
   end if
   if meta.pedigree <> invalid and meta.pedigree <> ""
-    bits.push(meta.pedigree)
+    pedigreeLower = LCase(meta.pedigree)
+    if pedigreeLower <> "human" and pedigreeLower <> "brood" and pedigreeLower <> "by human" and pedigreeLower <> "by brood"
+      bits.push(meta.pedigree)
+    end if
   end if
   if bits.count() = 0 then return ""
   line = bits[0]
@@ -491,9 +515,12 @@ function mapItem(it as object, base as string) as object
   end if
   desc = ""
   if it.Overview <> invalid then desc = it.Overview
-  title = "Untitled"
-  if it.Name <> invalid then title = it.Name
+  filename = "Untitled"
+  if it.Name <> invalid and it.Name <> "" then filename = it.Name
   meta = extractMeta(it)
+  alias = ""
+  if meta.alias <> invalid then alias = meta.alias
+  title = displayTitle(filename, alias)
   metaLine = buildMetaLine(durationLabel, meta)
   hls = hlsStreamUrl(base, it.Id)
   mp4 = mp4StreamUrl(base, it.Id)
@@ -503,6 +530,8 @@ function mapItem(it as object, base as string) as object
   return {
     id: it.Id
     title: title
+    filename: filename
+    alias: alias
     description: desc
     hdPosterUrl: poster
     hasPrimary: hasPrimary

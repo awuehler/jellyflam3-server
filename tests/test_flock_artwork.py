@@ -8,6 +8,7 @@ from pipeline.flock_artwork import (
     attach_stills_backdrops,
     extract_poster_for_mp4,
     posters_ingest_state,
+    push_overview_from_sidecar,
     stills_enabled_for_ingest,
 )
 from pipeline.jellyfin_client import ImageAttachResult, MetadataEnrichResult
@@ -170,6 +171,7 @@ def test_attach_primary_happy_path(tmp_path: Path):
             "license": "cc-by",
             "duration_sec": 13.0,
             "edition": "gold_sheep_lite",
+            "alias": "frosty_swirles",
         },
         client=client,
         sleep=sleeps.append,
@@ -181,6 +183,8 @@ def test_attach_primary_happy_path(tmp_path: Path):
     client.refresh_library.assert_called_once()
     client.find_item_for_media.assert_called_once_with(mp4)
     client.enrich_item_metadata.assert_called_once()
+    kwargs = client.enrich_item_metadata.call_args.kwargs
+    assert kwargs["alias"] == "frosty_swirles"
     client.upload_primary_image.assert_called_once()
     assert sleeps == [0.25]
 
@@ -429,3 +433,33 @@ def test_apply_tuple_skips_stills(tmp_path: Path):
     assert "jellyfin_stills" not in sidecar
     client.upload_item_image.assert_not_called()
     client.clear_backdrop_images.assert_not_called()
+
+
+def test_push_overview_from_sidecar(tmp_path: Path):
+    mp4 = tmp_path / "electricsheep.247.00505.mp4"
+    mp4.write_bytes(b"x")
+    client = MagicMock()
+    client.find_item_for_media.return_value = {"Id": "item-9"}
+    client.enrich_item_metadata.return_value = MetadataEnrichResult(
+        ok=True,
+        item_id="item-9",
+        status="enriched",
+        overview="Alias: frosty_swirles",
+        sort_name="electricsheep.247.00505",
+    )
+    out = push_overview_from_sidecar(
+        _cfg(),
+        mp4,
+        {
+            "id": "electricsheep.247.00505",
+            "license": "cc-by",
+            "alias": "frosty_swirles",
+            "tags": ["cc-by"],
+        },
+        client=client,
+    )
+    assert out["ok"] is True
+    client.refresh_library.assert_not_called()
+    kwargs = client.enrich_item_metadata.call_args.kwargs
+    assert kwargs["alias"] == "frosty_swirles"
+    assert kwargs["sheep_id"] == "electricsheep.247.00505"

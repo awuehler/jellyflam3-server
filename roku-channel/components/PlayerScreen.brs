@@ -18,6 +18,7 @@ sub init()
   m.hlsUrl = ""
   m.mp4Url = ""
   m.title = ""
+  m.alias = ""
   m.lengthSec = 0
   m.triedAltFallback = false
   m.reloopPending = false
@@ -63,6 +64,7 @@ sub playSheep(item as object)
   m.hlsUrl = ""
   m.mp4Url = ""
   m.title = ""
+  m.alias = ""
   m.lengthSec = 0
   m.mediaPath = ""
   m.sheepId = ""
@@ -78,6 +80,7 @@ sub playSheep(item as object)
     end if
     if item.mp4Url <> invalid then m.mp4Url = item.mp4Url
     if item.title <> invalid then m.title = item.title
+    if item.alias <> invalid then m.alias = item.alias
     if item.length <> invalid then m.lengthSec = item.length
     if item.mediaPath <> invalid then m.mediaPath = item.mediaPath
     if item.sheepId <> invalid then m.sheepId = item.sheepId
@@ -294,7 +297,11 @@ sub onState()
       m.status.visible = false
     else
       m.status.visible = true
-      m.status.text = "Buffering (" + m.streamFormat + ")..."
+      if m.alias <> invalid and m.alias <> ""
+        m.status.text = m.alias + "(" + UCase(m.streamFormat) + ")"
+      else
+        m.status.text = "Buffering (" + UCase(m.streamFormat) + ")..."
+      end if
     end if
   else if st = "playing"
     m.status.visible = false

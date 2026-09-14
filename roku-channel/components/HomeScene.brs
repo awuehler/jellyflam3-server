@@ -189,6 +189,12 @@ sub ensureDefaults()
   ' "false" (empty Settings save, or older packages that copied presets) would
   ' otherwise survive every client upgrade.
   m.registry.write("shuffleFlock", "true")
+  tm = m.registry.read("titleMode")
+  if tm = invalid then tm = ""
+  tm = LCase(tm.Trim())
+  if tm <> "alias"
+    m.registry.write("titleMode", "filename")
+  end if
   m.registry.flush()
 end sub
 
@@ -198,6 +204,14 @@ function shuffleFlockEnabled() as boolean
   tl = LCase(v.Trim())
   if tl = "" then return true
   return (tl = "true" or tl = "1" or tl = "yes")
+end function
+
+function titleModeValue() as string
+  v = m.registry.read("titleMode")
+  if v = invalid then return "filename"
+  tl = LCase(v.Trim())
+  if tl = "alias" then return "alias"
+  return "filename"
 end function
 
 ' Shuffle allowlist: archive gens + pedigree + tuple. Ignores misc/test/other.
@@ -396,6 +410,7 @@ sub startFlockRepoll(force as boolean)
   t.userId = m.registry.read("userId")
   t.libraryId = m.registry.read("libraryId")
   t.commercialMode = m.registry.read("commercialMode") = "true"
+  t.titleMode = titleModeValue()
   t.command = "list"
   t.control = "RUN"
   m.repollTask = t
@@ -424,11 +439,17 @@ sub rebuildFlockRow()
   if m.player <> invalid then return
   if m.items = invalid then m.items = []
   content = createObject("roSGNode", "ContentNode")
-  row = content.createChild("ContentNode")
-  row.title = "Flock"
+  itemsPerRow = 5
+  row = invalid
+  column = itemsPerRow
   for each it in m.items
+    if row = invalid or column >= itemsPerRow
+      row = content.createChild("ContentNode")
+      column = 0
+    end if
     child = row.createChild("ContentNode")
     bindFlockItemFields(child, it)
+    column = column + 1
   end for
   m.rowList.content = content
 end sub
@@ -448,6 +469,7 @@ sub refreshFromRegistry()
   m.task.userId = m.registry.read("userId")
   m.task.libraryId = m.registry.read("libraryId")
   m.task.commercialMode = m.registry.read("commercialMode") = "true"
+  m.task.titleMode = titleModeValue()
   m.task.command = "list"
   m.task.control = "RUN"
 end sub
@@ -529,6 +551,10 @@ sub bindFlockItemFields(child as object, it as object)
   if child = invalid or it = invalid then return
   child.title = it.title
   child.description = it.description
+  child.addField("filename", "string", false)
+  if it.filename <> invalid then child.filename = it.filename else child.filename = ""
+  child.addField("alias", "string", false)
+  if it.alias <> invalid then child.alias = it.alias else child.alias = ""
   child.hdPosterUrl = it.hdPosterUrl
   child.id = it.id
   child.addField("jellyfinId", "string", false)
@@ -660,6 +686,7 @@ sub playItem(item as object)
     hlsUrl: hls
     mp4Url: mp4
     title: item.title
+    alias: item.alias
     length: item.length
     id: playId
     mediaPath: mediaPath
@@ -795,6 +822,7 @@ function handleDeepLink(args as object) as void
   t.userId = m.registry.read("userId")
   t.libraryId = m.registry.read("libraryId")
   t.commercialMode = m.registry.read("commercialMode") = "true"
+  t.titleMode = titleModeValue()
   t.command = "item"
   t.itemId = cid
   t.control = "RUN"

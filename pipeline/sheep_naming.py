@@ -6,6 +6,7 @@ Requirements: catalog ``*.jellyflam3.json`` beside MP4s; stdlib only.
 Usage:
   python3 -m pipeline.sheep_naming backfill
   python3 -m pipeline.sheep_naming backfill --dry-run
+  python3 -m pipeline.sheep_naming backfill --push-jellyfin
   python3 -m pipeline.sheep_naming set-alias --stem electricsheep.247.00505 --alias frosty_swirles
   python3 -m pipeline.sheep_naming clear-alias --stem electricsheep.247.00505
   python3 -m pipeline.sheep_naming resolve frosty_swirles
@@ -13,7 +14,9 @@ Usage:
 
 Assumptions: Filename stays canonical. Hash-seed from stem so re-ingest of the
 same sheep keeps the alias. ``alias_source=human`` is sticky until clear-alias.
-LLM path and pasture filename/alias toggles stay parked (guide 09).
+Jellyfin ``Name`` stays the stem; Overview gets an ``Alias:`` line so Roku VoD
+``titleMode=alias`` can show it. Kodi / screensaver captions stay parked.
+LLM poster naming is Phase 5.
 Docs: docs/phase4/09_SHEEP_NAMING.md
 """
 
@@ -421,6 +424,12 @@ def _media_root(config: Path) -> Path:
     return resolve_path(cfg, "media_library")
 
 
+def _push_jellyfin(cfg: dict[str, Any], mp4: Path, sidecar: dict[str, Any]) -> dict[str, Any]:
+    from pipeline.flock_artwork import push_overview_from_sidecar
+
+    return push_overview_from_sidecar(cfg, mp4, sidecar)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Catalog sheep aliases (adjective_surname)")
     ap.add_argument("--config", default="configs/jellyflam3.yaml")
@@ -429,6 +438,11 @@ def main(argv: list[str] | None = None) -> int:
     p_bf = sub.add_parser("backfill", help="Assign auto aliases where missing")
     p_bf.add_argument("--dry-run", action="store_true")
     p_bf.add_argument("--limit", type=int, default=0)
+    p_bf.add_argument(
+        "--push-jellyfin",
+        action="store_true",
+        help="After write, refresh Jellyfin Overview Alias: lines (not with --dry-run)",
+    )
 
     p_set = sub.add_parser("set-alias", help="Sticky human override")
     p_set.add_argument("--stem", required=True)
@@ -452,6 +466,16 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "backfill":
         rows = backfill_catalog(media, dry_run=args.dry_run, limit=args.limit)
+        if args.push_jellyfin and not args.dry_run:
+            for row in rows:
+                stem = row.get("stem") or ""
+                try:
+                    path, data = load_sidecar_for_stem(media, stem)
+                except (OSError, ValueError, json.JSONDecodeError) as exc:
+                    row["jellyfin"] = {"ok": False, "status": "sidecar_missing", "error": str(exc)}
+                    continue
+                mp4 = path.with_name(stem + ".mp4")
+                row["jellyfin"] = _push_jellyfin(cfg, mp4, data)
         print(json.dumps({"count": len(rows), "rows": rows}, indent=2))
         return 0
 
@@ -486,9 +510,15 @@ def main(argv: list[str] | None = None) -> int:
         clear_to_auto(data, stem, taken)
     mp4 = path.with_name(stem + ".mp4")
     write_sidecar(mp4, data)
+    jf = _push_jellyfin(cfg, mp4, data)
     print(
         json.dumps(
-            {"stem": stem, "alias": alias_of(data), "alias_source": source_of(data)},
+            {
+                "stem": stem,
+                "alias": alias_of(data),
+                "alias_source": source_of(data),
+                "jellyfin": jf,
+            },
             indent=2,
         )
     )

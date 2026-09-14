@@ -167,7 +167,7 @@ Phase 4 design ([phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md)): Roku VoD **1.0.
 
 ### Sheep naming / alias
 
-Phase 4 design ([phase4/09](phase4/09_SHEEP_NAMING.md)): furnace auto-generates a short memorable **alias** (`adjective_surname`, e.g. `frosty_swirles`) on the catalog sidecar (hash-seed from stem; `python3 -m pipeline.sheep_naming`); human override sticky. Peer clients may later toggle **filename vs alias** display (parked). **LLM poster naming** (`alias_source=llm`) is Phase 5: small GPU VLM caption then Instruct JSON ([phase5/02](phase5/02_LLM_INTEGRATION.md#vision-pipeline)). Not the same as flam3 XML **`nick`** (designer credit for license).
+Phase 4 design ([phase4/09](phase4/09_SHEEP_NAMING.md)): furnace auto-generates a short memorable **alias** (`adjective_surname`, e.g. `frosty_swirles`) on the catalog sidecar (hash-seed from stem; `python3 -m pipeline.sheep_naming`); human override sticky. Roku VoD **1.0.33** Settings `titleMode` shows **filename** (default) or **alias**. Kodi / screensaver captions parked. **LLM poster naming** (`alias_source=llm`) is Phase 5: small GPU VLM caption then Instruct JSON ([phase5/02](phase5/02_LLM_INTEGRATION.md#vision-pipeline)). Not the same as flam3 XML **`nick`** (designer credit for license).
 
 ### flam3-genome maximum attempts warning
 

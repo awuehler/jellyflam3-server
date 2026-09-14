@@ -19,7 +19,7 @@ Custom JellyFlam3 channel only — not jellyfin-roku, not screensaver.
 | `components/SettingsScreen.*` / `SettingRow.*` | Registry editor for credentials |
 | `images/` | `mm_icon_focus_hd.png` (290×218), `splash-screen.png` (1280×720). Generative refresh: [CLIENT_CHANNEL_ART.md](../CLIENT_CHANNEL_ART.md) |
 
-Settings registry section `JellyFlam3`: `baseUrl`, `apiKey`, `userId`, `libraryId`, `commercialMode`.
+Settings registry section `JellyFlam3`: `baseUrl`, `apiKey`, `userId`, `libraryId`, `commercialMode`, `streamMode`, `shuffleFlock`, `titleMode`.
 
 Deep link: `contentId` = Jellyfin item id → dedicated item Task → `PlayerScreen` with `loop=true`.  
 Roku allows only **one** `Video` play instance: HomeScene always `stopPlayer()` before starting another stream (build 8+). List refresh never autoplays while a deep link is in flight.
@@ -49,6 +49,7 @@ Roku allows only **one** `Video` play instance: HomeScene always `stopPlayer()` 
    - `userId` — Jellyfin user id (required)
    - `libraryId` — Sheep library id (recommended)
    - `commercialMode` — `false` unless filtering NC
+   - `titleMode` — `filename` (default) or `alias` (VoD **1.0.33+**; Overview `Alias:` line)
    - Tip: dump IDs with `python3 scripts/jellyfin_id_dump.py` ([phase3/08](../phase3/08_JELLYFIN_ID_DUMP.md))
 6. After save → flock RowList should populate; select a dream → looped playback; **Back** returns to list.
 

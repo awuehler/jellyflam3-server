@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — give every catalog sheep a short, **human-readable alias** (e.g. `frosty_swirles`, `angry_bardeen`) so operators and peer clients can remember and reference sheep without typing `electricsheep.247.00505` or pedigree hashes. Also known as a **random name generator** / **auto-generated names** pattern: typically an **adjective + surname** of a famous person, place, or thing.
 
-**Status:** RNG + ingest + override shipped 2026-09-09. Client filename-vs-alias toggle stays parked here. **LLM poster naming** is Phase 5 ([../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md)). Keys `alias` / `alias_source` live in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Household vote recipes still wait on [08](08_VIEWER_FEEDBACK_LOOP.md).
+**Status:** RNG + ingest + override shipped 2026-09-09. **Roku VoD filename vs alias toggle shipped 2026-09-13** (channel **1.0.33**). Kodi / screensaver captions stay parked (idle path stays chrome-light). **LLM poster naming** is Phase 5 ([../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md)). Keys `alias` / `alias_source` live in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Household vote recipes: [08](08_VIEWER_FEEDBACK_LOOP.md).
 
 Depends on catalog **sidecar** as sole metadata SoT ([../phase1/07_LICENSE_AND_METADATA.md](../phase1/07_LICENSE_AND_METADATA.md), [08_VIEWER_FEEDBACK_LOOP.md](08_VIEWER_FEEDBACK_LOOP.md)), worker ingest, and peer clients (Roku VoD, Kodi screensaver, Shears CLI). Optional later: LLM vision over poster/stills for a broader inferred vocabulary. Distinct from flam3 XML **`nick`** (designer attribution used by license inference) — aliases are **display / operator names**, not Creative Commons credit.
 
@@ -57,12 +57,12 @@ Keys **`alias`** and **`alias_source`** (`auto` \| `human` \| `llm`) are in [pha
 ### B — Sidecar + Jellyfin
 
 1. ~~**Reserved + writer**~~ — keys documented; ingest/backfill write them. Generator uniqueness is in-process (catalog scan).
-2. Best-effort Jellyfin Overview / `SortName` refresh so browse UIs can show the alias without a separate client (optional; parked).
+2. Best-effort Jellyfin Overview `Alias:` line (ingest + `set-alias` / `backfill --push-jellyfin`). `Name` / `SortName` stay the filename. Optional OriginalTitle / SortName-as-alias remains parked.
 3. Shears delete already removes the sidecar (no parallel alias index).
 
 ### C — Peer clients
 
-1. **Roku VoD** — Settings toggle: display **filename** vs **alias** on flock rows / player chrome; screensaver stills captions optional.
+1. ~~**Roku VoD**~~ — Settings `titleMode` `filename` (default) vs `alias` on flock rows / player chrome. Reads Overview `Alias:`; missing alias falls back to filename. Screensaver stills captions stay parked.
 2. **Kodi screensaver** — log + optional on-screen label (only if chrome is allowed in a settings preview; idle path stays chrome-free) / JSON-RPC title from alias when configured.
 3. ~~**Pipeline UX**~~ — `python3 -m pipeline.sheep_naming resolve` maps alias → stem; stem always valid. Shears/breed still take stems.
 
@@ -76,7 +76,7 @@ Moved: [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md) § A a
 
 ### E — Ops & docs
 
-1. Operator rename CLI in [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md); client filename/alias toggle parked.
+1. Operator rename CLI in [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md); VoD `titleMode` shipped; Kodi / SS captions parked.
 2. ~~Glossary~~ — alias vs flam3 `nick`.
 3. ~~Tests~~ — uniqueness, override sticky, collision retry, backfill.
 
@@ -84,9 +84,10 @@ Moved: [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md) § A a
 
 | Artifact | Kind | Role |
 |---|---|---|
-| `pipeline/sheep_naming.py` | pipeline | Hash-seed generator, ingest helper, backfill / set / clear / resolve CLI |
+| `pipeline/sheep_naming.py` | pipeline | Hash-seed generator, ingest helper, backfill / set / clear / resolve CLI; `--push-jellyfin` |
+| `roku-channel/` VoD **1.0.33** | client | Settings `titleMode` filename \| alias |
 | `configs/jellyflam3.yaml.example` `naming.enabled` | config | Default on; set false to skip ingest assign |
-| [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) | docs | Curator alias CLI |
+| [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) | docs | Curator alias CLI + VoD toggle |
 
 ## Non-goals
 
@@ -99,7 +100,7 @@ Moved: [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md) § A a
 
 - [x] New catalog sheep get a unique auto-alias on ingest (worker hook; process restart required for running furnaces)
 - [x] Operator can override and reset; sticky against auto/LLM
-- [ ] At least one peer client (Roku or Kodi) offers filename vs alias display toggle
+- [x] At least one peer client (Roku or Kodi) offers filename vs alias display toggle
 - [x] Docs + glossary; sidecar schema documented; generator shipped (`pipeline.sheep_naming`)
 - [x] LLM path documented as optional / off by default (implementation → [../phase5/02](../phase5/02_LLM_INTEGRATION.md))
 

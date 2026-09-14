@@ -264,6 +264,7 @@ def attach_primary_after_refresh(
                 else None
             ),
             edition=str(side["edition"]) if side.get("edition") else None,
+            alias=str(side["alias"]).strip() if side.get("alias") else None,
         )
 
         if not want_poster:
@@ -399,3 +400,43 @@ def apply_flock_artwork(
         sidecar["stills"] = {"ok": True, "status": "skipped_tuple", "screensaver_safe": False}
 
     return sidecar
+
+
+def push_overview_from_sidecar(
+    cfg: dict[str, Any],
+    mp4: Path,
+    sidecar: dict[str, Any] | None = None,
+    *,
+    client: JellyfinClient | None = None,
+) -> dict[str, Any]:
+    """Best-effort Overview refresh (Alias line) without a library scan."""
+    jf = cfg.get("jellyfin") or {}
+    if not jf.get("api_key"):
+        return {"ok": False, "status": "skipped", "error": "no jellyfin api_key"}
+    side = sidecar or {}
+    tags = list(side.get("tags") or [])
+    try:
+        jf_client = client or JellyfinClient.from_config(cfg)
+        item = jf_client.find_item_for_media(mp4)
+        if not item or not item.get("Id"):
+            return {
+                "ok": False,
+                "status": "item_not_found",
+                "error": f"no Jellyfin item for {mp4}",
+            }
+        dur = None
+        if side.get("duration_sec") is not None:
+            dur = float(side["duration_sec"])
+        meta = jf_client.enrich_item_metadata(
+            str(item["Id"]),
+            sheep_id=str(side.get("id") or mp4.stem),
+            license=str(side.get("license") or "unknown"),
+            tags=tags,
+            duration_sec=dur,
+            edition=str(side["edition"]) if side.get("edition") else None,
+            alias=str(side["alias"]).strip() if side.get("alias") else None,
+        )
+        return meta.to_sidecar()
+    except Exception as exc:  # noqa: BLE001
+        log.info("Jellyfin overview push failed for %s: %s", mp4, exc)
+        return {"ok": False, "status": "failed", "error": str(exc)}

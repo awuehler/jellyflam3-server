@@ -35,20 +35,21 @@
       wrap="true"
       font="font:SmallSystemFont"
       color="0xA0A0B0FF" />
-    <SettingRow id="row_baseUrl" translation="[120,155]" />
-    <SettingRow id="row_apiKey" translation="[120,225]" />
-    <SettingRow id="row_userId" translation="[120,295]" />
-    <SettingRow id="row_libraryId" translation="[120,365]" />
-    <SettingRow id="row_commercialMode" translation="[120,435]" />
-    <SettingRow id="row_streamMode" translation="[120,505]" />
-    <SettingRow id="row_shuffleFlock" translation="[120,575]" />
-    <SettingRow id="row_probeDisplay" translation="[120,645]" />
-    <SettingRow id="row_save" translation="[120,730]" />
-    <SettingRow id="row_cancel" translation="[120,800]" />
+    <SettingRow id="row_baseUrl" translation="[120,148]" />
+    <SettingRow id="row_apiKey" translation="[120,206]" />
+    <SettingRow id="row_userId" translation="[120,264]" />
+    <SettingRow id="row_libraryId" translation="[120,322]" />
+    <SettingRow id="row_commercialMode" translation="[120,380]" />
+    <SettingRow id="row_streamMode" translation="[120,438]" />
+    <SettingRow id="row_shuffleFlock" translation="[120,496]" />
+    <SettingRow id="row_titleMode" translation="[120,554]" />
+    <SettingRow id="row_probeDisplay" translation="[120,612]" />
+    <SettingRow id="row_save" translation="[120,690]" />
+    <SettingRow id="row_cancel" translation="[120,748]" />
     <Label
       id="footer"
       text=""
-      translation="[120,885]"
+      translation="[120,830]"
       width="1680"
       height="160"
       wrap="true"

@@ -242,8 +242,11 @@ def test_build_flock_overview_and_sort_name():
         tags=["cc-by-nc", "generation-247"],
         duration_sec=23.0,
         edition="gold_sheep_lite",
+        alias="frosty_swirles",
     )
     assert "electricsheep.247.00505" in ov
+    assert "Alias: frosty_swirles" in ov
+    assert "Alias:" not in build_flock_overview(sheep_id="x", license="cc-by")
     assert "cc-by-nc" in ov
     assert "23.0s" in ov
     assert "gold_sheep_lite" in ov
@@ -274,9 +277,11 @@ def test_enrich_item_metadata_posts_merged_item():
         tags=["cc-by", "generation-247"],
         duration_sec=13.0,
         edition="gold_sheep_lite",
+        alias="frosty_swirles",
     )
     assert result.ok and result.status == "enriched"
     assert result.sort_name == "electricsheep.247.00505"
+    assert "Alias: frosty_swirles" in (result.overview or "")
     assert "legacy" in (result.tags or [])
     assert "cc-by" in (result.tags or [])
     assert calls[0][0] == "GET"
@@ -287,6 +292,7 @@ def test_enrich_item_metadata_posts_merged_item():
     assert posted["Overview"] == result.overview
     assert posted["SortName"] == "electricsheep.247.00505"
     assert posted["ForcedSortName"] == "electricsheep.247.00505"
+    assert posted["Name"] == "electricsheep.247.00505"
     assert "legacy" in posted["Tags"]
 
 

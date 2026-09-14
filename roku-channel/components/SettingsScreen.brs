@@ -1,7 +1,7 @@
 sub init()
   m.top.focusable = true
-  m.fields = ["baseUrl", "apiKey", "userId", "libraryId", "commercialMode", "streamMode", "shuffleFlock"]
-  m.rowIds = ["row_baseUrl", "row_apiKey", "row_userId", "row_libraryId", "row_commercialMode", "row_streamMode", "row_shuffleFlock", "row_probeDisplay", "row_save", "row_cancel"]
+  m.fields = ["baseUrl", "apiKey", "userId", "libraryId", "commercialMode", "streamMode", "shuffleFlock", "titleMode"]
+  m.rowIds = ["row_baseUrl", "row_apiKey", "row_userId", "row_libraryId", "row_commercialMode", "row_streamMode", "row_shuffleFlock", "row_titleMode", "row_probeDisplay", "row_save", "row_cancel"]
   m.values = {}
   m.idx = 0
   m.registry = CreateObject("roRegistrySection", "JellyFlam3")
@@ -58,6 +58,8 @@ function fieldHint(name as string) as string
     return "mp4=ambient Direct Play loop; hls=Jellyfin remux compare (other values become mp4)"
   else if name = "shuffleFlock"
     return "always true — rotate archive gens + pedigree + tuple (skip misc/test); false is not persisted"
+  else if name = "titleMode"
+    return "filename=Jellyfin Name (electricsheep.gen.id); alias=sidecar name from Overview Alias: line; missing alias falls back to filename"
   else if name = "probeDisplay"
     return "OK=capture roDeviceInfo + POST per-screen profile to Pi :8791 (multi-Roku/Kodi safe; hint only)"
   else if name = "save"
@@ -91,6 +93,13 @@ end function
 
 function shuffleFlockDefault() as boolean
   return true
+end function
+
+function normalizeTitleMode(raw as string) as string
+  if raw = invalid then return "filename"
+  v = LCase(raw.Trim())
+  if v = "alias" then return "alias"
+  return "filename"
 end function
 
 function flagStr(v) as string
@@ -136,6 +145,8 @@ sub openSettings()
       val = normalizeBool(val, false)
     else if name = "shuffleFlock"
       val = "true"
+    else if name = "titleMode"
+      val = normalizeTitleMode(val)
     end if
     m.values[name] = val
     refreshRowLabel(name)
@@ -159,6 +170,8 @@ sub refreshRowLabel(name as string)
     if val = "" then shown = "false"
   else if name = "shuffleFlock"
     if val = "" then shown = "true"
+  else if name = "titleMode"
+    if val = "" then shown = "filename"
   else if val = ""
     shown = "(empty)"
   end if
@@ -452,6 +465,8 @@ sub editField(name as string)
   kb = createObject("roSGNode", "KeyboardDialog")
   if name = "streamMode"
     kb.title = "streamMode: mp4 or hls"
+  else if name = "titleMode"
+    kb.title = "titleMode: filename or alias"
   else if name = "commercialMode" or name = "shuffleFlock"
     kb.title = name + ": true or false"
   else
@@ -491,6 +506,8 @@ sub onKeyboardButton()
       text = normalizeBool(text, false)
     else if name = "shuffleFlock"
       text = "true"
+    else if name = "titleMode"
+      text = normalizeTitleMode(text)
     end if
     m.values[name] = text
     refreshRowLabel(name)
@@ -515,6 +532,8 @@ sub saveAndClose()
       val = normalizeBool(val, false)
     else if name = "shuffleFlock"
       val = "true"
+    else if name = "titleMode"
+      val = normalizeTitleMode(val)
     end if
     m.registry.write(name, val)
   end for

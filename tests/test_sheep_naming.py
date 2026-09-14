@@ -122,6 +122,13 @@ def test_worker_assigns_alias_after_reserved_merge():
     assert "collect_taken_aliases" in text
 
 
+def test_cli_mentions_push_jellyfin():
+    text = (ROOT / "pipeline" / "sheep_naming.py").read_text(encoding="utf-8")
+    assert "--push-jellyfin" in text
+    assert "push_overview_from_sidecar" in text
+    assert "Alias:" in (ROOT / "pipeline" / "jellyfin_client.py").read_text(encoding="utf-8")
+
+
 def test_example_yaml_documents_naming():
     text = (ROOT / "configs" / "jellyflam3.yaml.example").read_text(encoding="utf-8")
     assert "naming:" in text

@@ -65,8 +65,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=32" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.32""' in text
+    assert "build_version=34" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.34""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
@@ -101,6 +101,15 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "return true" in settings
     assert 'if val = "" then shown = "true"' in settings
     assert 'val = "true"' in settings
+    assert "function normalizeTitleMode(raw as string) as string" in settings
+    assert 'if v = "alias" then return "alias"' in settings
+    jf = (VOD / "components" / "JellyfinTask.brs").read_text(encoding="utf-8")
+    assert "function overviewKeyedValue(ov as string, key as string)" in jf
+    assert "function displayTitle(filename as string, alias as string)" in jf
+    assert "Alias:" in jf
+    home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
+    assert "function titleModeValue() as string" in home
+    assert "t.titleMode = titleModeValue()" in home
     ss = (SS / "components" / "ScreenSaverScene.brs").read_text(encoding="utf-8")
     assert 'write("shuffleFlock"' not in ss
     assert "shuffleCopy" in ss
@@ -118,6 +127,23 @@ def test_roku_commercial_mode_does_not_query_tags():
     ss_set = (SS / "components" / "ScreenSaverSettings.brs").read_text(encoding="utf-8")
     assert 'm.credFields = ["baseUrl", "apiKey", "userId", "libraryId"]' in ss_set
     assert "sub editCred(name as string)" in ss_set
+
+
+def test_roku_vod_wrapped_flock_layout_and_compact_metadata():
+    scene = (VOD / "components" / "HomeScene.xml").read_text(encoding="utf-8")
+    home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
+    task = (VOD / "components" / "JellyfinTask.brs").read_text(encoding="utf-8")
+    player = (VOD / "components" / "PlayerScreen.brs").read_text(encoding="utf-8")
+
+    assert "Ambient Sheep - Press OK button to play / Settings - Press * to Open" in scene
+    assert 'numRows="3"' in scene
+    assert 'showRowLabel="[false]"' in scene
+    assert "itemsPerRow = 5" in home
+    assert "column >= itemsPerRow" in home
+    assert 'pedigreeLower <> "by human"' in task
+    assert 'pedigreeLower <> "by brood"' in task
+    assert "alias: item.alias" in home
+    assert 'm.status.text = m.alias + "(" + UCase(m.streamFormat) + ")"' in player
 
 
 def test_roku_screensaver_expands_nested_library_folders():

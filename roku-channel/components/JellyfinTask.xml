@@ -7,6 +7,8 @@
     <field id="userId" type="string" />
     <field id="libraryId" type="string" />
     <field id="commercialMode" type="boolean" />
+    <!-- filename (default) or alias — Overview Alias: line; Name stays stem -->
+    <field id="titleMode" type="string" />
     <field id="command" type="string" />
     <field id="itemId" type="string" />
     <field id="positionTicks" type="integer" />

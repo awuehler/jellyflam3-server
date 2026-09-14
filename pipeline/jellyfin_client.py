@@ -65,12 +65,14 @@ def build_flock_overview(
     tags: list[str] | None = None,
     duration_sec: float | None = None,
     edition: str | None = None,
+    alias: str | None = None,
 ) -> str:
     """Short Jellyfin Overview for browse/detail clients."""
-    lines = [
-        f"JellyFlam3 sheep · {sheep_id}",
-        f"License: {license}",
-    ]
+    lines = [f"JellyFlam3 sheep · {sheep_id}"]
+    alias_s = (alias or "").strip()
+    if alias_s:
+        lines.append(f"Alias: {alias_s}")
+    lines.append(f"License: {license}")
     if duration_sec is not None:
         lines.append(f"Duration: {float(duration_sec):.1f}s")
     if edition:
@@ -564,11 +566,13 @@ class JellyfinClient:
         tags: list[str] | None = None,
         duration_sec: float | None = None,
         edition: str | None = None,
+        alias: str | None = None,
     ) -> MetadataEnrichResult:
         """Best-effort Overview + SortName + Tags via full Item GET/POST.
 
         Soft-fails on 4xx/5xx. If the full Item POST fails, falls back to
-        ``add_tags`` only (Phase 1 soft-fail path).
+        ``add_tags`` only (Phase 1 soft-fail path). ``Name`` stays the
+        filename; ``alias`` is an Overview ``Alias:`` line only.
         """
         if not item_id:
             return MetadataEnrichResult(
@@ -585,6 +589,7 @@ class JellyfinClient:
             tags=tag_list,
             duration_sec=duration_sec,
             edition=edition,
+            alias=alias,
         )
         sort_name = build_flock_sort_name(sheep_id)
 

@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — author a **household / end-user** guide for day-to-day JellyFlam3 operation: common tasks, worked examples, and problem triage. Audience is the person running one or more Pis + Roku(s), not the Phase 1–3 implementer reading feature guides.
 
-**Status:** Baseline complete (Owner OK 2026-09-03). Day-to-day use: **[../USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md)** (Layer 1 + [worked examples](../USER_GUIDE_AND_RUNBOOK.md#worked-examples) + Layer 2 triage). Fridge card: **[../FRIDGE_CARD.md](../FRIDGE_CARD.md)**. Overlay button map + vote/share recipe: VoD **1.0.32** and [worked example 6](../USER_GUIDE_AND_RUNBOOK.md#6--vote-then-share). Alias rename CLI shipped with [09](09_SHEEP_NAMING.md).
+**Status:** Baseline complete (Owner OK 2026-09-03). Day-to-day use: **[../USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md)** (Layer 1 + [worked examples](../USER_GUIDE_AND_RUNBOOK.md#worked-examples) + Layer 2 triage). Fridge card: **[../FRIDGE_CARD.md](../FRIDGE_CARD.md)**. Overlay button map + vote/share recipe: VoD **1.0.32** and [worked example 6](../USER_GUIDE_AND_RUNBOOK.md#6--vote-then-share). Filename vs alias on VoD **1.0.33** Settings `titleMode` ([09](09_SHEEP_NAMING.md)).
 
 Complements (does not replace):
 
@@ -42,7 +42,7 @@ Complements (does not replace):
 | Breed / seed | Manual `pipeline.breed` or daily `cron_breed_idle.sh` when inbox empty; idle-breed **weights parents by sidecar votes** when present ([08](08_VIEWER_FEEDBACK_LOOP.md)) |
 | Promote peer share | Opt In; **gated** `promote --apply` on receive. Liked sheep: `cron_share_votes.sh` copies to `peers/share-out` ([08](08_VIEWER_FEEDBACK_LOOP.md)); auto-promote **cancelled** ([01](01_PEER_SHARE_PATH.md)) |
 | Vote / like a sheep | Roku VoD overlay last 12 s ([08](08_VIEWER_FEEDBACK_LOOP.md)); LAN-only POST; re-votes allowed; love is a stronger tally, not a different share path |
-| Rename / alias a sheep | Phase 4 sheep naming ([09](09_SHEEP_NAMING.md)): auto `adjective_surname` or human override; clients may show alias vs filename |
+| Rename / alias a sheep | [09](09_SHEEP_NAMING.md): auto `adjective_surname` or human override; VoD Settings `titleMode` filename vs alias |
 | Delete a sheep | Shears dry-run → apply (Phase 3 / 03) |
 | Multi-Roku | Same Jellyfin URL on each TV; `display_profiles list` |
 | Update fleet | `git pull` on each Pi; when to restart units |
