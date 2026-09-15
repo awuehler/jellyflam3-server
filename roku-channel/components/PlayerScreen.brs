@@ -1,4 +1,8 @@
 sub init()
+  ' Keep focus on this wrapper, not Video. Roku Video consumes transport keys
+  ' (FF/Replay) before they can bubble to onKeyEvent; the wrapper owns ambient
+  ' playback controls and forwards no native seek commands.
+  m.top.focusable = true
   m.video = m.top.findNode("Video")
   m.status = m.top.findNode("status")
   m.progressTimer = m.top.findNode("progressTimer")
@@ -147,7 +151,7 @@ sub startVideo(url as string, fmt as string)
   m.video.loop = false
   m.video.enableUI = false
   m.video.control = "play"
-  m.video.setFocus(true)
+  m.top.setFocus(true)
 end sub
 
 sub stopSheep()

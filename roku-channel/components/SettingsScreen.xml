@@ -29,7 +29,7 @@
       color="0xA0A0B0FF" />
     <Label
       id="hint"
-      text="Up/Down / OK edits / Probe display writes registry + Pi profile / Save / Back"
+      text="Up/Down / OK edits and saves immediately / Back returns / Done reloads flock"
       translation="[120,96]"
       width="1680"
       wrap="true"

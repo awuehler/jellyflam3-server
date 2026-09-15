@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Roku VoD **1.0.37**: accepted Settings edits persist immediately (Back no longer discards them); registry reads are normalized; home status shows commercial-filter and alias/fallback counts; NC always overrides safe tags and applies to deep links. Player focus stays above the Video node so **FF love** and **REPLAY vote** reach the overlay alongside existing OK/BACK handling.
 - Roku VoD **1.0.36**: home copy is **Ambient Dreams** and **N sheep in flock**; poster grid is **six** columns (270×152 tiles so the last column stays inside the right gutter). Pedigree genomes keep the full `cc-*` license on the tile; pedigree tags move to the wider detail chip.
 - Kodi screensaver **0.2.10** silently closes Kodi's native playback-failed `okdialog` while dropping and refreshing a quarantined sheep, preventing a recovered session from retaining a modal end-user prompt.
 - Active worker quality intervention: reject linear-only, cloned-singularity, frozen single-flame, and washed-palette genomes before full animation; render a one-frame saturation preview before expensive CPU work; re-check the encoded midpoint before catalog/Jellyfin publication. Rejections persist reasons/metrics in job state and move the claimed genome to quarantine. `genome_orbit_frozen` is now a hard-quarantine reason (score **80**); legacy still-loop requires an explicit gate opt-out.

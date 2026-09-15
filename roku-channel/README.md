@@ -15,6 +15,8 @@ If a sheep is quarantined or Shears-deleted while a clip is queued, **1.0.29+** 
 
 The **1.0.36** flock browser wraps every six posters into vertically scrollable rows (three rows visible at once; 270×152 tiles leave a right gutter so column 6 is not clipped). Home copy is **Ambient Dreams** and **N sheep in flock**. Tile metadata is duration / generation / full `cc-*` license (including `cc-by-sa` and `cc-by-nc-sa`). Pedigree tags stay on the detail chip so they do not clip the license on 270px tiles. While the next MP4 connects, the lower-left status shows `{alias}(MP4)` when available.
 
+**1.0.37 settings and controls:** keyboard **OK** validates and persists that field immediately; Back returns without discarding accepted edits, and Done reloads the flock. Boolean/title reads are canonicalized. The home status reports effective commercial filtering and alias/fallback counts. NC tags always override safe tags, including conflicting-tag data and deep links. PlayerScreen owns focus so Roku Video cannot swallow **FF love** or **REPLAY vote**; OK like and BACK dismiss are unchanged.
+
 ## Settings version
 
 Settings shows **Version X.Y.Z** from `roAppInfo.GetVersion()` (manifest `major_version` / `minor_version` / `build_version`). Sideload builds append `(sideload)`. Keep Jellyfin auth `Version=` in sync with the manifest on each package.
@@ -29,7 +31,7 @@ Section `JellyFlam3` (edit in-channel via **Settings** button, **\* Options**, o
 | `apiKey` | Jellyfin API key |
 | `userId` | Jellyfin user id (required) |
 | `libraryId` | Sheep library ParentId (recommended) |
-| `commercialMode` | `true` / `false` — client-side filter on Items **Tags** only: keep `cc-by` / `cc0` / PD / `cc-by-sa`; hide NC and untagged items. Do **not** use Jellyfin `Tags=` query params. Overview `License:` is display-only |
+| `commercialMode` | `true` / `false` — client-side filter on Items **Tags** only: keep `cc-by` / `cc0` / PD / `cc-by-sa`; hide NC and untagged items. NC overrides safe tags regardless of order. Do **not** use Jellyfin `Tags=` query params. Overview `License:` is display-only |
 | `streamMode` | `mp4` (ambient loop default) or `hls` (remux compare) |
 | `shuffleFlock` | always `true` — rotate archive gens (`247…165`) plus pedigree/tuple at EOF (skips `misc`/`test`). Channel **1.0.30** rewrites this on every launch so sideload cannot leave a leftover `false`. |
 | `titleMode` | `filename` (default) or `alias` — flock rows + player chrome (**1.0.33**). Alias is Overview `Alias:`; missing alias falls back to `Name`. Screensaver does not read this key. |

@@ -21,6 +21,8 @@ Custom JellyFlam3 channel only — not jellyfin-roku, not screensaver.
 
 Settings registry section `JellyFlam3`: `baseUrl`, `apiKey`, `userId`, `libraryId`, `commercialMode`, `streamMode`, `shuffleFlock`, `titleMode`.
 
+VoD **1.0.37+** persists each valid keyboard edit when **OK** is pressed; Back does not discard accepted edits, and Done reloads the list. Boolean/title reads are normalized at startup. Home status shows effective commercial filtering and alias fallback counts. NC tags override safe tags regardless of order, including deep links. PlayerScreen—not Video—owns playback focus so FF and Replay reach the vote overlay.
+
 Deep link: `contentId` = Jellyfin item id → dedicated item Task → `PlayerScreen` with `loop=true`.  
 Roku allows only **one** `Video` play instance: HomeScene always `stopPlayer()` before starting another stream (build 8+). List refresh never autoplays while a deep link is in flight.
 

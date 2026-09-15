@@ -65,14 +65,14 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=36" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.36""' in text
+    assert "build_version=37" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.37""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
     assert 'm.registry.write("shuffleFlock", "true")' in home
     assert "if sf.Trim() = \"\"" not in home
-    assert "if tl = \"\" then return true" in home
+    assert 'return registryBoolEnabled("shuffleFlock", true)' in home
     assert "sub onPlaybackFailed()" in home
     assert "sub maybeRepollFlock()" in home
     assert "sub maybeWrapRefetchFlock()" in home
@@ -93,6 +93,10 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "sub submitSheepVote(kind as string)" in player
     assert 'submitSheepVote("like")' in player
     assert 'submitSheepVote("love")' in player
+    assert 'submitSheepVote("vote")' in player
+    assert "m.top.focusable = true" in player
+    assert "m.top.setFocus(true)" in player
+    assert "m.video.setFocus(true)" not in player
     assert 'command = "sheepVote"' in player
     assert "/v1/sheep-votes" in text
     assert "function postSheepVote() as object" in text
@@ -114,12 +118,26 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "streamMode invalid (" in settings
     assert "commercialMode invalid (" in settings
     assert "m.inputNotice" in settings
+    assert "if accepted = true" in settings
+    assert "m.registry.write(name, val)" in settings
+    assert "m.registry.flush()" in settings
+    assert "m.top.saved = true" in settings
     jf = (VOD / "components" / "JellyfinTask.brs").read_text(encoding="utf-8")
+    assert "function hasNcLicense(it as object) as boolean" in jf
+    assert "function hasSafeLicense(it as object) as boolean" in jf
+    assert "if hasNcLicense(it) then return false" in jf
+    assert 'error: "item excluded by commercialMode"' in jf
+    assert "filteredCount: filteredCount" in jf
+    assert "aliasCount: aliasCount" in jf
     assert "function overviewKeyedValue(ov as string, key as string)" in jf
     assert "function displayTitle(filename as string, alias as string)" in jf
     assert "Alias:" in jf
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert "function titleModeValue() as string" in home
+    assert "function registryBoolEnabled(name as string, defaultVal as boolean)" in home
+    assert "function effectiveSettingsSummary(res as object) as string" in home
+    assert "commercialModeEnabled()" in home
+    assert "alias titles:" in home
     assert "t.titleMode = titleModeValue()" in home
     ss = (SS / "components" / "ScreenSaverScene.brs").read_text(encoding="utf-8")
     assert 'write("shuffleFlock"' not in ss

@@ -19,6 +19,7 @@ sub init()
   m.advancingClip = false
   m.lastRepollSec = 0
   m.repollTask = invalid
+  m.effectiveSummary = ""
 
   m.rowList.observeField("rowItemSelected", "onRowItemSelected")
   m.rowList.observeField("rowItemFocused", "onRowItemFocused")
@@ -174,7 +175,10 @@ sub ensureDefaults()
   if m.registry.read("baseUrl") = invalid or m.registry.read("baseUrl") = ""
     m.registry.write("baseUrl", "http://192.168.X.Y:8096")
   end if
-  if m.registry.read("commercialMode") = invalid
+  ' Canonicalize legacy/mixed-case boolean tokens once at startup.
+  if registryBoolEnabled("commercialMode", false)
+    m.registry.write("commercialMode", "true")
+  else
     m.registry.write("commercialMode", "false")
   end if
   ' Ambient loop defaults to Static MP4; set "hls" to compare remux re-loop.
@@ -192,18 +196,29 @@ sub ensureDefaults()
   tm = m.registry.read("titleMode")
   if tm = invalid then tm = ""
   tm = LCase(tm.Trim())
-  if tm <> "alias"
+  if tm = "alias"
+    m.registry.write("titleMode", "alias")
+  else
     m.registry.write("titleMode", "filename")
   end if
   m.registry.flush()
 end sub
 
-function shuffleFlockEnabled() as boolean
-  v = m.registry.read("shuffleFlock")
-  if v = invalid then return true
+function registryBoolEnabled(name as string, defaultVal as boolean) as boolean
+  v = m.registry.read(name)
+  if v = invalid then return defaultVal
   tl = LCase(v.Trim())
-  if tl = "" then return true
-  return (tl = "true" or tl = "1" or tl = "yes")
+  if tl = "true" or tl = "1" or tl = "yes" then return true
+  if tl = "false" or tl = "0" or tl = "no" then return false
+  return defaultVal
+end function
+
+function commercialModeEnabled() as boolean
+  return registryBoolEnabled("commercialMode", false)
+end function
+
+function shuffleFlockEnabled() as boolean
+  return registryBoolEnabled("shuffleFlock", true)
 end function
 
 function titleModeValue() as string
@@ -409,7 +424,7 @@ sub startFlockRepoll(force as boolean)
   t.apiKey = m.registry.read("apiKey")
   t.userId = m.registry.read("userId")
   t.libraryId = m.registry.read("libraryId")
-  t.commercialMode = m.registry.read("commercialMode") = "true"
+  t.commercialMode = commercialModeEnabled()
   t.titleMode = titleModeValue()
   t.command = "list"
   t.control = "RUN"
@@ -428,6 +443,7 @@ sub onRepollResult()
   if res.items = invalid then return
   m.items = res.items
   m.flockCount = res.items.count()
+  m.effectiveSummary = effectiveSettingsSummary(res)
   excludeId = ""
   if m.currentPlayId <> invalid then excludeId = m.currentPlayId
   if shuffleFlockEnabled() then rebuildShuffleQueue(excludeId)
@@ -468,7 +484,7 @@ sub refreshFromRegistry()
   m.task.apiKey = m.registry.read("apiKey")
   m.task.userId = m.registry.read("userId")
   m.task.libraryId = m.registry.read("libraryId")
-  m.task.commercialMode = m.registry.read("commercialMode") = "true"
+  m.task.commercialMode = commercialModeEnabled()
   m.task.titleMode = titleModeValue()
   m.task.command = "list"
   m.task.control = "RUN"
@@ -496,6 +512,32 @@ sub showEmptyUi()
   setUiState("empty", "Empty flock — Retry after seeding, or open Settings")
   focusRecoveryControl()
 end sub
+
+function effectiveSettingsSummary(res as object) as string
+  count = 0
+  if res.items <> invalid then count = res.items.count()
+  ncCount = 0
+  if res.ncCount <> invalid then ncCount = res.ncCount
+  filtered = 0
+  if res.filteredCount <> invalid then filtered = res.filteredCount
+  aliases = 0
+  if res.aliasCount <> invalid then aliases = res.aliasCount
+
+  summary = count.toStr() + " sheep · "
+  if commercialModeEnabled()
+    summary = summary + "commercial on: " + filtered.toStr() + " hidden (" + ncCount.toStr() + " NC)"
+  else
+    summary = summary + "commercial off: " + ncCount.toStr() + " NC shown"
+  end if
+  if titleModeValue() = "alias"
+    fallback = count - aliases
+    if fallback < 0 then fallback = 0
+    summary = summary + " · alias titles: " + aliases.toStr() + ", " + fallback.toStr() + " fallback"
+  else
+    summary = summary + " · filename titles"
+  end if
+  return summary
+end function
 
 sub onTaskResult()
   raw = m.task.resultJson
@@ -542,7 +584,8 @@ sub onTaskResult()
   if m.rowList = invalid or m.rowList.content = invalid then return
   first = m.rowList.content.getChild(0).getChild(0)
   updateDetailChrome(first)
-  setUiState("ready", m.flockCount.toStr() + " sheep in flock")
+  m.effectiveSummary = effectiveSettingsSummary(res)
+  setUiState("ready", m.effectiveSummary)
   if m.player = invalid then m.rowList.setFocus(true)
 end sub
 
@@ -628,7 +671,11 @@ sub onRowItemFocused()
   item = row.getChild(idx[1])
   updateDetailChrome(item)
   if m.status <> invalid and m.flockCount <> invalid
-    m.status.text = m.flockCount.toStr() + " sheep in flock"
+    if m.effectiveSummary <> invalid and m.effectiveSummary <> ""
+      m.status.text = m.effectiveSummary
+    else
+      m.status.text = m.flockCount.toStr() + " sheep in flock"
+    end if
   end if
 end sub
 
@@ -822,7 +869,7 @@ function handleDeepLink(args as object) as void
   t.apiKey = m.registry.read("apiKey")
   t.userId = m.registry.read("userId")
   t.libraryId = m.registry.read("libraryId")
-  t.commercialMode = m.registry.read("commercialMode") = "true"
+  t.commercialMode = commercialModeEnabled()
   t.titleMode = titleModeValue()
   t.command = "item"
   t.itemId = cid

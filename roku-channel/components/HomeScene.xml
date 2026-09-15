@@ -106,7 +106,7 @@
       id="status"
       text="Loading…"
       translation="[80,316]"
-      width="1200"
+      width="1760"
       font="font:SmallSystemFont"
       color="0x8888A0FF" />
     <Button

@@ -63,7 +63,7 @@ Overlay is visual-only (Video stays focused; playback does not pause). Shown whe
 ### A — Roku VoD overlay (shipped 1.0.32)
 
 1. **Timing** — overlay when remaining duration ≤ 12 s; hide on timeout (10 s), vote, BACK, or clip advance.
-2. **UI** — transient SceneGraph group over Video (bottom banner, **65%** opacity in **1.0.35**); prompt is **Like this sheep:** plus Settings `titleMode` (alias when that mode is on and an alias exists, else filename); copy for like / love / vote; no Button focus (Video stays focused). Overlay is skipped on **tuple** clips.
+2. **UI** — transient SceneGraph group over Video (bottom banner, **65%** opacity in **1.0.35**); prompt is **Like this sheep:** plus Settings `titleMode` (alias when that mode is on and an alias exists, else filename); copy for like / love / vote; no Button focus. In **1.0.37**, `PlayerScreen` owns focus instead of the Video node so Video cannot consume FF / Replay before the vote handler. Overlay is skipped on **tuple** clips.
 3. **Mapping** — see Remote map above; shuffle / streamMode / Options keys are not stolen during playback.
 4. **Identity** — stem from `mediaPath` basename (fallback `electricsheep.{generation}.{sheepId}`); Jellyfin item id + optional DeviceId on the event.
 5. **Multi-Roku** — per-device DeviceId optional; household votes aggregate on the furnace sidecar.

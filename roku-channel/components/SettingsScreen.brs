@@ -64,9 +64,9 @@ function fieldHint(name as string) as string
   else if name = "probeDisplay"
     return "OK=capture roDeviceInfo + POST per-screen profile to Pi :8791 (multi-Roku/Kodi safe; hint only)"
   else if name = "save"
-    return "Write registry and reload flock"
+    return "Done - accepted edits are already saved; reload flock"
   else if name = "cancel"
-    return "Discard edits and return"
+    return "Return (accepted edits remain saved)"
   end if
   return ""
 end function
@@ -268,8 +268,8 @@ sub openSettings()
     m.values[name] = val
     refreshRowLabel(name)
   end for
-  m.top.findNode("row_save").label = "Save"
-  m.top.findNode("row_cancel").label = "Cancel"
+  m.top.findNode("row_save").label = "Done"
+  m.top.findNode("row_cancel").label = "Back"
   refreshProbeRowLabel()
   focusIndex(0)
 end sub
@@ -615,7 +615,22 @@ sub onKeyboardButton()
     text = m.keyboard.text
     if text = invalid then text = ""
     text = text.Trim()
-    applyEditedValue(name, text)
+    accepted = applyEditedValue(name, text)
+    if accepted = true
+      ' Persist each accepted edit now. Back should never silently discard a
+      ' value that the keyboard's OK button already accepted.
+      val = m.values[name]
+      if val = invalid then val = ""
+      if name = "baseUrl"
+        while Len(val) > 0 and Right(val, 1) = "/"
+          val = Left(val, Len(val) - 1)
+        end while
+        m.values[name] = val
+      end if
+      m.registry.write(name, val)
+      m.registry.flush()
+      m.top.saved = true
+    end if
     refreshRowLabel(name)
   end if
   m.top.removeChild(m.keyboard)

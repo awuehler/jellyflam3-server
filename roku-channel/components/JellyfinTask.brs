@@ -35,7 +35,7 @@ end function
 
 function authHeader() as string
   ' Token in Authorization is what Jellyfin uses to bind Client/Device into /Sessions
-  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.36"", Token=""" + m.top.apiKey + """"
+  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.37"", Token=""" + m.top.apiKey + """"
 end function
 
 ' Lab-verified HLS remux path: prefer main.m3u8 + AudioCodec=aac.
@@ -340,29 +340,65 @@ function fetchList() as object
   ' Commercial filtering is client-side via isCommercialSafe() below.
 
   items = []
+  ncCount = 0
+  ncExcluded = 0
+  filteredCount = 0
   for each it in raw
+    isNc = hasNcLicense(it)
+    if isNc then ncCount = ncCount + 1
     if m.top.commercialMode = true
-      if isCommercialSafe(it) then items.push(mapItem(it, base))
+      if isCommercialSafe(it)
+        items.push(mapItem(it, base))
+      else
+        filteredCount = filteredCount + 1
+        if isNc then ncExcluded = ncExcluded + 1
+      end if
     else
       items.push(mapItem(it, base))
     end if
   end for
   items = pruneToCap(items, flockIndexCap())
-  return { items: items, count: items.count() }
+  aliasCount = 0
+  for each mapped in items
+    if mapped.alias <> invalid and mapped.alias <> "" then aliasCount = aliasCount + 1
+  end for
+  return {
+    items: items
+    count: items.count()
+    sourceCount: raw.count()
+    filteredCount: filteredCount
+    ncCount: ncCount
+    ncExcluded: ncExcluded
+    aliasCount: aliasCount
+  }
 end function
 
-function isCommercialSafe(it as object) as boolean
+function hasNcLicense(it as object) as boolean
   if it.Tags = invalid then return false
   for each t in it.Tags
     tl = LCase(t)
     if tl = "cc-by-nc" or tl = "cc-by-nc-sa" or Instr(1, tl, "by-nc") > 0
-      return false
-    end if
-    if tl = "cc-by" or tl = "cc0" or tl = "public-domain" or tl = "pd"
       return true
     end if
   end for
   return false
+end function
+
+function hasSafeLicense(it as object) as boolean
+  if it.Tags = invalid then return false
+  for each t in it.Tags
+    tl = LCase(t)
+    if tl = "cc-by" or tl = "cc-by-sa" or tl = "cc0" or tl = "public-domain" or tl = "pd"
+      return true
+    end if
+  end for
+  return false
+end function
+
+function isCommercialSafe(it as object) as boolean
+  ' NC always wins, regardless of Jellyfin tag order or an additional safe tag.
+  if hasNcLicense(it) then return false
+  return hasSafeLicense(it)
 end function
 
 function formatDurationLabel(sec as integer) as string
@@ -578,6 +614,9 @@ function fetchOne(itemId as string) as object
   end if
   data = ParseJson(resp.body)
   if data = invalid then return { error: "item JSON error" }
+  if m.top.commercialMode = true and isCommercialSafe(data) <> true
+    return { error: "item excluded by commercialMode", items: [], count: 0 }
+  end if
   return { items: [mapItem(data, base)], count: 1 }
 end function
 
