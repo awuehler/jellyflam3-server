@@ -57,7 +57,7 @@ Video screensaver add-on **JellyFlam3 Dreams** (`screensaver.jellyflam3`) — pl
 4. **Configure Jellyfin** — if the zip was built on a furnace Pi (`package_kodi_screensaver.*`), defaults are already in the add-on settings. Otherwise open **Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → Configure** and paste Jellyfin URL, API key, user id, library id (operator runs `jellyfin_id_dump.py` on the furnace Pi).
 5. Set screensaver wait time (e.g. **1 minute** for testing), then wait or use **Activate screensaver**.
 
-**Everyday use:** leave Kodi idle; any keypress exits the screensaver (Kodi default). When flock is configured, sheep MP4s shuffle; if Jellyfin is unreachable, you see a short hint on black (no test-pattern video). Package **0.2.9** re-fetches after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). If a sheep is **quarantined** while idle is running, 0.2.7 drops that id, re-polls Jellyfin (rate-limited), and continues with a remaining loop.
+**Everyday use:** leave Kodi idle; any keypress exits the screensaver (Kodi default). When flock is configured, sheep MP4s shuffle; if Jellyfin is unreachable, you see a short hint on black (no test-pattern video). Package **0.2.9+** re-fetches after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). If a sheep is **quarantined** while idle is running, 0.2.7+ drops that id, re-polls Jellyfin (rate-limited), and continues with a remaining loop; **0.2.10** also dismisses Kodi's playback-failed dialog automatically.
 
 **Upgrade (on the TV, no PC):** if the operator already dropped a new zip into Downloads, Kodi → **Add-ons → Install from zip file** → select the new `screensaver.jellyflam3.zip`. Jellyfin settings in add-on **Configure** are kept (`addon_data`).
 
@@ -728,7 +728,7 @@ Folder name must stay `screensaver.jellyflam3`.
 
 | Check | How |
 |---|---|
-| Version | Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → **Information** (version in `addon.xml`, currently **0.2.9**). |
+| Version | Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → **Information** (version in `addon.xml`, currently **0.2.10**). |
 | Playback | Set short wait time → **Activate screensaver** or wait; sheep MP4s should shuffle. |
 | Idle gate | On furnace Pi: `cat /var/lib/jellyflam3/idle_gate_status.json` → `"gate": "open"` while Kodi SS runs. |
 | Jellyfin IDs | On furnace: `python3 scripts/jellyfin_id_dump.py --items --limit 5` — item count should be > 0 when flock is seeded. |
@@ -942,7 +942,7 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 | Peering stuck (live mesh) | `peering status`; inbox under `peers/inbox` | `promote --apply`; trust keys; share-security verify |
 | Bad palette / encode / frozen still on TV | `python3 -m pipeline.refactor report --id …`; `job.json` `quality_gate` | New jobs: worker quarantines before catalog. Existing: `refactor quarantine --confirm QUARANTINE` |
 | Worker `quality gate … rejected` | `/var/cache/jellyflam3/lib/jobs/<id>/job.json` | Expected fail-closed. Genome is in `genomes/quarantine`. Do not re-seed the same `.flam3` |
-| Black / error after quarantine | Item gone from disk/Jellyfin; client still has old flock list | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id and re-poll (30s rate limit). Overnight new-sheep pickup is wrap-once (VoD 1.0.31 / Roku SS 1.0.9 / Kodi SS 0.2.9) — [Flock mix](#flock-mix-shuffle-wrap) |
+| Black / error after quarantine | Item gone from disk/Jellyfin; client still has old flock list | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id and re-poll (30s rate limit). Kodi SS **0.2.10** also closes the native playback-failed dialog. Overnight new-sheep pickup is wrap-once (VoD 1.0.31 / Roku SS 1.0.9 / Kodi SS 0.2.9+) — [Flock mix](#flock-mix-shuffle-wrap) |
 | Playback stutters / several TVs | `python3 -m pipeline.link_capacity estimate --profile wifi-pi`; this lab is WiFi STA (`eth0` DOWN) | Direct Play; fewer TVs — stay at/under `N_max`. Jellyfin will not refuse extras. Cable the Pi only if that host actually has Ethernet |
 | Wipe everything local | — | `hammer --dry-run` then `--confirm HAMMER` (not Shears) |
 

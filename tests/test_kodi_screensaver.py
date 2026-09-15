@@ -16,7 +16,7 @@ def test_addon_xml_screensaver_entry():
     tree = ET.parse(ADDON_XML)
     root = tree.getroot()
     assert root.attrib["id"] == "screensaver.jellyflam3"
-    assert root.attrib["version"] == "0.2.9"
+    assert root.attrib["version"] == "0.2.10"
     req = root.find("requires/import")
     assert req is not None
     assert req.attrib["addon"] == "xbmc.python"
@@ -47,6 +47,8 @@ def test_screensaver_entry_files_exist():
     assert "def onPlayBackEnded" in text  # signals advance only
     assert "def onPlayBackError" in text
     assert "_handle_dead_sheep" in text
+    assert "Dialog.Close(okdialog,true)" in text
+    assert text.count("_dismiss_playback_error()") >= 3  # definition + callback + watch thread
     assert "flock wrap refetch" in text
     assert "rotate_past" in text
     pkg = (ROOT / "scripts" / "package_kodi_screensaver.sh").read_text(encoding="utf-8")

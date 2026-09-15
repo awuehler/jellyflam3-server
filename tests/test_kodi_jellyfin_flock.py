@@ -155,7 +155,7 @@ def test_drop_item_and_repoll_rate_limit():
     assert jf.should_repoll_flock(90.0, 100.0, min_sec=30.0) is False
     assert jf.should_repoll_flock(60.0, 100.0, min_sec=30.0) is True
     assert jf.FLOCK_REPOLL_MIN_SEC == 30.0
-    assert jf.CLIENT_VERSION == "0.2.9"
+    assert jf.CLIENT_VERSION == "0.2.10"
     assert jf.FLOCK_INDEX_CAP == 313
     assert jf.FLOCK_FETCH_LIMIT == 5000
     h = jf.auth_header("secret")

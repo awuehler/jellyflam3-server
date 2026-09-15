@@ -20,7 +20,7 @@ from typing import Any
 CLIENT_NAME = "JellyFlam3-Screensaver"
 CLIENT_DEVICE = "Kodi"
 CLIENT_DEVICE_ID = "jellyflam3-kodi-ss"
-CLIENT_VERSION = "0.2.9"
+CLIENT_VERSION = "0.2.10"
 FLOCK_REPOLL_MIN_SEC = 30.0
 # In-memory session list after a random prune. HTTP fetch is larger so the
 # sample is not Jellyfin's first-N sort.

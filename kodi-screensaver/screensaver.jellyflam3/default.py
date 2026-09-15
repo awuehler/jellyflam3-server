@@ -53,6 +53,11 @@ def _dismiss_busy():
     xbmc.executebuiltin("Dialog.Close(busydialognocancel,true)")
 
 
+def _dismiss_playback_error():
+    """Close Kodi's modal playback-failed dialog after a dead flock item."""
+    xbmc.executebuiltin("Dialog.Close(okdialog,true)")
+
+
 def _set_repeat(mode: str):
     """mode: off | one | all"""
     active = _jsonrpc(
@@ -163,6 +168,7 @@ class LoopPlayer(xbmc.Player):
 
     def onPlayBackError(self):
         # 404 / stream open fail — drop this id and re-poll (watch thread).
+        _dismiss_playback_error()
         self._owner._dead = True
 
 
@@ -247,6 +253,10 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
             xbmc.log("%s: empty-flock label failed: %s" % (ADDON_ID, exc), xbmc.LOGERROR)
 
     def _handle_dead_sheep(self):
+        # Kodi raises a modal okdialog for an unplayable URL. The player callback
+        # can precede creation of that dialog, so close it again on the watch
+        # thread before advancing to the refreshed flock.
+        _dismiss_playback_error()
         if not self._flock_mode or not self._flock:
             self._show_flock_empty(
                 "JellyFlam3 — flock empty (sheep gone); exit screensaver"

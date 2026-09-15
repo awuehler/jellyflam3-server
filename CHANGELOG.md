@@ -6,6 +6,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Roku VoD **1.0.36**: home copy is **Ambient Dreams** and **N sheep in flock**; poster grid is **six** columns (270×152 tiles so the last column stays inside the right gutter). Pedigree genomes keep the full `cc-*` license on the tile; pedigree tags move to the wider detail chip.
+- Kodi screensaver **0.2.10** silently closes Kodi's native playback-failed `okdialog` while dropping and refreshing a quarantined sheep, preventing a recovered session from retaining a modal end-user prompt.
 - Active worker quality intervention: reject linear-only, cloned-singularity, frozen single-flame, and washed-palette genomes before full animation; render a one-frame saturation preview before expensive CPU work; re-check the encoded midpoint before catalog/Jellyfin publication. Rejections persist reasons/metrics in job state and move the claimed genome to quarantine. `genome_orbit_frozen` is now a hard-quarantine reason (score **80**); legacy still-loop requires an explicit gate opt-out.
 - Operator idle-gate note: CLI `idle-gate closed; waiting 15s…` is the retry cap; `idle_delay_sec` default **600** holds after VoD (including Home). Runbook [Idle gate behavior](docs/USER_GUIDE_AND_RUNBOOK.md#idle-gate-behavior).
 - Roku VoD **1.0.35** vote overlay: skip tuples (no banner / no POST); banner fill **65%** opacity (`0x0A0A12A6`); prompt is **Like this sheep:** plus Settings `titleMode` (alias or filename); remote hints use **OK / FF / REPLAY / BACK**. Flock focus ring no longer covers the **N dreams in flock** line. Settings rejects typos (`mp4`/`hls`, `true`/`false`, `filename`/`alias`, URL/GUID/key).

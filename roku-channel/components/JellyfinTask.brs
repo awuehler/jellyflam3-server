@@ -35,7 +35,7 @@ end function
 
 function authHeader() as string
   ' Token in Authorization is what Jellyfin uses to bind Client/Device into /Sessions
-  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.35"", Token=""" + m.top.apiKey + """"
+  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.36"", Token=""" + m.top.apiKey + """"
 end function
 
 ' Lab-verified HLS remux path: prefer main.m3u8 + AudioCodec=aac.
@@ -394,10 +394,10 @@ function extractMeta(it as object) as object
       generation = Mid(t, 12)
     else if Left(tl, 6) = "sheep-"
       sheepId = Mid(t, 7)
-    else if tl = "cc-by-nc" or tl = "cc-by-nc-sa"
-      license = "cc-by-nc"
+    else if tl = "cc-by-nc" or tl = "cc-by-nc-sa" or Instr(1, tl, "by-nc") > 0
+      license = tl
     else if tl = "cc-by" or tl = "cc-by-sa"
-      if license = "" then license = "cc-by"
+      if license = "" then license = tl
     else if tl = "cc0" or tl = "public-domain" or tl = "pd"
       if license = "" then license = tl
     else if tl = "local_pedigree" or tl = "pedigree" or Instr(1, tl, "pedigree") > 0
@@ -478,16 +478,15 @@ function buildMetaLine(durationLabel as string, meta as object) as string
   bits = []
   if durationLabel <> "" then bits.push(durationLabel)
   if meta.generation <> invalid and meta.generation <> ""
-    bits.push("gen " + meta.generation)
+    gen = LCase(meta.generation)
+    ' Folder classes belong on the detail pedigree/generation chips — they crowd
+    ' cc-xx off the 270px tile (e.g. "23s · gen pedigree · cc-by-nc-sa").
+    if gen <> "pedigree" and gen <> "tuple" and gen <> "misc" and gen <> "test"
+      bits.push("gen " + meta.generation)
+    end if
   end if
   if meta.license <> invalid and meta.license <> ""
     bits.push(meta.license)
-  end if
-  if meta.pedigree <> invalid and meta.pedigree <> ""
-    pedigreeLower = LCase(meta.pedigree)
-    if pedigreeLower <> "human" and pedigreeLower <> "brood" and pedigreeLower <> "by human" and pedigreeLower <> "by brood"
-      bits.push(meta.pedigree)
-    end if
   end if
   if bits.count() = 0 then return ""
   line = bits[0]

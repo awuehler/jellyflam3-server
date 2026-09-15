@@ -65,8 +65,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=35" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.35""' in text
+    assert "build_version=36" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.36""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
@@ -146,17 +146,25 @@ def test_roku_vod_wrapped_flock_layout_and_compact_metadata():
     task = (VOD / "components" / "JellyfinTask.brs").read_text(encoding="utf-8")
     player = (VOD / "components" / "PlayerScreen.brs").read_text(encoding="utf-8")
 
-    assert "Ambient Sheep - Press OK button to play / Settings - Press * to Open" in scene
+    assert "Ambient Dreams - Press OK button to play / Settings - Press * to Open" in scene
     assert 'numRows="3"' in scene
     assert 'showRowLabel="[false]"' in scene
     assert 'drawFocusFeedback="false"' in scene
     assert 'rowFocusAnimationStyle="fixedFocus"' in scene
     assert 'translation="[80,316]"' in scene
     assert 'translation="[80,380]"' in scene
-    assert "itemsPerRow = 5" in home
+    assert "itemsPerRow = 6" in home
+    assert 'rowItemSize="[[270,152]]"' in scene
+    assert 'width="270"' in (VOD / "components" / "FlockItem.xml").read_text(encoding="utf-8")
+    assert "sheep in flock" in home
     assert "column >= itemsPerRow" in home
-    assert 'pedigreeLower <> "by human"' in task
-    assert 'pedigreeLower <> "by brood"' in task
+    assert "bits.push(meta.pedigree)" not in task
+    assert 'gen <> "pedigree"' in task
+    assert 'license = tl' in task
+    assert 'id="chipLicense"' in scene
+    assert 'width="360"' in scene
+    assert 'id="chipPedigree"' in scene
+    assert 'translation="[860,98]"' in scene
     assert "alias: item.alias" in home
     assert "function displayNameForUi() as string" in player
     assert "function titleModeValue() as string" in player

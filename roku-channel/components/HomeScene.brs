@@ -439,7 +439,7 @@ sub rebuildFlockRow()
   if m.player <> invalid then return
   if m.items = invalid then m.items = []
   content = createObject("roSGNode", "ContentNode")
-  itemsPerRow = 5
+  itemsPerRow = 6
   row = invalid
   column = itemsPerRow
   for each it in m.items
@@ -542,7 +542,7 @@ sub onTaskResult()
   if m.rowList = invalid or m.rowList.content = invalid then return
   first = m.rowList.content.getChild(0).getChild(0)
   updateDetailChrome(first)
-  setUiState("ready", m.flockCount.toStr() + " dreams in flock")
+  setUiState("ready", m.flockCount.toStr() + " sheep in flock")
   if m.player = invalid then m.rowList.setFocus(true)
 end sub
 
@@ -628,7 +628,7 @@ sub onRowItemFocused()
   item = row.getChild(idx[1])
   updateDetailChrome(item)
   if m.status <> invalid and m.flockCount <> invalid
-    m.status.text = m.flockCount.toStr() + " dreams in flock"
+    m.status.text = m.flockCount.toStr() + " sheep in flock"
   end if
 end sub
 

@@ -26,7 +26,7 @@
       focusable="true" />
     <Label
       id="subtitle"
-      text="Ambient Sheep - Press OK button to play / Settings - Press * to Open"
+      text="Ambient Dreams - Press OK button to play / Settings - Press * to Open"
       translation="[80,96]"
       width="1760"
       font="font:SmallSystemFont"
@@ -76,18 +76,20 @@
       <Label
         id="chipLicense"
         translation="[480,98]"
-        width="280"
+        width="360"
         height="28"
         font="font:SmallestSystemFont"
         color="0x9AA0C0FF"
+        wrap="false"
         text="" />
       <Label
         id="chipPedigree"
-        translation="[780,98]"
-        width="480"
+        translation="[860,98]"
+        width="840"
         height="28"
         font="font:SmallestSystemFont"
         color="0x9AA0C0FF"
+        wrap="false"
         text="" />
       <Label
         id="detailDesc"
@@ -118,10 +120,10 @@
       id="rowList"
       translation="[80,380]"
       itemComponentName="FlockItem"
-      itemSize="[1760,212]"
-      rowItemSize="[[320,180]]"
-      rowItemSpacing="[[24,0]]"
-      rowHeights="[212]"
+      itemSize="[1760,184]"
+      rowItemSize="[[270,152]]"
+      rowItemSpacing="[[16,0]]"
+      rowHeights="[184]"
       numRows="3"
       itemSpacing="[0,12]"
       showRowLabel="[false]"

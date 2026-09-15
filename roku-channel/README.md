@@ -13,7 +13,7 @@ Roku VOD **cannot gapless-loop** HTTP MP4/HLS with the Video node (`Video.loop` 
 
 If a sheep is quarantined or Shears-deleted while a clip is queued, **1.0.29+** drops that id after HLS↔MP4 fallback fails, re-polls the flock (30s rate limit), and continues. A failed open does not POST Playing. **1.0.30** always persists `shuffleFlock=true` so an upgrade cannot leave the TV looping one sheep. **1.0.31** treats a wrap as one random permutation of the in-memory list, then re-fetches Jellyfin (HTTP Limit 5000, randomly prune to 313). The new mix is rotated so the first item is not the clip that just finished. Overnight ingest appears without exiting ambient.
 
-The **1.0.34** flock browser wraps every five posters into vertically scrollable rows (three rows visible at once). Tile metadata keeps duration / generation / license / useful pedigree tags, but omits the short `human` / `brood` labels that were truncated. While the next MP4 connects, the lower-left status shows `{alias}(MP4)` when available.
+The **1.0.36** flock browser wraps every six posters into vertically scrollable rows (three rows visible at once; 270×152 tiles leave a right gutter so column 6 is not clipped). Home copy is **Ambient Dreams** and **N sheep in flock**. Tile metadata is duration / generation / full `cc-*` license (including `cc-by-sa` and `cc-by-nc-sa`). Pedigree tags stay on the detail chip so they do not clip the license on 270px tiles. While the next MP4 connects, the lower-left status shows `{alias}(MP4)` when available.
 
 ## Settings version
 

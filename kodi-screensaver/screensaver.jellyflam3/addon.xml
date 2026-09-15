@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="screensaver.jellyflam3"
        name="JellyFlam3 Dreams"
-       version="0.2.9"
+       version="0.2.10"
        provider-name="JellyFlam3">
   <requires>
     <import addon="xbmc.python" version="3.0.1"/>
@@ -13,7 +13,7 @@
     <source>https://github.com/awuehler/jellyflam3-server</source>
     <summary lang="en_GB">Electric Sheep–style flock screensaver (JellyFlam3)</summary>
     <description lang="en_GB">Fullscreen idle player for the JellyFlam3 flock from Jellyfin (Static MP4 Direct Play). Shuffles archive gens, pedigree, and tuples as one clip each (loop A, morph, loop B — no extra sequencer). After a full mix, re-fetches the catalog (session cap 313). Optional commercial-safe tag filter. Server or flock miss: short hint on black, no bundled test pattern. Separate from the Roku stills screensaver. Does not render flam3 or take votes. Client JellyFlam3-Screensaver is ignored by the furnace idle-gate.</description>
-    <news lang="en_GB">0.2.9 - Re-fetch Jellyfin once per shuffle wrap; randomly cap the session list at 313.</news>
+    <news lang="en_GB">0.2.10 - Silently recover from quarantined sheep without leaving Kodi's playback-failed dialog open.</news>
     <assets>
       <icon>resources/icon.png</icon>
       <fanart>resources/fanart.jpg</fanart>
