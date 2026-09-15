@@ -818,7 +818,7 @@ If a workflow literally requires **byte-identical first and last frames inside t
 1. **One sheep per file** for loop VoD: `sequence=one_seed.flam3` (avoid multi-sheep edges unless you want a non-periodic journey).
 2. **`nframes` sized for 7–37 s** at the encode fps (default **552 @ 24 fps ≈ 23 s**; optional dynamic chooser still clamped to this band); verify with ffprobe after encode.
 3. **Template** with high `temporal_samples` so motion blur matches ES and hides inter-frame gaps.
-4. **Only rotating xforms** contribute to the orbit; confirm seeds aren’t all `animate` frozen if you expect motion. Frozen single-flame genomes (`is_orbit_frozen`) skip `sequence=`/`flam3-animate` and still-loop one Lite frame for the dynamic-band duration.
+4. **Only rotating xforms** contribute to the orbit; confirm seeds aren’t all `animate` frozen if you expect motion. The active worker gate quarantines frozen single-flame genomes (`is_orbit_frozen`) before `sequence=` / `flam3-animate`. Legacy still-loop behavior requires explicitly setting `quality_gate.reject_orbit_frozen: false`.
 5. **ffmpeg:** `-framerate` equals configured `fps`; constant frame rate; no intro/outro fades; optional GOP aligned to loop length.
 6. **Roku:** `m.video.loop = true` for ambient flock playback; disable loop only when auto-advancing to the next sheep.
 
@@ -1241,7 +1241,7 @@ flowchart TD
 |---|---|
 | **Boundary** | Job queue worker: genome → gated MP4 on disk + Jellyfin refresh—stop before idle-gate process |
 | **In** | Guides 02–04; VoD duration 7–37; encode maps; job states |
-| **Tasks** | Inbox watcher/queue; resize genome; `sequence` with `nframes`; animate to scratch; ffmpeg A/V maps; ffprobe duration + codec gates; move to `/media/sheep/...`; API refresh + basic tags; scratch cleanup; quarantine failures; `JELLYFLAM3_SMOKE` short path |
+| **Tasks** | Inbox watcher/queue; resize genome; **quality_gate** (XML + preview + encoded midpoint); `sequence` with `nframes`; animate to scratch; ffmpeg A/V maps; ffprobe duration + codec gates; move to `/media/sheep/...`; API refresh + basic tags; scratch cleanup; quarantine failures (including artistic rejects); `JELLYFLAM3_SMOKE` short path |
 | **Out** | `pipeline/worker`; one real seed → catalog MP4 in 7–37 s band |
 | **Exit** | ffprobe gate pass; Jellyfin lists item; re-run idempotent; failure → `genomes/quarantine/` |
 
@@ -1654,7 +1654,7 @@ flowchart TD
 |---|---|
 | **Boundary** | Refactor tool for **sub-standard** sheep (quality/palette/encode)—not Shears CRUD, not Hammer |
 | **In** | Catalog + `genomes/done`; tax/TV-port/worker; `palette_harmony` |
-| **Tasks** | Scan/score + complementary palette report; optional palette override; Jellyfin-visible preview under `/media/sheep/_refactor-preview/`; quarantine or re-TV-port/retint/re-encode; sidecar refactor history |
+| **Tasks** | Worker `quality_gate` blocks new duds; scan/score remaining catalog; optional palette override; Jellyfin-visible preview under `/media/sheep/_refactor-preview/`; quarantine or re-TV-port/retint/re-encode; sidecar refactor history |
 | **Out** | `pipeline.refactor` `scan` / `report` / `preview` / `quarantine` / `apply` / `batch` |
 | **Exit** | Owner OK 2026-08-21 — pathways A/P/B/C/D; 16a lab smoke |
 

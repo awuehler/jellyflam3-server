@@ -1,12 +1,13 @@
-"""Purpose: Job queue worker — genome → MP4 → ffprobe gates → catalog ingest.
+"""Purpose: Job queue worker — genome → active quality gates → MP4 → catalog ingest.
 
 Requirements: flam3-genome/animate, ffmpeg/ffprobe, configs/jellyflam3.yaml; idle gate, sheep tax, TV-optimize.
 
 Usage: ``python3 -m pipeline.worker [--once GENOME]`` (polls genomes_inbox by default).
 
-Assumptions: Single-threaded; sheep tax then TV-port before render; frozen single-flame
-  genomes still-loop one Lite still (skip sequence/animate); tuple genomes render three
-  sequence stages then watermark the middle edge; successful genomes archive to genomes_done.
+Assumptions: Single-threaded; sheep tax then TV-port then active artistic-quality admission.
+  Linear-only, singularity-cloned, frozen single-flame, washed-palette, and visually
+  desaturated jobs quarantine before publication. Tuple genomes render three sequence
+  stages then watermark the middle edge; successful genomes archive to genomes_done.
   Drain flag (pipeline.worker_drain) skips the next inbox claim after the current job.
 """
 
@@ -59,11 +60,33 @@ from pipeline.media_layout import (
     ensure_catalog_file_mode,
     repair_by_generation_perms,
 )
-from pipeline.poster import poster_path_for_mp4
+from pipeline.poster import extract_mid_loop_poster, poster_path_for_mp4
+from pipeline.quality_gate import (
+    assess_genome_quality,
+    assess_image_quality,
+    enforce_quality,
+    quality_gate_cfg,
+)
 from pipeline.tv_optimize import tv_optimize_file
 from pipeline.tool_lookup import tool as _tool
 
 log = logging.getLogger("jellyflam3.worker")
+
+
+def record_quality_check(
+    state: dict[str, Any],
+    work: Path,
+    result: dict[str, Any],
+) -> None:
+    """Persist each active quality decision before it can reject the job."""
+    quality = state.setdefault("quality_gate", {"status": "passed", "checks": []})
+    checks = quality.setdefault("checks", [])
+    checks.append(result)
+    if result.get("status") == "rejected":
+        quality["status"] = "rejected"
+    elif quality.get("status") != "rejected" and result.get("status") == "passed":
+        quality["status"] = "passed"
+    _write_job_state(work, state)
 
 
 def install_catalog_mp4(out_tmp: Path, dest: Path) -> None:
@@ -414,7 +437,7 @@ def archive_rendered_genome(cfg: dict[str, Any], src: Path) -> Path:
 
 
 def process_genome(cfg: dict[str, Any], src: Path) -> Path:
-    """Render one genome through tax → TV-port → sequence/still-loop → encode → catalog.
+    """Render one genome through tax → TV-port → quality gate → encode → catalog.
 
     Returns destination MP4 path. On failure updates job.json, copies to quarantine, re-raises.
     """
@@ -497,6 +520,40 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
 
         genome_xml = optimized.read_text(encoding="utf-8", errors="replace")
         signals = extract_genome_signals(genome_xml)
+        base_name = sheep_basename(src)
+        is_tuple = is_tuple_stem(base_name)
+        quality_policy = quality_gate_cfg(cfg)
+        palette = None
+        if harmony is not None:
+            palette = {
+                "mode": harmony.mode,
+                "seed_hex": harmony.seed_hex,
+                "complement_hex": harmony.complement_hex,
+            }
+
+        genome_gate = assess_genome_quality(
+            cfg,
+            genome_xml,
+            palette=palette,
+            is_tuple=is_tuple,
+        )
+        record_quality_check(state, work, genome_gate)
+        enforce_quality(genome_gate)
+
+        quality_preview: Path | None = None
+        if quality_policy["enabled"] and quality_policy["check_preview_saturation"]:
+            wait_for_gate(cfg)
+            quality_preview = render_lite_still(
+                cfg, seed_for_sequence, work / "quality_preview.png"
+            )
+            preview_gate = assess_image_quality(
+                cfg,
+                quality_preview,
+                stage="pre_render_preview",
+            )
+            record_quality_check(state, work, preview_gate)
+            enforce_quality(preview_gate)
+
         try:
             inbox = resolve_path(cfg, "genomes_inbox")
             pending = len(list(inbox.glob("*.flam3"))) if inbox.is_dir() else 0
@@ -506,8 +563,6 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
 
         job_ctx: dict[str, Any] = {"src": str(src), "signals": signals}
         fps = int(vod.get("fps", 24))
-        base_name = sheep_basename(src)
-        is_tuple = is_tuple_stem(base_name)
         if is_tuple:
             seq_nframes = tuple_stage_nframes(cfg)
             nframes = seq_nframes * 3
@@ -555,11 +610,7 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
             }
         )
         if harmony is not None:
-            state["palette"] = {
-                "mode": harmony.mode,
-                "seed_hex": harmony.seed_hex,
-                "complement_hex": harmony.complement_hex,
-            }
+            state["palette"] = palette
         _write_job_state(work, state)
 
         ffmpeg = _tool(cfg, "ffmpeg")
@@ -572,7 +623,10 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
             )
             wait_for_gate(cfg)
             still_png = work / "still.png"
-            render_lite_still(cfg, seed_for_sequence, still_png)
+            if quality_preview is not None and quality_preview.is_file():
+                shutil.copy2(quality_preview, still_png)
+            else:
+                render_lite_still(cfg, seed_for_sequence, still_png)
             state["state"] = "encoding"
             _write_job_state(work, state)
             wait_for_gate(cfg)
@@ -694,6 +748,21 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
         dur = ffprobe_duration(ffprobe, out_tmp)
         assert_duration_in_band(dur, cfg)
         ffprobe_video_ok(ffprobe, out_tmp, cfg)
+
+        if quality_policy["enabled"] and quality_policy["check_output_saturation"]:
+            output_preview = extract_mid_loop_poster(
+                ffmpeg=ffmpeg,
+                mp4=out_tmp,
+                dest=work / "quality_output.jpg",
+                duration_sec=dur,
+            )
+            output_gate = assess_image_quality(
+                cfg,
+                output_preview,
+                stage="pre_publish_output",
+            )
+            record_quality_check(state, work, output_gate)
+            enforce_quality(output_gate)
 
         from pipeline.sheep_names import catalog_generation
 

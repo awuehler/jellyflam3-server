@@ -11,13 +11,14 @@ from typing import Any
 
 from pipeline.choose_duration import effective_min_sec, hard_max_sec, soft_max_sec
 from pipeline.config import resolve_path
-from pipeline.genome_signals import (
-    is_linear_only_genome,
-    is_orbit_frozen,
-    is_singularity_cloned,
-)
+from pipeline.genome_signals import is_orbit_frozen
 from pipeline.palette_harmony import HarmonyResult, apply_palette_harmony
 from pipeline.poster import resolve_poster_path
+from pipeline.quality_gate import (
+    genome_dud_reasons,
+    image_mean_saturation,
+    palette_washed_out as _palette_washed_out,
+)
 from pipeline.sheep_names import normalize_stem, stem_of
 from pipeline.sheep_tax import tax_xml
 from pipeline.stills import iter_catalog_mp4s, load_sidecar
@@ -34,11 +35,12 @@ HARD_QUARANTINE_REASONS = frozenset(
         "sheep_tax_fail",
         "genome_linear_only",
         "genome_singularity_cloned",
+        "genome_orbit_frozen",
     }
 )
 LINEAR_ONLY_SCORE_DEFAULT = 80.0
 SINGULARITY_CLONED_SCORE_DEFAULT = 80.0
-ORBIT_FROZEN_SCORE_DEFAULT = 25.0
+ORBIT_FROZEN_SCORE_DEFAULT = 80.0
 
 
 @dataclass
@@ -228,67 +230,6 @@ def _neon_clash(palette: dict[str, Any]) -> bool:
     return False
 
 
-def _hex_chroma(hex_color: str | None) -> float | None:
-    """Return absolute channel spread (max-min)/255 in [0,1] for #RRGGBB."""
-    if not hex_color or not isinstance(hex_color, str):
-        return None
-    hx = hex_color.lstrip("#")
-    if len(hx) != 6:
-        return None
-    try:
-        r, g, b = int(hx[0:2], 16), int(hx[2:4], 16), int(hx[4:6], 16)
-    except ValueError:
-        return None
-    return (max(r, g, b) - min(r, g, b)) / 255.0
-
-
-def _palette_washed_out(palette: dict[str, Any], *, max_chroma: float = 0.40) -> bool:
-    """True when both harmony poles have low absolute chroma (dull/muddy pair)."""
-    s = _hex_chroma(palette.get("seed_hex") if isinstance(palette.get("seed_hex"), str) else None)
-    c = _hex_chroma(
-        palette.get("complement_hex") if isinstance(palette.get("complement_hex"), str) else None
-    )
-    if s is None or c is None:
-        return False
-    return s < max_chroma and c < max_chroma
-
-
-def image_mean_saturation(path: Path, *, sample_w: int = 64) -> float | None:
-    """Mean per-pixel channel-spread saturation in [0, 1] over a downscaled RGB sample.
-
-    Used to catch washed-out / grey catalog sheep that still pass structural checks.
-    """
-    try:
-        from PIL import Image
-    except ImportError:
-        return None
-    try:
-        im = Image.open(path).convert("RGB")
-    except OSError:
-        return None
-    w, h = im.size
-    if w < 1 or h < 1:
-        return None
-    tw = max(8, min(sample_w, w))
-    th = max(8, int(tw * h / w))
-    small = im.resize((tw, th), Image.Resampling.BILINEAR)
-    total = 0.0
-    n = 0
-    pixels = getattr(small, "get_flattened_data", None)
-    data = pixels() if callable(pixels) else small.getdata()
-    for r, g, b in data:
-        mx = max(r, g, b)
-        if mx == 0:
-            sat = 0.0
-        else:
-            sat = (mx - min(r, g, b)) / 255.0
-        total += sat
-        n += 1
-    if n == 0:
-        return None
-    return total / n
-
-
 def catalog_saturation(
     mp4: Path,
     *,
@@ -321,16 +262,6 @@ def _desat_thresholds(cfg: dict[str, Any]) -> tuple[float, float]:
     mean_max = float(ref.get("desat_mean_max", 0.12))
     weight = float(ref.get("desat_score", 20.0))
     return mean_max, weight
-
-
-def genome_dud_reasons(xml_text: str) -> list[str]:
-    """Pathway A reasons for linear-only / ES singularities clones (order stable)."""
-    reasons: list[str] = []
-    if is_linear_only_genome(xml_text):
-        reasons.append("genome_linear_only")
-    if is_singularity_cloned(xml_text):
-        reasons.append("genome_singularity_cloned")
-    return reasons
 
 
 def genome_dud_score(cfg: dict[str, Any], reasons: list[str]) -> float:

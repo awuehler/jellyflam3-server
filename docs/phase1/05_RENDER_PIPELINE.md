@@ -51,15 +51,19 @@ python3 -m pipeline.seed_inbox --config configs/jellyflam3.yaml --mutate genomes
 ## Steps
 
 1. Take `.flam3` from inbox or `--once` (inbox claim skips when drain is requested — [Worker drain](../USER_GUIDE_AND_RUNBOOK.md#worker-drain-pause-before-next-sheep))
-2. TV-optimize: 16:9 + Gold Sheep Lite quality + OkLCh palette
-3. Choose duration / nframes (fixed **23 s** default → **552** frames @ 24 fps). Frozen single-flame genomes skip rotate period-snap.
-4. If `is_orbit_frozen` and one `<flame>` and `render.still_loop_if_orbit_frozen` (default **true**): one Lite `flam3-render` still + ffmpeg loop of the chosen duration (no `sequence=` / `flam3-animate`). Else:
-5. `flam3-genome sequence=` with `configs/templates/electricsheep.tv.1080p.flam3` template
-6. `flam3-animate` → scratch frames
-7. `ffmpeg` H.264 High 4.2 + silent AAC
-8. `ffprobe` duration + codec gates
-9. Move to library; Jellyfin refresh + tags / sidecar (incl. palette + edition; `signals.orbit_frozen` / `duration_meta.still_loop` when the shortcut ran)
-10. Cleanup scratch; on success **archive** inbox `.flam3` → `paths.genomes_done` (pedigree parent pool); quarantine failures
+2. Sheep Tax, then TV-optimize: 16:9 + Gold Sheep Lite quality + OkLCh palette.
+3. **Active pre-render gate:** quarantine linear-only, `singularity="cloned"`, frozen single-flame, or washed-palette genomes before full animation.
+4. Render one Lite preview still; quarantine when mean saturation is below `quality_gate.desat_mean_max` (default **0.12**).
+5. Choose duration / nframes (fixed **23 s** default → **552** frames @ 24 fps).
+6. `flam3-genome sequence=` with `configs/templates/electricsheep.tv.1080p.flam3` template.
+7. `flam3-animate` → scratch frames, then `ffmpeg` H.264 High 4.2 + silent AAC.
+8. `ffprobe` duration + codec gates.
+9. **Pre-publication gate:** extract the encoded midpoint and re-check visual saturation. A rejection never moves the MP4 into `by-generation/`.
+10. Only after every gate passes: move to library; Jellyfin refresh + tags / sidecar; archive the genome to `paths.genomes_done`. Any rejection/failure records `quality_gate.checks` in `job.json` and moves the claimed genome to quarantine.
+
+`quality_gate` defaults to enabled even when omitted from a live yaml. The old
+`render.still_loop_if_orbit_frozen` path is only a fallback when an operator
+explicitly disables `quality_gate.reject_orbit_frozen`.
 
 Smoke: `JELLYFLAM3_SMOKE=1` uses `smoke_duration_sec: 13` (312 frames @ 24 fps).
 
@@ -71,7 +75,8 @@ Default `render.max_cpus: 3` (leave 1 of 4 Pi cores free): `flam3-animate` `nthr
 
 | Artifact | Kind | Role |
 |---|---|---|
-| `pipeline/worker.py` | pipeline | Job queue: tax → TV-optimize → sequence → animate → encode → ingest |
+| `pipeline/worker.py` | pipeline | Job queue: tax → TV-optimize → quality gate → sequence → animate → encode → visual gate → ingest |
+| `pipeline/quality_gate.py` | pipeline | Fail-closed artistic admission (genome / palette / preview / encoded midpoint) |
 | `pipeline/worker_drain.py` | pipeline | Finish current job, then pause inbox claiming until cancel |
 | `pipeline/seed_inbox.py` | pipeline | Feed inbox (samples / archive / mutate / generate) |
 | `pipeline/job_recovery.py` | pipeline | Reclaim orphaned / superseded in-flight jobs |

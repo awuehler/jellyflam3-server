@@ -3,12 +3,15 @@
 Requirements: Genome XML text (``<flame>`` or ``<flames>`` wrapper).
 
 Usage: ``extract_genome_signals(xml)`` → complexity / period candidates for choose_duration.
-  ``is_linear_only_genome`` / ``is_singularity_cloned`` — Pathway A dud gates.
-  ``is_orbit_frozen`` / ``should_still_loop`` — static ``sequence=`` predictor (worker still-loop).
+  ``is_linear_only_genome`` / ``is_singularity_cloned`` — quality-gate + Pathway A dud reasons.
+  ``is_orbit_frozen`` / ``should_still_loop`` — static ``sequence=`` predictor. Worker
+  ``quality_gate.reject_orbit_frozen`` (default **true**) quarantines frozen single-flame
+  genomes before animate; ``should_still_loop`` is only the legacy opt-out path.
 
 Assumptions: Periods come from rotate, color_speed, and animated xform weights; malformed XML is wrapped when needed.
   Flam3 ``symmetry>0`` on an xform implies ``animate=0`` (frozen orbit). Frozen single-flame
-  genomes skip period snap and may still-loop instead of a 360° Lite animate.
+  genomes skip period snap. They are not published as still-loops unless the quality gate
+  is explicitly opted out.
 """
 
 from __future__ import annotations
@@ -190,11 +193,13 @@ def is_orbit_frozen(xml_text: str) -> bool:
 
 
 def should_still_loop(xml_text: str, cfg: dict[str, Any] | None = None) -> bool:
-    """True when the worker should skip sequence/animate and encode a still-loop.
+    """True when the worker would skip sequence/animate and encode a still-loop.
 
     Requires a frozen orbit, fewer than two ``<flame>`` control points (two-flame
     files can still morph on the transition stage), and
-    ``render.still_loop_if_orbit_frozen`` (default **true**).
+    ``render.still_loop_if_orbit_frozen`` (default **true**). The active quality
+    gate rejects this shape first unless ``quality_gate.reject_orbit_frozen`` is
+    explicitly false.
     """
     render = (cfg or {}).get("render") or {}
     if not bool(render.get("still_loop_if_orbit_frozen", True)):

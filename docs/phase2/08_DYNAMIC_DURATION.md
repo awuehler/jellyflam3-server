@@ -38,7 +38,7 @@ Detected periods (seconds) from genome XML:
 
 `snap_to_periods: true` (default) LCM-snaps `nframes` to those periods inside the effective band so the VoD lands on a seamless loop boundary. Camera orbit from `flam3-genome sequence=` remains one 360° pass over `nframes`.
 
-**Frozen orbit:** when every non-final xform is stationary (`is_orbit_frozen` — explicit `animate=0` or deprecated `symmetry>0`), `period_candidates_sec` is empty. Do **not** treat flame `rotate=` as a loop period (that snapped `electricsheep.245.09797` to a false 0.27 s fundamental). Duration stays on the normal dynamic band; the worker still-loops one Lite still for that length instead of hundreds of identical animate frames.
+**Frozen orbit:** when every non-final xform is stationary (`is_orbit_frozen` — explicit `animate=0` or deprecated `symmetry>0`), `period_candidates_sec` is empty. Do **not** treat flame `rotate=` as a loop period (that snapped `electricsheep.245.09797` to a false 0.27 s fundamental). The active worker quality gate now quarantines a frozen single-flame genome **before** duration selection / full animation. The old still-loop behavior remains only if `quality_gate.reject_orbit_frozen: false` is explicitly configured.
 
 ### Warning — period-snap LCM blow-up
 

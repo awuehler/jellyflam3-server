@@ -2,13 +2,14 @@
 
 ## Boundary
 
-Phase 3 guide — a **refactor tool workflow** that finds and repairs **sub-standard sheep** (poor render quality, bad / muddy palettes, weak TV presence, etc.) and re-queues them through the existing furnace. Complements Shears (CRUD cascade) and Hammer (nuclear wipe).
+Phase 3 guide — a **refactor tool workflow** that finds and repairs **sub-standard sheep** already in the catalog (poor render quality, bad / muddy palettes, weak TV presence, etc.) and re-queues them through the existing furnace. **New inbox jobs** are fail-closed by `pipeline.quality_gate` in the worker ([phase1/05](../phase1/05_RENDER_PIPELINE.md)); this CLI remediates sheep published before that gate. Complements Shears (CRUD cascade) and Hammer (nuclear wipe).
 
 **Status: complete** — Owner OK 2026-08-21 (Pathways A+P+C+B+D + sidecar history; 16a lab smoke: preview + apply + `refactor[]` on `electricsheep.pedigree.mutate.3b682148`). Next: [10](10_TESTING_AND_ACCEPTANCE.md) RC.
 
 Complements:
 
 - Phase 2 [06](../phase2/06_SHEEP_TAX.md) — structural XML / vocab hygiene (not artistic quality)
+- Worker **active quality gate** (`pipeline.quality_gate`) — linear-only / cloned / frozen single-flame / washed palette / desaturated preview+output never reach `by-generation/`
 - Phase 2 TV-port / OkLCh / Gold Sheep Lite — baseline visual policy the refactor re-applies
 - Phase 3 [03](03_SHEEP_SHEARS.md) — curator add / modify / delete + cascade (Shears owns lifecycle; refactor owns **quality remediation**)
 - Phase 3 [07](07_JELLYFLAM3_HAMMER.md) — nuclear wipe; not for selective quality fixes
@@ -21,7 +22,7 @@ Complements:
 | **Repeatable TV-grade pass** | Re-run TV-port, palette harmony, encode profile, posters |
 | **Operator workflow** | Scan → score → **palette report / optional override → poster preview** → apply/replace |
 
-Sub-standard examples (non-exhaustive): crushed blacks, neon clash on living-room TVs, near-empty frames, **linear-only / `singularity="cloned"` voids**, **frozen `sequence=` orbits** (still encoded as a long Lite animate), extreme vibrancy, broken aspect after bad hand edits, duration that fails band after dynamic snap. Loop masters are **unmarked by design**; tuple edge watermark is a Phase 4 encode policy, not a refactor score.
+Sub-standard examples (non-exhaustive): crushed blacks, neon clash on living-room TVs, near-empty frames, **linear-only / `singularity="cloned"` voids**, **frozen `sequence=` orbits** (worker quarantines single-flame frozen genomes; do not still-loop them into the flock), extreme vibrancy, broken aspect after bad hand edits, duration that fails band after dynamic snap. Loop masters are **unmarked by design**; tuple edge watermark is a Phase 4 encode policy, not a refactor score.
 
 ## Implementation pathways (enable set)
 
@@ -42,6 +43,10 @@ Build `pipeline/refactor.py` (`python3 -m pipeline.refactor`) by **composing exi
 
 ### Pathway A — Scan / score / report (read-only)
 
+The worker now reuses these defect signals as an **active admission and
+pre-publication gate** for new jobs. This report remains useful for catalog
+sheep created before active enforcement; report itself still performs no moves.
+
 | Step | Reuse | Notes |
 |---|---|---|
 | Enumerate flock | `pipeline.media_layout`, catalog + `*.jellyflam3.json` sidecars | Same Id space as Shears / Jellyfin |
@@ -53,7 +58,8 @@ Build `pipeline/refactor.py` (`python3 -m pipeline.refactor`) by **composing exi
 | Encode sanity | ffprobe on catalog MP4 (fps, pix_fmt, bitrate heuristics) | Wrong profile → re-encode candidate |
 | **Desaturation / wash-out** | Poster mean channel-spread saturation + low-chroma harmony poles | `catalog_desaturated` (mean sat &lt; `refactor.desat_mean_max`, default **0.12**); `palette_washed_out` when both poles are dull |
 | **Linear-only / singularities clone** | `pipeline.genome_signals.is_linear_only_genome` / `is_singularity_cloned` | `genome_linear_only` (every xform is implicit or explicit `linear` only — ES void / singularities); `genome_singularity_cloned` (`<flame singularity="cloned">`). Either reason is a **hard quarantine** (not remediable by palette apply). Config: `refactor.linear_only_score` / `singularity_cloned_score` (default **80**) |
-| **Frozen 360° orbit** | `pipeline.genome_signals.is_orbit_frozen` | `genome_orbit_frozen` — every non-final xform is stationary (explicit `animate=0`, or deprecated `symmetry>0` with no `animate`, flam3 parser). **Candidate** (default score **25**), not quarantine: the still is valid art; `sequence=` cannot orbit. Worker skips Lite animate and encodes a still-loop (`render.still_loop_if_orbit_frozen`, default **true**). Config: `refactor.orbit_frozen_score` |
+| **Frozen 360° orbit** | `pipeline.genome_signals.is_orbit_frozen` | `genome_orbit_frozen` — every non-final xform is stationary (explicit `animate=0`, or deprecated `symmetry>0` with no `animate`, flam3 parser). **Hard quarantine** (default score **80**): worker rejects single-flame frozen input before full animate. Multi-control-point tuples remain eligible because their transition can move. |
+| **Active visual gate** | `pipeline.quality_gate` | Before full animate, render one Lite preview and reject mean saturation below **0.12**; after encode, repeat on the midpoint before moving anything into the live catalog. Rejections persist in job `quality_gate.checks`. |
 | Emit report | JSON + human table (`scan` / `report`) | No catalog writes; palette block required per sheep |
 
 **Report palette block (required fields):**
@@ -237,6 +243,7 @@ Refactor may call Shears **modify** to re-queue; it never replaces Shears delete
 
 | Artifact | Kind | Role |
 |---|---|---|
+| `pipeline/quality_gate.py` | pipeline | Worker admission + pre-publication visual gate (shared heuristics with Pathway A) |
 | `pipeline/refactor.py` (`python -m pipeline.refactor`) | pipeline | `scan` / `report` / `preview` / `quarantine` / `apply` / `batch` CLI |
 | Quality score report (`--json`) | ops | Palette (seed + complement) / encode / duration / poster / tax signals |
 | Preview dir `/media/sheep/_refactor-preview/<id>/` + preview MP4/poster | ops | Jellyfin-console-visible gate before live replace |
@@ -244,7 +251,7 @@ Refactor may call Shears **modify** to re-queue; it never replaces Shears delete
 | `genomes/quarantine/` + `/media/sheep/_refactor-quarantine/<id>/` | ops | Genetics + parked catalog (no delete) |
 | Re-TV-port / retint / re-encode apply path | pipeline | Reuse tax → worker furnace; replace same Id when genetics kept |
 | Sidecar `refactor: { reason[], score, before, after, palette }` | sidecar | Remediation history |
-| Scoring fixtures + unit tests | test | Bad palette / band fail / missing poster / override → new complement hex; `genome_orbit_frozen` candidate (`tests/test_orbit_frozen.py`) |
+| Scoring fixtures + unit tests | test | Bad palette / band fail / missing poster / override → new complement hex; active frozen/palette/preview/output rejection (`tests/test_orbit_frozen.py`, `tests/test_quality_gate.py`) |
 
 ## Exit criteria
 

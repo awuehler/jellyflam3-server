@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Active worker quality intervention: reject linear-only, cloned-singularity, frozen single-flame, and washed-palette genomes before full animation; render a one-frame saturation preview before expensive CPU work; re-check the encoded midpoint before catalog/Jellyfin publication. Rejections persist reasons/metrics in job state and move the claimed genome to quarantine. `genome_orbit_frozen` is now a hard-quarantine reason (score **80**); legacy still-loop requires an explicit gate opt-out.
 - Operator idle-gate note: CLI `idle-gate closed; waiting 15s…` is the retry cap; `idle_delay_sec` default **600** holds after VoD (including Home). Runbook [Idle gate behavior](docs/USER_GUIDE_AND_RUNBOOK.md#idle-gate-behavior).
 - Roku VoD **1.0.35** vote overlay: skip tuples (no banner / no POST); banner fill **65%** opacity (`0x0A0A12A6`); prompt is **Like this sheep:** plus Settings `titleMode` (alias or filename); remote hints use **OK / FF / REPLAY / BACK**. Flock focus ring no longer covers the **N dreams in flock** line. Settings rejects typos (`mp4`/`hls`, `true`/`false`, `filename`/`alias`, URL/GUID/key).
 - Kodi screensaver add-on description aligned with shipped flock (tuples as one clip, wrap cap 313, no votes, idle-gate ignored).
@@ -20,7 +21,7 @@ All notable changes to this project are documented here. Format loosely follows 
 - Fleet log hygiene: persistent journald (class-sized) + 72h `jellyflam3-logrotate.timer`; compress file-log backups after 11 days; purge after 23 days (`scripts/enable_log_hygiene.sh`).
 - Opt-In watchdog LAN heal: ping default gateway; rate-limited Wi‑Fi bounce (`nmcli`) before Tailscale re-auth (`peering.watchdog.*`).
 - Sheep refactor Pathway A: `catalog_desaturated` + `palette_washed_out` heuristics for grey/muddy catalog sheep.
-- Sheep refactor Pathway A: `genome_orbit_frozen` candidate (score 25) when `flam3-genome sequence=` cannot 360°-orbit; worker still-loops one Lite still (`render.still_loop_if_orbit_frozen`, default on). Duration does not snap frozen `rotate=` as a loop period.
+- Initial frozen-orbit handling detected when `flam3-genome sequence=` could not 360°-orbit and avoided false duration snapping; active quality intervention above supersedes its still-loop publication behavior.
 - Printable Layer 1 fridge card (`docs/FRIDGE_CARD.md`) — watch / gate / Settings / triage; no API keys.
 - Phase 4 guide 05 baseline complete: four worked examples in the user guide (first evening, screensaver, two Rokus, peer receive); Owner OK 2026-09-03.
 - Concurrent-client estimator (`python3 -m pipeline.link_capacity`): integer `N_max` from usable hop × headroom ÷ session bps; WiFi-STA lab note in guide 07. **Owner OK 2026-09-09**.

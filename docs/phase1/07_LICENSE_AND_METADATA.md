@@ -173,7 +173,8 @@ File: `{stem}.jellyflam3.json` next to the catalog MP4. Code list: `pipeline.sti
 | `tags` | worker | `cc-by`, `generation-N`, `sheep-ID`, `human` / `brood`, … |
 | `nframes`, `fps`, `duration_sec`, `duration_target_sec` | worker | Encode timing |
 | `edition` | worker | e.g. `gold_sheep_lite` |
-| `signals`, `duration_meta` | worker | Dynamic duration (Phase 2). Nested: `signals.orbit_frozen`, `signals.effective_animate_count`; `duration_meta.still_loop` when the worker skipped animate |
+| `signals`, `duration_meta` | worker | Dynamic duration (Phase 2). Nested: `signals.orbit_frozen`, `signals.effective_animate_count`; new active gate rejects frozen single-flame jobs (legacy opt-out can still write `duration_meta.still_loop`) |
+| `quality_gate` | worker job state | Active pre-render genome/palette/preview and pre-publication output checks. Rejections remain in `/var/cache/jellyflam3/.../jobs/<id>/job.json`; rejected jobs do not get a catalog sidecar |
 | `palette` | worker | Optional OkLCh harmony |
 | `jellyfin_image` | flock artwork | Poster / Items Primary status (`uploaded` = live ImageTag; `local_primary` is stale after `stills/.ignore`) |
 | `jellyfin_stills` | flock artwork | Backdrop upload status (non-tuple). Disk frames are not Backdrops until `uploaded` |

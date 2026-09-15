@@ -83,7 +83,7 @@ All three are **Instruct INT4**, Hub/QNN-converted, **one hot at a time**. They 
 | **Instruct never sees pixels** | JPEG stays on the VLM path; Instruct gets text + sidecar cards (alias, tags, votes). |
 | **VLM does not apply aliases** | It describes. The 7B proposes `adjective_surname` / breed JSON. **A** still writes SoT. |
 | **Fail-open** | VLM down → skip LLM naming (keep `auto`). Instruct down → same. Do not block ingest on A. |
-| **Quarantine** | Do not auto-name washed-out / orbit-frozen stems ([phase3/09](../phase3/09_SHEEP_REFACTOR.md)); VLM may still flag them for Shears. |
+| **Quarantine** | Do not auto-name washed-out / orbit-frozen stems. Worker `quality_gate` now keeps those out of new catalog ingest ([phase1/05](../phase1/05_RENDER_PIPELINE.md)); leftover published stems still skip LLM naming ([phase3/09](../phase3/09_SHEEP_REFACTOR.md)). VLM may still flag them for Shears. |
 
 Illustrative config (names TBD):
 

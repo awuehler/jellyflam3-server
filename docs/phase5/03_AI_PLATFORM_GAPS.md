@@ -47,7 +47,7 @@ AI Hub / App Lab / GenieX vs portable llama.cpp GGUF. Hub may be faster on Hexag
 
 ### G6 — Vision input quality
 
-Naming-from-poster uses JPEGs **from A** ([phase2/02](../phase2/02_JELLYFIN_FLOCK_UX.md)). Instruct graphs are **text only**. Pixels go through the small GPU VLM, then caption text into Instruct JSON ([02](02_LLM_INTEGRATION.md#vision-pipeline)). Washed-out / orbit-frozen sheep ([phase3/09](../phase3/09_SHEEP_REFACTOR.md)) yield garbage names — A should not auto-apply LLM aliases on quarantined stems (VLM may still tag them for Shears).
+Naming-from-poster uses JPEGs **from A** ([phase2/02](../phase2/02_JELLYFIN_FLOCK_UX.md)). Instruct graphs are **text only**. Pixels go through the small GPU VLM, then caption text into Instruct JSON ([02](02_LLM_INTEGRATION.md#vision-pipeline)). Washed-out / orbit-frozen sheep ([phase1/05](../phase1/05_RENDER_PIPELINE.md) active gate; leftover catalog via [phase3/09](../phase3/09_SHEEP_REFACTOR.md)) yield garbage names — A should not auto-apply LLM aliases on quarantined stems (VLM may still tag them for Shears).
 
 ### G7 — Genome XML is a bad prompt
 

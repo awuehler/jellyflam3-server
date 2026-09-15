@@ -1,4 +1,4 @@
-"""Frozen-orbit predictor, Pathway A candidate, duration snap skip, still-loop gate."""
+"""Frozen-orbit predictor, Pathway A hard-quarantine, duration snap skip, still-loop opt-out."""
 
 from __future__ import annotations
 
@@ -121,9 +121,9 @@ def test_frozen_rotate_does_not_period_snap():
     assert n == 456  # 19s * 24
 
 
-def test_orbit_frozen_is_candidate_not_quarantine(tmp_path: Path):
-    assert "genome_orbit_frozen" not in HARD_QUARANTINE_REASONS
-    assert verdict_for(25.0, ["genome_orbit_frozen"]) == "candidate"
+def test_orbit_frozen_is_active_quarantine_reason(tmp_path: Path):
+    assert "genome_orbit_frozen" in HARD_QUARANTINE_REASONS
+    assert verdict_for(80.0, ["genome_orbit_frozen"]) == "quarantine"
 
     media = tmp_path / "media" / "by-generation" / "245"
     media.mkdir(parents=True)
@@ -157,14 +157,13 @@ def test_orbit_frozen_is_candidate_not_quarantine(tmp_path: Path):
         "palette": {"mode": "complementary", "seed": "genome_accent"},
         "sheep_tax": {"enabled": True, "repair": False},
         "tools": {},
-        "refactor": {"orbit_frozen_score": 25},
+        "refactor": {"orbit_frozen_score": 80},
     }
     row = score_sheep(cfg, mp4)
     assert "genome_orbit_frozen" in row.reasons
     assert "genome_linear_only" not in row.reasons
-    assert row.verdict == "candidate"
-    assert row.score >= 25.0
-    assert row.score < 80.0
+    assert row.verdict == "quarantine"
+    assert row.score >= 80.0
 
 
 def test_catalog_ffmpeg_still_loop_keeps_aac():

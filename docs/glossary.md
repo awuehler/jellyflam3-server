@@ -123,7 +123,7 @@ Operator pause: finish the **current** inbox job, then do not claim another unti
 
 ### Quarantine
 
-`paths.genomes_quarantine` — failed sheep tax, bad peer integrity, or unrecoverable genomes. Not auto-rendered.
+`paths.genomes_quarantine` — failed sheep tax, bad peer integrity, **quality-gate reject**, or unrecoverable genomes. Not auto-rendered.
 
 ### genomes_done
 
@@ -427,7 +427,7 @@ Curated `genomes/pedigree/` in repo (smoke + examples). Distinct from archive `g
 
 ### Sheep refactor
 
-Phase 3 guide [09](phase3/09_SHEEP_REFACTOR.md) (**complete** — Owner OK 2026-08-21) — remediate sub-standard sheep (quality / palette / encode) via re-furnace. Pathways: scan/report (includes complementary palette; **hard-quarantine** `genome_linear_only` and `genome_singularity_cloned`), optional palette override + Jellyfin-visible poster preview under `/media/sheep/_refactor-preview/`, apply/replace, quarantine, batch. Not Shears (CRUD) and not Hammer (wipe).
+Phase 3 guide [09](phase3/09_SHEEP_REFACTOR.md) (**complete** — Owner OK 2026-08-21) — detect and remediate sub-standard sheep (quality / palette / encode). The worker now actively reuses these signals: hard-reject linear-only, cloned-singularity, frozen single-flame, washed-palette, and desaturated preview/output before publication. Scan/report remains read-only for older catalog audit; explicit quarantine/batch performs the move and Jellyfin unpublish. Optional palette override + preview lives under `/media/sheep/_refactor-preview/`. Not Shears (CRUD) and not Hammer (wipe).
 
 ---
 

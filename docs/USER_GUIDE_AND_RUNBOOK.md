@@ -408,6 +408,31 @@ export JELLYFLAM3_SMOKE=1
 # Success token: SMOKE_RENDER_OK
 ```
 
+#### Active quality intervention
+
+New worker jobs are fail-closed before they can appear in `by-generation/` or
+Jellyfin:
+
+1. After Sheep Tax + TV optimization, reject `genome_linear_only`,
+   `genome_singularity_cloned`, frozen single-flame (`genome_orbit_frozen`),
+   and low-chroma harmony poles (`palette_washed_out`).
+2. Render one Lite preview still and reject mean saturation below **0.12**
+   before committing CPU to the full animation.
+3. After encode, extract the midpoint and repeat the saturation check before
+   catalog installation.
+
+Rejected claimed genomes move to `paths.genomes_quarantine`; no MP4 is
+published. The job file records `quality_gate.status=rejected`, stage, reasons,
+and visual metrics:
+
+```bash
+python3 -m json.tool /var/cache/jellyflam3/lib/jobs/<job-id>/job.json
+```
+
+Defaults are active even when `quality_gate` is absent from the live yaml.
+See `configs/jellyflam3.yaml.example` for explicit switches. Disabling a check
+is an operator exception and can expose sub-standard output.
+
 ### Catalog posters (after render)
 
 Default is `jellyfin.attach_posters: auto` in the example yaml. Live `configs/jellyflam3.yaml` is gitignored — `git pull` does **not** change it. Older yaml with `attach_posters: true` always creates posters until you edit it.
@@ -500,7 +525,11 @@ Cascade removes catalog MP4/sidecar/poster, jobs, edges (best-effort), Jellyfin 
 
 ### Quality repair: Sheep refactor
 
-For sub-standard renders (palette clash, bad encode, **linear-only / `singularity="cloned"` voids**) — **not** delete/recreate genetics.
+The worker actively blocks these defects for new jobs. Use refactor to audit
+and remediate **older catalog sheep** created before enforcement (palette
+clash, bad encode, linear-only / cloned voids, frozen or desaturated output).
+`report` is read-only; only explicit `quarantine --confirm QUARANTINE`
+unpublishes an existing sheep.
 
 ```bash
 python3 -m pipeline.refactor scan --config configs/jellyflam3.yaml
@@ -911,7 +940,8 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 | Kodi zip push fails | SMB `\\<Kodi_IP>\Downloads` vs SSH key | Use LibreELEC SMB; or install SSH key for `root@<Kodi_IP_Address>` |
 | Offline peering (Opt In, no sync) | `healthcheck`: `BAD share not live`; `peering status` → `share_live: false` | `opt-in` with `TS_AUTHKEY` + Syncthing up, or `opt-out` |
 | Peering stuck (live mesh) | `peering status`; inbox under `peers/inbox` | `promote --apply`; trust keys; share-security verify |
-| Bad palette / encode | `refactor scan` | preview → apply pathway |
+| Bad palette / encode / frozen still on TV | `python3 -m pipeline.refactor report --id …`; `job.json` `quality_gate` | New jobs: worker quarantines before catalog. Existing: `refactor quarantine --confirm QUARANTINE` |
+| Worker `quality gate … rejected` | `/var/cache/jellyflam3/lib/jobs/<id>/job.json` | Expected fail-closed. Genome is in `genomes/quarantine`. Do not re-seed the same `.flam3` |
 | Black / error after quarantine | Item gone from disk/Jellyfin; client still has old flock list | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id and re-poll (30s rate limit). Overnight new-sheep pickup is wrap-once (VoD 1.0.31 / Roku SS 1.0.9 / Kodi SS 0.2.9) — [Flock mix](#flock-mix-shuffle-wrap) |
 | Playback stutters / several TVs | `python3 -m pipeline.link_capacity estimate --profile wifi-pi`; this lab is WiFi STA (`eth0` DOWN) | Direct Play; fewer TVs — stay at/under `N_max`. Jellyfin will not refuse extras. Cable the Pi only if that host actually has Ethernet |
 | Wipe everything local | — | `hammer --dry-run` then `--confirm HAMMER` (not Shears) |
@@ -961,7 +991,7 @@ On Windows: use Git Bash for gate script tests; `media_layout` tests skip on `nt
 ### Pipeline CLI index
 
 ```text
-python3 -m pipeline.worker          # furnace (poll inbox or --once)
+python3 -m pipeline.worker          # furnace (quality gate → encode → ingest)
 python3 -m pipeline.worker_drain    # finish current job, then pause claiming
 python3 -m pipeline.idle_gate       # gate supervisor
 python3 -m pipeline.seed_inbox      # archive / random / mutate feedstock
@@ -970,7 +1000,7 @@ python3 -m pipeline.breed_idle      # daily idle breed (incl. tuple mode)
 python3 -m pipeline.sheep_tuple     # stage loop A + edge + loop B genome
 python3 -m pipeline.shears          # add/modify/delete/audit/sweep
 python3 -m pipeline.hammer         # nuclear local reset
-python3 -m pipeline.refactor        # quality scan/preview/apply/quarantine/batch
+python3 -m pipeline.refactor        # catalog quality scan/preview/apply/quarantine/batch
 python3 -m pipeline.peering         # opt-in/out, mesh-join, publish, promote, keys
 python3 -m pipeline.stills          # operator re-extract of screensaver frames
 python3 -m pipeline.backfill_posters  # posters + stills + Jellyfin images
@@ -1009,6 +1039,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 
 | Change | Read first |
 |---|---|
+| Worker quality admission | `pipeline/quality_gate.py`, [Active quality intervention](#active-quality-intervention), [phase1/05](phase1/05_RENDER_PIPELINE.md) |
 | Render duration bands | `pipeline/choose_duration.py`, `docs/phase2/08_DYNAMIC_DURATION.md` |
 | Worker drain / pause | `pipeline/worker_drain.py`, [Worker drain](#worker-drain-pause-before-next-sheep), [phase1/05](phase1/05_RENDER_PIPELINE.md) |
 | TV-port / palette | `pipeline/tv_optimize.py`, `pipeline/palette_harmony.py` |
