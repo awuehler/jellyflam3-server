@@ -45,7 +45,7 @@ Key **`viewer_feedback`** (likes / loves / votes / last_voted_at / share_candida
 
 ### Remote map (VoD **1.0.38**)
 
-Overlay is visual-only (playback does not pause). Shown when remaining duration ≤ 12 s. Two kinds only: **love** and **like**. Both increment sidecar `votes` (share cron + idle-breed). Plain `kind=vote` stays on the furnace CLI/API for compatibility; the channel does not POST it. The arrows match a keyboard so a later Kodi overlay can use Enter / Right / Down / Up-Esc without a third vote kind. **Roku screensaver voting stays cancelled.** Kodi screensaver still exits on any key and does not vote.
+Overlay is visual-only (playback does not pause). Shown when remaining duration ≤ **7 s**. Two kinds only: **love** and **like**. Both increment sidecar `votes` (share cron + idle-breed). Plain `kind=vote` stays on the furnace CLI/API for compatibility; the channel does not POST it. The arrows match a keyboard so a later Kodi overlay can use Enter / Right / Down / Up-Esc without a third vote kind. **Roku screensaver voting stays cancelled.** Kodi screensaver still exits on any key and does not vote.
 
 | Key | Action | Keyboard / future Kodi |
 |---|---|---|
@@ -61,8 +61,8 @@ Overlay is visual-only (playback does not pause). Shown when remaining duration 
 
 ### A — Roku VoD overlay (shipped 1.0.32)
 
-1. **Timing** — overlay when remaining duration ≤ 12 s; hide on timeout (10 s), vote, BACK, or clip advance.
-2. **UI** — transient SceneGraph group over Video (bottom banner, **65%** opacity in **1.0.35**); prompt is **Like this sheep:** plus Settings `titleMode` (alias when that mode is on and an alias exists, else filename); copy for love / like / dismiss / exit. No Button focus. **1.0.37+** `PlayerScreen` owns focus instead of the Video node. Overlay is skipped on **tuple** clips. **1.0.38** map: OK love, Right like, Down dismiss, Up/Back exit.
+1. **Timing** — overlay when remaining duration ≤ **7 s**; hide on timeout (7 s), vote, Down dismiss, or clip advance.
+2. **UI** — shared bottom chrome with loading-next (**1.0.41**): one 55% bar at `[80,920]`, SmallSystemFont. Vote line: left is Settings `titleMode` filename or alias only; right is **OK love · RIGHT like · DOWN dismiss · UP/BACK exit**. Name is clipped so it cannot overlap the keys. Loading uses the same bar and type. No Button focus. Overlay is skipped on **tuple** clips. **1.0.38** map: OK love, Right like, Down dismiss, Up/Back exit.
 3. **Mapping** — see Remote map above; shuffle / streamMode / Options keys are not stolen during playback. FF / Replay are unused (not vote aliases).
 4. **Identity** — stem from `mediaPath` basename (fallback `electricsheep.{generation}.{sheepId}`); Jellyfin item id + optional DeviceId on the event.
 5. **Multi-Roku** — per-device DeviceId optional; household votes aggregate on the furnace sidecar.

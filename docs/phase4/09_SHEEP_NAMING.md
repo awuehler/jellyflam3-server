@@ -62,7 +62,7 @@ Keys **`alias`** and **`alias_source`** (`auto` \| `human` \| `llm`) are in [pha
 
 ### C — Peer clients
 
-1. ~~**Roku VoD**~~ — Settings `titleMode` `filename` (default) vs `alias` on flock rows / player chrome. Reads Overview `Alias:`; missing alias falls back to filename. Screensaver stills captions stay parked.
+1. ~~**Roku VoD**~~ — Settings `titleMode` `filename` (default) vs `alias` on flock rows / player chrome. In **1.0.39+**, OK toggles and flushes the mode immediately; **Save & Reload** re-fetches the flock. Reads Overview `Alias:`; missing alias falls back to filename. Screensaver stills captions stay parked.
 2. **Kodi screensaver** — log + optional on-screen label (only if chrome is allowed in a settings preview; idle path stays chrome-free) / JSON-RPC title from alias when configured.
 3. ~~**Pipeline UX**~~ — `python3 -m pipeline.sheep_naming resolve` maps alias → stem; stem always valid. Shears/breed still take stems.
 
@@ -85,7 +85,7 @@ Moved: [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md) § A a
 | Artifact | Kind | Role |
 |---|---|---|
 | `pipeline/sheep_naming.py` | pipeline | Hash-seed generator, ingest helper, backfill / set / clear / resolve CLI; `--push-jellyfin` |
-| `roku-channel/` VoD **1.0.33** | client | Settings `titleMode` filename \| alias |
+| `roku-channel/` VoD **1.0.33** / toggle fix **1.0.39** | client | Settings `titleMode` filename \| alias; OK toggle + Save & Reload |
 | `configs/jellyflam3.yaml.example` `naming.enabled` | config | Default on; set false to skip ingest assign |
 | [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) | docs | Curator alias CLI + VoD toggle |
 

@@ -60,11 +60,11 @@ function fieldHint(name as string) as string
   else if name = "shuffleFlock"
     return "always true - rotate archive gens + pedigree + tuple (skip misc/test); false is not persisted"
   else if name = "titleMode"
-    return "filename=Jellyfin Name (electricsheep.gen.id); alias=sidecar name from Overview Alias: line; missing alias falls back to filename"
+    return "OK toggles filename/alias and saves; alias uses Overview Alias: line; missing alias falls back to filename"
   else if name = "probeDisplay"
     return "OK=capture roDeviceInfo + POST per-screen profile to Pi :8791 (multi-Roku/Kodi safe; hint only)"
   else if name = "save"
-    return "Done - accepted edits are already saved; reload flock"
+    return "Save & Reload - persist settings and reload flock"
   else if name = "cancel"
     return "Return (accepted edits remain saved)"
   end if
@@ -268,7 +268,7 @@ sub openSettings()
     m.values[name] = val
     refreshRowLabel(name)
   end for
-  m.top.findNode("row_save").label = "Done"
+  m.top.findNode("row_save").label = "Save & Reload"
   m.top.findNode("row_cancel").label = "Back"
   refreshProbeRowLabel()
   focusIndex(0)
@@ -360,9 +360,28 @@ sub onRowSelected()
   else if id = "row_probeDisplay"
     probeAndSaveDisplay()
     return
+  else if id = "row_titleMode"
+    toggleTitleMode()
+    return
   end if
   name = Mid(id, 5) ' strip "row_"
   editField(name)
+end sub
+
+sub toggleTitleMode()
+  current = normalizeTitleMode(m.values["titleMode"])
+  if current = "alias"
+    nextMode = "filename"
+  else
+    nextMode = "alias"
+  end if
+  m.values["titleMode"] = nextMode
+  m.registry.write("titleMode", nextMode)
+  m.registry.flush()
+  m.top.saved = true
+  m.inputNotice = "titleMode saved as " + nextMode
+  refreshRowLabel("titleMode")
+  updateFooter()
 end sub
 
 function hostFromBaseUrl(base as string) as string

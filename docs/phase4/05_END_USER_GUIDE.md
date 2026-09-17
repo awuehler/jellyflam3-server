@@ -41,7 +41,7 @@ Complements (does not replace):
 | Extract stills | Poster ingest / `backfill_posters`; operator `python3 -m pipeline.stills --dry-run` / `--limit N` |
 | Breed / seed | Manual `pipeline.breed` or daily `cron_breed_idle.sh` when inbox empty; idle-breed **weights parents by sidecar votes** when present ([08](08_VIEWER_FEEDBACK_LOOP.md)) |
 | Promote peer share | Opt In; **gated** `promote --apply` on receive. Liked sheep: `cron_share_votes.sh` copies to `peers/share-out` ([08](08_VIEWER_FEEDBACK_LOOP.md)); auto-promote **cancelled** ([01](01_PEER_SHARE_PATH.md)) |
-| Vote / like a sheep | Roku VoD overlay last 12 s ([08](08_VIEWER_FEEDBACK_LOOP.md)); LAN-only POST; re-votes allowed; love is a stronger tally, not a different share path |
+| Vote / like a sheep | Roku VoD overlay last **7 s** ([08](08_VIEWER_FEEDBACK_LOOP.md)); LAN-only POST; re-votes allowed; love is a stronger tally, not a different share path |
 | Clear household votes | `python3 -m pipeline.sheep_votes sweep` then `--confirm SWEEP` ([example 7](../USER_GUIDE_AND_RUNBOOK.md#7--sweep-votes-fresh-start-on-this-furnace)); does not unshare `peers/share-out` |
 | Rename / alias a sheep | [09](09_SHEEP_NAMING.md): auto `adjective_surname` or human override; VoD Settings `titleMode` filename vs alias |
 | Delete a sheep | Shears dry-run → apply (Phase 3 / 03) |

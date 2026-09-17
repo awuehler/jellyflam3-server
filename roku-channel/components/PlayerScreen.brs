@@ -5,6 +5,7 @@ sub init()
   m.top.focusable = true
   m.video = m.top.findNode("Video")
   m.status = m.top.findNode("status")
+  m.playerChrome = m.top.findNode("playerChrome")
   m.progressTimer = m.top.findNode("progressTimer")
   m.voteOverlay = m.top.findNode("voteOverlay")
   m.votePrompt = m.top.findNode("votePrompt")
@@ -36,6 +37,30 @@ sub init()
   m.voteDismissed = false
   ' Finer position ticks help catch end-of-clip before "finished".
   m.video.notificationInterval = 0.25
+end sub
+
+sub refreshPlayerChrome()
+  voteOn = voteOverlayVisible()
+  loadOn = false
+  if m.status <> invalid and m.status.visible = true then loadOn = true
+  if m.playerChrome <> invalid then m.playerChrome.visible = (voteOn or loadOn)
+end sub
+
+sub showLoadChrome(msg as string)
+  if voteOverlayVisible()
+    if m.voteHideTimer <> invalid then m.voteHideTimer.control = "stop"
+    if m.voteOverlay <> invalid then m.voteOverlay.visible = false
+  end if
+  if m.status <> invalid
+    if msg <> invalid then m.status.text = msg
+    m.status.visible = true
+  end if
+  refreshPlayerChrome()
+end sub
+
+sub hideLoadChrome()
+  if m.status <> invalid then m.status.visible = false
+  refreshPlayerChrome()
 end sub
 
 ' Ambient dream loop defaults to Static MP4.
@@ -142,8 +167,7 @@ sub startVideo(url as string, fmt as string)
   if m.status <> invalid
     label = m.title
     if label = invalid or label = "" then label = "sheep"
-    m.status.text = "Loading " + label + " (" + fmt + ")..."
-    m.status.visible = true
+    showLoadChrome("Loading " + label + " (" + fmt + ")...")
   end if
   m.video.content = content
   m.video.visible = true
@@ -156,6 +180,7 @@ end sub
 
 sub stopSheep()
   hideVoteOverlay()
+  hideLoadChrome()
   stopPlaybackReport()
   if m.video <> invalid
     m.video.control = "stop"
@@ -288,10 +313,7 @@ sub tryAltFallback() as boolean
   m.streamFormat = altFmt
   m.reportedPlaying = false
   if m.progressTimer <> invalid then m.progressTimer.control = "stop"
-  if m.status <> invalid
-    m.status.visible = true
-    m.status.text = "Retrying as " + altFmt + "..."
-  end if
+  showLoadChrome("Retrying as " + altFmt + "...")
   m.video.control = "stop"
   startVideo(altUrl, altFmt)
   return true
@@ -320,39 +342,36 @@ sub onState()
   if st = "buffering" or st = "connecting"
     ' Suppress status flash during ambient seek-reloop (gap still happens; less UI noise).
     if m.reloopPending = true
-      m.status.visible = false
+      hideLoadChrome()
+    else if voteOverlayVisible()
+      ' Keep the vote bar; do not swap to loading in the last seconds.
     else
-      m.status.visible = true
       shown = displayNameForUi()
       if shown <> "" and shown <> "sheep"
-        m.status.text = shown + "(" + UCase(m.streamFormat) + ")"
+        showLoadChrome(shown + "(" + UCase(m.streamFormat) + ")")
       else
-        m.status.text = "Buffering (" + UCase(m.streamFormat) + ")..."
+        showLoadChrome("Buffering (" + UCase(m.streamFormat) + ")...")
       end if
     end if
   else if st = "playing"
-    m.status.visible = false
+    hideLoadChrome()
   else if st = "error"
     if tryAltFallback() then return
     signalPlaybackFailed()
-    if m.status = invalid then return
-    m.status.visible = true
     msg = m.video.errorMsg
     if msg = invalid or msg = "" then msg = "playback error"
-    m.status.text = msg
+    showLoadChrome(msg)
   end if
 end sub
 
 sub onError()
   if tryAltFallback() then return
   signalPlaybackFailed()
-  if m.status = invalid then return
   msg = m.video.errorMsg
   code = m.video.errorCode
-  m.status.visible = true
   if msg = invalid or msg = "" then msg = "playback error"
   if code <> invalid then msg = msg + " (" + code.toStr() + ")"
-  m.status.text = msg
+  showLoadChrome(msg)
 end sub
 
 function onKeyEvent(key as string, press as boolean) as boolean
@@ -387,7 +406,7 @@ function voteOverlayVisible() as boolean
 end function
 
 function voteRemainThresholdSec() as float
-  return 12.0
+  return 7.0
 end function
 
 function isTuplePlayback() as boolean
@@ -419,8 +438,10 @@ end function
 
 sub showVoteOverlay()
   if m.voteOverlay = invalid then return
-  if m.votePrompt <> invalid then m.votePrompt.text = "Like this sheep: " + votePromptName()
+  if m.status <> invalid then m.status.visible = false
+  if m.votePrompt <> invalid then m.votePrompt.text = votePromptName()
   m.voteOverlay.visible = true
+  refreshPlayerChrome()
   if m.voteHideTimer <> invalid
     m.voteHideTimer.control = "stop"
     m.voteHideTimer.control = "start"
@@ -430,6 +451,7 @@ end sub
 sub hideVoteOverlay()
   if m.voteHideTimer <> invalid then m.voteHideTimer.control = "stop"
   if m.voteOverlay <> invalid then m.voteOverlay.visible = false
+  refreshPlayerChrome()
 end sub
 
 sub dismissVoteOverlay()

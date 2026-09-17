@@ -6,6 +6,9 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Roku VoD **1.0.41**: loading-next and vote banners share one 55% bar at `[80,920]` with the same SmallSystemFont line so they swap in place. Vote left side is filename/alias only (no “Like this sheep:”); the name is clipped so it cannot overlap the key hints.
+- Roku VoD **1.0.40**: vote overlay is a single 55% banner in the last **7 s**; filename/alias left, **OK love · RIGHT like · DOWN dismiss · UP/BACK exit** right.
+- Roku VoD **1.0.39**: `titleMode` is now an OK-toggle (`filename` ↔ `alias`) that writes and flushes the registry immediately; **Save & Reload** replaces ambiguous **Done** and refreshes the home flock using the effective mode.
 - Roku VoD **1.0.38**: vote overlay is two-tier **love / like** only (**OK** love, **Right** like, **Down** dismiss, **Up/Back** exit). Matches a keyboard (Enter / Right / Down / Up-Esc) for a later Kodi overlay. Plain `vote` is no longer posted by the channel; furnace CLI/API still accepts it.
 - Operator flock vote sweep: `python3 -m pipeline.sheep_votes sweep` (dry-run) / `--confirm SWEEP` zeros live-catalog sidecar `viewer_feedback` for a fresh start. Aliases, tags, genomes, unpublished quarantine trees, and existing `peers/share-out` copies are unchanged. Runbook [example 7](docs/USER_GUIDE_AND_RUNBOOK.md#7--sweep-votes-fresh-start-on-this-furnace).
 - Roku VoD **1.0.37**: accepted Settings edits persist immediately (Back no longer discards them); registry reads are normalized; home status shows commercial-filter and alias/fallback counts; NC always overrides safe tags and applies to deep links. Player focus stays above the Video node so **FF love** and **REPLAY vote** reach the overlay alongside existing OK/BACK handling.

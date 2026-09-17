@@ -27,9 +27,9 @@ You do **not** need the Pi terminal for normal viewing. Printable one-pager: [FR
 
 1. Sideload the JellyFlam3 VoD channel zip (e.g. `dist/jellyflam3-roku.zip` from `scripts/package_roku_channel.*` on a furnace Pi).
 2. **Furnace-built zips are pre-configured:** when packaged on a Pi with `secrets.env`, the zip includes that furnace’s Jellyfin URL, API key, user id, and library id. Launch the channel — credentials apply on first run if the registry is empty; the flock list should load without manual paste.
-3. **Otherwise** (Windows packaging host or empty registry): open the channel → **Settings** → enter Jellyfin connection values. An operator runs `python3 scripts/jellyfin_id_dump.py` on the Pi and gives you `baseUrl`, `apiKey`, `userId`, `libraryId` (never share the API key in chat/email — paste on the TV only). VoD **1.0.37+** persists each valid keyboard **OK** immediately; Back returns without discarding accepted edits, and Done reloads the flock.
+3. **Otherwise** (Windows packaging host or empty registry): open the channel → **Settings** → enter Jellyfin connection values. An operator runs `python3 scripts/jellyfin_id_dump.py` on the Pi and gives you `baseUrl`, `apiKey`, `userId`, `libraryId` (never share the API key in chat/email — paste on the TV only). VoD **1.0.37+** persists each valid keyboard **OK** immediately. In **1.0.39**, highlight `titleMode` and press OK to toggle `filename` ↔ `alias`; **Save & Reload** refreshes the flock.
 
-**Everyday use:** launch JellyFlam3 → pick a sheep → ambient loop plays. Shuffle is always on (channel **1.0.30+**): archive gens plus **pedigree** and **tuple**. After a full mix, **1.0.31** asks Jellyfin again so overnight ingest can appear without leaving the player ([Flock mix](#flock-mix-shuffle-wrap)). Near the end of each clip (**1.0.32**, overlay polish **1.0.35**, map **1.0.38**), a banner invites a vote without pausing: **OK** love, **Right** like, **Down** dismiss, **Up / Back** exit. **Tuples skip the vote overlay.** Votes stay on the Pi (LAN only). A **tuple** is one longer clip: sheep A, then a morph into sheep B. During that middle morph only, a quiet mark sits in the lower-right corner (the Electric Sheep logo PNG on the default private furnace; your own PNG if the operator set one; or the credit “artwork by Scott Draves and the Electric Sheep” on a commercial-safe furnace that still uses the Cesari file). Loops A and B have no mark. That mark is **not** a license to post the clip as official Electric Sheep — operators, see [Private vs public furnace](#private-vs-public-furnace) and [Use your own PNG](#use-your-own-png-private-and-public). When you press **Play**, the Pi **stops rendering** new sheep until the TV has been idle for several minutes (see [idle gate](#idle-gate-behavior) below).
+**Everyday use:** launch JellyFlam3 → pick a sheep → ambient loop plays. Shuffle is always on (channel **1.0.30+**): archive gens plus **pedigree** and **tuple**. After a full mix, **1.0.31** asks Jellyfin again so overnight ingest can appear without leaving the player ([Flock mix](#flock-mix-shuffle-wrap)). Near the end of each clip (**1.0.41**, last **7 s**), a one-line 55% banner invites a vote without pausing in the same place as loading-next: filename/alias on the left, **OK** love, **Right** like, **Down** dismiss, **Up / Back** exit on the right. **Tuples skip the vote overlay.** Votes stay on the Pi (LAN only). A **tuple** is one longer clip: sheep A, then a morph into sheep B. During that middle morph only, a quiet mark sits in the lower-right corner (the Electric Sheep logo PNG on the default private furnace; your own PNG if the operator set one; or the credit “artwork by Scott Draves and the Electric Sheep” on a commercial-safe furnace that still uses the Cesari file). Loops A and B have no mark. That mark is **not** a license to post the clip as official Electric Sheep — operators, see [Private vs public furnace](#private-vs-public-furnace) and [Use your own PNG](#use-your-own-png-private-and-public). When you press **Play**, the Pi **stops rendering** new sheep until the TV has been idle for several minutes (see [idle gate](#idle-gate-behavior) below).
 
 **Deep link smoke (optional):** after an operator dumps item Guids (`jellyfin_id_dump.py --items`), a specific sheep can be launched with `contentId=<Guid>` via the Roku ECP port (developer mode).
 
@@ -233,7 +233,7 @@ python3 -m pipeline.worker_drain cancel
 
 **Host:** furnace Pi **Opt In** (`share_live: true`) + Roku VoD **1.0.38** (overlay) with display-sink token set. Votes never pause the clip. They stay on this Pi’s catalog sidecar (LAN only). Screensaver packages do not vote.
 
-1. Play a sheep (not a tuple). In the last **12 seconds**, the banner appears.
+1. Play a sheep (not a tuple). In the last **7 seconds**, the banner appears.
    - **OK** / keyboard **Enter** = love (`loves++`, `votes++`)
    - **Right** = like (`likes++`, `votes++`)
    - **Down** = dismiss overlay; keep playing
@@ -548,7 +548,7 @@ python3 -m pipeline.sheep_naming clear-alias --stem electricsheep.247.00505
 python3 -m pipeline.sheep_naming resolve frosty_swirles
 ```
 
-Roku VoD **1.0.33+**: Settings → `titleMode` → `filename` (default) or `alias`. In **1.0.37+**, keyboard OK saves immediately and Done reloads the flock. Alias comes from the Jellyfin Overview `Alias:` line (ingest writes it; `set-alias` / `backfill --push-jellyfin` refresh existing items). Missing alias shows the filename. The home status reports alias and filename-fallback counts. Screensaver and Kodi idle chrome stay untitled.
+Roku VoD **1.0.33+**: Settings → `titleMode` → `filename` (default) or `alias`. In **1.0.39+**, highlight the row and press OK to toggle and save immediately, then choose **Save & Reload**. Alias comes from the Jellyfin Overview `Alias:` line (ingest writes it; `set-alias` / `backfill --push-jellyfin` refresh existing items). Missing alias shows the filename. The home status reports alias and filename-fallback counts. Screensaver and Kodi idle chrome stay untitled.
 
 Cascade removes catalog MP4/sidecar/poster, jobs, edges (best-effort), Jellyfin item (soft-fail), peer copies when Opt In. Does **not** touch secrets or Syncthing device config.
 
@@ -862,7 +862,7 @@ Do this **in order**. Skipping tags or the client toggles is how you get an empt
    ```
    Each restage is a full 3-stage encode (hours). Gate must be **open**. Worker rotates the old MP4 to `*.mp4.prev`. Confirm the sidecar: Cesari path → `"style": "text"` and the Scott Draves sentence; operator PNG → `"style": "image"` and your path.
 6. **Turn commercial-safe on at every pasture client** (furnace yaml does not do this). Existing Roku registry survives sideload; furnace-built zips still preset `commercialMode=false`.
-   - **Roku VoD:** Settings → `commercialMode` → **true** → keyboard OK (saved immediately in 1.0.37+) → Done to reload. Repeat on each stick. Home status reports how many items were filtered and how many NC tags were found.
+   - **Roku VoD:** Settings → `commercialMode` → **true** → keyboard OK (saved immediately in 1.0.37+) → **Save & Reload**. Repeat on each stick. Home status reports how many items were filtered and how many NC tags were found.
    - **Kodi:** Add-ons → JellyFlam3 Dreams → Configure → **Commercial-safe (skip NC)** on.
    - **Roku screensaver:** same registry `commercialMode` as VoD — NC stills are skipped; tuple folders are never shown.
 7. **Do not expose Jellyfin as the public player.** Guests on `:8096` or jellyfin-roku still see NC. Restrict the library (LAN-only, auth, or do not share the URL).

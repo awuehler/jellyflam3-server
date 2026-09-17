@@ -65,8 +65,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=38" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.38""' in text
+    assert "build_version=41" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.41""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
@@ -124,6 +124,11 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "m.registry.write(name, val)" in settings
     assert "m.registry.flush()" in settings
     assert "m.top.saved = true" in settings
+    assert 'else if id = "row_titleMode"' in settings
+    assert "sub toggleTitleMode()" in settings
+    assert 'm.registry.write("titleMode", nextMode)' in settings
+    assert 'm.inputNotice = "titleMode saved as " + nextMode' in settings
+    assert 'm.top.findNode("row_save").label = "Save & Reload"' in settings
     jf = (VOD / "components" / "JellyfinTask.brs").read_text(encoding="utf-8")
     assert "function hasNcLicense(it as object) as boolean" in jf
     assert "function hasSafeLicense(it as object) as boolean" in jf
@@ -199,11 +204,32 @@ def test_roku_vod_vote_overlay_skips_tuples_and_softens_banner():
     assert "if isTuplePlayback() then return" in player
     assert "if isTuplePlayback()" in player
     assert 'Instr(1, stem, ".tuple.")' in player
-    assert 'color="0x0A0A12A6"' in xml
+    assert 'id="playerChrome"' in xml
+    assert 'translation="[80,920]"' in xml
+    assert 'id="chromeBanner"' in xml
+    assert 'color="0x0A0A128C"' in xml
+    assert 'translation="[80,980]"' not in xml
+    assert xml.count('font:SmallSystemFont') >= 3
+    assert xml.count('color="0xE8E8F0FF"') >= 3
+    assert "sub showLoadChrome(msg as string)" in player
+    assert "sub refreshPlayerChrome()" in player
+    assert "sub hideLoadChrome()" in player
+    assert "showLoadChrome(" in player
+    assert 'horizAlign="left"' in xml
+    assert 'horizAlign="right"' in xml
     assert "OK love · RIGHT like · DOWN dismiss · UP/BACK exit" in xml
     assert "function votePromptName() as string" in player
     assert "return displayNameForUi()" in player
-    assert '"Like this sheep: " + votePromptName()' in player
+    assert "if m.votePrompt <> invalid then m.votePrompt.text = votePromptName()" in player
+    assert "return 7.0" in player
+    assert "Like this sheep" not in player
+    assert "Like this sheep" not in xml
+    assert 'id="votePrompt"' in xml
+    assert 'width="700"' in xml
+    assert 'ellipsizeOnBoundary="true"' in xml
+    assert 'translation="[760,8]"' in xml
+    assert 'id="voteHideTimer"' in xml
+    assert 'duration="7"' in xml
     assert "filename: item.filename" in home
 
 

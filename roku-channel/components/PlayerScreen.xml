@@ -17,38 +17,51 @@
       translation="[0,0]"
       loop="false"
       enableUI="false" />
-    <Group id="voteOverlay" visible="false">
+    <Group
+      id="playerChrome"
+      translation="[80,920]"
+      visible="false">
       <Rectangle
-        id="voteBanner"
-        translation="[80,860]"
+        id="chromeBanner"
         width="1760"
-        height="100"
-        color="0x0A0A12A6" />
+        height="52"
+        color="0x0A0A128C" />
       <Label
-        id="votePrompt"
-        translation="[100,872]"
-        width="1720"
-        height="36"
-        font="font:MediumSystemFont"
-        color="0xE8E8F0FF"
-        text="Like this sheep:" />
-      <Label
-        id="voteHint"
-        translation="[100,910]"
+        id="status"
+        translation="[20,8]"
         width="1720"
         height="36"
         font="font:SmallSystemFont"
-        color="0xA0A0B8FF"
-        text="OK love · RIGHT like · DOWN dismiss · UP/BACK exit" />
+        color="0xE8E8F0FF"
+        horizAlign="left"
+        wrap="false"
+        visible="false"
+        text="" />
+      <Group id="voteOverlay" visible="false">
+        <Label
+          id="votePrompt"
+          translation="[20,8]"
+          width="700"
+          height="36"
+          font="font:SmallSystemFont"
+          color="0xE8E8F0FF"
+          horizAlign="left"
+          wrap="false"
+          maxLines="1"
+          ellipsizeOnBoundary="true"
+          text="" />
+        <Label
+          id="voteHint"
+          translation="[760,8]"
+          width="980"
+          height="36"
+          font="font:SmallSystemFont"
+          color="0xE8E8F0FF"
+          horizAlign="right"
+          wrap="false"
+          text="OK love · RIGHT like · DOWN dismiss · UP/BACK exit" />
+      </Group>
     </Group>
-    <Label
-      id="status"
-      translation="[80,980]"
-      width="1760"
-      font="font:SmallSystemFont"
-      color="0xE8E8F0FF"
-      text=""
-      visible="false" />
     <Timer
       id="progressTimer"
       repeat="true"
@@ -56,6 +69,6 @@
     <Timer
       id="voteHideTimer"
       repeat="false"
-      duration="10" />
+      duration="7" />
   </children>
 </component>
