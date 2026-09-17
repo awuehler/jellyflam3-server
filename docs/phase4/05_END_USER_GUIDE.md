@@ -42,6 +42,7 @@ Complements (does not replace):
 | Breed / seed | Manual `pipeline.breed` or daily `cron_breed_idle.sh` when inbox empty; idle-breed **weights parents by sidecar votes** when present ([08](08_VIEWER_FEEDBACK_LOOP.md)) |
 | Promote peer share | Opt In; **gated** `promote --apply` on receive. Liked sheep: `cron_share_votes.sh` copies to `peers/share-out` ([08](08_VIEWER_FEEDBACK_LOOP.md)); auto-promote **cancelled** ([01](01_PEER_SHARE_PATH.md)) |
 | Vote / like a sheep | Roku VoD overlay last 12 s ([08](08_VIEWER_FEEDBACK_LOOP.md)); LAN-only POST; re-votes allowed; love is a stronger tally, not a different share path |
+| Clear household votes | `python3 -m pipeline.sheep_votes sweep` then `--confirm SWEEP` ([example 7](../USER_GUIDE_AND_RUNBOOK.md#7--sweep-votes-fresh-start-on-this-furnace)); does not unshare `peers/share-out` |
 | Rename / alias a sheep | [09](09_SHEEP_NAMING.md): auto `adjective_surname` or human override; VoD Settings `titleMode` filename vs alias |
 | Delete a sheep | Shears dry-run → apply (Phase 3 / 03) |
 | Multi-Roku | Same Jellyfin URL on each TV; `display_profiles list` |
@@ -57,6 +58,7 @@ Shipped in [USER_GUIDE_AND_RUNBOOK.md — Worked examples](../USER_GUIDE_AND_RUN
 4. Peer receive: land in `peers/inbox` → verify → promote → furnace picks up.
 5. Pause the furnace: drain request --wait → optional restart → cancel.
 6. Vote then share: overlay OK/FF/REPLAY → sidecar `share_candidate` → `share_votes` / cron copies `share-out` → receiver still `promote --apply`. Tuples skip the overlay.
+7. Sweep votes: `sheep_votes sweep` dry-run → `--confirm SWEEP` zeros live-catalog `viewer_feedback`; share-out copies and aliases stay.
 
 ### D — Triage cookbook
 

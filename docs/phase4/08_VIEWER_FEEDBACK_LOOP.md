@@ -56,7 +56,7 @@ Overlay is visual-only (Video stays focused; playback does not pause). Shown whe
 | **Up** | exit playback (same trapdoor as before the overlay) |
 | **\*** / Options / Info | Settings on Home (not consumed during overlay) |
 
-`POST /v1/sheep-votes` on `jellyflam3-display-sink` (:8791, header `X-JellyFlam3-Token`). CLI: `python3 -m pipeline.sheep_votes apply --stem … --kind like\|love\|vote`. Restart **display-sink** (not the worker) to load the route.
+`POST /v1/sheep-votes` on `jellyflam3-display-sink` (:8791, header `X-JellyFlam3-Token`). CLI: `python3 -m pipeline.sheep_votes apply --stem … --kind like\|love\|vote`; `show --stem …`; flock fresh start `sweep` (dry-run) / `sweep --confirm SWEEP`. Restart **display-sink** (not the worker) to load the route.
 
 ## Work items (when Phase 4 opens)
 
@@ -72,7 +72,7 @@ Overlay is visual-only (Video stays focused; playback does not pause). Shown whe
 ### B — Furnace vote capture (shipped)
 
 1. **API / sink** — `POST /v1/sheep-votes` on the existing display-profile sink (`pipeline.display_profile_sink`, port 8791); same **required** `DISPLAY_SINK_TOKEN` / `X-JellyFlam3-Token`. The systemd unit binds `0.0.0.0`; empty token crash-loops the unit.
-2. **Store** — atomic rewrite of that sheep’s `{stem}.jellyflam3.json` `viewer_feedback` (`pipeline.sheep_votes`). No `/var/lib` vote JSON.
+2. **Store** — atomic rewrite of that sheep’s `{stem}.jellyflam3.json` `viewer_feedback` (`pipeline.sheep_votes`). No `/var/lib` vote JSON. Operator `sweep --confirm SWEEP` restores the default block on live catalog sidecars (aliases, tags, genomes, and existing `peers/share-out` copies stay).
 3. **Unlimited re-vote** — each event increments sidecar counts.
 4. **Resolve genome** — stem via catalog sidecar scan; else mediaPath basename under `paths.media_library`; 404 if no sidecar (never invent JSON).
 
@@ -95,7 +95,7 @@ Overlay is visual-only (Video stays focused; playback does not pause). Shown whe
 ### E — Ops & docs
 
 1. Crontab example alongside archive + idle-breed in the runbook and this cron header.
-2. End-user vote/share recipe: [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md#6--vote-then-share).
+2. End-user vote/share recipe: [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md#6--vote-then-share). Vote sweep (fresh start): [example 7](../USER_GUIDE_AND_RUNBOOK.md#7--sweep-votes-fresh-start-on-this-furnace).
 3. Glossary + SoT cross-links. Vote POST is still display-sink (not a Playing client).
 
 ## Non-goals
@@ -115,6 +115,7 @@ Overlay is visual-only (Video stays focused; playback does not pause). Shown whe
 | VoD overlay + key handler | `roku-channel/` | Transient like/love/vote UI |
 | Vote ingest endpoint / sink | host service | Capture events from Roku(s) |
 | `{stem}.jellyflam3.json` `viewer_feedback` | sidecar | Sole metadata SoT for vote tallies / share_candidate |
+| `python3 -m pipeline.sheep_votes sweep` | CLI | Zero live-catalog tallies (`--confirm SWEEP`); dry-run default |
 | `scripts/cron_share_votes.sh` | cron | Scan sidecars → peer share-out |
 | Weighted `breed_idle` | pipeline | Viewer-biased parent picks |
 | Config + docs | yaml / guides | Thresholds, button map, Opt In interaction |
@@ -129,6 +130,7 @@ Overlay is visual-only (Video stays focused; playback does not pause). Shown whe
 - [x] Daily idle breed uses vote weights when available; uniform fallback when not
 - [x] Docs: button map, privacy / LAN scope, vote/share recipe; linked from Phase 4 overview + end-user guide
 - [x] Idle-gate / Sessions behavior: vote POST is display-sink, not a Playing client
+- [x] Operator can dry-run then `--confirm SWEEP` to zero live-catalog `viewer_feedback` without touching share-out copies
 
 ## See also
 

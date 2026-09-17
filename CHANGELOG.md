@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Operator flock vote sweep: `python3 -m pipeline.sheep_votes sweep` (dry-run) / `--confirm SWEEP` zeros live-catalog sidecar `viewer_feedback` for a fresh start. Aliases, tags, genomes, unpublished quarantine trees, and existing `peers/share-out` copies are unchanged. Runbook [example 7](docs/USER_GUIDE_AND_RUNBOOK.md#7--sweep-votes-fresh-start-on-this-furnace).
 - Roku VoD **1.0.37**: accepted Settings edits persist immediately (Back no longer discards them); registry reads are normalized; home status shows commercial-filter and alias/fallback counts; NC always overrides safe tags and applies to deep links. Player focus stays above the Video node so **FF love** and **REPLAY vote** reach the overlay alongside existing OK/BACK handling.
 - Roku VoD **1.0.36**: home copy is **Ambient Dreams** and **N sheep in flock**; poster grid is **six** columns (270×152 tiles so the last column stays inside the right gutter). Pedigree genomes keep the full `cc-*` license on the tile; pedigree tags move to the wider detail chip.
 - Kodi screensaver **0.2.10** silently closes Kodi's native playback-failed `okdialog` while dropping and refreshing a quarantined sheep, preventing a recovered session from retaining a modal end-user prompt.

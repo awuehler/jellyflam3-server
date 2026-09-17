@@ -8,7 +8,7 @@ from pathlib import Path
 from pipeline.peering import peers_share_out
 from pipeline.share_votes import meets_share_threshold, run_share_votes, share_votes_cfg
 from pipeline.share_security import gen_keypair
-from pipeline.sheep_votes import DEFAULT_FEEDBACK, increment_feedback
+from pipeline.sheep_votes import DEFAULT_FEEDBACK, increment_feedback, sweep_votes
 
 GOOD_FLAME = (
     '<flame size="800 600" scale="600">'
@@ -189,3 +189,24 @@ def test_skip_inbox_genome(tmp_path: Path):
     assert any(s.get("reason") == "genome_missing" for s in out["skipped"])
     assert inbox_g.is_file()
     assert list(peers_share_out(cfg).glob("*.flam3")) == []
+
+
+def test_vote_sweep_stops_share_selection_leaves_share_out(tmp_path: Path):
+    cfg = _cfg(tmp_path)
+    gen_keypair(cfg)
+    flam = _write_voted_sheep(tmp_path)
+    first = run_share_votes(cfg, apply=True)
+    assert first["action"] == "share"
+    dest = peers_share_out(cfg) / flam.name
+    assert dest.is_file()
+    dest_bytes = dest.read_bytes()
+
+    media = tmp_path / "media"
+    swept = sweep_votes(media, apply=True)
+    assert swept["reset"] == 1
+    plan = run_share_votes(cfg, apply=False)
+    assert plan["candidates"] == 0
+    assert dest.is_file()
+    assert dest.read_bytes() == dest_bytes
+    assert flam.is_file()
+    assert list((tmp_path / "genomes" / "inbox").glob("*.flam3")) == []

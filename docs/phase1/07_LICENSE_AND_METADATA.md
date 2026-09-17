@@ -188,7 +188,7 @@ File: `{stem}.jellyflam3.json` next to the catalog MP4. Code list: `pipeline.sti
 | `type` | [03](../phase4/03_EDGES_AND_WATERMARK.md) | `"loop"` (default when omitted), `"tuple"` (worker writes), or `"edge"` (reserved, not written) | Guide 01 does not add its own top-level key |
 | `from_id`, `to_id` | [03](../phase4/03_EDGES_AND_WATERMARK.md) | string or `null` | Companions of `type: tuple` (and reserved `type: edge`) |
 | `watermark` | [03](../phase4/03_EDGES_AND_WATERMARK.md) | `{ enabled, style, text, image }` | Tuple ingest writes the **effective** style (`text` on commercial-safe furnaces even if yaml says `image`); do not falsify flam3 XML |
-| `viewer_feedback` | [08](../phase4/08_VIEWER_FEEDBACK_LOOP.md); [01](../phase4/01_PEER_SHARE_PATH.md) reads `share_candidate` | `{ likes, loves, votes, last_voted_at, share_candidate }` | Integers / bool / ISO timestamp or `null`. Vote sink: `POST /v1/sheep-votes` / `python3 -m pipeline.sheep_votes` |
+| `viewer_feedback` | [08](../phase4/08_VIEWER_FEEDBACK_LOOP.md); [01](../phase4/01_PEER_SHARE_PATH.md) reads `share_candidate` | `{ likes, loves, votes, last_voted_at, share_candidate }` | Integers / bool / ISO timestamp or `null`. Vote sink: `POST /v1/sheep-votes` / `python3 -m pipeline.sheep_votes` (`apply` / `show` / `sweep --confirm SWEEP`) |
 | `alias` | [09](../phase4/09_SHEEP_NAMING.md) | `adjective_surname` | Display name; filename stays canonical |
 | `alias_source` | [09](../phase4/09_SHEEP_NAMING.md); LLM write path [phase5/02](../phase5/02_LLM_INTEGRATION.md) | `auto` \| `human` \| `llm` | Companion of `alias` |
 

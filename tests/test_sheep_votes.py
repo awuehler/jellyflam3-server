@@ -8,14 +8,20 @@ from pathlib import Path
 import pytest
 
 from pipeline.sheep_votes import (
+    DEFAULT_FEEDBACK,
     InvalidVote,
     StemNotFound,
+    SWEEP_CONFIRM_TOKEN,
     apply_vote,
+    cleared_feedback,
+    feedback_needs_reset,
     increment_feedback,
+    main,
     normalize_feedback,
     resolve_vote_sidecar,
     show_vote,
     stem_from_media_path,
+    sweep_votes,
 )
 
 STEM = "electricsheep.247.00505"
@@ -147,3 +153,202 @@ def test_resolve_generation_sheep_id(tmp_path: Path):
     media = _catalog(tmp_path)
     path = resolve_vote_sidecar(media, generation="247", sheep_id="00505")
     assert path.name == f"{STEM}.jellyflam3.json"
+
+
+def _catalog_cfg(tmp_path: Path, media: Path) -> Path:
+    cfg = tmp_path / "jellyflam3.yaml"
+    cfg.write_text(
+        "paths:\n  media_library: %s\n" % media.as_posix().replace("\\", "/"),
+        encoding="utf-8",
+    )
+    return cfg
+
+
+def _write_sidecar(
+    media: Path,
+    stem: str,
+    *,
+    votes: int = 0,
+    likes: int = 0,
+    loves: int = 0,
+    extra_root: dict | None = None,
+    extra_fb: dict | None = None,
+    gen: str | None = None,
+) -> Path:
+    parts = stem.split(".")
+    generation = gen or (parts[1] if len(parts) > 2 else "247")
+    dest = media / "by-generation" / generation
+    dest.mkdir(parents=True, exist_ok=True)
+    (dest / f"{stem}.mp4").write_bytes(b"x")
+    fb = dict(DEFAULT_FEEDBACK)
+    fb.update(
+        {
+            "likes": likes,
+            "loves": loves,
+            "votes": votes,
+            "share_candidate": votes > 0 or likes > 0 or loves > 0,
+            "last_voted_at": "2026-09-16T00:00:00Z" if votes else None,
+        }
+    )
+    if extra_fb:
+        fb.update(extra_fb)
+    payload = {
+        "id": stem,
+        "type": "loop",
+        "alias": "keep_me",
+        "alias_source": "human",
+        "tags": ["cc-by", "pedigree"],
+        "license": "cc-by",
+        "watermark": {"enabled": False, "style": "image"},
+        "viewer_feedback": fb,
+        "refactor": [{"reason": "keep"}],
+    }
+    if extra_root:
+        payload.update(extra_root)
+    path = dest / f"{stem}.jellyflam3.json"
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
+def test_feedback_needs_reset_defaults():
+    assert feedback_needs_reset(None) is False
+    assert feedback_needs_reset({}) is False
+    assert feedback_needs_reset(dict(DEFAULT_FEEDBACK)) is False
+    assert feedback_needs_reset({"votes": 1, "share_candidate": True}) is True
+    assert feedback_needs_reset({"likes": 0, "extra": 1}) is True
+    assert feedback_needs_reset("nope") is True
+    assert cleared_feedback() == DEFAULT_FEEDBACK
+    cleared_feedback()["votes"] = 9
+    assert DEFAULT_FEEDBACK["votes"] == 0
+
+
+def test_sweep_dry_run_does_not_write(tmp_path: Path):
+    media = tmp_path / "media"
+    path = _write_sidecar(media, STEM, votes=3, likes=2)
+    before = path.read_text(encoding="utf-8")
+    mtime = path.stat().st_mtime_ns
+    out = sweep_votes(media, apply=False)
+    assert out["action"] == "plan"
+    assert out["dirty"] == 1
+    assert out["reset"] == 0
+    assert out["stems"] == [STEM]
+    assert path.read_text(encoding="utf-8") == before
+    assert path.stat().st_mtime_ns == mtime
+
+
+def test_sweep_apply_resets_votes_preserves_other_keys(tmp_path: Path):
+    media = tmp_path / "media"
+    _write_sidecar(
+        media,
+        STEM,
+        votes=4,
+        likes=2,
+        loves=1,
+        extra_fb={"note": "drop-me"},
+    )
+    clean = _write_sidecar(media, "electricsheep.247.00999", votes=0)
+    clean_mtime = clean.stat().st_mtime_ns
+    out = sweep_votes(media, apply=True)
+    assert out["ok"] is True
+    assert out["action"] == "apply"
+    assert out["scanned"] == 2
+    assert out["dirty"] == 1
+    assert out["reset"] == 1
+    assert out["unchanged"] == 1
+    loaded = json.loads(
+        (media / "by-generation" / "247" / f"{STEM}.jellyflam3.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert loaded["alias"] == "keep_me"
+    assert loaded["alias_source"] == "human"
+    assert loaded["type"] == "loop"
+    assert loaded["tags"] == ["cc-by", "pedigree"]
+    assert loaded["license"] == "cc-by"
+    assert loaded["watermark"] == {"enabled": False, "style": "image"}
+    assert loaded["refactor"] == [{"reason": "keep"}]
+    assert loaded["viewer_feedback"] == DEFAULT_FEEDBACK
+    assert "note" not in loaded["viewer_feedback"]
+    assert clean.stat().st_mtime_ns == clean_mtime
+    shown = show_vote(media, STEM)
+    assert shown["viewer_feedback"]["votes"] == 0
+    assert shown["viewer_feedback"]["share_candidate"] is False
+
+
+def test_sweep_skips_unpublished_quarantine(tmp_path: Path):
+    media = tmp_path / "media"
+    _write_sidecar(media, STEM, votes=2)
+    parked = (
+        media
+        / "_refactor-quarantine"
+        / "by-generation"
+        / "247"
+        / "electricsheep.247.07777.jellyflam3.json"
+    )
+    parked.parent.mkdir(parents=True)
+    parked.write_text(
+        json.dumps(
+            {
+                "id": "electricsheep.247.07777",
+                "viewer_feedback": {
+                    "likes": 9,
+                    "loves": 9,
+                    "votes": 9,
+                    "share_candidate": True,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = sweep_votes(media, apply=True)
+    assert out["stems"] == [STEM]
+    parked_data = json.loads(parked.read_text(encoding="utf-8"))
+    assert parked_data["viewer_feedback"]["votes"] == 9
+
+
+def test_sweep_one_stem_leaves_others(tmp_path: Path):
+    media = tmp_path / "media"
+    _write_sidecar(media, STEM, votes=2)
+    other = "electricsheep.247.00111"
+    _write_sidecar(media, other, votes=5)
+    out = sweep_votes(media, apply=True, stem=STEM)
+    assert out["scanned"] == 1
+    assert out["reset"] == 1
+    assert show_vote(media, STEM)["viewer_feedback"]["votes"] == 0
+    assert show_vote(media, other)["viewer_feedback"]["votes"] == 5
+
+
+def test_sweep_reports_unreadable_sidecar(tmp_path: Path):
+    media = tmp_path / "media"
+    dest = media / "by-generation" / "247"
+    dest.mkdir(parents=True)
+    (dest / f"{STEM}.jellyflam3.json").write_text("{not-json", encoding="utf-8")
+    out = sweep_votes(media, apply=True)
+    assert out["ok"] is False
+    assert out["errors"][0]["reason"] == "unreadable_sidecar"
+    assert out["reset"] == 0
+
+
+def test_sweep_cli_confirm_and_wrong_token(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
+    media = tmp_path / "media"
+    _write_sidecar(media, STEM, votes=2)
+    cfg = _catalog_cfg(tmp_path, media)
+    rc = main(["--config", str(cfg), "sweep"])
+    assert rc == 0
+    plan = json.loads(capsys.readouterr().out)
+    assert plan["action"] == "plan"
+    assert plan["dirty"] == 1
+    assert show_vote(media, STEM)["viewer_feedback"]["votes"] == 2
+
+    rc = main(["--config", str(cfg), "sweep", "--confirm", "DELETE"])
+    assert rc == 2
+    err = capsys.readouterr().err
+    assert SWEEP_CONFIRM_TOKEN in err
+    assert show_vote(media, STEM)["viewer_feedback"]["votes"] == 2
+
+    rc = main(["--config", str(cfg), "sweep", "--confirm", SWEEP_CONFIRM_TOKEN])
+    assert rc == 0
+    applied = json.loads(capsys.readouterr().out)
+    assert applied["action"] == "apply"
+    assert applied["reset"] == 1
+    assert show_vote(media, STEM)["viewer_feedback"] == DEFAULT_FEEDBACK

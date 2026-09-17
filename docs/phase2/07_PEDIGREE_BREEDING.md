@@ -167,7 +167,7 @@ Once pedigree / tuple VoDs land in the catalog, JellyFlam3 continuous shuffle in
 
 ## Daily idle breed cron
 
-When the inbox is **empty**, the worker is **idle** (gate open, no live render), and the next archive-seed cron is not imminent, a daily cron breeds **exactly one** pedigree sheep so the furnace keeps working between archive fills. Parent picks are **weighted** by catalog sidecar `viewer_feedback.votes` when that block exists ([../phase4/08_VIEWER_FEEDBACK_LOOP.md](../phase4/08_VIEWER_FEEDBACK_LOOP.md)); otherwise uniform.
+When the inbox is **empty**, the worker is **idle** (gate open, no live render), and the next archive-seed cron is not imminent, a daily cron breeds **exactly one** pedigree sheep so the furnace keeps working between archive fills. Parent picks are **weighted** by catalog sidecar `viewer_feedback.votes` when that block exists ([../phase4/08_VIEWER_FEEDBACK_LOOP.md](../phase4/08_VIEWER_FEEDBACK_LOOP.md)); otherwise uniform. `python3 -m pipeline.sheep_votes sweep --confirm SWEEP` returns those weights to uniform on this furnace.
 
 ```bash
 # Dry-run gates + plan

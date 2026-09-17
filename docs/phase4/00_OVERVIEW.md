@@ -15,7 +15,7 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 | Mesh introduce scripting | **Shipped** A/B/C — [02](02_MESH_INTRODUCE_SCRIPTING.md); manual add-json still valid |
 | Edges + watermark | **Tuple slice shipped** 2026-09-05 — [03](03_EDGES_AND_WATERMARK.md). Standalone `type: edge` files, loop/stills watermark, and Kodi edge sequencer **cancelled** 2026-09-13 (tuples cover the journey) |
 | Roku VoD + screensaver publish | **Private-channel path shipped** 2026-09-11 — [04](04_ROKU_PUBLISH.md) (VoD as unpublished channel + one sideload slot for SS; SS Settings writes Jellyfin creds in **1.0.10**). Channel Store / brand assets parked |
-| End-user guide (tasks / examples / triage) | **Baseline + vote/share recipe** — [05](05_END_USER_GUIDE.md); [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) (example 6); fridge card [FRIDGE_CARD.md](../FRIDGE_CARD.md) |
+| End-user guide (tasks / examples / triage) | **Baseline + vote/share recipe** — [05](05_END_USER_GUIDE.md); [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) (examples 6–7); fridge card [FRIDGE_CARD.md](../FRIDGE_CARD.md) |
 | Sheep library disk check + auto-purge / rotate | **Rotate shipped** 2026-09-13 — [06](06_LIBRARY_DISK_ROTATE.md); healthcheck WARN/BAD; worker refuse on sheep BAD; daily rotate cron **inactive until needed** |
 | Concurrent clients / link-capacity estimate | **Estimator shipped** 2026-09-03 — [07](07_CONCURRENT_CLIENTS.md); `wifi-pi` lab (`eth0 DOWN`); **Owner OK 2026-09-09**. Jellyfin cap / Ethernet lab **cancelled** |
 | Viewer feedback loop (vote → share + breed bias) | **Wave 2+3 shipped** — [08](08_VIEWER_FEEDBACK_LOOP.md); VoD **1.0.32** overlay; share cron; idle-breed weights. **Screensaver voting** and **auto-promote cancelled** 2026-09-13 |
@@ -46,7 +46,7 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 
 | Slice | Guide | What landed | Still parked |
 |---|---|---|---|
-| Viewer overlay + sidecar sink | [08](08_VIEWER_FEEDBACK_LOOP.md) | VoD **1.0.32** transient like/love/vote overlay (last 12 s, playback continues). `POST /v1/sheep-votes` on `jellyflam3-display-sink` (:8791) increments `{stem}.jellyflam3.json` `viewer_feedback` and sets `share_candidate`. CLI `python3 -m pipeline.sheep_votes`. Unlimited re-vote. Screensaver voting **cancelled**. | — |
+| Viewer overlay + sidecar sink | [08](08_VIEWER_FEEDBACK_LOOP.md) | VoD **1.0.32** transient like/love/vote overlay (last 12 s, playback continues). `POST /v1/sheep-votes` on `jellyflam3-display-sink` (:8791) increments `{stem}.jellyflam3.json` `viewer_feedback` and sets `share_candidate`. CLI `python3 -m pipeline.sheep_votes` (`apply` / `show` / `sweep --confirm SWEEP`). Unlimited re-vote. Screensaver voting **cancelled**. | — |
 | Private-channel path | [04](04_ROKU_PUBLISH.md) | In-repo runbook: VoD as unpublished/private channel so the one sideload slot can hold screensaver. Roku SS **1.0.10** Settings writes Jellyfin creds (registry is per channel ID once packages coexist). | Channel Store listing; brand-asset refresh; VoD Settings layout polish; Owner dashboard publish |
 
 ## Opened (2026-09-13)

@@ -5,7 +5,7 @@ One document, **three layers**. Pick your layer and stay there — you should no
 | Layer | Audience | You want to… |
 |---|---|---|
 | **[Layer 1 — End user](#layer-1--end-user)** | Household / viewer | Watch ambient loops, use Roku or Kodi screensaver, fix “nothing plays” without SSH |
-| **[Worked examples](#worked-examples)** | Viewer + operator | Four first-evening stories (VoD gate, screensaver, two Rokus, peer receive) |
+| **[Worked examples](#worked-examples)** | Viewer + operator | First-evening stories (VoD gate, screensaver, two Rokus, peer receive, drain, vote/share, **vote sweep**) |
 | **[Layer 2 — Operator](#layer-2--operator-runbook)** | Pi owner / homelab operator | Keep the flock healthy, seed/breed/delete sheep, peering, health gates, fleet updates, **private ↔ public** |
 | **[Layer 3 — Contributor](#layer-3--contributor)** | Developer / maintainer | Run tests, change pipeline code, CI, deploy conventions |
 
@@ -256,6 +256,35 @@ python3 -m pipeline.worker_drain cancel
 4. On a **receiver** Pi (after Syncthing): still **`promote --apply`**. Loved NC sheep are not shared when this furnace’s `license.commercial_mode` is on. Opt Out skips the cron (`action=skip`, `reason=opt_out`).
 
 **Pass:** file in publisher `share-out`; receiver `peers/inbox` then inbox/quarantine only after promote. **Fail:** expecting votes to render a new sheep by themselves (they do not); cancel drain if you paused the worker.
+
+### 7 — Sweep votes (fresh start on this furnace)
+
+**Host:** furnace Pi with catalog sidecars. Use this when household likes should no longer bias idle breed or daily `share_votes`. Votes live only on `{stem}.jellyflam3.json` `viewer_feedback`. This does **not** delete MP4s, genomes, aliases, or files already copied to `peers/share-out`.
+
+1. Dry-run (default). Confirm `dirty` is the sheep you expect; `reset` stays `0`:
+
+   ```bash
+   cd /opt/jellyflam3-server
+   python3 -m pipeline.sheep_votes sweep
+   python3 -m pipeline.sheep_votes show --stem electricsheep.247.00505
+   ```
+
+2. Apply the flock-wide reset (must be exactly `SWEEP`):
+
+   ```bash
+   python3 -m pipeline.sheep_votes sweep --confirm SWEEP
+   python3 -m pipeline.sheep_votes show --stem electricsheep.247.00505
+   ```
+
+   Expect `likes` / `loves` / `votes` = `0`, `share_candidate: false`, `last_voted_at: null`. Optional one-sheep reset: add `--stem electricsheep.247.00505`.
+3. Confirm share cron no longer selects those stems, and that a prior share-out copy is still on disk:
+
+   ```bash
+   python3 -m pipeline.share_votes --json
+   ls genomes/peers/share-out
+   ```
+
+**Pass:** `sweep --confirm SWEEP` reports `action: apply` and `reset` matching the dry-run `dirty` count; `show` is zeros; `share_votes` plan has `candidates: 0` (unless new votes arrived). **Fail:** `--confirm DELETE` (Shears token) is rejected; omit `--confirm` if you only wanted the plan. Next Roku votes increment from zero again. Idle-breed parent weights return to uniform until new votes land.
 
 ---
 
@@ -1010,7 +1039,7 @@ python3 -m pipeline.hw_profile      # apply 16a/08a/04a profile
 python3 -m pipeline.link_capacity   # concurrent-client N_max estimate
 python3 -m pipeline.library_disk    # sheep-mount WARN/BAD + rotate
 python3 -m pipeline.sheep_naming    # alias backfill / set / clear / resolve
-python3 -m pipeline.sheep_votes     # sidecar like/love/vote (show / apply)
+python3 -m pipeline.sheep_votes     # sidecar like/love/vote (show / apply / sweep)
 python3 -m pipeline.share_votes     # liked sheep → peers/share-out (plan / --apply)
 python3 -m pipeline.display_profiles
 ```

@@ -8,11 +8,16 @@ Usage:
   python3 -m pipeline.sheep_votes apply --stem electricsheep.247.00505 --kind love
   python3 -m pipeline.sheep_votes apply --stem electricsheep.247.00505 --kind vote
   python3 -m pipeline.sheep_votes show --stem electricsheep.247.00505
+  python3 -m pipeline.sheep_votes sweep
+  python3 -m pipeline.sheep_votes sweep --confirm SWEEP
+  python3 -m pipeline.sheep_votes sweep --stem electricsheep.247.00505 --confirm SWEEP
 
 Assumptions: The catalog sidecar is the sole metadata SoT. No store under
   ``/var/lib/jellyflam3/``.   Unlimited re-vote. Any event sets ``share_candidate``.
-  Share cron: ``python3 -m pipeline.share_votes``. Idle-breed reads the same
-  sidecar block for parent weights. HTTP lives on the
+  ``sweep`` zeros ``viewer_feedback`` on live catalog sidecars (dry-run unless
+  ``--confirm SWEEP``). It does not delete MP4s, genomes, aliases, or files
+  already in ``peers/share-out``. Share cron: ``python3 -m pipeline.share_votes``.
+  Idle-breed reads the same sidecar block for parent weights. HTTP lives on the
   display-profile sink (``POST /v1/sheep-votes``).
 Docs: docs/phase4/08_VIEWER_FEEDBACK_LOOP.md
 """
@@ -29,10 +34,12 @@ from pathlib import Path
 from typing import Any, Iterator
 
 from pipeline.config import load_config, resolve_path
-from pipeline.sheep_naming import load_sidecar_for_stem, sidecar_stem
+from pipeline.media_layout import is_unpublished_media_path
+from pipeline.sheep_naming import iter_sidecars, load_sidecar_for_stem, sidecar_stem
 from pipeline.stills import sidecar_path_for_mp4
 
 VOTE_KINDS = frozenset({"like", "love", "vote"})
+SWEEP_CONFIRM_TOKEN = "SWEEP"
 
 DEFAULT_FEEDBACK: dict[str, Any] = {
     "likes": 0,
@@ -101,6 +108,25 @@ def normalize_feedback(raw: Any) -> dict[str, Any]:
         text = str(last).strip()
         out["last_voted_at"] = text or None
     return out
+
+
+def cleared_feedback() -> dict[str, Any]:
+    """Canonical empty ``viewer_feedback`` (fresh start). Extra keys are dropped."""
+    return dict(DEFAULT_FEEDBACK)
+
+
+def feedback_needs_reset(raw: Any) -> bool:
+    """True when the sidecar block is missing defaults or has extra keys."""
+    if raw is None:
+        return False
+    if not isinstance(raw, dict):
+        return True
+    if not raw:
+        return False
+    if set(raw) - set(DEFAULT_FEEDBACK):
+        return True
+    normalized = normalize_feedback(raw)
+    return any(normalized.get(key) != value for key, value in DEFAULT_FEEDBACK.items())
 
 
 def increment_feedback(block: dict[str, Any], kind: str, *, when: str | None = None) -> dict[str, Any]:
@@ -284,13 +310,81 @@ def show_vote(media_root: Path, stem: str) -> dict[str, Any]:
     }
 
 
+def _iter_sweep_sidecars(media_root: Path, stem: str = "") -> list[Path]:
+    """Live catalog sidecars, or one resolved stem. Never unpublished trees."""
+    want = (stem or "").strip()
+    if want:
+        path = resolve_vote_sidecar(media_root, stem=want)
+        if is_unpublished_media_path(path):
+            raise StemNotFound("unpublished sidecar is not in the live flock: %s" % path)
+        return [path]
+    return [p for p in iter_sidecars(media_root) if not is_unpublished_media_path(p)]
+
+
+def sweep_votes(
+    media_root: Path,
+    *,
+    apply: bool = False,
+    stem: str = "",
+) -> dict[str, Any]:
+    """Reset dirty ``viewer_feedback`` blocks. Dry-run unless ``apply``."""
+    dirty: list[str] = []
+    errors: list[dict[str, str]] = []
+    unchanged = 0
+    reset = 0
+    paths = _iter_sweep_sidecars(media_root, stem)
+    for path in paths:
+        rec_stem = sidecar_stem(path)
+        with sidecar_lock(path):
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                errors.append(
+                    {
+                        "stem": rec_stem,
+                        "sidecar": str(path),
+                        "reason": "unreadable_sidecar",
+                        "error": str(exc),
+                    }
+                )
+                continue
+            if not isinstance(data, dict):
+                errors.append(
+                    {
+                        "stem": rec_stem,
+                        "sidecar": str(path),
+                        "reason": "unreadable_sidecar",
+                        "error": "sidecar is not an object",
+                    }
+                )
+                continue
+            if not feedback_needs_reset(data.get("viewer_feedback")):
+                unchanged += 1
+                continue
+            dirty.append(rec_stem)
+            if apply:
+                data["viewer_feedback"] = cleared_feedback()
+                atomic_write_json(path, data)
+                reset += 1
+    return {
+        "ok": not errors,
+        "action": "apply" if apply else "plan",
+        "scanned": len(paths),
+        "dirty": len(dirty),
+        "reset": reset,
+        "unchanged": unchanged,
+        "stems": dirty,
+        "errors": errors,
+    }
+
+
 def _media_root(config: Path) -> Path:
     cfg = load_config(str(config))
     return resolve_path(cfg, "media_library")
 
 
 def main(argv: list[str] | None = None) -> int:
-    """CLI: apply or show sidecar vote tallies."""
+    """CLI: apply, show, or sweep sidecar vote tallies."""
     ap = argparse.ArgumentParser(description="Catalog sidecar viewer votes (like/love/vote)")
     ap.add_argument("--config", default="configs/jellyflam3.yaml")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -303,12 +397,38 @@ def main(argv: list[str] | None = None) -> int:
     p_show = sub.add_parser("show", help="Print viewer_feedback for a stem")
     p_show.add_argument("--stem", required=True)
 
+    p_sweep = sub.add_parser(
+        "sweep",
+        help=f"Zero live-catalog viewer_feedback (dry-run unless --confirm {SWEEP_CONFIRM_TOKEN})",
+    )
+    p_sweep.add_argument("--stem", default="", help="Limit to one stem (default: whole live catalog)")
+    p_sweep.add_argument(
+        "--confirm",
+        default="",
+        help=f"Must be {SWEEP_CONFIRM_TOKEN!r} to apply (default: dry-run)",
+    )
+
     args = ap.parse_args(argv)
     media = _media_root(Path(args.config))
     try:
         if args.cmd == "show":
             print(json.dumps(show_vote(media, args.stem), indent=2))
             return 0
+        if args.cmd == "sweep":
+            if args.confirm and args.confirm != SWEEP_CONFIRM_TOKEN:
+                print(
+                    f"ERROR: --confirm must be exactly {SWEEP_CONFIRM_TOKEN!r} "
+                    f"(got {args.confirm!r}). Dry-run: omit --confirm.",
+                    file=sys.stderr,
+                )
+                return 2
+            result = sweep_votes(
+                media,
+                apply=args.confirm == SWEEP_CONFIRM_TOKEN,
+                stem=args.stem,
+            )
+            print(json.dumps(result, indent=2))
+            return 0 if result["ok"] else 1
         result = apply_vote(
             media,
             {"stem": args.stem, "kind": args.kind, "mediaPath": args.media_path},

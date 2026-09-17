@@ -23,7 +23,7 @@ Contract: [phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_
 
 ## Sidecar
 
-Share-out reads **`viewer_feedback.share_candidate`** on `{stem}.jellyflam3.json` ([phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema)). Vote sink sets it; share cron stages **share-out** only. Worker ingest copies reserved sidecar keys across re-encode. That does **not** skip promote.
+Share-out reads **`viewer_feedback.share_candidate`** on `{stem}.jellyflam3.json` ([phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema)). Vote sink sets it; `python3 -m pipeline.sheep_votes sweep --confirm SWEEP` clears it on the live catalog (already-copied `peers/share-out` files stay). Share cron stages **share-out** only. Worker ingest copies reserved sidecar keys across re-encode. That does **not** skip promote.
 
 ## Non-goals (cancelled / out of product)
 
