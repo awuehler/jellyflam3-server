@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Operator runbook: `worker_drain request` returns as soon as the flag is set (`phase=draining` while a job is in flight); `request --wait` keeps polling until `phase=idle`. `INFO waiting for drain idle (N in-flight job(s))` is expected; leftover inbox files do not keep the wait looping.
 - Roku VoD **1.0.42**: Settings OK-toggle for `commercialMode`, `streamMode`, `shuffleFlock`, and `titleMode` (no keyboard); text fields still use the keyboard. Player chrome labels (loading-next and vote) use the same **55%** alpha as the bar (`0xE8E8F08C`).
 - Roku VoD **1.0.41**: loading-next and vote banners share one 55% bar at `[80,920]` with the same SmallSystemFont line so they swap in place. Vote left side is filename/alias only (no “Like this sheep:”); the name is clipped so it cannot overlap the key hints.
 - Roku VoD **1.0.40**: vote overlay is a single 55% banner in the last **7 s**; filename/alias left, **OK love · RIGHT like · DOWN dismiss · UP/BACK exit** right.

@@ -218,14 +218,16 @@ On that furnace Pi:
 
 ```bash
 cd /opt/jellyflam3-server
-python3 -m pipeline.worker_drain request --wait
+python3 -m pipeline.worker_drain request          # sets drain=true and returns
+python3 -m pipeline.worker_drain status           # draining while a job is in flight
+python3 -m pipeline.worker_drain request --wait   # same flag, then block until idle
 # phase is "idle" — nothing in-flight. Optional safe restart:
 # sudo systemctl restart jellyflam3-worker
 # Stay paused until you resume (survives restart):
 python3 -m pipeline.worker_drain cancel
 ```
 
-`status` prints `phase`: `off` (normal), `draining` (current job still running), `idle` (safe to restart or leave quiet). `cancel` / `resume` / `undrain` are the same.
+`status` prints `phase`: `off` (normal), `draining` (current job still running), `idle` (safe to restart or leave quiet). `request` only writes the flag; `--wait` keeps polling until `in_flight` is empty. `cancel` / `resume` / `undrain` are the same.
 
 **Pass:** after `--wait`, `status` shows `"phase": "idle"` and `"drain": true`; healthcheck WARNs drain until cancel. **Fail:** restarting **before** idle still orphans the live `flam3-animate` (today’s restart). The **first** git pull that adds drain still needs one worker restart to load the check — do that between jobs if you can.
 
@@ -385,14 +387,24 @@ Ctrl+C and rerun after `gate` is `open`, or leave the command running — it con
 Lets the **current** inbox job finish, then the worker **watches inbox without claiming**. Archive seed and idle-breed may still drop files; they sit until you cancel. Distinct from [idle gate](#idle-gate-behavior) (TV Playing) and from an empty inbox.
 
 ```bash
-python3 -m pipeline.worker_drain request          # stop after the current job
-python3 -m pipeline.worker_drain request --wait   # same, then block until idle
+python3 -m pipeline.worker_drain request          # set drain=true and return (job may still be in flight)
+python3 -m pipeline.worker_drain request --wait   # same, then block until phase=idle
 python3 -m pipeline.worker_drain status           # off | draining | idle
 python3 -m pipeline.worker_drain wait             # block until idle (flag already set)
 python3 -m pipeline.worker_drain cancel           # resume claiming (no restart)
 ```
 
-Status file: `/var/lib/jellyflam3/worker_drain.json` (`paths.worker_drain_file`). The flag **persists across** `systemctl restart` until `cancel`. Safe restart recipe: `request --wait` then restart. Do **not** SIGSTOP `flam3-animate` and do not kill the current job to “pause”.
+`request` writes `/var/lib/jellyflam3/worker_drain.json` (`drain: true`) immediately. That is **not** “idle”. While a claimed job is still `queued` / `rendering` / `encoding` / `gating`, `status` shows `phase=draining` and `in_flight=1` (or more). `inbox_pending` is leftover `.flam3` waiting to be claimed; drain leaves those files on disk and they do **not** keep `--wait` looping.
+
+`--wait` / `wait` poll until `phase=idle` (no in-flight `job.json`). Until then you will see:
+
+```text
+INFO waiting for drain idle (1 in-flight job(s))
+```
+
+That line is expected. The CLI exits when that job finishes (or `--timeout-sec` expires). Optional `--poll-sec` (default **2**). Restarting **before** idle still orphans live `flam3-animate`.
+
+Status file: `/var/lib/jellyflam3/worker_drain.json` (`paths.worker_drain_file`). The flag **persists across** `systemctl restart` until `cancel`. Safe restart recipe: `request --wait` (wait for **idle**, not merely draining) then restart. Do **not** SIGSTOP `flam3-animate` and do not kill the current job to “pause”.
 
 `--once` is an explicit operator run and still processes that genome while drained.
 
@@ -910,7 +922,7 @@ git pull --ff-only
 git log -1 --oneline
 ./scripts/ensure_exec_bits.sh --check     # or ./scripts/ensure_exec_bits.sh if drift
 # If worker/idle_gate code changed, drain first so restart does not orphan animate:
-python3 -m pipeline.worker_drain request --wait
+python3 -m pipeline.worker_drain request --wait   # blocks until phase=idle, not merely draining
 sudo systemctl restart jellyflam3-idlegate jellyflam3-worker
 python3 -m pipeline.worker_drain cancel   # resume claiming (omit to stay paused)
 ./scripts/healthcheck.sh
@@ -1021,7 +1033,7 @@ On Windows: use Git Bash for gate script tests; `media_layout` tests skip on `nt
 
 ```text
 python3 -m pipeline.worker          # furnace (quality gate → encode → ingest)
-python3 -m pipeline.worker_drain    # finish current job, then pause claiming
+python3 -m pipeline.worker_drain    # request sets the flag; --wait blocks until idle (not draining)
 python3 -m pipeline.idle_gate       # gate supervisor
 python3 -m pipeline.seed_inbox      # archive / random / mutate feedstock
 python3 -m pipeline.breed           # pedigree mutate/cross/blend/interpolate
