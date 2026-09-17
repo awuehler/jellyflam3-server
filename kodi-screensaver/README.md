@@ -18,6 +18,7 @@ Tasks **1–4** done; **Jellyfin flock client + commercial filter + shuffle sequ
 - **0.2.8:** always shuffle; heal persisted `shuffle=false` after zip upgrade
 - **0.2.9:** re-fetch Jellyfin once per full shuffle wrap (one random permutation; next clip is not the one that just finished); HTTP Limit 5000 then randomly prune the session list to 313 (`flock_limit`)
 - **0.2.10:** quarantine recovery closes Kodi's playback-failed `okdialog` automatically, so the refreshed flock continues without a lingering end-user prompt
+- Does **not** take votes (any remote/keyboard action exits the screensaver). If a vote overlay is opened later, use the same two-tier map as Roku VoD **1.0.38**: Enter/Select = love, Right = like, Down = dismiss, Up/Back/Esc = exit
 
 **Post-launch:** loop→edge→loop sequencer (edges + watermark) is not in v0.3.0.
 

@@ -39,7 +39,7 @@
         height="36"
         font="font:SmallSystemFont"
         color="0xA0A0B8FF"
-        text="OK like · FF love · REPLAY vote · BACK dismiss" />
+        text="OK love · RIGHT like · DOWN dismiss · UP/BACK exit" />
     </Group>
     <Label
       id="status"

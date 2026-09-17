@@ -46,7 +46,7 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 
 | Slice | Guide | What landed | Still parked |
 |---|---|---|---|
-| Viewer overlay + sidecar sink | [08](08_VIEWER_FEEDBACK_LOOP.md) | VoD **1.0.32** transient like/love/vote overlay (last 12 s, playback continues). `POST /v1/sheep-votes` on `jellyflam3-display-sink` (:8791) increments `{stem}.jellyflam3.json` `viewer_feedback` and sets `share_candidate`. CLI `python3 -m pipeline.sheep_votes` (`apply` / `show` / `sweep --confirm SWEEP`). Unlimited re-vote. Screensaver voting **cancelled**. | — |
+| Viewer overlay + sidecar sink | [08](08_VIEWER_FEEDBACK_LOOP.md) | VoD **1.0.32** overlay (last 12 s). **1.0.38** two-tier **OK** love / **Right** like / **Down** dismiss / **Up-Back** exit. `POST /v1/sheep-votes` on `jellyflam3-display-sink` (:8791) increments `{stem}.jellyflam3.json` `viewer_feedback` and sets `share_candidate`. CLI `python3 -m pipeline.sheep_votes` (`apply` / `show` / `sweep --confirm SWEEP`). Unlimited re-vote. Screensaver voting **cancelled**. | — |
 | Private-channel path | [04](04_ROKU_PUBLISH.md) | In-repo runbook: VoD as unpublished/private channel so the one sideload slot can hold screensaver. Roku SS **1.0.10** Settings writes Jellyfin creds (registry is per channel ID once packages coexist). | Channel Store listing; brand-asset refresh; VoD Settings layout polish; Owner dashboard publish |
 
 ## Opened (2026-09-13)

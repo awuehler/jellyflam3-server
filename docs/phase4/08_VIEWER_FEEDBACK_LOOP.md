@@ -43,18 +43,17 @@ Depends on Phase 1–2 Roku VoD playback ([../phase1/08_ROKU_BRIGHTSCRIPT.md](..
 
 Key **`viewer_feedback`** (likes / loves / votes / last_voted_at / share_candidate) is reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Overlay and vote sink write that block on `{stem}.jellyflam3.json` only. Share cron and idle-breed weights **read** the same block (Wave 3). Load–mutate–write readers keep unknown JSON; worker ingest copies this block across re-encode. Any vote sets `share_candidate: true`; gated `promote --apply` is unchanged.
 
-### Remote map (VoD 1.0.32)
+### Remote map (VoD **1.0.38**)
 
-Overlay is visual-only (Video stays focused; playback does not pause). Shown when remaining duration ≤ 12 s.
+Overlay is visual-only (playback does not pause). Shown when remaining duration ≤ 12 s. Two kinds only: **love** and **like**. Both increment sidecar `votes` (share cron + idle-breed). Plain `kind=vote` stays on the furnace CLI/API for compatibility; the channel does not POST it. The arrows match a keyboard so a later Kodi overlay can use Enter / Right / Down / Up-Esc without a third vote kind. **Roku screensaver voting stays cancelled.** Kodi screensaver still exits on any key and does not vote.
 
-| Key | Action |
-|---|---|
-| **OK** | like (`likes++`, `votes++`) |
-| **FF** | love (`loves++`, `votes++`) |
-| **REPLAY** | plain vote (`votes++` only) |
-| **BACK** (overlay visible) | dismiss overlay; do not exit playback |
-| **Up** | exit playback (same trapdoor as before the overlay) |
-| **\*** / Options / Info | Settings on Home (not consumed during overlay) |
+| Key | Action | Keyboard / future Kodi |
+|---|---|---|
+| **OK** | love (`loves++`, `votes++`) | Enter / Select |
+| **Right** | like (`likes++`, `votes++`) | Right arrow |
+| **Down** (overlay visible) | dismiss overlay; do not exit playback | Down arrow |
+| **Up** / **BACK** | exit playback | Up arrow / Esc |
+| **\*** / Options / Info | Settings on Home (not consumed during overlay) | — |
 
 `POST /v1/sheep-votes` on `jellyflam3-display-sink` (:8791, header `X-JellyFlam3-Token`). CLI: `python3 -m pipeline.sheep_votes apply --stem … --kind like\|love\|vote`; `show --stem …`; flock fresh start `sweep` (dry-run) / `sweep --confirm SWEEP`. Restart **display-sink** (not the worker) to load the route.
 
@@ -63,8 +62,8 @@ Overlay is visual-only (Video stays focused; playback does not pause). Shown whe
 ### A — Roku VoD overlay (shipped 1.0.32)
 
 1. **Timing** — overlay when remaining duration ≤ 12 s; hide on timeout (10 s), vote, BACK, or clip advance.
-2. **UI** — transient SceneGraph group over Video (bottom banner, **65%** opacity in **1.0.35**); prompt is **Like this sheep:** plus Settings `titleMode` (alias when that mode is on and an alias exists, else filename); copy for like / love / vote; no Button focus. In **1.0.37**, `PlayerScreen` owns focus instead of the Video node so Video cannot consume FF / Replay before the vote handler. Overlay is skipped on **tuple** clips.
-3. **Mapping** — see Remote map above; shuffle / streamMode / Options keys are not stolen during playback.
+2. **UI** — transient SceneGraph group over Video (bottom banner, **65%** opacity in **1.0.35**); prompt is **Like this sheep:** plus Settings `titleMode` (alias when that mode is on and an alias exists, else filename); copy for love / like / dismiss / exit. No Button focus. **1.0.37+** `PlayerScreen` owns focus instead of the Video node. Overlay is skipped on **tuple** clips. **1.0.38** map: OK love, Right like, Down dismiss, Up/Back exit.
+3. **Mapping** — see Remote map above; shuffle / streamMode / Options keys are not stolen during playback. FF / Replay are unused (not vote aliases).
 4. **Identity** — stem from `mediaPath` basename (fallback `electricsheep.{generation}.{sheepId}`); Jellyfin item id + optional DeviceId on the event.
 5. **Multi-Roku** — per-device DeviceId optional; household votes aggregate on the furnace sidecar.
 6. **Shuffle pool (shipped 1.0.28)** — VoD `shuffleFlock` already includes **`pedigree`** and **`tuple`**.

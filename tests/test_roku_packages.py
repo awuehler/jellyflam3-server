@@ -65,8 +65,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=37" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.37""' in text
+    assert "build_version=38" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.38""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
@@ -93,7 +93,9 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "sub submitSheepVote(kind as string)" in player
     assert 'submitSheepVote("like")' in player
     assert 'submitSheepVote("love")' in player
-    assert 'submitSheepVote("vote")' in player
+    assert 'submitSheepVote("vote")' not in player
+    assert 'key = "right"' in player
+    assert 'key = "down"' in player
     assert "m.top.focusable = true" in player
     assert "m.top.setFocus(true)" in player
     assert "m.video.setFocus(true)" not in player
@@ -198,7 +200,7 @@ def test_roku_vod_vote_overlay_skips_tuples_and_softens_banner():
     assert "if isTuplePlayback()" in player
     assert 'Instr(1, stem, ".tuple.")' in player
     assert 'color="0x0A0A12A6"' in xml
-    assert "OK like · FF love · REPLAY vote · BACK dismiss" in xml
+    assert "OK love · RIGHT like · DOWN dismiss · UP/BACK exit" in xml
     assert "function votePromptName() as string" in player
     assert "return displayNameForUi()" in player
     assert '"Like this sheep: " + votePromptName()' in player

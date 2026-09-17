@@ -15,7 +15,9 @@ If a sheep is quarantined or Shears-deleted while a clip is queued, **1.0.29+** 
 
 The **1.0.36** flock browser wraps every six posters into vertically scrollable rows (three rows visible at once; 270×152 tiles leave a right gutter so column 6 is not clipped). Home copy is **Ambient Dreams** and **N sheep in flock**. Tile metadata is duration / generation / full `cc-*` license (including `cc-by-sa` and `cc-by-nc-sa`). Pedigree tags stay on the detail chip so they do not clip the license on 270px tiles. While the next MP4 connects, the lower-left status shows `{alias}(MP4)` when available.
 
-**1.0.37 settings and controls:** keyboard **OK** validates and persists that field immediately; Back returns without discarding accepted edits, and Done reloads the flock. Boolean/title reads are canonicalized. The home status reports effective commercial filtering and alias/fallback counts. NC tags always override safe tags, including conflicting-tag data and deep links. PlayerScreen owns focus so Roku Video cannot swallow **FF love** or **REPLAY vote**; OK like and BACK dismiss are unchanged.
+**1.0.37 settings and controls:** keyboard **OK** validates and persists that field immediately; Back returns without discarding accepted edits, and Done reloads the flock. Boolean/title reads are canonicalized. The home status reports effective commercial filtering and alias/fallback counts. NC tags always override safe tags, including conflicting-tag data and deep links. PlayerScreen owns focus so Roku Video cannot swallow vote keys.
+
+**1.0.38 vote map:** two-tier only — **OK** love, **Right** like, **Down** dismiss overlay, **Up / Back** exit playback. No plain `vote` POST from the channel. Same arrows as a keyboard (Enter / Right / Down / Up-Esc) so a later Kodi overlay can match.
 
 ## Settings version
 
@@ -91,7 +93,7 @@ cd /opt/jellyflam3-server
 
 Developer mode holds **one** sideloaded package. Installing the screensaver zip replaces this VoD channel on that box; re-sideload this zip to restore. To keep **both** installed, publish VoD as a private/unpublished channel ([docs/phase4/04](../docs/phase4/04_ROKU_PUBLISH.md#private-channel-path-wave-2)).
 
-**Vote overlay (1.0.32, polish 1.0.35):** near the end of each non-tuple clip a banner appears without pausing. Prompt names the sheep with Settings `titleMode` (alias or filename). **OK** like · **FF** love · **REPLAY** vote · **BACK** dismiss. Tuples skip the overlay. Banner fill is 65% opaque. The channel POSTs to `http://{Jellyfin-host}:8791/v1/sheep-votes` (same token as display profiles). Playback / Sessions / wrap-once behavior is unchanged.
+**Vote overlay (1.0.32, polish 1.0.35, map 1.0.38):** near the end of each non-tuple clip a banner appears without pausing. Prompt names the sheep with Settings `titleMode` (alias or filename). **OK** love · **RIGHT** like · **DOWN** dismiss · **UP/BACK** exit. Tuples skip the overlay. Banner fill is 65% opaque. The channel POSTs to `http://{Jellyfin-host}:8791/v1/sheep-votes` (same token as display profiles). Playback / Sessions / wrap-once behavior is unchanged.
 
 **Title mode (1.0.33):** Settings `titleMode=alias` shows the memorable `adjective_surname` on flock tiles and player status. Default remains the filename. Sideload this package and, for sheep ingested before this slice, run `python3 -m pipeline.sheep_naming backfill --push-jellyfin` so Overview has `Alias:` lines.
 

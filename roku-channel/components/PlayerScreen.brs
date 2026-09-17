@@ -1,7 +1,7 @@
 sub init()
-  ' Keep focus on this wrapper, not Video. Roku Video consumes transport keys
-  ' (FF/Replay) before they can bubble to onKeyEvent; the wrapper owns ambient
-  ' playback controls and forwards no native seek commands.
+  ' Keep focus on this wrapper, not Video. Roku Video consumes transport / d-pad
+  ' keys before they can bubble to onKeyEvent; the wrapper owns ambient playback
+  ' controls and forwards no native seek commands.
   m.top.focusable = true
   m.video = m.top.findNode("Video")
   m.status = m.top.findNode("status")
@@ -357,18 +357,19 @@ end sub
 
 function onKeyEvent(key as string, press as boolean) as boolean
   if not press then return false
+  ' Overlay-only votes: OK=love, Right=like, Down=dismiss. Matches a keyboard
+  ' (Enter / Right / Down / Up-Esc) so Kodi can use the same map later.
   if voteOverlayVisible()
     if key = "OK"
-      submitSheepVote("like")
-      return true
-    else if key = "fastforward"
       submitSheepVote("love")
       return true
-    else if key = "replay"
-      submitSheepVote("vote")
+    else if key = "right"
+      submitSheepVote("like")
       return true
-    else if key = "back"
+    else if key = "down"
       dismissVoteOverlay()
+      return true
+    else if key = "left"
       return true
     end if
   end if

@@ -57,7 +57,7 @@ Shipped in [USER_GUIDE_AND_RUNBOOK.md — Worked examples](../USER_GUIDE_AND_RUN
 3. Two Rokus, one Pi: Fetch TV display on both → two profile files → independent prefs.
 4. Peer receive: land in `peers/inbox` → verify → promote → furnace picks up.
 5. Pause the furnace: drain request --wait → optional restart → cancel.
-6. Vote then share: overlay OK/FF/REPLAY → sidecar `share_candidate` → `share_votes` / cron copies `share-out` → receiver still `promote --apply`. Tuples skip the overlay.
+6. Vote then share: overlay OK love / Right like / Down dismiss / Up-Back exit → sidecar `share_candidate` → `share_votes` / cron copies `share-out` → receiver still `promote --apply`. Tuples skip the overlay.
 7. Sweep votes: `sheep_votes sweep` dry-run → `--confirm SWEEP` zeros live-catalog `viewer_feedback`; share-out copies and aliases stay.
 
 ### D — Triage cookbook
