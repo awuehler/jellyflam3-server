@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Roku VoD **1.0.42**: Settings OK-toggle for `commercialMode`, `streamMode`, `shuffleFlock`, and `titleMode` (no keyboard); text fields still use the keyboard. Player chrome labels (loading-next and vote) use the same **55%** alpha as the bar (`0xE8E8F08C`).
 - Roku VoD **1.0.41**: loading-next and vote banners share one 55% bar at `[80,920]` with the same SmallSystemFont line so they swap in place. Vote left side is filename/alias only (no “Like this sheep:”); the name is clipped so it cannot overlap the key hints.
 - Roku VoD **1.0.40**: vote overlay is a single 55% banner in the last **7 s**; filename/alias left, **OK love · RIGHT like · DOWN dismiss · UP/BACK exit** right.
 - Roku VoD **1.0.39**: `titleMode` is now an OK-toggle (`filename` ↔ `alias`) that writes and flushes the registry immediately; **Save & Reload** replaces ambiguous **Done** and refreshes the home flock using the effective mode.

@@ -29,7 +29,7 @@
       color="0xA0A0B0FF" />
     <Label
       id="hint"
-      text="Up/Down / OK edits or toggles and saves / Back returns / Save &amp; Reload applies"
+      text="Up/Down / OK toggles modes or edits text and saves / Back returns / Save &amp; Reload applies"
       translation="[120,96]"
       width="1680"
       wrap="true"

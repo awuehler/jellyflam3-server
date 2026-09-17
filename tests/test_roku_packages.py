@@ -65,8 +65,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=41" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.41""' in text
+    assert "build_version=42" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.42""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
@@ -106,7 +106,7 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "function shuffleFlockDefault() as boolean" in settings
     assert "return true" in settings
     assert 'if val = "" then shown = "true"' in settings
-    assert 'val = "true"' in settings
+    assert "normalizeBool(val, true)" in settings
     assert "function normalizeTitleMode(raw as string) as string" in settings
     assert 'if v = "alias" then return "alias"' in settings
     assert "function applyEditedValue(name as string, text as string) as boolean" in settings
@@ -124,10 +124,15 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "m.registry.write(name, val)" in settings
     assert "m.registry.flush()" in settings
     assert "m.top.saved = true" in settings
-    assert 'else if id = "row_titleMode"' in settings
-    assert "sub toggleTitleMode()" in settings
-    assert 'm.registry.write("titleMode", nextMode)' in settings
-    assert 'm.inputNotice = "titleMode saved as " + nextMode' in settings
+    assert "function isOkToggleField(name as string) as boolean" in settings
+    assert "sub toggleChoice(name as string)" in settings
+    assert "function nextToggleValue(name as string) as string" in settings
+    assert "saved as" not in settings
+    assert "m.inputNotice = \"\"" in settings
+    assert "isOkToggleField(name) <> true" in settings
+    assert "if isOkToggleField(name)" in settings
+    assert "sub toggleTitleMode()" not in settings
+    assert 'streamMode: mp4 or hls' not in settings
     assert 'm.top.findNode("row_save").label = "Save & Reload"' in settings
     jf = (VOD / "components" / "JellyfinTask.brs").read_text(encoding="utf-8")
     assert "function hasNcLicense(it as object) as boolean" in jf
@@ -210,7 +215,8 @@ def test_roku_vod_vote_overlay_skips_tuples_and_softens_banner():
     assert 'color="0x0A0A128C"' in xml
     assert 'translation="[80,980]"' not in xml
     assert xml.count('font:SmallSystemFont') >= 3
-    assert xml.count('color="0xE8E8F0FF"') >= 3
+    assert xml.count('color="0xE8E8F08C"') >= 3
+    assert 'color="0xE8E8F0FF"' not in xml
     assert "sub showLoadChrome(msg as string)" in player
     assert "sub refreshPlayerChrome()" in player
     assert "sub hideLoadChrome()" in player

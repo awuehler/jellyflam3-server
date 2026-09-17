@@ -54,11 +54,11 @@ function fieldHint(name as string) as string
   else if name = "libraryId"
     return "Sheep library ParentId (recommended)"
   else if name = "commercialMode"
-    return "true=commercial flock (hide NC; keep CC BY / CC0 / PD); false=show all; CC=Creative Commons; NC=NonCommercial; BY=Attribution; PD=public domain; CC0=no rights reserved"
+    return "OK toggles true/false and saves; true=commercial flock (hide NC; keep CC BY / CC0 / PD); false=show all"
   else if name = "streamMode"
-    return "mp4=ambient Direct Play loop; hls=Jellyfin remux compare (typos rejected)"
+    return "OK toggles mp4/hls and saves; mp4=ambient Direct Play loop; hls=Jellyfin remux compare"
   else if name = "shuffleFlock"
-    return "always true - rotate archive gens + pedigree + tuple (skip misc/test); false is not persisted"
+    return "OK toggles true/false and saves; true rotates archive gens + pedigree + tuple (skip misc/test); launch still heals leftover false"
   else if name = "titleMode"
     return "OK toggles filename/alias and saves; alias uses Overview Alias: line; missing alias falls back to filename"
   else if name = "probeDisplay"
@@ -174,15 +174,10 @@ function applyEditedValue(name as string, text as string) as boolean
     return true
   else if name = "shuffleFlock"
     if isValidBoolToken(text) <> true
-      m.inputNotice = "shuffleFlock invalid (" + text + ") - use true"
+      m.inputNotice = "shuffleFlock invalid (" + text + ") - use true or false"
       return false
     end if
-    if normalizeBool(text, true) <> "true"
-      m.inputNotice = "shuffleFlock stays true (rotation is always on)"
-      m.values[name] = "true"
-      return false
-    end if
-    m.values[name] = "true"
+    m.values[name] = normalizeBool(text, true)
     return true
   else if name = "titleMode"
     if isValidTitleMode(text) <> true
@@ -260,7 +255,7 @@ sub openSettings()
     else if name = "commercialMode"
       val = normalizeBool(val, false)
     else if name = "shuffleFlock"
-      val = "true"
+      val = normalizeBool(val, true)
     else if name = "titleMode"
       val = normalizeTitleMode(val)
       if val = "" then val = "filename"
@@ -308,7 +303,7 @@ sub updateFooter()
   if m.streamModeNotice <> "" and name = "streamMode"
     line = line + " | " + m.streamModeNotice
   end if
-  if m.inputNotice <> ""
+  if m.inputNotice <> "" and isOkToggleField(name) <> true
     line = line + " | " + m.inputNotice
   end if
   if name = "probeDisplay" and m.displaySummary <> ""
@@ -360,27 +355,48 @@ sub onRowSelected()
   else if id = "row_probeDisplay"
     probeAndSaveDisplay()
     return
-  else if id = "row_titleMode"
-    toggleTitleMode()
-    return
   end if
   name = Mid(id, 5) ' strip "row_"
+  if isOkToggleField(name)
+    toggleChoice(name)
+    return
+  end if
   editField(name)
 end sub
 
-sub toggleTitleMode()
-  current = normalizeTitleMode(m.values["titleMode"])
-  if current = "alias"
-    nextMode = "filename"
-  else
-    nextMode = "alias"
+function isOkToggleField(name as string) as boolean
+  return name = "commercialMode" or name = "streamMode" or name = "shuffleFlock" or name = "titleMode"
+end function
+
+function nextToggleValue(name as string) as string
+  cur = ""
+  if m.values <> invalid and m.values[name] <> invalid then cur = m.values[name]
+  cur = LCase(cur.Trim())
+  if name = "titleMode"
+    if cur = "alias" then return "filename"
+    return "alias"
+  else if name = "streamMode"
+    if cur = "hls" then return "mp4"
+    return "hls"
+  else if name = "commercialMode"
+    if cur = "true" then return "false"
+    return "true"
+  else if name = "shuffleFlock"
+    if cur = "false" then return "true"
+    return "false"
   end if
-  m.values["titleMode"] = nextMode
-  m.registry.write("titleMode", nextMode)
+  return cur
+end function
+
+sub toggleChoice(name as string)
+  nextVal = nextToggleValue(name)
+  if nextVal = invalid or nextVal = "" then return
+  m.values[name] = nextVal
+  m.registry.write(name, nextVal)
   m.registry.flush()
   m.top.saved = true
-  m.inputNotice = "titleMode saved as " + nextMode
-  refreshRowLabel("titleMode")
+  m.inputNotice = ""
+  refreshRowLabel(name)
   updateFooter()
 end sub
 
@@ -601,16 +617,12 @@ sub onDisplaySinkResult()
 end sub
 
 sub editField(name as string)
-  kb = createObject("roSGNode", "KeyboardDialog")
-  if name = "streamMode"
-    kb.title = "streamMode: mp4 or hls"
-  else if name = "titleMode"
-    kb.title = "titleMode: filename or alias"
-  else if name = "commercialMode" or name = "shuffleFlock"
-    kb.title = name + ": true or false"
-  else
-    kb.title = "Edit " + name
+  if isOkToggleField(name)
+    toggleChoice(name)
+    return
   end if
+  kb = createObject("roSGNode", "KeyboardDialog")
+  kb.title = "Edit " + name
   cur = m.values[name]
   if cur = invalid then cur = ""
   kb.text = cur
@@ -698,7 +710,12 @@ sub saveAndClose()
       end if
       val = normalizeBool(val, false)
     else if name = "shuffleFlock"
-      val = "true"
+      if isValidBoolToken(val) <> true
+        m.inputNotice = "shuffleFlock invalid - use true or false"
+        updateFooter()
+        return
+      end if
+      val = normalizeBool(val, true)
     else if name = "titleMode"
       if isValidTitleMode(val) <> true
         m.inputNotice = "titleMode invalid - use filename or alias"

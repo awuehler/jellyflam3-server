@@ -19,6 +19,8 @@ The **1.0.36** flock browser wraps every six posters into vertically scrollable 
 
 **1.0.38 vote map:** two-tier only — **OK** love, **Right** like, **Down** dismiss overlay, **Up / Back** exit playback. No plain `vote` POST from the channel. Same arrows as a keyboard (Enter / Right / Down / Up-Esc) so a later Kodi overlay can match.
 
+**1.0.42 settings toggles:** highlight `commercialMode`, `streamMode`, `shuffleFlock`, or `titleMode` and press **OK** to cycle the two values; each press writes and flushes immediately. **Save & Reload** refreshes the flock. Text credentials still use the keyboard.
+
 **1.0.39 title mode:** highlight `titleMode` and press **OK** to toggle `filename` ↔ `alias`; the value is written and flushed immediately. **Save & Reload** replaces **Done** and fetches the flock with the effective mode. Sheep without an `Alias:` Overview line still show their filename.
 
 ## Settings version
@@ -35,10 +37,10 @@ Section `JellyFlam3` (edit in-channel via **Settings** button, **\* Options**, o
 | `apiKey` | Jellyfin API key |
 | `userId` | Jellyfin user id (required) |
 | `libraryId` | Sheep library ParentId (recommended) |
-| `commercialMode` | `true` / `false` — client-side filter on Items **Tags** only: keep `cc-by` / `cc0` / PD / `cc-by-sa`; hide NC and untagged items. NC overrides safe tags regardless of order. Do **not** use Jellyfin `Tags=` query params. Overview `License:` is display-only |
-| `streamMode` | `mp4` (ambient loop default) or `hls` (remux compare) |
-| `shuffleFlock` | always `true` — rotate archive gens (`247…165`) plus pedigree/tuple at EOF (skips `misc`/`test`). Channel **1.0.30** rewrites this on every launch so sideload cannot leave a leftover `false`. |
-| `titleMode` | `filename` (default) or `alias` — flock rows + player chrome (**1.0.33**). Alias is Overview `Alias:`; missing alias falls back to `Name`. Screensaver does not read this key. |
+| `commercialMode` | `true` / `false` — **OK** toggles in Settings (**1.0.42**). Client-side filter on Items **Tags** only: keep `cc-by` / `cc0` / PD / `cc-by-sa`; hide NC and untagged items. NC overrides safe tags regardless of order. Do **not** use Jellyfin `Tags=` query params. Overview `License:` is display-only |
+| `streamMode` | `mp4` (ambient loop default) or `hls` (remux compare) — **OK** toggles in Settings (**1.0.42**) |
+| `shuffleFlock` | `true` / `false` — **OK** toggles in Settings (**1.0.42**). `true` rotates archive gens (`247…165`) plus pedigree/tuple at EOF (skips `misc`/`test`). Channel **1.0.30** still rewrites `true` on launch so a leftover `false` cannot survive a cold start. |
+| `titleMode` | `filename` (default) or `alias` — flock rows + player chrome (**1.0.33**). **OK** toggles in Settings (**1.0.39** / **1.0.42**). Alias is Overview `Alias:`; missing alias falls back to `Name`. Screensaver does not read this key. |
 | `displayWidth` / `displayHeight` | From Settings **Fetch TV display** (`roDeviceInfo`) |
 | `uiResolution` / `uiWidth` / `uiHeight` | UI resolution name + pixels |
 | `videoMode` | e.g. `1080p`, `2160p60` |
@@ -97,7 +99,7 @@ Developer mode holds **one** sideloaded package. Installing the screensaver zip 
 
 **1.0.41 player chrome:** loading-next (`{alias}(MP4)` / Loading…) and the vote overlay use the same 55% bar and SmallSystemFont line at the bottom of the picture.
 
-**Vote overlay (1.0.32, polish 1.0.40 / chrome 1.0.41):** in the last **7 s** of each non-tuple clip a one-line banner appears without pausing. Left is Settings `titleMode` filename or alias only (no “Like this sheep:” prefix); **OK love · RIGHT like · DOWN dismiss · UP/BACK exit** is right-justified. The name ellipsizes so it cannot overlap the keys. Banner fill is **55%** opaque (`0x0A0A128C`). Tuples skip the overlay. The channel POSTs to `http://{Jellyfin-host}:8791/v1/sheep-votes` (same token as display profiles). Playback / Sessions / wrap-once behavior is unchanged.
+**Vote overlay (1.0.32, polish 1.0.40 / chrome 1.0.41):** in the last **7 s** of each non-tuple clip a one-line banner appears without pausing. Left is Settings `titleMode` filename or alias only (no “Like this sheep:” prefix); **OK love · RIGHT like · DOWN dismiss · UP/BACK exit** is right-justified. The name ellipsizes so it cannot overlap the keys. Banner fill and foreground type are **55%** opaque (`0x0A0A128C` / `0xE8E8F08C`). Tuples skip the overlay. The channel POSTs to `http://{Jellyfin-host}:8791/v1/sheep-votes` (same token as display profiles). Playback / Sessions / wrap-once behavior is unchanged.
 
 **Title mode (1.0.33):** Settings `titleMode=alias` shows the memorable `adjective_surname` on flock tiles and player status. Default remains the filename. Sideload this package and, for sheep ingested before this slice, run `python3 -m pipeline.sheep_naming backfill --push-jellyfin` so Overview has `Alias:` lines.
 
