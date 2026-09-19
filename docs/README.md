@@ -70,7 +70,7 @@ Parallel after **02**: `03` (HLS) anytime; `04` once Primary images exist. `05`�
 6. [06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md) — disk check (**slice shipped**); rotate parked
 7. [07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md) — `link_capacity` (**estimator shipped**; Owner OK 2026-09-09; no Jellyfin cap / Ethernet lab DoD)
 8. [08_VIEWER_FEEDBACK_LOOP.md](phase4/08_VIEWER_FEEDBACK_LOOP.md) — vote overlay + sidecar sink + share cron + idle-breed weights (**shipped**); auto-promote **cancelled**; screensaver voting **cancelled**
-9. [09_SHEEP_NAMING.md](phase4/09_SHEEP_NAMING.md) — RNG aliases (**slice shipped** 2026-09-09; client toggle parked)
+9. [09_SHEEP_NAMING.md](phase4/09_SHEEP_NAMING.md) — RNG aliases + VoD / screensaver `titleMode` shipped; optional Jellyfin OriginalTitle parked
 
 Overview: [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md).
 

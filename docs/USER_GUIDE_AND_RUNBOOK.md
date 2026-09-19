@@ -35,7 +35,7 @@ You do **not** need the Pi terminal for normal viewing. Printable one-pager: [FR
 
 ### Roku Screensaver / Backdrop
 
-The screensaver is a **separate sideload package** (`jellyflam3-screensaver.zip`). It shows **Jellyfin Primary posters and Backdrop stills** from every library folder except `tuple` — no video node (Roku policy). It always rotates (ignores VoD `shuffleFlock`) and honors the same `commercialMode` Tag filter as VoD. Package **1.0.9** re-fetches stills after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). **1.0.10** Screensaver Settings can enter Jellyfin URL / API key / user / library (needed when VoD is a private channel).
+The screensaver is a **separate sideload package** (`jellyflam3-screensaver.zip`). It shows **Jellyfin Primary posters and Backdrop stills** from every library folder except `tuple` — no video node (Roku policy). It always rotates (ignores VoD `shuffleFlock`) and honors the same `commercialMode` Tag filter as VoD. Package **1.0.9** re-fetches stills after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). **1.0.10** Screensaver Settings can enter Jellyfin URL / API key / user / library (needed when VoD is a private channel). **1.0.11** adds Settings `titleMode` (`filename` default / `alias`) and a chrome-light stills caption from Overview `Alias:`.
 
 **Credentials:** Screensaver reads registry section `JellyFlam3` on **this** package. A **furnace-built** zip ships `registry/jellyflam3-presets.json`. Otherwise paste in **Screensaver Settings** (**1.0.10+**) or, while both packages still share the developer slot, save VoD Settings first then sideload SS (registry survives the zip swap). Private-channel VoD does **not** share registry with sideload SS.
 
@@ -47,7 +47,7 @@ The screensaver is a **separate sideload package** (`jellyflam3-screensaver.zip`
 
 ### Kodi Electric Sheep screensaver (optional)
 
-Video screensaver add-on **JellyFlam3 Dreams** (`screensaver.jellyflam3`) — plays Jellyfin flock MP4s when Kodi idles. Separate from Roku stills; loops-only MVP (edge journeys planned post-launch). Detail: [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md).
+Video screensaver add-on **JellyFlam3 Dreams** (`screensaver.jellyflam3`) — plays Jellyfin flock MP4s when Kodi idles. Separate from Roku stills. Tuples play as one clip; there is no extra edge sequencer. Detail: [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md).
 
 **First time on the Kodi box:**
 
@@ -57,7 +57,7 @@ Video screensaver add-on **JellyFlam3 Dreams** (`screensaver.jellyflam3`) — pl
 4. **Configure Jellyfin** — if the zip was built on a furnace Pi (`package_kodi_screensaver.*`), defaults are already in the add-on settings. Otherwise open **Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → Configure** and paste Jellyfin URL, API key, user id, library id (operator runs `jellyfin_id_dump.py` on the furnace Pi).
 5. Set screensaver wait time (e.g. **1 minute** for testing), then wait or use **Activate screensaver**.
 
-**Everyday use:** leave Kodi idle; any keypress exits the screensaver (Kodi default). When flock is configured, sheep MP4s shuffle. If Jellyfin is unreachable, **0.2.11+** shows **waiting for the furnace** on black and retries every 30 seconds (not a settings lecture). Missing credentials still ask you to configure the add-on. Package **0.2.9+** re-fetches after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). If a sheep is **quarantined** while idle is running, 0.2.7+ drops that id, re-polls Jellyfin (rate-limited), and continues; **0.2.10** also dismisses Kodi's playback-failed dialog automatically.
+**Everyday use:** leave Kodi idle; any keypress exits the screensaver (Kodi default). When flock is configured, sheep MP4s shuffle. Configure **Titles** (`title_mode`, **0.2.12+**) as filename (default) or alias for a chrome-light caption. If Jellyfin is unreachable, **0.2.11+** shows **waiting for the furnace** on black and retries every 30 seconds (not a settings lecture). Missing credentials still ask you to configure the add-on. Package **0.2.9+** re-fetches after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). If a sheep is **quarantined** while idle is running, 0.2.7+ drops that id, re-polls Jellyfin (rate-limited), and continues; **0.2.10** also dismisses Kodi's playback-failed dialog automatically.
 
 **Upgrade (on the TV, no PC):** if the operator already dropped a new zip into Downloads, Kodi → **Add-ons → Install from zip file** → select the new `screensaver.jellyflam3.zip`. Jellyfin settings in add-on **Configure** are kept (`addon_data`).
 
@@ -405,7 +405,7 @@ INFO waiting for drain idle (1 in-flight job(s))
 
 That line is expected. The CLI exits when that job finishes (or `--timeout-sec` expires). Optional `--poll-sec` (default **2**). Restarting **before** idle still orphans live `flam3-animate`.
 
-Status file: `/var/lib/jellyflam3/worker_drain.json` (`paths.worker_drain_file`). The flag **persists across** `systemctl restart` until `cancel`. Safe restart recipe: `request --wait` (wait for **idle**, not merely draining) then restart. Do **not** SIGSTOP `flam3-animate` and do not kill the current job to “pause”.
+Status file: `/var/lib/jellyflam3/worker_drain.json` (`paths.worker_drain_file`). The flag **persists across** `systemctl restart` until `cancel`. Safe restart recipe: `request --wait` (wait for **idle**, not merely draining) then restart. Do not kill the current job to “pause”. Mid-animate checkpoint/resume and SIGSTOP-as-pause are **cancelled** (Phase 4, 2026-09-19): `flam3-animate` has no resume protocol.
 
 `--once` is an explicit operator run and still processes that genome while drained.
 
@@ -436,11 +436,33 @@ python3 -m pipeline.worker --config configs/jellyflam3.yaml --once path/to/new.f
 | Cron | Script | Role |
 |---|---|---|
 | `11 5 * * *` | `scripts/cron_breed_idle.sh` | Daily idle breed when inbox empty (parents weighted by votes) |
-| _not installed_ | `scripts/cron_library_rotate.sh` | Oldest-catalog Shears rotate — **inactive until needed** (example `23 5 * * *`) |
+| _optional_ | `scripts/cron_library_rotate.sh` | Oldest-catalog Shears rotate — **not** on lab crontab; [Activate library rotate](#activate-library-rotate) (`23 5 * * *`) |
 | `41 6 * * *` | `scripts/cron_share_votes.sh` | Daily liked sheep → `peers/share-out` (not inbox) |
 | Staggered DOM | `scripts/cron_archive_seed.sh` | ~10-day archive seed per host (skips fetch if sheep still BAD) |
 
 Both prepend `/usr/local/bin` for `flam3-*`. Missing real config → **exit 1** (no silent `.yaml.example` fallback).
+
+### Activate library rotate
+
+Phase 4 / 06 is **closed**. The daily wrapper is optional: archive seed already rotate-applies before fetch. Arm cron on a furnace that is WARN/BAD (or staying near the warn floor). Full recipe: [phase4/06 Activate daily rotate](phase4/06_LIBRARY_DISK_ROTATE.md#activate-daily-rotate).
+
+```bash
+cd /opt/jellyflam3-server
+grep -n rotate_enabled configs/jellyflam3.yaml    # must be true
+python3 -m pipeline.library_disk rotate           # plan
+python3 -m pipeline.library_disk rotate --apply   # one-shot Shears when you accept the plan
+mkdir -p /var/log/jellyflam3
+crontab -e    # paste the line below; save
+crontab -l | grep cron_library_rotate
+./scripts/cron_library_rotate.sh --dry-run
+```
+
+```cron
+23 5 * * *  /opt/jellyflam3-server/scripts/cron_library_rotate.sh \
+    >>/var/log/jellyflam3/library_rotate.log 2>&1
+```
+
+Pause apply without removing cron: `library_disk.rotate_enabled: false`. Remove the crontab line to uninstall. Do not Hammer for disk full.
 
 **Smoke one pedigree sheep (never publishes to catalog):**
 
@@ -561,7 +583,7 @@ python3 -m pipeline.sheep_naming clear-alias --stem electricsheep.247.00505
 python3 -m pipeline.sheep_naming resolve frosty_swirles
 ```
 
-Roku VoD **1.0.33+**: Settings → `titleMode` → `filename` (default) or `alias`. In **1.0.42+**, highlight the row and press OK to toggle and save immediately (same for `commercialMode`, `streamMode`, and `shuffleFlock`), then choose **Save & Reload**. Alias comes from the Jellyfin Overview `Alias:` line (ingest writes it; `set-alias` / `backfill --push-jellyfin` refresh existing items). Missing alias shows the filename. The home status reports alias and filename-fallback counts. Screensaver and Kodi idle chrome stay untitled.
+Roku VoD **1.0.33+**: Settings → `titleMode` → `filename` (default) or `alias`. In **1.0.42+**, highlight the row and press OK to toggle and save immediately (same for `commercialMode`, `streamMode`, and `shuffleFlock`), then choose **Save & Reload**. Alias comes from the Jellyfin Overview `Alias:` line (ingest writes it; `set-alias` / `backfill --push-jellyfin` refresh existing items). Missing alias shows the filename. The home status reports alias and filename-fallback counts. Screensaver and Kodi idle chrome can show a light filename or alias caption (`titleMode` / `title_mode`, default **filename**). Missing alias falls back to the stem. Optional Jellyfin OriginalTitle / SortName-as-alias is not used.
 
 Cascade removes catalog MP4/sidecar/poster, jobs, edges (best-effort), Jellyfin item (soft-fail), peer copies when Opt In. Does **not** touch secrets or Syncthing device config.
 
@@ -780,7 +802,7 @@ Folder name must stay `screensaver.jellyflam3`.
 
 | Check | How |
 |---|---|
-| Version | Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → **Information** (version in `addon.xml`, currently **0.2.11**). |
+| Version | Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → **Information** (version in `addon.xml`, currently **0.2.12**). |
 | Playback | Set short wait time → **Activate screensaver** or wait; sheep MP4s should shuffle. |
 | Idle gate | On furnace Pi: `cat /var/lib/jellyflam3/idle_gate_status.json` → `"gate": "open"` while Kodi SS runs. |
 | Jellyfin IDs | On furnace: `python3 scripts/jellyfin_id_dump.py --items --limit 5` — item count should be > 0 when flock is seeded. |
@@ -983,7 +1005,7 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 | Worker quiet, gate open | `ls genomes/inbox/*.flam3`; journal `-u jellyflam3-worker`; `python3 -m pipeline.worker_drain status` | Seed inbox; inspect quarantine; **cancel** drain if `drain: true` |
 | `jellyflam3-display-sink` crash-loop (`activating` / `NRestarts` climbing) | journal: `DISPLAY_SINK_TOKEN required when binding a non-loopback host` | On **this** Pi: `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'` → `DISPLAY_SINK_TOKEN=` in `secrets.env`; `systemctl reset-failed` + restart. Same string → Roku `displaySinkToken`. Do not copy another furnace. See [Display sink token](#display-sink-token-how--where--when). |
 | healthcheck exit 1 | Read script sections (units, tools, status file, **peering share_live**, **library disk BAD**) | See [offline peering](#opt-in-vs-share-live-do-not-confuse-them); `opt-in` or `opt-out`; free space on `/media/sheep` |
-| Sheep disk WARN / BAD | `python3 -m pipeline.library_disk check`; `df -h /media/sheep` | `python3 -m pipeline.library_disk rotate --apply` (daily rotate cron is **inactive until needed**); Shears for one sheep; do not Hammer unless wiping the factory |
+| Sheep disk WARN / BAD | `python3 -m pipeline.library_disk check`; `df -h /media/sheep` | `python3 -m pipeline.library_disk rotate --apply`; arm daily cron with [Activate library rotate](#activate-library-rotate); Shears for one sheep; do not Hammer unless wiping the factory |
 | Empty flock with commercial-safe on | Items Tags missing | `jellyfin_id_dump.py --items`; [private vs public](#private-vs-public-furnace) step 2 |
 | Blank Roku SS | VoD Settings ever saved on this device? | Sideload VoD → Settings → re-sideload SS |
 | VoD **No poster** tiles | Items lack `ImageTags.Primary` (stills JPEGs are ignored) | `backfill_posters` (base64 Images POST); relaunch VoD |

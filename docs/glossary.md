@@ -115,7 +115,7 @@ Electric Sheep flock epoch (e.g. **247**). Archive URLs: `…/generation-{N}/bes
 
 ### Worker drain
 
-Operator pause: finish the **current** inbox job, then do not claim another until `python3 -m pipeline.worker_drain cancel`. Flag: `/var/lib/jellyflam3/worker_drain.json`. Not the **idle gate** (TV Playing) and not an empty inbox (seed/breed may still refill). See [USER_GUIDE drain](USER_GUIDE_AND_RUNBOOK.md#worker-drain-pause-before-next-sheep).
+Operator pause: finish the **current** inbox job, then do not claim another until `python3 -m pipeline.worker_drain cancel`. Flag: `/var/lib/jellyflam3/worker_drain.json`. Not the **idle gate** (TV Playing) and not an empty inbox (seed/breed may still refill). Mid-animate checkpoint / SIGSTOP pause is **cancelled** (Phase 4, 2026-09-19). See [USER_GUIDE drain](USER_GUIDE_AND_RUNBOOK.md#worker-drain-pause-before-next-sheep).
 
 ### Inbox
 
@@ -167,7 +167,7 @@ Phase 4 design ([phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md)): Roku VoD **1.0.
 
 ### Sheep naming / alias
 
-Phase 4 design ([phase4/09](phase4/09_SHEEP_NAMING.md)): furnace auto-generates a short memorable **alias** (`adjective_surname`, e.g. `frosty_swirles`) on the catalog sidecar (hash-seed from stem; `python3 -m pipeline.sheep_naming`); human override sticky. Roku VoD **1.0.33** Settings `titleMode` shows **filename** (default) or **alias**. Kodi / screensaver captions parked. **LLM poster naming** (`alias_source=llm`) is Phase 5: small GPU VLM caption then Instruct JSON ([phase5/02](phase5/02_LLM_INTEGRATION.md#vision-pipeline)). Not the same as flam3 XML **`nick`** (designer credit for license).
+Phase 4 design ([phase4/09](phase4/09_SHEEP_NAMING.md)): furnace auto-generates a short memorable **alias** (`adjective_surname`, e.g. `frosty_swirles`) on the catalog sidecar (hash-seed from stem; `python3 -m pipeline.sheep_naming`); human override sticky. Roku VoD **1.0.33**, Kodi screensaver **0.2.12**, and Roku screensaver **1.0.11** Settings `titleMode` / `title_mode` show **filename** (default) or **alias**. Optional Jellyfin OriginalTitle / SortName-as-alias stays parked. **LLM poster naming** (`alias_source=llm`) is Phase 5: small GPU VLM caption then Instruct JSON ([phase5/02](phase5/02_LLM_INTEGRATION.md#vision-pipeline)). Not the same as flam3 XML **`nick`** (designer credit for license).
 
 ### flam3-genome maximum attempts warning
 
@@ -259,7 +259,7 @@ Integer estimate of concurrent **video** sessions one JellyFlam3-server can carr
 
 ### Library disk check
 
-Operator check of the sheep mount (`paths.media_library`) used % / free GiB. CLI: `python3 -m pipeline.library_disk check` / `rotate [--apply]`. Healthcheck WARN (exit 0) vs BAD (exit 1). Optional daily wrapper `scripts/cron_library_rotate.sh` is **inactive until needed**. Worker refuses ingest on sheep **BAD**. Guide: [phase4/06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md).
+Operator check of the sheep mount (`paths.media_library`) used % / free GiB. CLI: `python3 -m pipeline.library_disk check` / `rotate [--apply]`. Healthcheck WARN (exit 0) vs BAD (exit 1). Daily wrapper `scripts/cron_library_rotate.sh` is optional — [Activate library rotate](USER_GUIDE_AND_RUNBOOK.md#activate-library-rotate). Worker refuses ingest on sheep **BAD**. Guide: [phase4/06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md) (**closed** 2026-09-19).
 
 ### Direct Stream
 

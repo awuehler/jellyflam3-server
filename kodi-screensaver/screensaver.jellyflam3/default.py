@@ -98,6 +98,21 @@ def _shuffle_enabled() -> bool:
     return True
 
 
+def _title_mode() -> str:
+    raw = (ADDON.getSetting("title_mode") or "filename").strip().lower()
+    if raw == "alias":
+        return "alias"
+    return "filename"
+
+
+def _item_caption(item: dict) -> str:
+    return jellyfin_flock.display_title(
+        item.get("title") or "",
+        item.get("alias") or "",
+        _title_mode(),
+    )
+
+
 HINT_SETTINGS = "JellyFlam3 — add Jellyfin in screensaver settings"
 HINT_UNREACHABLE = "JellyFlam3 — waiting for the furnace"
 HINT_EMPTY = "JellyFlam3 — flock empty; exit screensaver"
@@ -208,6 +223,7 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
     def onInit(self):
         label = self.getControl(100)
         label.setVisible(False)
+        self._hide_caption()
 
         xbmcgui.Window(10000).setProperty("PseudoTVRunning", "True")
         xbmcgui.Window(10000).setProperty("%s.Running" % ADDON_ID, "True")
@@ -247,6 +263,7 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         self._keepalive.start()
 
     def _set_hint(self, reason: str):
+        self._hide_caption()
         try:
             label = self.getControl(100)
             label.setLabel(reason)
@@ -259,6 +276,23 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
             self.getControl(100).setVisible(False)
         except Exception:
             pass
+
+    def _hide_caption(self):
+        try:
+            self.getControl(101).setVisible(False)
+        except Exception:
+            pass
+
+    def _show_caption(self, text: str):
+        try:
+            cap = self.getControl(101)
+            if not (text or "").strip():
+                cap.setVisible(False)
+                return
+            cap.setLabel(text)
+            cap.setVisible(True)
+        except Exception as exc:
+            xbmc.log("%s: caption failed: %s" % (ADDON_ID, exc), xbmc.LOGWARNING)
 
     def _enter_wait(self):
         self._waiting = True
@@ -298,7 +332,7 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         self._av_started = False
         url = self._flock[self._index % len(self._flock)]["url"]
         item = self._flock[self._index % len(self._flock)]
-        title = item.get("title") or "JellyFlam3"
+        title = _item_caption(item) or item.get("title") or "JellyFlam3"
         xbmc.log(
             "%s: play %s (%s/%s)"
             % (ADDON_ID, title, (self._index % len(self._flock)) + 1, len(self._flock)),
@@ -314,6 +348,7 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         _dismiss_busy()
         _cancel_stop_script_alarm()
         _set_repeat("off")
+        self._show_caption(title)
         return True
 
     def _show_flock_empty(self, reason: str):
@@ -325,6 +360,7 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
                 self._player.stop()
         except Exception:
             pass
+        self._hide_caption()
         try:
             label = self.getControl(100)
             label.setLabel(reason)

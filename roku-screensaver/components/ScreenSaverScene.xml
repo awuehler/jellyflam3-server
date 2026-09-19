@@ -55,6 +55,16 @@
       />
     </Animation>
     <Label
+      id="caption"
+      width="1760"
+      height="48"
+      translation="[80,1016]"
+      horizAlign="left"
+      font="font:SmallSystemFont"
+      color="0xE8E8F08C"
+      text=""
+    />
+    <Label
       id="status"
       width="1920"
       height="80"

@@ -2,7 +2,7 @@
 
 ## Boundary
 
-Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 03)** which shipped 2026-09-05, **09 RNG aliases** which shipped 2026-09-09, **08 overlay + sidecar vote sink** and **04 private-channel path** which shipped 2026-09-11, **Wave 3** (01 gated promote lock + 08 share cron / idle-breed weights + 05 vote recipes) which shipped 2026-09-13, **Wave 4 slices 1–2** (06 library rotate + 02 mesh introduce A/B/C) which shipped 2026-09-13, and **09 C Roku VoD titleMode** which shipped 2026-09-13. Still parked: Roku Channel Store, Kodi/SS alias captions. **Cancelled 2026-09-13:** standalone edge files / loop-stills watermark / Kodi edge sequencer (tuples close 03); screensaver voting (Roku best practices — VoD overlay only); enforcing `N_max` as a Jellyfin cap and an Ethernet control lab (07 — this fleet is WiFi STA, `eth0 DOWN`); **auto-promote** (01 — gated `promote --apply` is the receive path).
+Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 03)** which shipped 2026-09-05, **09 RNG aliases** which shipped 2026-09-09, **08 overlay + sidecar vote sink** and **04 private-channel path** which shipped 2026-09-11, **Wave 3** (01 gated promote lock + 08 share cron / idle-breed weights + 05 vote recipes) which shipped 2026-09-13, **Wave 4 slices 1–2** (06 library rotate + 02 mesh introduce A/B/C) which shipped 2026-09-13, **09 C Roku VoD titleMode** which shipped 2026-09-13, and **09 Kodi/Roku screensaver captions** which shipped 2026-09-19. Still parked: Roku Channel Store. Optional Jellyfin OriginalTitle / SortName-as-alias stays parked. **Cancelled 2026-09-13:** standalone edge files / loop-stills watermark / Kodi edge sequencer (tuples close 03); screensaver voting (Roku best practices — VoD overlay only); enforcing `N_max` as a Jellyfin cap and an Ethernet control lab (07 — this fleet is WiFi STA, `eth0 DOWN`); **auto-promote** (01 — gated `promote --apply` is the receive path). **Cancelled 2026-09-19:** furnace polish leftover that is **not drain** — checkpoint/resume inside `flam3-animate` and SIGSTOP of a live animate as “pause” (`flam3-animate` has no resume protocol). Drain stays shipped.
 
 **Pre-open slices** already shipped (docs + operator CLIs; not those products): end-user baseline, sheep-disk check, concurrent-client estimator, and catalog sidecar key names. **Opened 2026-09-09:** worker preserves reserved sidecar keys on re-ingest. **Opened 2026-09-09:** pasture clients re-poll the flock on mid-session 404 (quarantine / Shears). **Opened 2026-09-10:** wrap-once flock re-fetch + 313 session cap. **Opened 2026-09-10:** worker drain (finish current job, pause claiming until cancel). **Opened 2026-09-09:** 07 estimator Owner OK; 09 RNG aliases (ingest + backfill + override).
 
@@ -10,25 +10,25 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 
 | Item | State |
 |---|---|
-| Phase 4 products | **Mostly parked** (2026-08-16) — tuples (03), 09 RNG + VoD `titleMode`, 08 overlay + Wave 3 share/breed, 04 private-channel path, **06 rotate**, **02 mesh A/B/C** shipped; gated promote **locked** (auto-promote **cancelled**); do not implement Store until Owner opens that slice |
+| Phase 4 products | **Mostly parked** (2026-08-16) — tuples (03), 09 RNG + VoD `titleMode` + Kodi/Roku SS captions, 08 overlay + Wave 3 share/breed, 04 private-channel path, **06 rotate closed**, **02 mesh A/B/C** shipped; gated promote **locked** (auto-promote **cancelled**); do not implement Store until Owner opens that slice |
 | Peer share path revisit | **Locked** — gated `promote --apply` ([01](01_PEER_SHARE_PATH.md)); share cron stages `peers/share-out` only. **Auto-promote cancelled** 2026-09-13 |
 | Mesh introduce scripting | **Shipped** A/B/C — [02](02_MESH_INTRODUCE_SCRIPTING.md); manual add-json still valid |
 | Edges + watermark | **Tuple slice shipped** 2026-09-05 — [03](03_EDGES_AND_WATERMARK.md). Standalone `type: edge` files, loop/stills watermark, and Kodi edge sequencer **cancelled** 2026-09-13 (tuples cover the journey) |
 | Roku VoD + screensaver publish | **Private-channel path shipped** 2026-09-11 — [04](04_ROKU_PUBLISH.md) (VoD as unpublished channel + one sideload slot for SS; SS Settings writes Jellyfin creds in **1.0.10**). Channel Store / brand assets parked |
 | End-user guide (tasks / examples / triage) | **Baseline + vote/share recipe** — [05](05_END_USER_GUIDE.md); [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) (examples 6–7); fridge card [FRIDGE_CARD.md](../FRIDGE_CARD.md) |
-| Sheep library disk check + auto-purge / rotate | **Rotate shipped** 2026-09-13 — [06](06_LIBRARY_DISK_ROTATE.md); healthcheck WARN/BAD; worker refuse on sheep BAD; daily rotate cron **inactive until needed** |
+| Sheep library disk check + auto-purge / rotate | **Closed** 2026-09-19 — [06](06_LIBRARY_DISK_ROTATE.md); healthcheck WARN/BAD; worker refuse on sheep BAD; daily cron optional ([Activate daily rotate](06_LIBRARY_DISK_ROTATE.md#activate-daily-rotate)) |
 | Concurrent clients / link-capacity estimate | **Estimator shipped** 2026-09-03 — [07](07_CONCURRENT_CLIENTS.md); `wifi-pi` lab (`eth0 DOWN`); **Owner OK 2026-09-09**. Jellyfin cap / Ethernet lab **cancelled** |
 | Viewer feedback loop (vote → share + breed bias) | **Wave 2+3 shipped** — [08](08_VIEWER_FEEDBACK_LOOP.md); VoD **1.0.32** overlay; share cron; idle-breed weights. **Screensaver voting** and **auto-promote cancelled** 2026-09-13 |
-| Sheep naming (auto-generated aliases) | **RNG + VoD toggle shipped** — [09](09_SHEEP_NAMING.md); VoD **1.0.33** `titleMode`; Kodi/SS captions parked; LLM poster naming → Phase 5 |
+| Sheep naming (auto-generated aliases) | **RNG + VoD + screensaver captions shipped** — [09](09_SHEEP_NAMING.md); VoD **1.0.33** `titleMode`; Kodi **0.2.12**; Roku SS **1.0.11**. Optional Jellyfin OriginalTitle/SortName parked; LLM poster naming → Phase 5 |
 
 ## Pre-open shipped (2026-09-03)
 
 | Slice | Guide | What landed | Still parked |
 |---|---|---|---|
-| Household guide + fridge card | [05](05_END_USER_GUIDE.md) | [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) Layer 1 + worked examples (incl. vote/share); [FRIDGE_CARD.md](../FRIDGE_CARD.md) | Kodi/SS alias captions |
-| Sheep disk WARN/BAD | [06](06_LIBRARY_DISK_ROTATE.md) | `python3 -m pipeline.library_disk check`; healthcheck | Rotate + worker refuse (opened 2026-09-13) |
+| Household guide + fridge card | [05](05_END_USER_GUIDE.md) | [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) Layer 1 + worked examples (incl. vote/share); [FRIDGE_CARD.md](../FRIDGE_CARD.md) | Optional Jellyfin OriginalTitle / SortName-as-alias |
+| Sheep disk WARN/BAD | [06](06_LIBRARY_DISK_ROTATE.md) | `python3 -m pipeline.library_disk check`; healthcheck | Rotate + worker refuse (opened 2026-09-13; **closed** 2026-09-19) |
 | Concurrent-client `N_max` | [07](07_CONCURRENT_CLIENTS.md) | `python3 -m pipeline.link_capacity`; WiFi-STA lab (`eth0 DOWN`); **Owner OK 2026-09-09** | **Cancelled** 2026-09-13: Jellyfin cap; Ethernet control lab |
-| Sidecar key names | [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) | `type`, `watermark`, `viewer_feedback`, `alias` (+ companions) | Kodi/SS alias captions |
+| Sidecar key names | [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) | `type`, `watermark`, `viewer_feedback`, `alias` (+ companions) | Optional Jellyfin OriginalTitle / SortName-as-alias |
 | Tuples (loop A + edge + loop B) | [03](03_EDGES_AND_WATERMARK.md) | One MP4 under `by-generation/tuple/`; edge-only watermark; idle-cron mode; Roku shuffle `tuple`+`pedigree` | **Cancelled** 2026-09-13: standalone edge files; watermark on loops/stills; Kodi edge sequencer |
 
 ## Opened (2026-09-09)
@@ -39,8 +39,8 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 | 404 mid-session re-poll | clients | Drop dead Jellyfin id, rate-limited re-poll, continue session: VoD **1.0.29**, Roku SS **1.0.8**, Kodi SS **0.2.7** | — |
 | Wrap-once flock re-fetch + 313 cap | clients | Once per full shuffle wrap (one random permutation; next item is not last-played), re-fetch Jellyfin and regenerate the in-memory list (skip if a fetch is already in flight; no 30s 404 gate). HTTP Limit 5000 then randomly prune to **313**. VoD **1.0.31**, Roku SS **1.0.9**, Kodi SS **0.2.9** | Hours-scale timer (not needed for ~daily ingest) |
 | 07 estimator Owner OK | [07](07_CONCURRENT_CLIENTS.md) | Sign-off 2026-09-09; `N_max` remains an estimate (not a Jellyfin cap); lab hop is WiFi STA | — |
-| 09 RNG aliases | [09](09_SHEEP_NAMING.md) | Hash-seed `adjective_surname` on ingest/backfill; `set-alias` / `clear-alias` | Roku VoD `titleMode` (opened 2026-09-13); Kodi/SS captions; LLM poster naming → [../phase5/02](../phase5/02_LLM_INTEGRATION.md) |
-| Worker drain / idle-before-restart | furnace polish | Finish current inbox job, then do not claim; `python3 -m pipeline.worker_drain` (`request`, `wait`, `cancel`). Flag persists until cancel. | Checkpoint/resume inside `flam3-animate`; SIGSTOP live animate |
+| 09 RNG aliases | [09](09_SHEEP_NAMING.md) | Hash-seed `adjective_surname` on ingest/backfill; `set-alias` / `clear-alias` | Roku VoD `titleMode` (opened 2026-09-13); Kodi/SS captions (opened 2026-09-19); LLM poster naming → [../phase5/02](../phase5/02_LLM_INTEGRATION.md) |
+| Worker drain / idle-before-restart | furnace polish | Finish current inbox job, then do not claim; `python3 -m pipeline.worker_drain` (`request`, `wait`, `cancel`). Flag persists until cancel. | **Cancelled** 2026-09-19: checkpoint/resume inside `flam3-animate`; SIGSTOP live animate |
 
 ## Opened (2026-09-11)
 
@@ -55,20 +55,26 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 |---|---|---|---|
 | Gated promote lock | [01](01_PEER_SHARE_PATH.md) | Keep `peers/inbox` → `promote --apply` → `genomes/inbox`. Votes never skip that gate. | **Cancelled** 2026-09-13: auto-promote after tax + verify |
 | Share cron + idle-breed weights | [08](08_VIEWER_FEEDBACK_LOOP.md) | `python3 -m pipeline.share_votes` + `scripts/cron_share_votes.sh` copy liked `.flam3` to `peers/share-out`. Idle-breed parent weight ∝ sidecar `votes`. | — |
-| Vote / share household recipe | [05](05_END_USER_GUIDE.md) | Runbook example 6: OK/FF/Replay, LAN-only, love vs share, receiver still promotes | Kodi/SS alias captions |
+| Vote / share household recipe | [05](05_END_USER_GUIDE.md) | Runbook example 6: OK/FF/Replay, LAN-only, love vs share, receiver still promotes | Optional Jellyfin OriginalTitle / SortName-as-alias |
 
 ## Opened (2026-09-13, Wave 4 slices 1–2)
 
 | Slice | Guide | What landed | Still parked |
 |---|---|---|---|
-| Library rotate | [06](06_LIBRARY_DISK_ROTATE.md) | Oldest-mtime Shears cascade; `library_disk rotate [--apply]`; `cron_library_rotate.sh` **inactive until needed**; archive seed skips fetch if sheep still BAD; worker refuse on sheep **BAD** | Daily rotate crontab; LRU / commercial-safe filters; soak-fill disks |
+| Library rotate | [06](06_LIBRARY_DISK_ROTATE.md) | Oldest-mtime Shears cascade; `library_disk rotate [--apply]`; `cron_library_rotate.sh` optional ([Activate daily rotate](06_LIBRARY_DISK_ROTATE.md#activate-daily-rotate)); archive seed skips fetch if sheep still BAD; worker refuse on sheep **BAD**. **Closed** 2026-09-19 (Owner OK). | LRU / soak-fill stay non-goals |
 | Mesh introduce | [02](02_MESH_INTRODUCE_SCRIPTING.md) | `ensure-mesh-local` (opt-in best-effort); gitignored `mesh-join --peers-file`; `introducer` on 16a example row | Mesh admin UI; committing device IDs |
 
 ## Opened (2026-09-13, 09 C)
 
 | Slice | Guide | What landed | Still parked |
 |---|---|---|---|
-| VoD filename vs alias | [09](09_SHEEP_NAMING.md) | VoD **1.0.33** Settings `titleMode` (`filename` default / `alias`); **1.0.39** OK-toggle + immediate flush + Save & Reload. Overview `Alias:` line from ingest + `sheep_naming` push. `Name` stays the stem. | Kodi screensaver captions; Roku SS stills captions |
+| VoD filename vs alias | [09](09_SHEEP_NAMING.md) | VoD **1.0.33** Settings `titleMode` (`filename` default / `alias`); **1.0.39** OK-toggle + immediate flush + Save & Reload. Overview `Alias:` line from ingest + `sheep_naming` push. `Name` stays the stem. | Optional Jellyfin OriginalTitle / SortName-as-alias |
+
+## Opened (2026-09-19, 09 screensaver captions)
+
+| Slice | Guide | What landed | Still parked |
+|---|---|---|---|
+| Kodi + Roku SS captions | [09](09_SHEEP_NAMING.md) | Kodi **0.2.12** `title_mode` + caption 101; Roku SS **1.0.11** Settings `titleMode` + stills caption. Overview `Alias:`; filename default; missing alias falls back. | Optional Jellyfin OriginalTitle / SortName-as-alias |
 
 ## In scope (parked products)
 
@@ -77,14 +83,14 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 3. [03_EDGES_AND_WATERMARK.md](03_EDGES_AND_WATERMARK.md) — **tuples shipped**; standalone edges / extra watermark / Kodi sequencer **cancelled** 2026-09-13
 4. [04_ROKU_PUBLISH.md](04_ROKU_PUBLISH.md) — **private-channel path shipped**; remaining: Store listing, brand assets, VoD Settings layout, Owner dashboard publish
 5. [05_END_USER_GUIDE.md](05_END_USER_GUIDE.md) — baseline + vote/share recipe shipped; VoD alias titles in 09 C
-6. [06_LIBRARY_DISK_ROTATE.md](06_LIBRARY_DISK_ROTATE.md) — **rotate + worker refuse shipped**; LRU filters parked
+6. [06_LIBRARY_DISK_ROTATE.md](06_LIBRARY_DISK_ROTATE.md) — **closed** 2026-09-19 (Owner OK); daily cron is optional ops, not remaining product
 7. [07_CONCURRENT_CLIENTS.md](07_CONCURRENT_CLIENTS.md) — **Owner OK 2026-09-09**; estimator closed (no Jellyfin cap; no Ethernet lab on this `eth0 DOWN` fleet)
 8. [08_VIEWER_FEEDBACK_LOOP.md](08_VIEWER_FEEDBACK_LOOP.md) — overlay + share cron + breed weights shipped; auto-promote **cancelled**; screensaver voting **cancelled**
-9. [09_SHEEP_NAMING.md](09_SHEEP_NAMING.md) — **RNG + VoD `titleMode` shipped**; remaining: Kodi/SS captions. LLM-from-poster → [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md)
+9. [09_SHEEP_NAMING.md](09_SHEEP_NAMING.md) — **RNG + VoD `titleMode` + Kodi/Roku SS captions shipped**; optional Jellyfin OriginalTitle / SortName-as-alias parked. LLM-from-poster → [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md)
 
 Also named (aspirational / TBD): broader social flock, DeepDream/AI backends. **LLM-assisted pedigree** and **LLM poster naming** moved to **Phase 5** ([../phase5/00_OVERVIEW.md](../phase5/00_OVERVIEW.md)): a **separate** Ventuno LLM Agent Platform talking to the Pi furnace — not models on the furnace and not Ventuno-as-16a. Guide [08](08_VIEWER_FEEDBACK_LOOP.md) overlay + share cron + breed weights shipped (auto-promote **cancelled**); [09](09_SHEEP_NAMING.md) RNG aliases stay here (LLM path in Phase 5).
 
-Sidecar key names for [01](01_PEER_SHARE_PATH.md) / [03](03_EDGES_AND_WATERMARK.md) / [08](08_VIEWER_FEEDBACK_LOOP.md) / [09](09_SHEEP_NAMING.md) are reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Worker copies reserved keys on re-ingest; tuple ingest writes `type` / `from_id` / `to_id` / `watermark` from this encode. Vote sink writes `viewer_feedback` on the catalog sidecar. Roku VoD can show aliases; Kodi/SS captions stay parked.
+Sidecar key names for [01](01_PEER_SHARE_PATH.md) / [03](03_EDGES_AND_WATERMARK.md) / [08](08_VIEWER_FEEDBACK_LOOP.md) / [09](09_SHEEP_NAMING.md) are reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Worker copies reserved keys on re-ingest; tuple ingest writes `type` / `from_id` / `to_id` / `watermark` from this encode. Vote sink writes `viewer_feedback` on the catalog sidecar. Roku VoD, Kodi screensaver, and Roku screensaver can show aliases. Optional Jellyfin OriginalTitle / SortName-as-alias stays parked.
 
 ### Client polish (shipped wrap-once refresh)
 
@@ -100,7 +106,9 @@ Sidecar key names for [01](01_PEER_SHARE_PATH.md) / [03](03_EDGES_AND_WATERMARK.
 |---|---|
 | **Worker drain / idle-before-restart** | **Shipped** `python3 -m pipeline.worker_drain`. Finish the current inbox job, then do not claim the next genome. Worker keeps watching inbox (seed/breed may refill; files wait). Flag file `/var/lib/jellyflam3/worker_drain.json` persists across restart until `cancel` / `resume` / `undrain` (no restart required to resume). `request --wait` blocks until no in-flight job.json (`queued`/`rendering`/`encoding`/`gating`) — then `systemctl restart jellyflam3-worker` does not orphan a live `flam3-animate`. Distinct from the **idle-gate** (TV Playing) and from an **empty inbox**. Per host. Household recipe: [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md#5--pause-the-furnace-drain). Tracked in [../phase1/05_RENDER_PIPELINE.md](../phase1/05_RENDER_PIPELINE.md), [../phase1/09_RUNTIME_AND_OPS.md](../phase1/09_RUNTIME_AND_OPS.md), `pipeline.job_recovery`. |
 
-**Not this slice:** checkpoint/resume inside `flam3-animate`; SIGSTOP of a live animate as “pause”; killing the current job on purpose (that is today’s restart without drain). Drain is **pause before the next inbox render**, not mid-frame. The first pull of this code still needs one worker restart to load the poll check — do that between jobs if you can.
+Drain is **pause before the next inbox render**, not mid-frame. Killing the current job on purpose is still today’s restart-without-drain (orphan + `job_recovery` drops scratch). The first pull of drain still needs one worker restart to load the poll check — do that between jobs if you can.
+
+**Cancelled 2026-09-19 (not drain):** checkpoint/resume inside `flam3-animate`, and SIGSTOP of a live animate as a product pause. `flam3-animate` writes sequential frames with **no documented checkpoint**; partial scratch is not a resume state (`job_recovery` already drops frames and re-queues). Freeze (`SIGSTOP`) is not a renderer protocol — it holds RAM/CPU/open files without serializing progress, and a later `SIGCONT` is not a supported animate restart. Worker and idle-gate stay at **stage boundaries** (`freeze_worker: false`). There is no later Phase 4 slice for mid-animate pause.
 
 ### Furnace polish (pre-wave 3 — idle-gate **shipped**)
 
@@ -113,7 +121,7 @@ P1 + remaining races **shipped** (Owner OK 2026-09-13). Guide [06](../phase1/06_
 | Stale `updated_at` | `open` older than **3×** `poll_interval_sec` (60 s at default 20 s poll) is closed |
 | `wait_for_gate` vs `seconds_until_resume` | Sleep `min(15, max(1, eta))` when eta > 0; else 15 s |
 | `freeze_worker` vs drain | Keep `freeze_worker: false`. `worker_drain wait` errors if the unit is frozen |
-| Mid-animate CPU | **Locked:** Playing does not pause `flam3-animate`; gate is stage boundaries only |
+| Mid-animate CPU | **Locked:** Playing does not pause `flam3-animate`; gate is stage boundaries only. Checkpoint / SIGSTOP pause **cancelled** 2026-09-19 (see drain section) |
 
 ## Out of scope
 

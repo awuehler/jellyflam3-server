@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Phase 4 / 09 screensaver captions: Kodi **0.2.12** Settings `title_mode` (filename default / alias) with a chrome-light overlay and ListItem title; Roku screensaver **1.0.11** Settings `titleMode` OK-toggle and stills caption. Both read Overview `Alias:` like VoD. Optional Jellyfin OriginalTitle / SortName-as-alias stays parked.
 - Roku VoD **1.0.43**: waiting UI when Jellyfin is unreachable (not empty flock); 30s auto-retry; Capabilities POST no longer blocks the Items GET; mid-play host-down probes `/System/Info/Public` instead of draining the in-memory list.
 - Kodi screensaver **0.2.11**: distinct hints for missing settings vs furnace down vs empty flock; reconnect every 30s while waiting; do not treat a dead Pi as quarantined sheep.
 - Opt-In watchdog LAN heal: associated STA uses `nmcli connect` only (no disconnect); always tries connect if disconnect fails; brcmfmac reload on firmware wedge (`SCAN-FAILED -110` / no default route); opt-in `worker_drain request` + reboot after `lan_heal_reboot_after_sec`. USB Ethernet is documented insurance (`peering.watchdog.*`).
@@ -47,7 +48,9 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
-- Cancel Phase 4 leftovers: **standalone edges** / loop-stills watermark / Kodi edge sequencer (tuples already include loop→edge→loop). **Screensaver voting** (Roku screensaver best practices / certification — VoD overlay only). **`N_max` as a Jellyfin cap** and an **Ethernet control lab** (guide 07 — this fleet is WiFi STA, `eth0 DOWN`; estimate stays ops guidance). **Auto-promote** (guide 01 — gated `promote --apply` is the receive path; no silent `peers/inbox` drain).
+- Phase 4 / 09 screensaver captions: Kodi **0.2.12** `title_mode` (filename default / alias) plus a chrome-light overlay; Roku screensaver **1.0.11** Settings `titleMode` plus stills caption. Both read Overview `Alias:` (same as VoD). Optional Jellyfin OriginalTitle / SortName-as-alias stays parked.
+- Phase 4 / 06 library rotate **closed** (Owner OK 2026-09-19). Check + Shears rotate + worker refuse stay shipped; daily `cron_library_rotate.sh` remains off the lab crontab until a host is WARN/BAD. How-to: [Activate daily rotate](docs/phase4/06_LIBRARY_DISK_ROTATE.md#activate-daily-rotate) and [USER_GUIDE](docs/USER_GUIDE_AND_RUNBOOK.md#activate-library-rotate). LRU / soak-fill stay non-goals.
+- Cancel Phase 4 leftovers: **standalone edges** / loop-stills watermark / Kodi edge sequencer (tuples already include loop→edge→loop). **Screensaver voting** (Roku screensaver best practices / certification — VoD overlay only). **`N_max` as a Jellyfin cap** and an **Ethernet control lab** (guide 07 — this fleet is WiFi STA, `eth0 DOWN`; estimate stays ops guidance). **Auto-promote** (guide 01 — gated `promote --apply` is the receive path; no silent `peers/inbox` drain). **Furnace polish that is not drain** (2026-09-19): checkpoint/resume inside `flam3-animate` and SIGSTOP-as-pause — the binary has no resume protocol; drain (finish current job, then stop claiming) stays the pause product.
 
 ### Fixed
 

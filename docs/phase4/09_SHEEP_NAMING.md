@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — give every catalog sheep a short, **human-readable alias** (e.g. `frosty_swirles`, `angry_bardeen`) so operators and peer clients can remember and reference sheep without typing `electricsheep.247.00505` or pedigree hashes. Also known as a **random name generator** / **auto-generated names** pattern: typically an **adjective + surname** of a famous person, place, or thing.
 
-**Status:** RNG + ingest + override shipped 2026-09-09. **Roku VoD filename vs alias toggle shipped 2026-09-13** (channel **1.0.33**). Kodi / screensaver captions stay parked (idle path stays chrome-light). **LLM poster naming** is Phase 5 ([../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md)). Keys `alias` / `alias_source` live in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Household vote recipes: [08](08_VIEWER_FEEDBACK_LOOP.md).
+**Status:** RNG + ingest + override shipped 2026-09-09. **Roku VoD filename vs alias toggle shipped 2026-09-13** (channel **1.0.33**). **Kodi screensaver 0.2.12** and **Roku screensaver 1.0.11** show chrome-light captions with the same `titleMode` (`filename` default / `alias`). Optional Jellyfin OriginalTitle / SortName-as-alias stays parked. **LLM poster naming** is Phase 5 ([../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md)). Keys `alias` / `alias_source` live in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema). Household vote recipes: [08](08_VIEWER_FEEDBACK_LOOP.md).
 
 Depends on catalog **sidecar** as sole metadata SoT ([../phase1/07_LICENSE_AND_METADATA.md](../phase1/07_LICENSE_AND_METADATA.md), [08_VIEWER_FEEDBACK_LOOP.md](08_VIEWER_FEEDBACK_LOOP.md)), worker ingest, and peer clients (Roku VoD, Kodi screensaver, Shears CLI). Optional later: LLM vision over poster/stills for a broader inferred vocabulary. Distinct from flam3 XML **`nick`** (designer attribution used by license inference) — aliases are **display / operator names**, not Creative Commons credit.
 
@@ -62,9 +62,10 @@ Keys **`alias`** and **`alias_source`** (`auto` \| `human` \| `llm`) are in [pha
 
 ### C — Peer clients
 
-1. ~~**Roku VoD**~~ — Settings `titleMode` `filename` (default) vs `alias` on flock rows / player chrome. In **1.0.42+**, OK toggles `titleMode` (and `commercialMode` / `streamMode` / `shuffleFlock`) and flushes immediately; **Save & Reload** re-fetches the flock. Reads Overview `Alias:`; missing alias falls back to filename. Screensaver stills captions stay parked.
-2. **Kodi screensaver** — log + optional on-screen label (only if chrome is allowed in a settings preview; idle path stays chrome-free) / JSON-RPC title from alias when configured.
-3. ~~**Pipeline UX**~~ — `python3 -m pipeline.sheep_naming resolve` maps alias → stem; stem always valid. Shears/breed still take stems.
+1. ~~**Roku VoD**~~ — Settings `titleMode` `filename` (default) vs `alias` on flock rows / player chrome. In **1.0.42+**, OK toggles `titleMode` (and `commercialMode` / `streamMode` / `shuffleFlock`) and flushes immediately; **Save & Reload** re-fetches the flock. Reads Overview `Alias:`; missing alias falls back to filename.
+2. ~~**Kodi screensaver**~~ — **0.2.12** add-on setting `title_mode`; chrome-light caption (control 101) + JSON-RPC ListItem label. Idle video stays fullscreen; any key still exits.
+3. ~~**Roku screensaver**~~ — **1.0.11** Settings OK-toggle `titleMode`; stills caption from Overview `Alias:` (same fallback). Image-only path; no Sessions/Playing.
+4. ~~**Pipeline UX**~~ — `python3 -m pipeline.sheep_naming resolve` maps alias → stem; stem always valid. Shears/breed still take stems.
 
 ### D — LLM poster naming (Phase 5)
 
@@ -76,7 +77,7 @@ Moved: [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md) § A a
 
 ### E — Ops & docs
 
-1. Operator rename CLI in [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md); VoD `titleMode` shipped; Kodi / SS captions parked.
+1. Operator rename CLI in [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md); VoD / Kodi SS / Roku SS `titleMode` shipped. Optional Jellyfin OriginalTitle / SortName-as-alias parked.
 2. ~~Glossary~~ — alias vs flam3 `nick`.
 3. ~~Tests~~ — uniqueness, override sticky, collision retry, backfill.
 
@@ -86,8 +87,10 @@ Moved: [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md) § A a
 |---|---|---|
 | `pipeline/sheep_naming.py` | pipeline | Hash-seed generator, ingest helper, backfill / set / clear / resolve CLI; `--push-jellyfin` |
 | `roku-channel/` VoD **1.0.33** / toggle fix **1.0.39** | client | Settings `titleMode` filename \| alias; OK toggle + Save & Reload |
+| `roku-screensaver/` **1.0.11** | client | Stills caption + Settings `titleMode` |
+| `kodi-screensaver/` **0.2.12** | client | Caption + `title_mode` setting; ListItem label |
 | `configs/jellyflam3.yaml.example` `naming.enabled` | config | Default on; set false to skip ingest assign |
-| [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) | docs | Curator alias CLI + VoD toggle |
+| [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) | docs | Curator alias CLI + VoD / screensaver toggles |
 
 ## Non-goals
 

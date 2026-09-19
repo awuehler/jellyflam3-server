@@ -20,7 +20,7 @@ from typing import Any
 CLIENT_NAME = "JellyFlam3-Screensaver"
 CLIENT_DEVICE = "Kodi"
 CLIENT_DEVICE_ID = "jellyflam3-kodi-ss"
-CLIENT_VERSION = "0.2.11"
+CLIENT_VERSION = "0.2.12"
 FLOCK_REPOLL_MIN_SEC = 30.0
 # In-memory session list after a random prune. HTTP fetch is larger so the
 # sample is not Jellyfin's first-N sort.
@@ -105,6 +105,38 @@ def http_get_json(url: str, api_key: str, timeout: float = 20.0) -> dict[str, An
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         body = resp.read().decode("utf-8", errors="replace")
     return json.loads(body) if body else {}
+
+
+def overview_keyed_value(overview: str, key: str) -> str:
+    """First line value after ``Alias:`` / ``License:`` in Jellyfin Overview."""
+    ov = overview or ""
+    needle = key or ""
+    if not ov or not needle:
+        return ""
+    idx = ov.find(needle)
+    if idx < 0:
+        idx = ov.lower().find(needle.lower())
+    if idx < 0:
+        return ""
+    frag = ov[idx + len(needle) :].strip()
+    nl = frag.find("\n")
+    if nl >= 0:
+        frag = frag[:nl]
+    return frag.strip()
+
+
+def item_alias(item: dict[str, Any]) -> str:
+    return overview_keyed_value(str(item.get("Overview") or ""), "Alias:")
+
+
+def display_title(filename: str, alias: str, title_mode: str) -> str:
+    """filename (default) vs alias; missing alias falls back to filename."""
+    mode = (title_mode or "filename").strip().lower()
+    alias_s = (alias or "").strip()
+    name_s = (filename or "").strip()
+    if mode == "alias" and alias_s:
+        return alias_s
+    return name_s or alias_s
 
 
 def fetch_flock(
@@ -211,6 +243,7 @@ def fetch_flock(
             {
                 "id": item_id,
                 "title": title,
+                "alias": item_alias(it),
                 "url": mp4_stream_url(base, item_id, api_key),
             }
         )

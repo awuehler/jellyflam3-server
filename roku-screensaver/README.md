@@ -9,6 +9,7 @@ This package reads and writes registry section `JellyFlam3` on **this** Roku / *
 | Key | Written by | Screensaver |
 |---|---|---|
 | `baseUrl`, `apiKey`, `userId`, `libraryId` | **Screensaver Settings 1.0.10+**, furnace zip `registry/jellyflam3-presets.json`, or VoD Settings **while sharing the developer slot** | Read + write (1.0.10+) |
+| `titleMode` | Screensaver Settings **1.0.11+** (`filename` default / `alias`) | Read + write |
 | `ssFade`, `ssDwellSec`, `ssFadeSec` | Screensaver Settings | Read + write |
 
 **Furnace-built zip (recommended):** package on a Pi with `secrets.env` (`./scripts/package_roku_screensaver.sh` on `16a` / `08a` / `04a`). The zip includes `registry/jellyflam3-presets.json`; first run applies Jellyfin IDs when keys are empty.
@@ -25,7 +26,7 @@ If neither Settings nor a furnace preset was applied, the screensaver shows “r
 - **No** `Video` node, deep links, or Sessions/Playing reports (keeps idle-gate open)
 - Mid-session **404 / missing still:** drop that URL, re-poll StillsTask (30s rate limit), continue — never Video / Sessions
 - **Wrap-once re-fetch (1.0.9):** a wrap is one random permutation of the stills URL list (each URL once). Then re-run StillsTask (HTTP Limit 5000, randomly prune Primary+Backdrop URLs to 313). When that list arrives, rotate so the next URL is not the still on screen. Skip if a fetch is already in flight. Single-URL lists do not wrap-refetch. 404 re-poll stays 30s-gated and does not use this rotate.
-- Screensaver options (same `JellyFlam3` section): `ssFade`, `ssDwellSec`, `ssFadeSec` — edit under **Change screensaver settings**
+- Screensaver options (same `JellyFlam3` section): `ssFade`, `ssDwellSec`, `ssFadeSec`, **`titleMode`** (`filename` default / `alias`) — edit under **Change screensaver settings**. **1.0.11** draws a chrome-light caption from Overview `Alias:` (filename fallback).
 
 ## Crossfade / dwell
 

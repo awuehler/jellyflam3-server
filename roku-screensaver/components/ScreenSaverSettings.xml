@@ -21,7 +21,7 @@
       wrap="true"
       font="font:SmallSystemFont"
       color="0xAAAAAAFF"
-      text="Jellyfin URL / API key / user / library can be entered here (needed when VoD is a private channel — registry is per package). Fade/dwell still save immediately. Up/Down select · OK edit creds or change fade · Back exit."
+      text="Jellyfin URL / API key / user / library can be entered here (needed when VoD is a private channel — registry is per package). Fade/dwell/titleMode save immediately. Up/Down select · OK edit creds, toggle titles, or change fade · Back exit."
     />
     <Label
       id="credStatus"
@@ -47,14 +47,16 @@
     <Label id="row5" width="1540" height="40" translation="[188,562]" font="font:MediumSystemFont" color="0xE8E8F0FF" text="" />
     <Rectangle id="row6bg" width="1600" height="62" translation="[160,616]" color="0x1A1A28FF" />
     <Label id="row6" width="1540" height="40" translation="[188,628]" font="font:MediumSystemFont" color="0xE8E8F0FF" text="" />
+    <Rectangle id="row7bg" width="1600" height="62" translation="[160,682]" color="0x1A1A28FF" />
+    <Label id="row7" width="1540" height="40" translation="[188,694]" font="font:MediumSystemFont" color="0xE8E8F0FF" text="" />
     <Label
       id="hint"
       width="1600"
       height="50"
-      translation="[160,700]"
+      translation="[160,766]"
       font="font:SmallSystemFont"
       color="0x888888FF"
-      text="Saves to registry section JellyFlam3 (baseUrl / apiKey / userId / libraryId / ssFade / ssDwellSec / ssFadeSec)."
+      text="Saves to registry section JellyFlam3 (baseUrl / apiKey / userId / libraryId / titleMode / ssFade / ssDwellSec / ssFadeSec)."
     />
   </children>
 </component>

@@ -21,7 +21,7 @@ function trimSlash(base as string) as string
 end function
 
 function authHeader() as string
-  return "MediaBrowser Client=""JellyFlam3-Screensaver"", Device=""Roku"", DeviceId=""jellyflam3-screensaver"", Version=""1.0.10"", Token=""" + m.top.apiKey + """"
+  return "MediaBrowser Client=""JellyFlam3-Screensaver"", Device=""Roku"", DeviceId=""jellyflam3-screensaver"", Version=""1.0.11"", Token=""" + m.top.apiKey + """"
 end function
 
 function commercialModeOn() as boolean
@@ -97,7 +97,7 @@ function httpGet(url as string) as object
 end function
 
 function fetchRawStillsItems(base as string, parentId as string, limit as integer) as object
-  path = base + "/Users/" + m.top.userId + "/Items?IncludeItemTypes=Movie,Video&Recursive=true&ParentId=" + parentId + "&Fields=ImageTags,BackdropImageTags,Path,Tags,Name&Limit=" + limit.toStr() + "&SortBy=Random"
+  path = base + "/Users/" + m.top.userId + "/Items?IncludeItemTypes=Movie,Video&Recursive=true&ParentId=" + parentId + "&Fields=ImageTags,BackdropImageTags,Path,Tags,Name,Overview&Limit=" + limit.toStr() + "&SortBy=Random"
   resp = httpGet(path)
   if resp.code < 200 or resp.code >= 300
     return { error: "HTTP " + Str(resp.code).Trim(), items: [] }
@@ -165,6 +165,49 @@ function mergeStillsById(primary as object, extra as object, limit as integer) a
   return out
 end function
 
+function overviewKeyedValue(ov as string, key as string) as string
+  if ov = invalid or ov = "" or key = invalid or key = "" then return ""
+  li = Instr(1, ov, key)
+  if li = 0 then li = Instr(1, LCase(ov), LCase(key))
+  if li = 0 then return ""
+  frag = Mid(ov, li + Len(key)).Trim()
+  nl = Instr(1, frag, Chr(10))
+  if nl > 0 then frag = Left(frag, nl - 1)
+  return frag.Trim()
+end function
+
+function itemFilename(it as object) as string
+  name = ""
+  if it <> invalid and it.Name <> invalid then name = it.Name
+  if name = "" and it <> invalid and it.Path <> invalid
+    p = it.Path
+    slash = 0
+    i = Len(p)
+    while i > 0
+      ch = Mid(p, i, 1)
+      if ch = "/" or ch = "\"
+        slash = i
+        exit while
+      end if
+      i = i - 1
+    end while
+    if slash > 0 then name = Mid(p, slash + 1) else name = p
+  end if
+  low = LCase(name)
+  if Right(low, 4) = ".mp4" then name = Left(name, Len(name) - 4)
+  return name
+end function
+
+function itemAlias(it as object) as string
+  ov = ""
+  if it <> invalid and it.Overview <> invalid then ov = it.Overview
+  return overviewKeyedValue(ov, "Alias:")
+end function
+
+function stillEntry(uri as string, filename as string, alias as string) as object
+  return { uri: uri, filename: filename, alias: alias }
+end function
+
 function artworkUrlsFromItems(base as string, raw as object) as object
   urls = []
   if raw = invalid then return urls
@@ -175,8 +218,10 @@ function artworkUrlsFromItems(base as string, raw as object) as object
     if commercial and not isCommercialSafe(it) then continue for
     if it.Id = invalid or it.Id = "" then continue for
     id = it.Id
+    filename = itemFilename(it)
+    alias = itemAlias(it)
     if it.ImageTags <> invalid and it.ImageTags.Primary <> invalid and it.ImageTags.Primary <> ""
-      urls.push(base + "/Items/" + id + "/Images/Primary?maxWidth=1920&api_key=" + m.top.apiKey)
+      urls.push(stillEntry(base + "/Items/" + id + "/Images/Primary?maxWidth=1920&api_key=" + m.top.apiKey, filename, alias))
     end if
     nBack = 0
     if it.BackdropImageTags <> invalid
@@ -184,7 +229,7 @@ function artworkUrlsFromItems(base as string, raw as object) as object
     end if
     i = 0
     while i < nBack
-      urls.push(base + "/Items/" + id + "/Images/Backdrop/" + i.toStr() + "?maxWidth=1920&api_key=" + m.top.apiKey)
+      urls.push(stillEntry(base + "/Items/" + id + "/Images/Backdrop/" + i.toStr() + "?maxWidth=1920&api_key=" + m.top.apiKey, filename, alias))
       i = i + 1
     end while
   end for
@@ -247,5 +292,5 @@ function fetchArtworkUrls() as object
   raw = mergeStillsById(nested, raw, fetchLimit)
   urls = pruneToCap(artworkUrlsFromItems(base, raw), flockIndexCap())
   urls = shuffleCopy(urls)
-  return { urls: urls, count: urls.count() }
+  return { urls: urls, stills: urls, count: urls.count() }
 end function

@@ -15,7 +15,8 @@ Usage:
 Assumptions: Filename stays canonical. Hash-seed from stem so re-ingest of the
 same sheep keeps the alias. ``alias_source=human`` is sticky until clear-alias.
 Jellyfin ``Name`` stays the stem; Overview gets an ``Alias:`` line so Roku VoD
-``titleMode=alias`` can show it. Kodi / screensaver captions stay parked.
+``titleMode=alias`` (and Kodi / Roku screensaver captions) can show it.
+Optional OriginalTitle / SortName-as-alias stays parked.
 LLM poster naming is Phase 5.
 Docs: docs/phase4/09_SHEEP_NAMING.md
 """

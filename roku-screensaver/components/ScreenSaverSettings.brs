@@ -11,7 +11,8 @@ sub init()
     m.top.findNode("row3"),
     m.top.findNode("row4"),
     m.top.findNode("row5"),
-    m.top.findNode("row6")
+    m.top.findNode("row6"),
+    m.top.findNode("row7")
   ]
   m.rowBgs = [
     m.top.findNode("row0bg"),
@@ -20,7 +21,8 @@ sub init()
     m.top.findNode("row3bg"),
     m.top.findNode("row4bg"),
     m.top.findNode("row5bg"),
-    m.top.findNode("row6bg")
+    m.top.findNode("row6bg"),
+    m.top.findNode("row7bg")
   ]
   m.credFields = ["baseUrl", "apiKey", "userId", "libraryId"]
   m.cursor = 0
@@ -32,6 +34,7 @@ sub init()
   m.fadeOn = registryBool(m.reg, "ssFade", true)
   m.dwellSec = registryInt(m.reg, "ssDwellSec", 12)
   m.fadeSec = registryFloat(m.reg, "ssFadeSec", 1.5)
+  m.titleMode = titleModeValue()
   m.dwellIdx = nearestIndex(m.dwellChoices, m.dwellSec)
   m.fadeSecIdx = nearestIndexFloat(m.fadeSecChoices, m.fadeSec)
   m.dwellSec = m.dwellChoices[m.dwellIdx]
@@ -62,6 +65,14 @@ function registryFloat(reg as object, key as string, defaultVal as float) as flo
   raw = reg.read(key)
   if raw = invalid or raw = "" then return defaultVal
   return Val(raw)
+end function
+
+function titleModeValue() as string
+  v = m.reg.read("titleMode")
+  if v = invalid then v = ""
+  tl = LCase(v.Trim())
+  if tl = "alias" then return "alias"
+  return "filename"
 end function
 
 function nearestIndex(choices as object, value as integer) as integer
@@ -148,6 +159,7 @@ sub refreshRows()
   m.rows[4].text = "Crossfade                    " + fadeLabel
   m.rows[5].text = "Dwell between images         " + m.dwellSec.toStr() + " s"
   m.rows[6].text = "Fade duration                " + fadeSecLabel(m.fadeSec)
+  m.rows[7].text = "Titles                       " + m.titleMode
 
   i = 0
   while i < m.rowBgs.count()
@@ -186,6 +198,21 @@ function fadeSecStorage(sec as float) as string
   if sec = 2.5 then return "2.5"
   return sec.toStr()
 end function
+
+sub saveTitleMode()
+  m.reg.write("titleMode", m.titleMode)
+  m.reg.flush()
+end sub
+
+sub toggleTitleMode()
+  if m.titleMode = "alias"
+    m.titleMode = "filename"
+  else
+    m.titleMode = "alias"
+  end if
+  saveTitleMode()
+  refreshRows()
+end sub
 
 sub nudgeFade(delta as integer)
   fadeCursor = m.cursor - m.credFields.count()
@@ -265,6 +292,8 @@ function onKeyEvent(key as string, press as boolean) as boolean
   else if key = "left"
     if m.cursor < m.credFields.count()
       editCred(m.credFields[m.cursor])
+    else if m.cursor = 7
+      toggleTitleMode()
     else
       nudgeFade(-1)
     end if
@@ -272,6 +301,8 @@ function onKeyEvent(key as string, press as boolean) as boolean
   else if key = "right" or key = "OK"
     if m.cursor < m.credFields.count()
       editCred(m.credFields[m.cursor])
+    else if m.cursor = 7
+      toggleTitleMode()
     else
       nudgeFade(1)
     end if

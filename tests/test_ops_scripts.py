@@ -99,23 +99,27 @@ def test_lab_share_votes_crontab_is_0641():
     assert "41 6 * * *" in yaml
 
 
-def test_lab_library_rotate_crontab_inactive_until_needed():
+def test_library_rotate_activate_howto_documented():
     script = _read("scripts/cron_library_rotate.sh")
     assert "23 5 * * *" in script
     assert "05:23" in script
     assert "NOT installed" in script
-    assert "inactive until needed" in script
+    assert "activate-daily-rotate" in script
     assert "pipeline.library_disk rotate" in script
     assert "--apply" in script
     yaml = _read("configs/jellyflam3.yaml.example")
     assert "23 5 * * *" in yaml
-    assert "inactive until needed" in yaml
     docs = _read("docs/phase4/06_LIBRARY_DISK_ROTATE.md")
     assert "cron_library_rotate.sh" in docs
-    assert "inactive until needed" in docs
+    assert "## Activate daily rotate" in docs or "### Activate daily rotate" in docs
+    assert "crontab -e" in docs
+    assert "rotate_enabled" in docs
     runbook = _read("docs/USER_GUIDE_AND_RUNBOOK.md")
     assert "cron_library_rotate.sh" in runbook
-    assert "inactive until needed" in runbook
+    assert "Activate library rotate" in runbook
+    assert "crontab -e" in runbook
+    overview = _read("docs/phase4/00_OVERVIEW.md")
+    assert "**Closed** 2026-09-19" in overview
 
 
 def test_operator_scripts_have_purpose_headers():

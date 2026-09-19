@@ -263,5 +263,14 @@ def test_roku_screensaver_expands_nested_library_folders():
     assert "pruneToCap" in text
     assert "flockIndexCap" in text
     assert "flockFetchLimit" in text
-    assert "build_version=10" in (SS / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.10""' in text
+    assert "build_version=11" in (SS / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.11""' in text
+    assert "itemAlias" in text
+    assert "overviewKeyedValue" in text
+    scene = (SS / "components" / "ScreenSaverScene.brs").read_text(encoding="utf-8")
+    assert "function titleModeValue() as string" in scene
+    assert "function displayTitle(filename as string, alias as string)" in scene
+    assert "setCaptionFor" in scene
+    settings = (SS / "components" / "ScreenSaverSettings.brs").read_text(encoding="utf-8")
+    assert "toggleTitleMode" in settings
+    assert 'write("titleMode"' in settings

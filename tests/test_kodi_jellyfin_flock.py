@@ -40,7 +40,12 @@ def test_commercial_filter():
 def test_fetch_flock_maps_mp4(monkeypatch):
     payload = {
         "Items": [
-            {"Id": "aa", "Name": "electricsheep.247.001", "Tags": ["cc-by"]},
+            {
+                "Id": "aa",
+                "Name": "electricsheep.247.001",
+                "Tags": ["cc-by"],
+                "Overview": "License: cc-by\nAlias: frosty_swirles",
+            },
             {"Id": "bb", "Name": "nc-sheep", "Tags": ["cc-by-nc"]},
         ]
     }
@@ -69,6 +74,7 @@ def test_fetch_flock_maps_mp4(monkeypatch):
     assert items[0]["id"] == "aa"
     assert "stream.mp4" in items[0]["url"]
     assert items[0]["title"] == "electricsheep.247.001"
+    assert items[0]["alias"] == "frosty_swirles"
     video_urls = [u for u in seen["urls"] if "IncludeItemTypes=Movie" in u]
     assert video_urls
     assert all("Tags=" not in u for u in video_urls)
@@ -156,7 +162,7 @@ def test_drop_item_and_repoll_rate_limit():
     assert jf.should_repoll_flock(90.0, 100.0, min_sec=30.0) is False
     assert jf.should_repoll_flock(60.0, 100.0, min_sec=30.0) is True
     assert jf.FLOCK_REPOLL_MIN_SEC == 30.0
-    assert jf.CLIENT_VERSION == "0.2.11"
+    assert jf.CLIENT_VERSION == "0.2.12"
     assert jf.FLOCK_INDEX_CAP == 313
     assert jf.FLOCK_FETCH_LIMIT == 5000
     h = jf.auth_header("secret")
@@ -180,8 +186,13 @@ def test_screensaver_package_mentions_flock():
     assert 'id="api_key"' in settings
     assert 'id="shuffle"' in settings
     assert 'default="true"' in settings
+    assert 'id="title_mode"' in settings
+    assert 'default="filename"' in settings
     assert 'id="flock_limit"' in settings
     assert 'default="313"' in settings
+    assert "_title_mode" in text
+    assert "_item_caption" in text
+    assert "_show_caption" in text
     assert "_shuffle_enabled" in text
     assert "_ensure_shuffle_on" in text
     assert 'setSetting("shuffle", "true")' in text
@@ -197,6 +208,15 @@ def test_rotate_past_avoids_wrap_seam_repeat():
     assert rotated[0]["id"] != "aa"
     assert {i["id"] for i in rotated} == {"aa", "bb", "cc"}
     assert len(jf.rotate_past([{"id": "aa"}], "aa")) == 1
+
+
+def test_display_title_filename_vs_alias():
+    assert jf.overview_keyed_value("License: cc-by\nAlias: frosty_swirles", "Alias:") == "frosty_swirles"
+    assert jf.overview_keyed_value("", "Alias:") == ""
+    assert jf.display_title("electricsheep.247.001", "frosty_swirles", "filename") == "electricsheep.247.001"
+    assert jf.display_title("electricsheep.247.001", "frosty_swirles", "alias") == "frosty_swirles"
+    assert jf.display_title("electricsheep.247.001", "", "alias") == "electricsheep.247.001"
+    assert jf.item_alias({"Overview": "Alias: angry_bardeen"}) == "angry_bardeen"
 
 
 def test_prune_to_cap_keeps_small_lists():

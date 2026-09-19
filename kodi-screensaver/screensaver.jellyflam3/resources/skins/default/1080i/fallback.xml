@@ -36,13 +36,26 @@
       <visible>false</visible>
       <label>JellyFlam3</label>
     </control>
-    <!-- Last control: windowed Player renders here -->
+    <!-- Windowed Player; caption 101 overlays a chrome-light title strip -->
     <control type="videowindow" id="1">
       <description>loop player (windowed, no OSD chrome)</description>
       <left>0</left>
       <top>0</top>
       <width>1920</width>
       <height>1080</height>
+    </control>
+    <control type="label" id="101">
+      <description>chrome-light filename/alias caption (Phase 4 / 09)</description>
+      <left>80</left>
+      <top>1016</top>
+      <width>1760</width>
+      <height>48</height>
+      <align>left</align>
+      <aligny>center</aligny>
+      <font>font13</font>
+      <textcolor>8CE8E8F0</textcolor>
+      <visible>false</visible>
+      <label></label>
     </control>
   </controls>
 </window>

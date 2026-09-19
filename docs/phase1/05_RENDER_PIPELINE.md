@@ -77,7 +77,7 @@ Default `render.max_cpus: 3` (leave 1 of 4 Pi cores free): `flam3-animate` `nthr
 |---|---|---|
 | `pipeline/worker.py` | pipeline | Job queue: tax → TV-optimize → quality gate → sequence → animate → encode → visual gate → ingest |
 | `pipeline/quality_gate.py` | pipeline | Fail-closed artistic admission (genome / palette / preview / encoded midpoint) |
-| `pipeline/worker_drain.py` | pipeline | Finish current job, then pause inbox claiming until cancel |
+| `pipeline/worker_drain.py` | pipeline | Finish current job, then pause inbox claiming until cancel. Mid-animate checkpoint / SIGSTOP pause **cancelled** (Phase 4, 2026-09-19) |
 | `pipeline/seed_inbox.py` | pipeline | Feed inbox (samples / archive / mutate / generate) |
 | `pipeline/job_recovery.py` | pipeline | Reclaim orphaned / superseded in-flight jobs |
 | `pipeline/tv_optimize.py` / `resize_genome.py` / `choose_duration.py` | pipeline | Size, Gold Sheep Lite, duration / nframes |

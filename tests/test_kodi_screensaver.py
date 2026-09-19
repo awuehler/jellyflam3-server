@@ -16,7 +16,7 @@ def test_addon_xml_screensaver_entry():
     tree = ET.parse(ADDON_XML)
     root = tree.getroot()
     assert root.attrib["id"] == "screensaver.jellyflam3"
-    assert root.attrib["version"] == "0.2.11"
+    assert root.attrib["version"] == "0.2.12"
     req = root.find("requires/import")
     assert req is not None
     assert req.attrib["addon"] == "xbmc.python"
@@ -62,8 +62,12 @@ def test_screensaver_entry_files_exist():
     )
     assert "videowindow" in skin
     assert 'id="90"' in skin  # focus sink (videowindow cannot focus)
-    # videowindow must be last so windowed Player is not covered
+    assert "_item_caption" in text
+    assert "title_mode" in text
+    assert 'id="101"' in skin
+    # videowindow after focus sink; caption overlay 101 sits on the video
     assert skin.rfind("videowindow") > skin.rfind('id="90"')
+    assert skin.rfind('id="101"') > skin.rfind("videowindow")
     assert (ADDON / "resources" / "icon.png").is_file()
     assert (ADDON / "resources" / "fanart.jpg").is_file()
     for n in ("screenshot-01.jpg", "screenshot-02.jpg", "screenshot-03.jpg"):

@@ -82,7 +82,7 @@ link_capacity:
 # Sheep library mount capacity (Phase 4 / 06). WARN/BAD in healthcheck; rotate + worker refuse.
 #   python3 -m pipeline.library_disk check
 #   python3 -m pipeline.library_disk rotate [--apply]
-#   scripts/cron_library_rotate.sh   (example 23 5 * * *; NOT installed — inactive until needed)
+#   scripts/cron_library_rotate.sh   (optional 23 5 * * *; see phase4/06 Activate daily rotate)
 # Scratch encode floor is still render.free_space_gb_min. Same-device sheep+scratch
 # is reported once. Rotate uses Shears cascade (not Hammer); git samples/pedigree stay.
 library_disk:

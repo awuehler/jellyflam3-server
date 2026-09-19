@@ -6,12 +6,14 @@ sub init()
   m.fadeToA = m.top.findNode("fadeToA")
   m.fadeToB = m.top.findNode("fadeToB")
   m.status = m.top.findNode("status")
+  m.caption = m.top.findNode("caption")
   m.urls = []
   m.index = 0
   m.showingA = true
   m.busy = false
   m.fading = false
   m.pendingUri = ""
+  m.pendingEntry = invalid
   m.lastRepollSec = 0
   m.repolling = false
   m.wrapRefetch = false
@@ -43,11 +45,11 @@ sub init()
   m.stillB.observeField("loadStatus", "onStillBLoad")
 
   if m.baseUrl = invalid or m.baseUrl = "" or m.apiKey = invalid or m.apiKey = "" or m.userId = invalid or m.userId = "" or m.libraryId = invalid or m.libraryId = ""
-    m.status.text = "No Jellyfin registry — Screensaver Settings, furnace zip, or VoD Settings"
+    setStatus("No Jellyfin registry — Screensaver Settings, furnace zip, or VoD Settings")
     return
   end if
 
-  m.status.text = "Loading flock stills…"
+  setStatus("Loading flock stills…")
   m.task = CreateObject("roSGNode", "StillsTask")
   m.task.observeField("resultJson", "onList")
   m.task.baseUrl = m.baseUrl
@@ -86,26 +88,81 @@ function registryFloat(reg as object, key as string, defaultVal as float, minVal
   return n
 end function
 
+function titleModeValue() as string
+  v = m.reg.read("titleMode")
+  if v = invalid then v = ""
+  tl = LCase(v.Trim())
+  if tl = "alias" then return "alias"
+  return "filename"
+end function
+
+function stillUri(entry as dynamic) as string
+  if entry = invalid then return ""
+  if GetInterface(entry, "ifAssociativeArray") <> invalid
+    if entry.uri <> invalid then return entry.uri
+    return ""
+  end if
+  return entry
+end function
+
+function stillFilename(entry as dynamic) as string
+  if entry = invalid then return ""
+  if GetInterface(entry, "ifAssociativeArray") <> invalid
+    if entry.filename <> invalid then return entry.filename
+  end if
+  return ""
+end function
+
+function stillAlias(entry as dynamic) as string
+  if entry = invalid then return ""
+  if GetInterface(entry, "ifAssociativeArray") <> invalid
+    if entry.alias <> invalid then return entry.alias
+  end if
+  return ""
+end function
+
+function displayTitle(filename as string, alias as string) as string
+  if titleModeValue() = "alias" and alias <> invalid and alias <> "" then return alias
+  if filename <> invalid and filename <> "" then return filename
+  if alias <> invalid and alias <> "" then return alias
+  return ""
+end function
+
+sub setStatus(msg as string)
+  if m.status <> invalid then m.status.text = msg
+  if msg <> invalid and msg <> ""
+    if m.caption <> invalid then m.caption.text = ""
+  end if
+end sub
+
+sub setCaptionFor(entry as dynamic)
+  if m.caption = invalid then return
+  if m.status <> invalid and m.status.text <> "" then return
+  m.caption.text = displayTitle(stillFilename(entry), stillAlias(entry))
+end sub
+
 sub onList()
   raw = m.task.resultJson
   if raw = invalid or raw = ""
-    m.status.text = "No stills (empty response)"
+    setStatus("No stills (empty response)")
     return
   end if
   data = ParseJson(raw)
   if data = invalid or data.urls = invalid or data.urls.count() = 0
     reason = "No Primary or Backdrop stills in library"
     if data <> invalid and data.error <> invalid then reason = data.error
-    m.status.text = reason
+    setStatus(reason)
     return
   end if
   m.urls = data.urls
   m.index = 0
-  m.status.text = ""
+  setStatus("")
   m.showingA = true
   m.stillA.opacity = 1.0
   m.stillB.opacity = 0.0
-  m.stillA.uri = m.urls[0]
+  first = m.urls[0]
+  m.stillA.uri = stillUri(first)
+  setCaptionFor(first)
   m.timer.control = "start"
 end sub
 
@@ -123,7 +180,7 @@ sub dropUrl(uri as string)
   if m.urls = invalid then m.urls = []
   kept = []
   for each u in m.urls
-    if u <> uri then kept.push(u)
+    if stillUri(u) <> uri then kept.push(u)
   end for
   m.urls = kept
   if m.index >= m.urls.count() then m.index = 0
@@ -203,19 +260,20 @@ sub handleStillFailed(uri as string)
   m.busy = false
   m.fading = false
   m.pendingUri = ""
+  m.pendingEntry = invalid
   if m.urls = invalid or m.urls.count() = 0
-    if m.status <> invalid then m.status.text = "No stills left — flock empty or all 404"
+    setStatus("No stills left — flock empty or all 404")
     if m.timer <> invalid then m.timer.control = "stop"
     m.handlingFail = false
     return
   end if
   if m.index >= m.urls.count() then m.index = 0
-  nextUri = m.urls[m.index]
+  nextStill = m.urls[m.index]
   m.handlingFail = false
   if not m.fadeOn
-    hardCut(nextUri)
+    hardCut(nextStill)
   else
-    startCrossfade(nextUri)
+    startCrossfade(nextStill)
   end if
 end sub
 
@@ -277,7 +335,7 @@ sub rotateUrlsPast(lastUri as string)
   n = m.urls.count()
   i = 0
   while i < n
-    if m.urls[0] <> lastUri then return
+    if stillUri(m.urls[0]) <> lastUri then return
     m.urls.push(m.urls.Shift())
     i = i + 1
   end while
@@ -292,22 +350,23 @@ sub onTick()
   else
     m.index = m.index + 1
     if m.index >= m.urls.count()
-      lastUri = m.urls[m.urls.count() - 1]
+      lastUri = stillUri(m.urls[m.urls.count() - 1])
       if m.urls.count() > 1 then maybeWrapRefetchStills()
       m.urls = shuffleCopy(m.urls)
       rotateUrlsPast(lastUri)
       m.index = 0
     end if
   end if
-  nextUri = m.urls[m.index]
+  nextStill = m.urls[m.index]
   if not m.fadeOn
-    hardCut(nextUri)
+    hardCut(nextStill)
     return
   end if
-  startCrossfade(nextUri)
+  startCrossfade(nextStill)
 end sub
 
-sub hardCut(uri as string)
+sub hardCut(entry as dynamic)
+  uri = stillUri(entry)
   if m.showingA
     m.stillA.uri = uri
     m.stillA.opacity = 1.0
@@ -317,11 +376,14 @@ sub hardCut(uri as string)
     m.stillB.opacity = 1.0
     m.stillA.opacity = 0.0
   end if
+  setCaptionFor(entry)
 end sub
 
-sub startCrossfade(uri as string)
+sub startCrossfade(entry as dynamic)
+  uri = stillUri(entry)
   m.busy = true
   m.pendingUri = uri
+  m.pendingEntry = entry
   if m.showingA
     m.stillB.uri = uri
     if m.stillB.loadStatus = "ready" or m.stillB.loadStatus = "loaded"
@@ -347,4 +409,8 @@ sub onFadeState()
   m.showingA = not m.showingA
   m.busy = false
   m.pendingUri = ""
+  if m.pendingEntry <> invalid
+    setCaptionFor(m.pendingEntry)
+    m.pendingEntry = invalid
+  end if
 end sub

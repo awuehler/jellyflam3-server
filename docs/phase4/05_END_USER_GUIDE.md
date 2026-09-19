@@ -43,7 +43,7 @@ Complements (does not replace):
 | Promote peer share | Opt In; **gated** `promote --apply` on receive. Liked sheep: `cron_share_votes.sh` copies to `peers/share-out` ([08](08_VIEWER_FEEDBACK_LOOP.md)); auto-promote **cancelled** ([01](01_PEER_SHARE_PATH.md)) |
 | Vote / like a sheep | Roku VoD overlay last **7 s** ([08](08_VIEWER_FEEDBACK_LOOP.md)); LAN-only POST; re-votes allowed; love is a stronger tally, not a different share path |
 | Clear household votes | `python3 -m pipeline.sheep_votes sweep` then `--confirm SWEEP` ([example 7](../USER_GUIDE_AND_RUNBOOK.md#7--sweep-votes-fresh-start-on-this-furnace)); does not unshare `peers/share-out` |
-| Rename / alias a sheep | [09](09_SHEEP_NAMING.md): auto `adjective_surname` or human override; VoD Settings `titleMode` filename vs alias |
+| Rename / alias a sheep | [09](09_SHEEP_NAMING.md): auto `adjective_surname` or human override; VoD / Kodi SS / Roku SS `titleMode` filename vs alias |
 | Delete a sheep | Shears dry-run → apply (Phase 3 / 03) |
 | Multi-Roku | Same Jellyfin URL on each TV; `display_profiles list` |
 | Update fleet | `git pull` on each Pi; when to restart units |
@@ -76,12 +76,12 @@ Symptom-oriented table (extend as lab learns):
 | Screensaver replaced VoD | One sideload slot | Re-sideload VoD or use private/Store ([04](04_ROKU_PUBLISH.md)) |
 | Peering empty | Opt In? Syncthing? trust keys? | Peering README; share-security verify |
 | Healthcheck mount fail | USB/NVMe | Phase 2 from-scratch mounts |
-| Sheep disk WARN / BAD | `library_disk check`; `df` | `library_disk rotate --apply` (rotate cron **inactive until needed**); Shears for one sheep ([06](06_LIBRARY_DISK_ROTATE.md)) |
+| Sheep disk WARN / BAD | `library_disk check`; `df` | `library_disk rotate --apply`; [Activate daily rotate](06_LIBRARY_DISK_ROTATE.md#activate-daily-rotate); Shears for one sheep ([06](06_LIBRARY_DISK_ROTATE.md)) |
 | Transcode hammering Pi / several TVs stutter | streamMode / `link_capacity estimate` | Prefer DirectPlay MP4; this lab is WiFi STA (`eth0` DOWN) — stay at/under `N_max` (ops, not a Jellyfin cap) ([07](07_CONCURRENT_CLIENTS.md)) |
 
-### E — Remaining (waits on 08)
+### E — Remaining
 
-Vote / like recipes in the user guide when [08](08_VIEWER_FEEDBACK_LOOP.md) ships. Alias CLI is already in the runbook ([09](09_SHEEP_NAMING.md)). Fridge card and refactor/Hammer/Kodi triage are already in the baseline.
+Vote / like recipes shipped with [08](08_VIEWER_FEEDBACK_LOOP.md) (runbook example 6). Filename vs alias: VoD + Kodi/Roku screensaver `titleMode` ([09](09_SHEEP_NAMING.md)); optional Jellyfin OriginalTitle parked. Fridge card and refactor/Hammer/Kodi triage are in the baseline.
 
 ## Guidelines
 

@@ -9,9 +9,10 @@
 #   python3 -m pipeline.library_disk rotate --config configs/jellyflam3.yaml
 #   python3 -m pipeline.library_disk rotate --apply
 #
-# When to run: **inactive until needed** — do not install on the lab fleet while
-# sheep disks are far below WARN. Enable the example crontab below only when a
-# host needs daily rotate. Manual: rotate [--apply]. Archive seed still rotates
+# When to run: optional daily valve. Lab 16a / 08a / 04a do **not** install this
+# crontab while sheep disks are far below WARN. Enable with the recipe in
+# docs/phase4/06_LIBRARY_DISK_ROTATE.md#activate-daily-rotate (and USER_GUIDE
+# Activate library rotate). Manual: rotate [--apply]. Archive seed still rotates
 # before fetch (existing ~10-day cron), independent of this line.
 # Success: JSON action=rotate|plan|skip (disabled, under_threshold, floor, …).
 # Fail: missing config → exit 1. Kill-switch library_disk.rotate_enabled.
@@ -22,8 +23,8 @@
 #
 # ---------------------------------------------------------------------------
 # Example crontab (user jellyflam3) — **NOT installed** on 16a / 08a / 04a.
-# Inactive until needed (sheep mount approaching WARN/BAD). Suggested slot
-# 05:23 local, after 05:11 idle-breed:
+# Suggested slot 05:23 local, after 05:11 idle-breed. How-to:
+# docs/phase4/06_LIBRARY_DISK_ROTATE.md#activate-daily-rotate
 #
 #   23 5 * * *  /opt/jellyflam3-server/scripts/cron_library_rotate.sh \
 #       >>/var/log/jellyflam3/library_rotate.log 2>&1

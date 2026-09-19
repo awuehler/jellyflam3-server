@@ -42,7 +42,7 @@ Section `JellyFlam3` (edit in-channel via **Settings** button, **\* Options**, o
 | `commercialMode` | `true` / `false` — **OK** toggles in Settings (**1.0.42**). Client-side filter on Items **Tags** only: keep `cc-by` / `cc0` / PD / `cc-by-sa`; hide NC and untagged items. NC overrides safe tags regardless of order. Do **not** use Jellyfin `Tags=` query params. Overview `License:` is display-only |
 | `streamMode` | `mp4` (ambient loop default) or `hls` (remux compare) — **OK** toggles in Settings (**1.0.42**) |
 | `shuffleFlock` | `true` / `false` — **OK** toggles in Settings (**1.0.42**). `true` rotates archive gens (`247…165`) plus pedigree/tuple at EOF (skips `misc`/`test`). Channel **1.0.30** still rewrites `true` on launch so a leftover `false` cannot survive a cold start. |
-| `titleMode` | `filename` (default) or `alias` — flock rows + player chrome (**1.0.33**). **OK** toggles in Settings (**1.0.39** / **1.0.42**). Alias is Overview `Alias:`; missing alias falls back to `Name`. Screensaver does not read this key. |
+| `titleMode` | `filename` (default) or `alias` — flock rows + player chrome (**1.0.33**). **OK** toggles in Settings (**1.0.39** / **1.0.42**). Alias is Overview `Alias:`; missing alias falls back to `Name`. Roku screensaver **1.0.11+** has its own Settings toggle for the same key (same registry section only while sharing the developer slot). |
 | `displayWidth` / `displayHeight` | From Settings **Fetch TV display** (`roDeviceInfo`) |
 | `uiResolution` / `uiWidth` / `uiHeight` | UI resolution name + pixels |
 | `videoMode` | e.g. `1080p`, `2160p60` |

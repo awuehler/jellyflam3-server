@@ -27,7 +27,7 @@ Prefer **VoD as a private/unpublished channel** (Home tile; does not occupy deve
 Roku `roRegistrySection` is **per channel ID**. Zip-swap (sideload VoD, then sideload SS) keeps section `JellyFlam3` because both packages share the developer slot. A **private VoD** has a different channel ID than sideload SS, so credentials do **not** carry over.
 
 - Furnace-built SS zip still ships `registry/jellyflam3-presets.json` for that Pi’s Jellyfin.
-- Screensaver **1.0.10** Settings can **write** `baseUrl` / `apiKey` / `userId` / `libraryId` (plus fade/dwell as before). Needed for coexistence and for boxes that never had VoD sideloaded (e.g. developer mode off).
+- Screensaver **1.0.10** Settings can **write** `baseUrl` / `apiKey` / `userId` / `libraryId` (plus fade/dwell as before). **1.0.11** also writes `titleMode` for stills captions. Needed for coexistence and for boxes that never had VoD sideloaded (e.g. developer mode off).
 
 ### Package a signed `.pkg` (on a developer Roku)
 
@@ -52,7 +52,7 @@ Do not merge VoD and screensaver into one zip (Roku policy: no `RunScreenSaver` 
 ### B — Settings layout & user input
 
 1. **VoD Settings** — clearer layout (sections, focus rings, safe margins); keyboard / paste-friendly Jellyfin URL + API key + user/library IDs; validation and error copy; keep display probe + Pi sink behavior from Phase 2.
-2. **Screensaver Settings** — first-class editors for Jellyfin credentials **and** `ssFade` / `ssDwellSec` / `ssFadeSec` (not status-only). **Shipped 1.0.10** (Wave 2): SS Settings writes `baseUrl` / `apiKey` / `userId` / `libraryId`. Back / focus already required. VoD visual-language polish stays parked.
+2. **Screensaver Settings** — first-class editors for Jellyfin credentials **and** `ssFade` / `ssDwellSec` / `ssFadeSec` (not status-only). **Shipped 1.0.10** (Wave 2): SS Settings writes `baseUrl` / `apiKey` / `userId` / `libraryId`. **1.0.11** OK-toggles `titleMode`. Back / focus already required. VoD visual-language polish stays parked.
 3. Shared `JellyFlam3` registry contract documented as the single secrets surface; no second ad-hoc store for Store builds.
 4. Optional **friendly screen name** (e.g. `Living Room`) stored in registry + echoed into display-profile JSON for operator lists.
 
@@ -119,7 +119,7 @@ Baseline already shipped: two live Roku profiles on one Pi (Phase 2 Owner OK). P
 
 - [ ] VoD and screensaver brand assets replaced (icons/logos/splash at minimum)
 - [ ] VoD Settings: improved layout + reliable text input for Jellyfin fields
-- [x] Screensaver Settings: credential + fade/dwell/fade-duration editors; Back exits (**1.0.10**)
+- [x] Screensaver Settings: credential + fade/dwell/fade-duration editors; Back exits (**1.0.10**); `titleMode` stills captions (**1.0.11**)
 - [ ] Both packages build via existing (or extended) package scripts; signed/private path documented
 - [x] Private-channel path documented (VoD unpublished + one sideload slot); Store listing parked
 - [ ] At least one publish path exercised (private channel **or** Store) for each package, or Owner waiver for Store

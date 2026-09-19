@@ -53,7 +53,7 @@ Roku allows only **one** `Video` play instance: HomeScene always `stopPlayer()` 
    - `userId` — Jellyfin user id (required)
    - `libraryId` — Sheep library id (recommended)
    - `commercialMode` — `false` unless filtering NC
-   - `titleMode` — `filename` (default) or `alias` (VoD **1.0.33+**; Overview `Alias:` line)
+   - `titleMode` — `filename` (default) or `alias` (VoD **1.0.33+**; Overview `Alias:` line). Roku screensaver **1.0.11+** Settings has the same toggle for stills captions.
    - Tip: dump IDs with `python3 scripts/jellyfin_id_dump.py` ([phase3/08](../phase3/08_JELLYFIN_ID_DUMP.md))
 6. After save → flock RowList should populate; select a dream → looped playback; **Back** returns to list.
 

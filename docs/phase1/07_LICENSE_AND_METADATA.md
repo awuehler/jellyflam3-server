@@ -153,7 +153,7 @@ license:
   - **Keep** items that carry a safe tag (`cc-by`, `cc-by-sa`, `cc0`, `public-domain`, `pd`) and **do not** carry `by-nc` / `cc-by-nc`.
   - **Hide** NC items and items with **empty / missing** Tags (empty Tags ≠ “show everything”).
   - Overview `License:` lines feed browse metadata (`metaLine`) but **do not** drive the commercial allow/deny decision.
-  - Overview `Alias:` lines feed VoD `titleMode=alias` (channel **1.0.33+**). Jellyfin `Name` stays the filename.
+  - Overview `Alias:` lines feed VoD `titleMode=alias` (channel **1.0.33+**), Kodi screensaver **0.2.12+** `title_mode`, and Roku screensaver **1.0.11+** `titleMode`. Jellyfin `Name` stays the filename.
 - Optional later: Jellyfin **commercial-safe** collection excluding NC.
 
 ## Catalog sidecar schema
