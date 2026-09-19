@@ -194,7 +194,7 @@ Smoked on `16a` / `08a` / `04a` (2026-08-11):
 |---|---|---|
 | Tailscale enroll / logout | `pipeline.peering opt-in` / `opt-out` | Every Opt In / Out |
 | `.stignore` write + Syncthing unit start/stop | host service | Every Opt In / Out |
-| Tailscale / Syncthing stay-alive while Opt In | `pipeline.tailscale_watch` + `cron_tailscale_watch.sh` | Poll (~5 min); if LAN gateway unreachable, rate-limited Wi‑Fi bounce; then heal `tailscaled` + `tailscale up` + Syncthing unit |
+| Tailscale / Syncthing stay-alive while Opt In | `pipeline.tailscale_watch` + `cron_tailscale_watch.sh` | Poll (~5 min); Wi‑Fi reconnect without disconnect while STA has IPv4; wedge escalate; then heal `tailscaled` + `tailscale up` + Syncthing unit |
 | Folder create + discovery harden | `ensure-mesh-local` (from `opt-in`) | Once per host |
 | Peer device IDs / introducer | `mesh-join --peers-file` or manual add-json | Once per host / new peer |
 | Gated promote | Operator (`promote --apply`) | Whenever land should enter the furnace |
@@ -214,7 +214,7 @@ Scripting for first-time mesh introduce is **shipped** in Phase 4 / [02](../phas
 | Artifact | Kind | Role |
 |---|---|---|
 | `pipeline/peering.py` | pipeline | Host service: status / opt-in / opt-out / promote |
-| `pipeline/tailscale_watch.py` | pipeline | Opt-In watchdog: LAN/WAN Wi‑Fi heal + Tailscale / Syncthing restart when share not live |
+| `pipeline/tailscale_watch.py` | pipeline | Opt-In watchdog: Wi‑Fi reconnect (no disconnect while STA has IPv4), wedge escalate, Tailscale / Syncthing restart when share not live |
 | `scripts/cron_tailscale_watch.sh` | cron | Fleet crontab wrapper for the watchdog |
 | `deploy/systemd/jellyflam3-peering.service` | deploy | Peering host-service unit |
 | `deploy/systemd/jellyflam3-syncthing.service` | deploy | Managed Syncthing lifecycle |

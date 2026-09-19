@@ -1,13 +1,15 @@
 """Purpose: Watchdog — keep Tailscale (and Opt-In Syncthing) live on fleet Pis.
 
 When peering is Opt In, poll ``tailscale status`` / unit state and heal if share is
-not live. Heal order: LAN/gateway check → WAN ping → optional Wi‑Fi bounce
-(cooldown; also when LAN is up but WAN is dead) → restart ``tailscaled`` →
-``tailscale up`` (skipped while WAN is still down) → restart Syncthing if inactive.
-Opt Out is a no-op.
+not live. Heal order: LAN/gateway check → WAN ping → Wi‑Fi reconnect (``nmcli
+connect`` while STA still has IPv4; disconnect only when unassociated) → optional
+firmware-wedge escalate (brcmfmac reload; opt-in drain+reboot) → restart
+``tailscaled`` → ``tailscale up`` (skipped while WAN is still down) → restart
+Syncthing if inactive. Opt Out is a no-op.
 
 Requirements: ``pipeline.peering`` helpers; optional systemctl + sudo (same as opt-in);
-``secrets.env`` ``TS_AUTHKEY`` for re-auth; ``ip`` / ``ping``; optional ``nmcli``.
+``secrets.env`` ``TS_AUTHKEY`` for re-auth; ``ip`` / ``ping``; optional ``nmcli`` /
+``modprobe`` / ``journalctl``.
 
 Usage:
   python3 -m pipeline.tailscale_watch [--config PATH] [--dry-run] [--json]
@@ -49,6 +51,12 @@ SYNCTHING_UNIT = "jellyflam3-syncthing.service"
 _DEFAULT_COOLDOWN_SEC = 900
 _DEFAULT_PING_TIMEOUT_SEC = 2
 _DEFAULT_WAN_PING_HOST = "1.1.1.1"
+_DEFAULT_REBOOT_AFTER_SEC = 1800
+_WEDGE_JOURNAL_MARKERS = (
+    "SCAN-FAILED ret=-110",
+    "brcmf_run_escan: error",
+    "brcmf_cfg80211_scan: scan error",
+)
 
 
 def watchdog_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
@@ -56,13 +64,21 @@ def watchdog_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
     return dict(pc.get("watchdog") or {})
 
 
-def _cooldown_path(cfg: dict[str, Any]) -> Path:
+def _watch_state_path(cfg: dict[str, Any], key: str, default: str) -> Path:
     wc = watchdog_cfg(cfg)
-    raw = wc.get("lan_heal_cooldown_file") or "/var/lib/jellyflam3/lan_heal_cooldown"
+    raw = wc.get(key) or default
     path = Path(raw)
     if not path.is_absolute():
         path = Path(cfg["_repo_root"]) / path
     return path
+
+
+def _cooldown_path(cfg: dict[str, Any]) -> Path:
+    return _watch_state_path(cfg, "lan_heal_cooldown_file", "/var/lib/jellyflam3/lan_heal_cooldown")
+
+
+def _wedge_path(cfg: dict[str, Any]) -> Path:
+    return _watch_state_path(cfg, "lan_heal_wedge_file", "/var/lib/jellyflam3/lan_heal_wedge")
 
 
 def default_route() -> dict[str, Any]:
@@ -171,34 +187,148 @@ def _cooldown_remaining(cfg: dict[str, Any]) -> int:
     return rem if rem > 0 else 0
 
 
-def _mark_cooldown(cfg: dict[str, Any]) -> None:
-    path = _cooldown_path(cfg)
+def _stamp_file(path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(f"{time.time():.3f}\n", encoding="utf-8")
 
 
+def _mark_cooldown(cfg: dict[str, Any]) -> None:
+    _stamp_file(_cooldown_path(cfg))
+
+
+def _wedge_age_sec(cfg: dict[str, Any]) -> int | None:
+    path = _wedge_path(cfg)
+    if not path.is_file():
+        return None
+    try:
+        started = float(path.read_text(encoding="utf-8").strip().split()[0])
+    except (OSError, ValueError, IndexError):
+        return None
+    return max(0, int(time.time() - started))
+
+
+def _mark_wedge(cfg: dict[str, Any]) -> None:
+    path = _wedge_path(cfg)
+    if path.is_file():
+        return
+    _stamp_file(path)
+
+
+def _clear_wedge(cfg: dict[str, Any]) -> None:
+    path = _wedge_path(cfg)
+    try:
+        path.unlink(missing_ok=True)
+    except OSError:
+        pass
+
+
+def _is_wifi(iface: str) -> bool:
+    return bool(iface) and (iface.startswith("wlan") or iface.startswith("wl"))
+
+
+def _iface_exists(iface: str) -> bool:
+    return bool(iface) and Path(f"/sys/class/net/{iface}").exists()
+
+
+def iface_has_ipv4(iface: str) -> bool:
+    """True when ``iface`` has a non-link-local IPv4 address."""
+    if not iface or not _have("ip"):
+        return False
+    proc = subprocess.run(
+        ["ip", "-br", "addr", "show", "dev", iface],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    text = proc.stdout or ""
+    for match in re.finditer(r"\b(\d+\.\d+\.\d+\.\d+)/\d+", text):
+        if not match.group(1).startswith("127."):
+            return True
+    return False
+
+
+def resolve_wifi_iface(cfg: dict[str, Any], lan: dict[str, Any]) -> str:
+    """Wi‑Fi device to heal: default-route iface, preferred, or onboard wlan0.
+
+    If the default route is already Ethernet, keep that iface so heal_lan skips
+    (USB Ethernet is insurance; do not bounce it or fall through to wlan0).
+    """
+    wc = watchdog_cfg(cfg)
+    preferred = (wc.get("lan_preferred_iface") or "").strip()
+    iface = str(lan.get("iface") or "").strip()
+    if _is_wifi(iface):
+        return iface
+    if iface and not _is_wifi(iface):
+        return iface
+    if _is_wifi(preferred):
+        return preferred
+    if _iface_exists("wlan0"):
+        return "wlan0"
+    return iface
+
+
+def sta_associated(iface: str, lan: dict[str, Any]) -> bool:
+    """STA still has L3 (IPv4 or a default-route gateway) — do not disconnect."""
+    if not _is_wifi(iface):
+        return False
+    if lan.get("gateway"):
+        return True
+    return iface_has_ipv4(iface)
+
+
+def wifi_firmware_wedge(*, since_min: int = 20) -> bool:
+    """Kernel log shows a brcmfmac scan hang (``SCAN-FAILED ret=-110``)."""
+    if not _have("journalctl"):
+        return False
+    proc = subprocess.run(
+        ["journalctl", "-k", "--since", f"{since_min} min ago", "--no-pager", "-q"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    text = proc.stdout or ""
+    return any(marker in text for marker in _WEDGE_JOURNAL_MARKERS)
+
+
+def _reload_brcmfmac(*, dry_run: bool) -> list[str]:
+    if not _have("modprobe"):
+        return ["modprobe missing; skip brcmfmac reload"]
+    steps: list[str] = []
+    for extra in (["-r", "brcmfmac"], ["brcmfmac"]):
+        args = ["sudo", "modprobe", *extra]
+        proc = _run(args, dry_run=dry_run)
+        steps.append(f"{' '.join(args[1:])} rc={proc.returncode}")
+        if not dry_run:
+            time.sleep(2)
+    return steps
+
+
+def _request_drain(cfg: dict[str, Any], *, dry_run: bool) -> str:
+    cmd = [sys.executable, "-m", "pipeline.worker_drain", "request"]
+    config_path = cfg.get("_config_path")
+    if config_path:
+        cmd.extend(["--config", str(config_path)])
+    proc = _run(cmd, dry_run=dry_run)
+    return f"worker_drain request rc={proc.returncode}"
+
+
 def heal_lan(cfg: dict[str, Any], lan: dict[str, Any], *, dry_run: bool = False) -> dict[str, Any]:
-    """Bounce Wi‑Fi (nmcli preferred) when LAN is down and iface is wireless."""
+    """Reconnect Wi‑Fi when LAN/WAN is down; escalate only on firmware wedge.
+
+    Associated STA (IPv4 or default-route gateway): ``nmcli connect`` only.
+    Disconnect / link-down only when unassociated. Connect is never skipped
+    because disconnect failed. Soft reconnect still runs during cooldown;
+    hard bounce, driver reload, and reboot honor cooldown / opt-in.
+    """
     wc = watchdog_cfg(cfg)
     if not bool(wc.get("lan_heal_enabled", True)):
         return {"ok": False, "step": "lan heal disabled", "skipped": True}
 
-    rem = _cooldown_remaining(cfg)
-    if rem > 0:
-        return {
-            "ok": False,
-            "step": f"lan heal cooldown {rem}s remaining",
-            "skipped": True,
-            "cooldown_sec": rem,
-        }
-
-    iface = lan.get("iface") or ""
+    iface = resolve_wifi_iface(cfg, lan)
     if not iface:
         return {"ok": False, "step": "lan heal skipped (no iface)", "skipped": True}
 
-    # Do not bounce ethernet — only Wi‑Fi style names (and explicit wlan*).
-    wireless = iface.startswith("wlan") or iface.startswith("wl")
-    if not wireless:
+    if not _is_wifi(iface):
         return {
             "ok": False,
             "step": f"lan heal skipped (iface {iface} not wifi)",
@@ -206,40 +336,99 @@ def heal_lan(cfg: dict[str, Any], lan: dict[str, Any], *, dry_run: bool = False)
             "iface": iface,
         }
 
+    rem = _cooldown_remaining(cfg)
+    associated = sta_associated(iface, lan)
     steps: list[str] = []
-    if _have("nmcli"):
-        # disconnect → wait → connect (NetworkManager re-associates).
-        for args in (
-            ["sudo", "nmcli", "device", "disconnect", iface],
-            ["sudo", "nmcli", "device", "connect", iface],
-        ):
-            if args[3] == "connect" and not dry_run:
-                time.sleep(2)
-            proc = _run(args, dry_run=dry_run)
-            steps.append(f"{' '.join(args[1:])} rc={proc.returncode}")
-            if proc.returncode != 0 and not dry_run:
-                break
+    heavy = False
+
+    if associated:
+        steps.append(f"skip disconnect (STA associated on {iface})")
+    elif rem > 0:
+        steps.append(f"hard bounce skipped (cooldown {rem}s remaining)")
     else:
-        # Fallback: link flap
-        for state in ("down", "up"):
-            proc = _run(["sudo", "ip", "link", "set", iface, state], dry_run=dry_run)
-            steps.append(f"ip link set {iface} {state} rc={proc.returncode}")
+        heavy = True
+        if _have("nmcli"):
+            proc = _run(["sudo", "nmcli", "device", "disconnect", iface], dry_run=dry_run)
+            steps.append(f"nmcli device disconnect {iface} rc={proc.returncode}")
+            if not dry_run:
+                time.sleep(2)
+        else:
+            proc = _run(["sudo", "ip", "link", "set", iface, "down"], dry_run=dry_run)
+            steps.append(f"ip link set {iface} down rc={proc.returncode}")
             if not dry_run:
                 time.sleep(2)
 
+    if _have("nmcli"):
+        if not dry_run:
+            time.sleep(2)
+        proc = _run(["sudo", "nmcli", "device", "connect", iface], dry_run=dry_run)
+        steps.append(f"nmcli device connect {iface} rc={proc.returncode}")
+    else:
+        proc = _run(["sudo", "ip", "link", "set", iface, "up"], dry_run=dry_run)
+        steps.append(f"ip link set {iface} up rc={proc.returncode}")
+
     if not dry_run:
-        _mark_cooldown(cfg)
         time.sleep(3)
 
     after = check_lan(cfg)
-    return {
+    still_down = not bool(after.get("lan_ok"))
+    journal_wedge = wifi_firmware_wedge()
+    no_route = not after.get("gateway")
+    driver_on = bool(wc.get("lan_heal_driver_reload_enabled", True))
+
+    if still_down:
+        _mark_wedge(cfg)
+    else:
+        _clear_wedge(cfg)
+
+    if still_down and driver_on and rem == 0 and (journal_wedge or no_route or not associated):
+        steps.append(
+            "wifi firmware wedge"
+            + (" (journal SCAN-FAILED -110)" if journal_wedge else "")
+            + (" (no default route)" if no_route else "")
+        )
+        steps.extend(_reload_brcmfmac(dry_run=dry_run))
+        heavy = True
+        if not dry_run:
+            time.sleep(3)
+        after = check_lan(cfg)
+        still_down = not bool(after.get("lan_ok"))
+        if still_down:
+            _mark_wedge(cfg)
+        else:
+            _clear_wedge(cfg)
+    elif still_down and rem > 0:
+        steps.append(f"driver reload skipped (cooldown {rem}s remaining)")
+
+    if heavy and not dry_run:
+        _mark_cooldown(cfg)
+
+    reboot_on = bool(wc.get("lan_heal_reboot_enabled", False))
+    reboot_after = int(wc.get("lan_heal_reboot_after_sec") or _DEFAULT_REBOOT_AFTER_SEC)
+    wedge_age = _wedge_age_sec(cfg)
+    if still_down and reboot_on and wedge_age is not None and wedge_age >= reboot_after:
+        steps.append(f"lan wedge {wedge_age}s >= {reboot_after}s; drain+reboot")
+        steps.append(_request_drain(cfg, dry_run=dry_run))
+        proc = _run(["sudo", "reboot"], dry_run=dry_run)
+        steps.append(f"reboot rc={proc.returncode}")
+    elif still_down and not reboot_on and wedge_age is not None:
+        steps.append(
+            f"lan wedge {wedge_age}s (reboot disabled; "
+            "set peering.watchdog.lan_heal_reboot_enabled)"
+        )
+
+    result: dict[str, Any] = {
         "ok": bool(after.get("lan_ok")),
         "step": "lan heal " + ("ok" if after.get("lan_ok") else "still_down"),
         "skipped": False,
         "iface": iface,
+        "associated": associated,
         "actions": steps,
         "lan_after": after,
     }
+    if rem > 0:
+        result["cooldown_sec"] = rem
+    return result
 
 
 def _tailscale_up(cfg: dict[str, Any], *, dry_run: bool) -> dict[str, Any]:
@@ -309,15 +498,15 @@ def heal_opt_in_share(cfg: dict[str, Any], *, dry_run: bool = False) -> dict[str
         f"skipped={wan_before.get('skipped')}"
     )
 
-    # 0) Wi‑Fi bounce when the gateway is unreachable, or LAN is up but WAN is dead
+    # 0) Wi‑Fi reconnect when the gateway is unreachable, or LAN is up but WAN is dead
     # (STA uplink blackhole — Tailscale-only heal cannot fix this, and re-auth while
-    # WAN is down previously logged the node out).
+    # WAN is down previously logged the node out). Associated STA: connect only.
     wc = watchdog_cfg(cfg)
     wan_heal_on = bool(wc.get("wan_heal_enabled", True))
     need_wifi = not lan_before.get("lan_ok")
     if wan_heal_on and lan_before.get("lan_ok") and not wan_before.get("skipped") and not wan_before.get("wan_ok"):
         need_wifi = True
-        steps.append("wan down while lan_ok; bouncing wifi")
+        steps.append("wan down while lan_ok; wifi reconnect")
 
     if need_wifi:
         lan_heal = heal_lan(cfg, lan_before, dry_run=dry_run)

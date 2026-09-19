@@ -296,12 +296,18 @@ peering:
   watchdog:
     lan_heal_enabled: true
     lan_ping_timeout_sec: 2
-    lan_heal_cooldown_sec: 900          # min seconds between Wi‑Fi bounces
+    lan_heal_cooldown_sec: 900          # min seconds between hard bounce / driver reload
     lan_heal_cooldown_file: /var/lib/jellyflam3/lan_heal_cooldown
-    lan_preferred_iface: null           # null = use default-route iface; or "wlan0"
-    wan_heal_enabled: true             # bounce Wi‑Fi when LAN gateway pings but WAN is dead
+    lan_preferred_iface: wlan0          # STA fleet: heal Wi‑Fi even with no default route; null = default-route iface only
+    wan_heal_enabled: true             # reconnect Wi‑Fi when LAN gateway pings but WAN is dead
     wan_ping_host: 1.1.1.1
     wan_ping_timeout_sec: 2
+    lan_heal_driver_reload_enabled: true
+    lan_heal_wedge_file: /var/lib/jellyflam3/lan_heal_wedge
+    # Last-resort drain+reboot after the wedge stamp is this old. Default off; enable on STA furnaces
+    # once jellyflam3 has NOPASSWD reboot (see USER_GUIDE). USB Ethernet is insurance — watchdog never bounces eth0.
+    lan_heal_reboot_enabled: false
+    lan_heal_reboot_after_sec: 1800
 
 # Sheep tax: XML / vocabulary scan & repair (Phase 2 — docs/phase2/06_SHEEP_TAX.md)
 # Order: tax → TV-port. Peer promote calls pipeline.sheep_tax.scan_file.

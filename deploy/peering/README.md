@@ -48,13 +48,16 @@ python3 -m pipeline.peering opt-in --config configs/jellyflam3.yaml
 python3 -m pipeline.peering status --config configs/jellyflam3.yaml
 
 # Optional fleet watchdog (every 5 min) — heal Tailscale/Syncthing when Opt In but not live.
-# Also pings the LAN gateway and a WAN target (1.1.1.1); rate-limited Wi‑Fi bounce
-# when the STA uplink is dead (including LAN-up / WAN-down). Does not `tailscale up`
-# while WAN is still down:
+# Also pings the LAN gateway and a WAN target (1.1.1.1). Reconnects Wi‑Fi with
+# `nmcli connect` while the STA still has IPv4 (no disconnect — that wedges
+# brcmfmac). Escalates: brcmfmac reload on SCAN-FAILED -110 / no default route;
+# opt-in drain+reboot after lan_heal_reboot_after_sec. USB Ethernet is insurance
+# (watchdog never bounces eth0). Does not `tailscale up` while WAN is still down:
 #   */5 * * * *  /opt/jellyflam3-server/scripts/cron_tailscale_watch.sh \
 #       >>/var/log/jellyflam3/tailscale_watch.log 2>&1
 # Manual: python3 -m pipeline.tailscale_watch --json
 # Config: peering.watchdog.* in jellyflam3.yaml.example
+# sudoers extras for STA furnaces: modprobe; reboot only if lan_heal_reboot_enabled
 
 # One-time (per host / new peer): Syncthing folder + device introduce
 # Option A (local folder) runs from opt-in / ensure-mesh-local.

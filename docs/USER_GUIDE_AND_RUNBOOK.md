@@ -623,7 +623,17 @@ python3 -m pipeline.peering opt-out --config configs/jellyflam3.yaml
 
 **When Opt In is true, background sharing is assumed to work** — both Syncthing and Tailscale must be up. If either is down, you have **offline peering**: the marker says “share,” but nothing syncs.
 
-**Fleet watchdog (recommended on Opt-In hosts):** `scripts/cron_tailscale_watch.sh` every ~5 minutes polls live Tailscale + Syncthing and heals when share is not live. If the **LAN gateway** is unreachable, or the gateway pings but **WAN** (default `1.1.1.1`) does not, it rate-limits a **Wi‑Fi reconnect** (`nmcli` disconnect/connect, 15 min cooldown) and will not `tailscale up` while WAN is still down. Opt Out is a no-op. Manual check:
+**Fleet watchdog (recommended on Opt-In hosts):** `scripts/cron_tailscale_watch.sh` every ~5 minutes polls live Tailscale + Syncthing and heals when share is not live. If the **LAN gateway** is unreachable, or the gateway pings but **WAN** (default `1.1.1.1`) does not, it **reconnects Wi‑Fi** (`nmcli device connect`). It does **not** `nmcli disconnect` while the STA still has IPv4 or a default-route gateway (that sequence wedged brcmfmac with `SCAN-FAILED ret=-110` on 16a). Disconnect / link-down is only for an unassociated iface. Connect is still attempted if disconnect fails. Soft reconnect still runs during the 15 min cooldown; hard bounce and `brcmfmac` reload wait for cooldown. If the chip is wedged (kernel `-110` and/or no default route), it reloads `brcmfmac`. **Drain + reboot** is opt-in (`peering.watchdog.lan_heal_reboot_enabled`, default off) after `lan_heal_reboot_after_sec` (default 30 min) of a stamped wedge; it runs `worker_drain request` (no `--wait`) then `sudo reboot`. It will not `tailscale up` while WAN is still down. Opt Out is a no-op.
+
+**Ethernet insurance (STA furnaces):** leave `eth0` down in the usual lab; keep a USB Ethernet adapter as a fallback path. The watchdog never bounces Ethernet. If Wi‑Fi is wedged, plug Ethernet, `sudo nmcli device connect eth0` (or unplug Wi‑Fi stick), then heal/reboot as needed.
+
+**sudoers (watchdog heals):** `jellyflam3` already needs NOPASSWD `nmcli`, `ip`, `systemctl`, and `tailscale`. For driver reload and optional reboot, also allow:
+
+```text
+jellyflam3 ALL=(root) NOPASSWD: /usr/bin/nmcli, /usr/sbin/nmcli, /usr/sbin/ip, /bin/ip, /bin/systemctl, /usr/bin/systemctl, /usr/bin/tailscale, /usr/sbin/modprobe, /usr/bin/modprobe, /usr/sbin/reboot
+```
+
+Enable `lan_heal_reboot_enabled: true` only after reboot is in sudoers. Manual check:
 
 ```bash
 python3 -m pipeline.tailscale_watch --json

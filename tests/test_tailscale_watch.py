@@ -23,6 +23,9 @@ def _cfg(tmp_path: Path, *, opted_in: bool, watchdog: dict | None = None) -> dic
             "lan_heal_enabled": True,
             "lan_heal_cooldown_sec": 900,
             "lan_heal_cooldown_file": str(tmp_path / "lan_heal_cooldown"),
+            "lan_heal_wedge_file": str(tmp_path / "lan_heal_wedge"),
+            "lan_heal_driver_reload_enabled": False,
+            "lan_heal_reboot_enabled": False,
             "lan_ping_timeout_sec": 2,
             **(watchdog or {}),
         },
@@ -159,7 +162,7 @@ def test_watch_heals_when_not_live(tmp_path: Path, monkeypatch):
     up.assert_called_once()
 
 
-def test_lan_heal_bounces_wifi_when_gateway_down(tmp_path: Path, monkeypatch):
+def test_lan_heal_reconnects_wifi_when_gateway_down(tmp_path: Path, monkeypatch):
     cfg = _cfg(tmp_path, opted_in=True)
     monkeypatch.setenv("TS_AUTHKEY", "tskey-auth-test")
     broken = {
@@ -207,10 +210,13 @@ def test_lan_heal_bounces_wifi_when_gateway_down(tmp_path: Path, monkeypatch):
         result = tw.heal_opt_in_share(cfg, dry_run=False)
 
     assert result["ok"] is True
-    assert any("nmcli device disconnect wlan0" in s for s in result["steps"])
+    joined = " ".join(result["steps"])
+    assert "nmcli device disconnect wlan0" not in joined
+    assert "skip disconnect (STA associated on wlan0)" in joined
+    assert "nmcli device connect wlan0" in joined
     assert any("lan heal ok" in s for s in result["steps"])
-    # Cooldown file written
-    assert Path(cfg["peering"]["watchdog"]["lan_heal_cooldown_file"]).is_file()
+    # Soft reconnect does not start the hard-bounce cooldown.
+    assert not Path(cfg["peering"]["watchdog"]["lan_heal_cooldown_file"]).is_file()
 
 
 def test_lan_heal_respects_cooldown(tmp_path: Path, monkeypatch):
@@ -241,15 +247,20 @@ def test_lan_heal_respects_cooldown(tmp_path: Path, monkeypatch):
         patch("pipeline.tailscale_watch.unit_active", return_value="active"),
         patch("pipeline.tailscale_watch._systemctl"),
         patch("pipeline.tailscale_watch._tailscale_up") as up,
+        patch("pipeline.tailscale_watch._have", side_effect=lambda c: c in {"nmcli", "ip", "ping"}),
         patch("pipeline.tailscale_watch._run") as run,
         patch("pipeline.tailscale_watch.time.sleep"),
         patch("pipeline.tailscale_watch.write_status"),
     ):
+        run.return_value = type("P", (), {"returncode": 0, "stdout": "", "stderr": ""})()
         up.return_value = {"ok": True, "step": "tailscale up rc=0"}
         result = tw.heal_opt_in_share(cfg, dry_run=False)
 
-    assert any("cooldown" in s for s in result["steps"])
-    run.assert_not_called()  # no nmcli during cooldown
+    joined = " ".join(result["steps"])
+    assert "cooldown" in joined
+    assert "nmcli device disconnect wlan0" not in joined
+    assert "nmcli device connect wlan0" in joined
+    assert "modprobe" not in joined
 
 
 def test_wan_heal_bounces_wifi_when_lan_up_wan_down(tmp_path: Path, monkeypatch):
@@ -300,8 +311,10 @@ def test_wan_heal_bounces_wifi_when_lan_up_wan_down(tmp_path: Path, monkeypatch)
         result = tw.heal_opt_in_share(cfg, dry_run=False)
 
     assert result["ok"] is True
-    assert any("wan down while lan_ok" in s for s in result["steps"])
-    assert any("nmcli device disconnect wlan0" in s for s in result["steps"])
+    assert any("wan down while lan_ok; wifi reconnect" in s for s in result["steps"])
+    joined = " ".join(result["steps"])
+    assert "nmcli device disconnect wlan0" not in joined
+    assert "nmcli device connect wlan0" in joined
     up.assert_called_once()
 
 
@@ -349,6 +362,140 @@ def test_lan_heal_skips_ethernet(tmp_path: Path):
     result = tw.heal_lan(cfg, lan, dry_run=True)
     assert result["skipped"] is True
     assert "not wifi" in result["step"]
+
+
+def _ok_proc(rc: int = 0):
+    return type("P", (), {"returncode": rc, "stdout": "", "stderr": ""})()
+
+
+def test_lan_heal_disconnects_when_unassociated(tmp_path: Path):
+    cfg = _cfg(tmp_path, opted_in=True)
+    lan = {
+        "ok": False,
+        "lan_ok": False,
+        "gateway": None,
+        "iface": None,
+        "error": "no default route",
+    }
+    cfg["peering"]["watchdog"]["lan_preferred_iface"] = "wlan0"
+    with (
+        patch("pipeline.tailscale_watch._have", side_effect=lambda c: c in {"nmcli", "ip", "ping"}),
+        patch("pipeline.tailscale_watch._run", return_value=_ok_proc()) as run,
+        patch("pipeline.tailscale_watch.check_lan", return_value=_lan_ok()),
+        patch("pipeline.tailscale_watch.iface_has_ipv4", return_value=False),
+        patch("pipeline.tailscale_watch.wifi_firmware_wedge", return_value=False),
+        patch("pipeline.tailscale_watch.time.sleep"),
+    ):
+        result = tw.heal_lan(cfg, lan, dry_run=False)
+
+    cmds = [" ".join(c.args[0]) for c in run.call_args_list]
+    assert any("nmcli device disconnect wlan0" in c for c in cmds)
+    assert any("nmcli device connect wlan0" in c for c in cmds)
+    assert result["associated"] is False
+    assert Path(cfg["peering"]["watchdog"]["lan_heal_cooldown_file"]).is_file()
+
+
+def test_lan_heal_connects_after_disconnect_fails(tmp_path: Path):
+    cfg = _cfg(tmp_path, opted_in=True)
+    lan = {
+        "ok": False,
+        "lan_ok": False,
+        "gateway": None,
+        "iface": "wlan0",
+        "error": "no default route",
+    }
+
+    def _run_side(cmd, **_kwargs):
+        joined = " ".join(cmd)
+        return _ok_proc(1 if "disconnect" in joined else 0)
+
+    with (
+        patch("pipeline.tailscale_watch._have", side_effect=lambda c: c in {"nmcli", "ip", "ping"}),
+        patch("pipeline.tailscale_watch._run", side_effect=_run_side) as run,
+        patch("pipeline.tailscale_watch.check_lan", return_value=_lan_ok()),
+        patch("pipeline.tailscale_watch.iface_has_ipv4", return_value=False),
+        patch("pipeline.tailscale_watch.wifi_firmware_wedge", return_value=False),
+        patch("pipeline.tailscale_watch.time.sleep"),
+    ):
+        result = tw.heal_lan(cfg, lan, dry_run=False)
+
+    cmds = [" ".join(c.args[0]) for c in run.call_args_list]
+    assert any("disconnect" in c for c in cmds)
+    assert any("connect" in c for c in cmds)
+    assert any("nmcli device connect wlan0 rc=0" in a for a in result["actions"])
+
+
+def test_lan_heal_driver_reload_on_firmware_wedge(tmp_path: Path):
+    cfg = _cfg(
+        tmp_path,
+        opted_in=True,
+        watchdog={"lan_heal_driver_reload_enabled": True},
+    )
+    lan = _lan_bad()
+    with (
+        patch("pipeline.tailscale_watch._have", side_effect=lambda c: c in {"nmcli", "ip", "ping", "modprobe"}),
+        patch("pipeline.tailscale_watch._run", return_value=_ok_proc()) as run,
+        patch("pipeline.tailscale_watch.check_lan", return_value=_lan_bad()),
+        patch("pipeline.tailscale_watch.wifi_firmware_wedge", return_value=True),
+        patch("pipeline.tailscale_watch.time.sleep"),
+    ):
+        result = tw.heal_lan(cfg, lan, dry_run=False)
+
+    cmds = [" ".join(c.args[0]) for c in run.call_args_list]
+    assert not any("disconnect" in c for c in cmds)
+    assert any("nmcli device connect wlan0" in c for c in cmds)
+    assert any("modprobe -r brcmfmac" in c for c in cmds)
+    assert any("modprobe brcmfmac" in c for c in cmds)
+    assert result["step"] == "lan heal still_down"
+    assert Path(cfg["peering"]["watchdog"]["lan_heal_cooldown_file"]).is_file()
+    assert Path(cfg["peering"]["watchdog"]["lan_heal_wedge_file"]).is_file()
+
+
+def test_lan_heal_reboot_opt_in_after_wedge_age(tmp_path: Path):
+    cfg = _cfg(
+        tmp_path,
+        opted_in=True,
+        watchdog={
+            "lan_heal_reboot_enabled": True,
+            "lan_heal_reboot_after_sec": 1800,
+        },
+    )
+    cfg["_config_path"] = str(tmp_path / "jellyflam3.yaml")
+    wedge = Path(cfg["peering"]["watchdog"]["lan_heal_wedge_file"])
+    wedge.write_text(f"{__import__('time').time() - 2000:.3f}\n", encoding="utf-8")
+    lan = _lan_bad()
+    with (
+        patch("pipeline.tailscale_watch._have", side_effect=lambda c: c in {"nmcli", "ip", "ping"}),
+        patch("pipeline.tailscale_watch._run", return_value=_ok_proc()) as run,
+        patch("pipeline.tailscale_watch.check_lan", return_value=_lan_bad()),
+        patch("pipeline.tailscale_watch.wifi_firmware_wedge", return_value=False),
+        patch("pipeline.tailscale_watch.time.sleep"),
+    ):
+        result = tw.heal_lan(cfg, lan, dry_run=False)
+
+    cmds = [" ".join(c.args[0]) for c in run.call_args_list]
+    assert any("pipeline.worker_drain" in c and "request" in c for c in cmds)
+    assert any(c == "sudo reboot" or c.endswith("reboot") for c in cmds)
+    assert any("drain+reboot" in a for a in result["actions"])
+
+
+def test_lan_heal_no_reboot_when_disabled(tmp_path: Path):
+    cfg = _cfg(tmp_path, opted_in=True)
+    wedge = Path(cfg["peering"]["watchdog"]["lan_heal_wedge_file"])
+    wedge.write_text(f"{__import__('time').time() - 2000:.3f}\n", encoding="utf-8")
+    lan = _lan_bad()
+    with (
+        patch("pipeline.tailscale_watch._have", side_effect=lambda c: c in {"nmcli", "ip", "ping"}),
+        patch("pipeline.tailscale_watch._run", return_value=_ok_proc()) as run,
+        patch("pipeline.tailscale_watch.check_lan", return_value=_lan_bad()),
+        patch("pipeline.tailscale_watch.wifi_firmware_wedge", return_value=False),
+        patch("pipeline.tailscale_watch.time.sleep"),
+    ):
+        result = tw.heal_lan(cfg, lan, dry_run=False)
+
+    cmds = [" ".join(c.args[0]) for c in run.call_args_list]
+    assert not any("reboot" in c for c in cmds)
+    assert any("reboot disabled" in a for a in result["actions"])
 
 
 def test_run_redacts_auth_key(caplog):

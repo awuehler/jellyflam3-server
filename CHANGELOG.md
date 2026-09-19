@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Opt-In watchdog LAN heal: associated STA uses `nmcli connect` only (no disconnect); always tries connect if disconnect fails; brcmfmac reload on firmware wedge (`SCAN-FAILED -110` / no default route); opt-in `worker_drain request` + reboot after `lan_heal_reboot_after_sec`. USB Ethernet is documented insurance (`peering.watchdog.*`).
 - Operator runbook: `worker_drain request` returns as soon as the flag is set (`phase=draining` while a job is in flight); `request --wait` keeps polling until `phase=idle`. `INFO waiting for drain idle (N in-flight job(s))` is expected; leftover inbox files do not keep the wait looping.
 - Roku VoD **1.0.42**: Settings OK-toggle for `commercialMode`, `streamMode`, `shuffleFlock`, and `titleMode` (no keyboard); text fields still use the keyboard. Player chrome labels (loading-next and vote) use the same **55%** alpha as the bar (`0xE8E8F08C`).
 - Roku VoD **1.0.41**: loading-next and vote banners share one 55% bar at `[80,920]` with the same SmallSystemFont line so they swap in place. Vote left side is filename/alias only (no “Like this sheep:”); the name is clipped so it cannot overlap the key hints.
@@ -29,7 +30,6 @@ All notable changes to this project are documented here. Format loosely follows 
 - Phase 4 Wave 2: Roku VoD **1.0.32** like/love/vote overlay (last 12 s, playback continues). `POST /v1/sheep-votes` on `jellyflam3-display-sink` (:8791) writes catalog sidecar `viewer_feedback` only and sets `share_candidate`. CLI `python3 -m pipeline.sheep_votes`. Screensaver voting later **cancelled** (Roku best practices).
 - Phase 4 Wave 2: private-channel coexistence path ([phase4/04](docs/phase4/04_ROKU_PUBLISH.md#private-channel-path-wave-2)). Roku screensaver **1.0.10** Settings writes Jellyfin credentials so VoD (private channel) and SS (sideload slot) can both stay installed. Channel Store parked.
 - Fleet log hygiene: persistent journald (class-sized) + 72h `jellyflam3-logrotate.timer`; compress file-log backups after 11 days; purge after 23 days (`scripts/enable_log_hygiene.sh`).
-- Opt-In watchdog LAN heal: ping default gateway; rate-limited Wi‑Fi bounce (`nmcli`) before Tailscale re-auth (`peering.watchdog.*`).
 - Sheep refactor Pathway A: `catalog_desaturated` + `palette_washed_out` heuristics for grey/muddy catalog sheep.
 - Initial frozen-orbit handling detected when `flam3-genome sequence=` could not 360°-orbit and avoided false duration snapping; active quality intervention above supersedes its still-loop publication behavior.
 - Printable Layer 1 fridge card (`docs/FRIDGE_CARD.md`) — watch / gate / Settings / triage; no API keys.
