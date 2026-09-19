@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import random
+import urllib.error
 from pathlib import Path
 from unittest.mock import patch
 
@@ -155,7 +156,7 @@ def test_drop_item_and_repoll_rate_limit():
     assert jf.should_repoll_flock(90.0, 100.0, min_sec=30.0) is False
     assert jf.should_repoll_flock(60.0, 100.0, min_sec=30.0) is True
     assert jf.FLOCK_REPOLL_MIN_SEC == 30.0
-    assert jf.CLIENT_VERSION == "0.2.10"
+    assert jf.CLIENT_VERSION == "0.2.11"
     assert jf.FLOCK_INDEX_CAP == 313
     assert jf.FLOCK_FETCH_LIMIT == 5000
     h = jf.auth_header("secret")
@@ -236,3 +237,29 @@ def test_fetch_flock_prunes_after_merge(monkeypatch):
     )
     assert len(items) == 313
     assert {it["id"] for it in items} <= {str(i) for i in range(400)}
+
+
+def test_classify_fetch_error_and_probe(monkeypatch):
+    auth = urllib.error.HTTPError("http://jf/x", 401, "no", hdrs=None, fp=None)
+    forbidden = urllib.error.HTTPError("http://jf/x", 403, "no", hdrs=None, fp=None)
+    boom = urllib.error.HTTPError("http://jf/x", 500, "no", hdrs=None, fp=None)
+    assert jf.classify_fetch_error(auth) == "auth"
+    assert jf.classify_fetch_error(forbidden) == "auth"
+    assert jf.classify_fetch_error(boom) == "unreachable"
+    assert jf.classify_fetch_error(urllib.error.URLError("timed out")) == "unreachable"
+
+    class _Resp:
+        status = 200
+
+        def getcode(self):
+            return 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    monkeypatch.setattr(jf.urllib.request, "urlopen", lambda *a, **k: _Resp())
+    assert jf.probe_jellyfin("http://jf:8096") is True
+    assert jf.probe_jellyfin("") is False

@@ -80,6 +80,8 @@ The extension should feel like Electric Sheep’s idle canvas, not a VoD browser
 
 **Cancelled 2026-09-13 (standalone edges):** a client sequencer that plays loop MP4 → edge MP4 → loop MP4 is **not** coming. **Tuples** ([03](../phase4/03_EDGES_AND_WATERMARK.md)) already bake that journey into one catalog file; Kodi’s recursive `by-generation/` walk plays them as ordinary flock items. Loops-only shuffle remains the Phase 3 DoD.
 
+**0.2.11:** furnace unreachable is a waiting hint with 30s reconnect (not missing settings / empty flock). Probe `/System/Info/Public` before dropping a sheep as quarantined.
+
 **Shipped polish (Phase 4):** wrap-once re-fetch in **0.2.9** — a wrap is one random permutation of the in-memory list (each sheep once; next clip is not last-played). Then `_load_flock` replaces the list (HTTP Limit 5000, randomly prune to 313 / `flock_limit`). Overnight ~daily ingest appears without exiting the screensaver. Older add-on userdata may still store `flock_limit=200` until Configure is changed. **Shipped in 0.2.7:** if a sheep is **quarantined** (or Shears-deleted) mid-session, a file-not-found / 404 drops that id, re-polls the flock (30s rate limit), and continues — same contract on Roku VoD 1.0.29+ and Roku SS 1.0.8+. **0.2.10** traps that Kodi player failure and force-closes only the native `okdialog`, avoiding a prompt that otherwise remains over the recovered flock.
 
 ## Exit criteria

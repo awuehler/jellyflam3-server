@@ -54,9 +54,10 @@ Furnace-built zips often pre-fill these. If the flock is empty, open VoD **Setti
 | Symptom | Try this |
 |---|---|
 | Empty flock / blank screensaver | Re-open VoD Settings; save; same Wi‑Fi as the Pi |
-| “Cannot connect” | URL must be the Pi’s **LAN IP**, not `127.0.0.1` |
+| “Waiting for the furnace” / cannot connect | URL must be the Pi’s **LAN IP**, not `127.0.0.1`. Wait or Retry — VoD 1.0.43+ / Kodi 0.2.11+ retry every 30s |
 | Screensaver replaced VoD | Re-sideload the VoD zip |
-| Kodi black / hint on black | Add-on **Configure** → furnace LAN URL |
+| Kodi black / settings hint | Add-on **Configure** → furnace LAN URL |
+| Kodi “waiting for the furnace” | Pi or Jellyfin is down; leave idle — it reconnects |
 | Nothing new for days | Often normal. Ask the operator if the TV was left on VoD |
 
 ---

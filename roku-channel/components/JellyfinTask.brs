@@ -13,6 +13,8 @@ sub runTask()
     out = reportPlayback("Playing/Progress")
   else if cmd = "stopped"
     out = reportPlayback("Playing/Stopped")
+  else if cmd = "reach"
+    out = probeReach()
   else if cmd = "displayProfile"
     out = postDisplayProfile()
   else if cmd = "sheepVote"
@@ -35,7 +37,7 @@ end function
 
 function authHeader() as string
   ' Token in Authorization is what Jellyfin uses to bind Client/Device into /Sessions
-  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.42"", Token=""" + m.top.apiKey + """"
+  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.43"", Token=""" + m.top.apiKey + """"
 end function
 
 ' Lab-verified HLS remux path: prefer main.m3u8 + AudioCodec=aac.
@@ -49,6 +51,10 @@ function mp4StreamUrl(base as string, itemId as string) as string
 end function
 
 function httpRequest(method as string, url as string, body as string) as object
+  return httpRequestWait(method, url, body, 15000)
+end function
+
+function httpRequestWait(method as string, url as string, body as string, timeoutMs as integer) as object
   xfer = CreateObject("roUrlTransfer")
   port = CreateObject("roMessagePort")
   xfer.SetPort(port)
@@ -77,10 +83,14 @@ function httpRequest(method as string, url as string, body as string) as object
     return { code: -1, body: "", reason: method + " failed to start" }
   end if
 
-  msg = wait(15000, port)
+  waitMs = timeoutMs
+  if waitMs < 1000 then waitMs = 1000
+  msg = wait(waitMs, port)
   if msg = invalid
     xfer.AsyncCancel()
-    return { code: -1, body: "", reason: "timeout 15s — Roku cannot reach " + urlHost(url) }
+    secs = Int(waitMs / 1000)
+    if secs < 1 then secs = 1
+    return { code: -1, body: "", reason: "timeout " + secs.toStr() + "s — Roku cannot reach " + urlHost(url) }
   end if
   if type(msg) <> "roUrlEvent"
     return { code: -1, body: "", reason: "unexpected event " + type(msg) }
@@ -189,11 +199,38 @@ function postSheepVote() as object
 end function
 
 sub registerSession(base as string)
-  ' Best-effort: advertise Client=JellyFlam3 Device=Roku for idle-gate matching
+  ' Best-effort idle-gate advertise. Do not wait — a dead Pi must not add a
+  ' second 15s before the Items GET (cold-fail used to take ~30s).
+  xfer = CreateObject("roUrlTransfer")
+  port = CreateObject("roMessagePort")
+  xfer.SetPort(port)
+  xfer.SetCertificatesFile("common:/certs/ca-bundle.crt")
+  xfer.InitClientCertificates()
+  xfer.EnablePeerVerification(false)
+  xfer.EnableHostVerification(false)
+  xfer.AddHeader("Accept", "application/json")
+  xfer.AddHeader("Authorization", authHeader())
+  xfer.AddHeader("X-Emby-Authorization", authHeader())
+  xfer.AddHeader("Content-Type", "application/json")
   q = Chr(34)
   body = "{" + q + "PlayableMediaTypes" + q + ":[" + q + "Video" + q + "]," + q + "SupportedCommands" + q + ":[]," + q + "SupportsMediaControl" + q + ":false," + q + "SupportsPersistentIdentifier" + q + ":true}"
-  httpRequest("POST", base + "/Sessions/Capabilities/Full", body)
+  ok = xfer.SetUrl(base + "/Sessions/Capabilities/Full")
+  if ok = true
+    xfer.AsyncPostFromString(body)
+  end if
+  m.sessionXfer = xfer
+  m.sessionPort = port
 end sub
+
+function probeReach() as object
+  base = trimSlash(m.top.baseUrl)
+  if base = "" then return { reachable: false, error: "baseUrl not set" }
+  resp = httpRequestWait("GET", base + "/System/Info/Public", "", 8000)
+  if resp.code = 200 then return { reachable: true }
+  detail = "HTTP " + resp.code.toStr()
+  if resp.reason <> invalid and resp.reason <> "" then detail = detail + ": " + resp.reason
+  return { reachable: false, error: detail }
+end function
 
 function urlHost(url as string) as string
   ' crude host for error text

@@ -98,8 +98,20 @@ def _shuffle_enabled() -> bool:
     return True
 
 
+HINT_SETTINGS = "JellyFlam3 — add Jellyfin in screensaver settings"
+HINT_UNREACHABLE = "JellyFlam3 — waiting for the furnace"
+HINT_EMPTY = "JellyFlam3 — flock empty; exit screensaver"
+HINT_AUTH = "JellyFlam3 — Jellyfin login failed; check settings"
+# Watch loop ticks at 0.5s; 60 → 30s reconnect (same floor as flock re-poll).
+RECONNECT_TICKS = 60
+
+
 def _load_flock():
-    """Fetch + shuffle Jellyfin items; return list of {id,title,url} or []."""
+    """Fetch + shuffle Jellyfin items.
+
+    Returns ``(items, status)`` where status is ``ok``, ``settings``,
+    ``unreachable``, ``auth``, or ``empty``.
+    """
     base = (ADDON.getSetting("server_url") or "").strip()
     key = (ADDON.getSetting("api_key") or "").strip()
     user = (ADDON.getSetting("user_id") or "").strip()
@@ -122,7 +134,7 @@ def _load_flock():
             "%s: Jellyfin settings incomplete — flock unavailable" % ADDON_ID,
             xbmc.LOGWARNING,
         )
-        return []
+        return [], "settings"
 
     try:
         items = jellyfin_flock.fetch_flock(
@@ -134,8 +146,13 @@ def _load_flock():
             limit=limit,
         )
     except Exception as exc:
-        xbmc.log("%s: flock fetch failed: %s" % (ADDON_ID, exc), xbmc.LOGERROR)
-        return []
+        kind = jellyfin_flock.classify_fetch_error(exc)
+        xbmc.log("%s: flock fetch failed (%s): %s" % (ADDON_ID, kind, exc), xbmc.LOGERROR)
+        return [], kind
+
+    if not items:
+        xbmc.log("%s: flock empty (Jellyfin reachable)" % ADDON_ID, xbmc.LOGWARNING)
+        return [], "empty"
 
     if shuffle:
         items = jellyfin_flock.shuffle_copy(items)
@@ -143,7 +160,7 @@ def _load_flock():
         "%s: flock loaded %s item(s) shuffle=%s" % (ADDON_ID, len(items), shuffle),
         xbmc.LOGINFO,
     )
-    return items
+    return items, "ok"
 
 
 class LoopPlayer(xbmc.Player):
@@ -185,6 +202,8 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         self._dead = False
         self._av_started = False
         self._last_repoll = None
+        self._waiting = False
+        self._reconnect_ticks = 0
 
     def onInit(self):
         label = self.getControl(100)
@@ -195,23 +214,83 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         _dismiss_busy()
         _cancel_stop_script_alarm()
 
-        self._flock = _load_flock()
-        self._flock_mode = bool(self._flock)
+        items, status = _load_flock()
+        self._flock = items
+        self._flock_mode = bool(items)
         self._index = 0
 
-        if not self._play_current():
-            label.setLabel(
-                "JellyFlam3 — configure Jellyfin in add-on settings, then retry"
-            )
-            label.setVisible(True)
-            xbmc.log("%s: flock empty or settings incomplete" % ADDON_ID, xbmc.LOGWARNING)
+        if status == "ok" and self._play_current():
+            self._start_watch()
+            xbmc.log("%s: idle player running" % ADDON_ID, xbmc.LOGINFO)
             return
 
+        if status == "settings":
+            self._set_hint(HINT_SETTINGS)
+            xbmc.log("%s: flock empty or settings incomplete" % ADDON_ID, xbmc.LOGWARNING)
+            return
+        if status == "auth":
+            self._set_hint(HINT_AUTH)
+            return
+        if status == "empty":
+            self._set_hint(HINT_EMPTY)
+            return
+
+        self._enter_wait()
+        self._start_watch()
+
+    def _start_watch(self):
+        if self._keepalive is not None:
+            return
         self._keepalive = threading.Thread(
             target=self._watch_loop, name="jf3-ss-watch", daemon=True
         )
         self._keepalive.start()
-        xbmc.log("%s: idle player running" % ADDON_ID, xbmc.LOGINFO)
+
+    def _set_hint(self, reason: str):
+        try:
+            label = self.getControl(100)
+            label.setLabel(reason)
+            label.setVisible(True)
+        except Exception as exc:
+            xbmc.log("%s: hint label failed: %s" % (ADDON_ID, exc), xbmc.LOGERROR)
+
+    def _hide_hint(self):
+        try:
+            self.getControl(100).setVisible(False)
+        except Exception:
+            pass
+
+    def _enter_wait(self):
+        self._waiting = True
+        self._reconnect_ticks = 0
+        try:
+            if self._player.isPlaying():
+                self._player.stop()
+        except Exception:
+            pass
+        self._set_hint(HINT_UNREACHABLE)
+        xbmc.log("%s: furnace unreachable; waiting to reconnect" % ADDON_ID, xbmc.LOGWARNING)
+
+    def _try_reconnect(self) -> bool:
+        items, status = _load_flock()
+        if status == "ok" and items:
+            self._waiting = False
+            self._flock = items
+            self._flock_mode = True
+            if self._index >= len(self._flock):
+                self._index = 0
+            self._hide_hint()
+            xbmc.log("%s: furnace reachable; resume flock" % ADDON_ID, xbmc.LOGINFO)
+            return self._play_current()
+        if status == "empty":
+            self._waiting = False
+            self._show_flock_empty(HINT_EMPTY)
+            return False
+        if status == "auth":
+            self._waiting = False
+            self._set_hint(HINT_AUTH)
+            return False
+        return False
 
     def _play_current(self) -> bool:
         if not self._flock_mode or not self._flock:
@@ -238,6 +317,7 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         return True
 
     def _show_flock_empty(self, reason: str):
+        self._waiting = False
         self._flock_mode = False
         self._flock = []
         try:
@@ -257,10 +337,14 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         # can precede creation of that dialog, so close it again on the watch
         # thread before advancing to the refreshed flock.
         _dismiss_playback_error()
+        if self._waiting:
+            return
+        base = (ADDON.getSetting("server_url") or "").strip()
+        if not jellyfin_flock.probe_jellyfin(base):
+            self._enter_wait()
+            return
         if not self._flock_mode or not self._flock:
-            self._show_flock_empty(
-                "JellyFlam3 — flock empty (sheep gone); exit screensaver"
-            )
+            self._show_flock_empty(HINT_EMPTY)
             return
         dead = self._flock[self._index % len(self._flock)]
         dead_id = dead.get("id") or ""
@@ -272,29 +356,35 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         now = time.monotonic()
         if jellyfin_flock.should_repoll_flock(self._last_repoll, now):
             self._last_repoll = now
-            fresh = _load_flock()
-            if fresh:
+            fresh, status = _load_flock()
+            if status == "ok" and fresh:
                 self._flock = jellyfin_flock.drop_item(fresh, dead_id)
+            elif status == "unreachable":
+                self._enter_wait()
+                return
         if not self._flock:
-            self._show_flock_empty(
-                "JellyFlam3 — flock empty (sheep gone); exit screensaver"
-            )
+            self._show_flock_empty(HINT_EMPTY)
             return
         if self._index >= len(self._flock):
             self._index = 0
         self._play_current()
 
     def _next_sheep(self):
+        if self._waiting:
+            return
         if not self._flock_mode or not self._flock:
             return
         self._index += 1
         if self._index >= len(self._flock):
             last_id = self._flock[-1].get("id") or ""
             if len(self._flock) > 1:
-                fresh = _load_flock()
-                if fresh:
+                fresh, status = _load_flock()
+                if status == "ok" and fresh:
                     self._flock = fresh
                     xbmc.log("%s: flock wrap refetch (%s item(s))" % (ADDON_ID, len(fresh)), xbmc.LOGINFO)
+                elif status == "unreachable":
+                    self._enter_wait()
+                    return
                 elif _shuffle_enabled():
                     self._flock = jellyfin_flock.shuffle_copy(self._flock)
                     xbmc.log("%s: flock reshuffled (wrap refetch empty)" % ADDON_ID, xbmc.LOGINFO)
@@ -309,6 +399,14 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         idle_ticks = 0
         while not self._exiting:
             _cancel_stop_script_alarm()
+            if self._waiting:
+                self._reconnect_ticks += 1
+                if self._reconnect_ticks >= RECONNECT_TICKS:
+                    self._reconnect_ticks = 0
+                    self._try_reconnect()
+                if self._monitor.waitForAbort(0.5):
+                    break
+                continue
             if self._dead:
                 self._dead = False
                 idle_ticks = 0

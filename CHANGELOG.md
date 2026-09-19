@@ -6,6 +6,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Roku VoD **1.0.43**: waiting UI when Jellyfin is unreachable (not empty flock); 30s auto-retry; Capabilities POST no longer blocks the Items GET; mid-play host-down probes `/System/Info/Public` instead of draining the in-memory list.
+- Kodi screensaver **0.2.11**: distinct hints for missing settings vs furnace down vs empty flock; reconnect every 30s while waiting; do not treat a dead Pi as quarantined sheep.
 - Opt-In watchdog LAN heal: associated STA uses `nmcli connect` only (no disconnect); always tries connect if disconnect fails; brcmfmac reload on firmware wedge (`SCAN-FAILED -110` / no default route); opt-in `worker_drain request` + reboot after `lan_heal_reboot_after_sec`. USB Ethernet is documented insurance (`peering.watchdog.*`).
 - Operator runbook: `worker_drain request` returns as soon as the flag is set (`phase=draining` while a job is in flight); `request --wait` keeps polling until `phase=idle`. `INFO waiting for drain idle (N in-flight job(s))` is expected; leftover inbox files do not keep the wait looping.
 - Roku VoD **1.0.42**: Settings OK-toggle for `commercialMode`, `streamMode`, `shuffleFlock`, and `titleMode` (no keyboard); text fields still use the keyboard. Player chrome labels (loading-next and vote) use the same **55%** alpha as the bar (`0xE8E8F08C`).

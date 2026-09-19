@@ -65,8 +65,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=42" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.42""' in text
+    assert "build_version=43" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.43""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
@@ -74,6 +74,12 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "if sf.Trim() = \"\"" not in home
     assert 'return registryBoolEnabled("shuffleFlock", true)' in home
     assert "sub onPlaybackFailed()" in home
+    assert "sub probeFurnaceReach()" in home
+    assert "sub onReachResult()" in home
+    assert "sub showUnreachableUi(raw as string)" in home
+    assert "function isUnreachableError(raw as string)" in home
+    assert "function reconnectIntervalSec() as integer" in home
+    assert "sub startReconnectTimer()" in home
     assert "sub maybeRepollFlock()" in home
     assert "sub maybeWrapRefetchFlock()" in home
     assert "sub rotateQueuePast(lastId as string)" in home
@@ -102,6 +108,10 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert 'command = "sheepVote"' in player
     assert "/v1/sheep-votes" in text
     assert "function postSheepVote() as object" in text
+    assert "function probeReach() as object" in text
+    assert "function httpRequestWait(" in text
+    assert "m.sessionXfer = xfer" in text
+    assert "/System/Info/Public" in text
     settings = (VOD / "components" / "SettingsScreen.brs").read_text(encoding="utf-8")
     assert "function shuffleFlockDefault() as boolean" in settings
     assert "return true" in settings

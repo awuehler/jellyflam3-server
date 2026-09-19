@@ -19,6 +19,8 @@ The **1.0.36** flock browser wraps every six posters into vertically scrollable 
 
 **1.0.38 vote map:** two-tier only — **OK** love, **Right** like, **Down** dismiss overlay, **Up / Back** exit playback. No plain `vote` POST from the channel. Same arrows as a keyboard (Enter / Right / Down / Up-Esc) so a later Kodi overlay can match.
 
+**1.0.43 unreachable furnace:** list fetch failures that look like a timeout stay on a waiting screen (Retry + 30s auto-retry). A clip that fails because the Pi is down does **not** skip through the whole flock into “empty library.” Session Capabilities POST is fire-and-forget so cold-fail is one 15s wait, not two.
+
 **1.0.42 settings toggles:** highlight `commercialMode`, `streamMode`, `shuffleFlock`, or `titleMode` and press **OK** to cycle the two values; each press writes and flushes immediately. **Save & Reload** refreshes the flock. Text credentials still use the keyboard.
 
 **1.0.39 title mode:** highlight `titleMode` and press **OK** to toggle `filename` ↔ `alias`; the value is written and flushed immediately. **Save & Reload** replaces **Done** and fetches the flock with the effective mode. Sheep without an `Alias:` Overview line still show their filename.

@@ -20,7 +20,7 @@ from typing import Any
 CLIENT_NAME = "JellyFlam3-Screensaver"
 CLIENT_DEVICE = "Kodi"
 CLIENT_DEVICE_ID = "jellyflam3-kodi-ss"
-CLIENT_VERSION = "0.2.10"
+CLIENT_VERSION = "0.2.11"
 FLOCK_REPOLL_MIN_SEC = 30.0
 # In-memory session list after a random prune. HTTP fetch is larger so the
 # sample is not Jellyfin's first-N sort.
@@ -65,6 +65,31 @@ def filter_commercial(items: list[dict[str, Any]], commercial_mode: bool) -> lis
     if not commercial_mode:
         return list(items)
     return [it for it in items if is_commercial_safe(it.get("Tags") or it.get("tags"))]
+
+
+def classify_fetch_error(exc: BaseException) -> str:
+    """Map a fetch failure to ``auth`` or ``unreachable`` (not empty flock)."""
+    if isinstance(exc, urllib.error.HTTPError) and int(getattr(exc, "code", 0) or 0) in (401, 403):
+        return "auth"
+    return "unreachable"
+
+
+def probe_jellyfin(base_url: str, timeout: float = 8.0) -> bool:
+    """True when Jellyfin ``/System/Info/Public`` answers (no API key)."""
+    url = trim_slash(base_url) + "/System/Info/Public"
+    if not trim_slash(base_url):
+        return False
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={"Accept": "application/json"},
+            method="GET",
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            code = int(getattr(resp, "status", None) or resp.getcode() or 0)
+            return 200 <= code < 300
+    except Exception:
+        return False
 
 
 def http_get_json(url: str, api_key: str, timeout: float = 20.0) -> dict[str, Any]:

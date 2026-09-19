@@ -23,6 +23,8 @@ Settings registry section `JellyFlam3`: `baseUrl`, `apiKey`, `userId`, `libraryI
 
 VoD **1.0.37+** persists each valid keyboard edit when **OK** is pressed; Back does not discard accepted edits. In **1.0.42**, `commercialMode`, `streamMode`, `shuffleFlock`, and `titleMode` are OK-toggles with an immediate registry flush; **Save & Reload** refreshes the flock. Text credentials still use the keyboard. Boolean/title reads are normalized at startup. Home status shows effective commercial filtering and alias fallback counts. NC tags override safe tags regardless of order, including deep links. PlayerScreen—not Video—owns playback focus so vote keys are not swallowed. **1.0.38** overlay: **OK** love, **Right** like, **Down** dismiss, **Up/Back** exit (keyboard Enter / Right / Down / Up-Esc). **1.0.40** shows that map on one 55% line in the last **7 s** (name left, keys right). **1.0.41** puts loading-next on the same bar and SmallSystemFont so the two banners swap in place.
 
+VoD **1.0.43** distinguishes an unreachable furnace from an empty library: the waiting screen keeps Retry focused and automatically tries again every 30 seconds. A playback-open failure probes Jellyfin before dropping the item, so a service outage does not drain the cached flock. Session registration is fire-and-forget, leaving one 15-second Items timeout on cold failure.
+
 Deep link: `contentId` = Jellyfin item id → dedicated item Task → `PlayerScreen` with `loop=true`.  
 Roku allows only **one** `Video` play instance: HomeScene always `stopPlayer()` before starting another stream (build 8+). List refresh never autoplays while a deep link is in flight.
 
@@ -80,7 +82,7 @@ Note: build **1.0.9+** reports `/Sessions/Playing` (and progress/stopped) from `
 ## Networking notes
 
 - `baseUrl` must be reachable **from the Roku** (same LAN; no AP/client isolation). Example: `http://192.168.X.Y:8096`.
-- Jellyfin Task uses a **15s HTTP timeout** and returns the failure reason on screen if the TV cannot connect.
+- Jellyfin Task uses a **15s HTTP timeout** for Items. Session Capabilities is fire-and-forget so a dead Pi fails in one wait, not two. Unreachable list/play shows a waiting screen with Retry and a **30s** auto-retry (channel **1.0.43+**).
 - Confirm from a phone/PC on the same Wi‑Fi as the Roku: `http://<pi>:8096/System/Info/Public`.
 
 ## Artifacts

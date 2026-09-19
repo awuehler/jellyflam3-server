@@ -19,6 +19,9 @@ sub init()
   m.advancingClip = false
   m.lastRepollSec = 0
   m.repollTask = invalid
+  m.reachTask = invalid
+  m.pendingDeadId = ""
+  m.reconnectTimer = invalid
   m.effectiveSummary = ""
 
   m.rowList.observeField("rowItemSelected", "onRowItemSelected")
@@ -40,16 +43,27 @@ sub init()
   end if
 end sub
 
-' Distinct loading / empty / error / ready UX + focus-safe Retry.
+' Distinct loading / empty / error / unreachable / ready UX + focus-safe Retry.
+function isUnreachableError(raw as string) as boolean
+  if raw = invalid or raw = "" then return false
+  low = LCase(raw)
+  if Instr(1, low, "timeout") > 0 then return true
+  if Instr(1, low, "cannot reach") > 0 then return true
+  if Instr(1, low, "connection") > 0 then return true
+  if Instr(1, low, "failed to start") > 0 then return true
+  if Instr(1, low, "http -1") > 0 then return true
+  return false
+end function
+
 function friendlyError(raw as string) as string
   if raw = invalid or raw = "" then return "Could not load flock — check Settings"
   msg = raw
   low = LCase(msg)
-  if Instr(1, low, "timeout") > 0 or Instr(1, low, "cannot reach") > 0
-    return "Network timeout — is the Pi Jellyfin URL reachable from this Roku?"
-  else if Instr(1, low, "apiKey") > 0 or Instr(1, low, "401") > 0 or Instr(1, low, "unauthorized") > 0
+  if isUnreachableError(msg)
+    return "Waiting for the furnace — is the Pi Jellyfin URL reachable from this Roku?"
+  else if Instr(1, low, "apikey") > 0 or Instr(1, low, "401") > 0 or Instr(1, low, "unauthorized") > 0
     return "Auth failed — check apiKey in Settings"
-  else if Instr(1, low, "userId") > 0
+  else if Instr(1, low, "userid") > 0
     return "Missing userId — set it in Settings"
   else if Instr(1, low, "baseurl") > 0
     return "Missing baseUrl — set Jellyfin URL in Settings"
@@ -58,9 +72,37 @@ function friendlyError(raw as string) as string
   return msg
 end function
 
+function reconnectIntervalSec() as integer
+  return 30
+end function
+
+sub startReconnectTimer()
+  if m.reconnectTimer = invalid
+    t = createObject("roSGNode", "Timer")
+    t.duration = reconnectIntervalSec()
+    t.repeat = true
+    t.observeField("fire", "onReconnectTimer")
+    m.top.appendChild(t)
+    m.reconnectTimer = t
+  end if
+  m.reconnectTimer.control = "start"
+end sub
+
+sub stopReconnectTimer()
+  if m.reconnectTimer = invalid then return
+  m.reconnectTimer.control = "stop"
+end sub
+
+sub onReconnectTimer()
+  if m.uiState <> "unreachable" then return
+  if m.settings <> invalid then return
+  if m.player <> invalid then return
+  refreshFromRegistry()
+end sub
+
 sub setUiState(state as string, message as string)
   m.uiState = state
-  showRetry = (state = "error" or state = "empty")
+  showRetry = (state = "error" or state = "empty" or state = "unreachable")
   if m.retryBtn <> invalid
     m.retryBtn.visible = showRetry
     m.retryBtn.focusable = showRetry
@@ -74,6 +116,11 @@ sub setUiState(state as string, message as string)
   end if
   if m.status <> invalid and message <> invalid
     m.status.text = message
+  end if
+  if state = "unreachable"
+    startReconnectTimer()
+  else
+    stopReconnectTimer()
   end if
 end sub
 
@@ -490,6 +537,16 @@ sub refreshFromRegistry()
   m.task.control = "RUN"
 end sub
 
+sub showUnreachableUi(raw as string)
+  msg = friendlyError(raw)
+  if m.detailTitle <> invalid then m.detailTitle.text = "Waiting for the furnace"
+  if m.detailMeta <> invalid then m.detailMeta.text = msg
+  if m.detailDesc <> invalid then m.detailDesc.text = "Retry now, or this screen tries again every 30 seconds. Dreams stay on the Pi."
+  if m.rowList <> invalid then m.rowList.content = invalid
+  setUiState("unreachable", msg)
+  focusRecoveryControl()
+end sub
+
 sub showErrorUi(raw as string)
   msg = friendlyError(raw)
   clearDetailChrome()
@@ -563,7 +620,11 @@ sub onTaskResult()
   end if
 
   if res.error <> invalid and res.error <> ""
-    showErrorUi(res.error)
+    if isUnreachableError(res.error)
+      showUnreachableUi(res.error)
+    else
+      showErrorUi(res.error)
+    end if
     return
   end if
 
@@ -640,7 +701,11 @@ sub onDeepLinkResult()
   if res = invalid or (res.error <> invalid and res.error <> "")
     err = "Deep link failed"
     if res <> invalid and res.error <> invalid then err = res.error
-    showErrorUi(err)
+    if isUnreachableError(err)
+      showUnreachableUi(err)
+    else
+      showErrorUi(err)
+    end if
     return
   end if
   if res.items = invalid or res.items.count() = 0
@@ -786,16 +851,53 @@ sub onPlaybackFailed()
   m.advancingClip = true
   deadId = ""
   if m.currentPlayId <> invalid then deadId = m.currentPlayId
+  m.pendingDeadId = deadId
+  probeFurnaceReach()
+end sub
+
+sub probeFurnaceReach()
+  if m.reachTask <> invalid then return
+  t = createObject("roSGNode", "JellyfinTask")
+  t.observeField("resultJson", "onReachResult")
+  t.baseUrl = m.registry.read("baseUrl")
+  t.apiKey = m.registry.read("apiKey")
+  t.userId = m.registry.read("userId")
+  t.command = "reach"
+  t.control = "RUN"
+  m.reachTask = t
+end sub
+
+sub onReachResult()
+  t = m.reachTask
+  m.reachTask = invalid
+  raw = ""
+  if t <> invalid then raw = t.resultJson
+  res = invalid
+  if raw <> invalid and raw <> "" then res = ParseJson(raw)
+  reachable = false
+  if res <> invalid and res.reachable = true then reachable = true
+  if reachable <> true
+    stopPlayer()
+    m.advancingClip = false
+    err = "cannot reach furnace"
+    if res <> invalid and res.error <> invalid and res.error <> "" then err = res.error
+    showUnreachableUi(err)
+    return
+  end if
+  deadId = m.pendingDeadId
+  m.pendingDeadId = ""
   dropItemFromFlock(deadId)
   maybeRepollFlock()
   if m.flockCount = 0 or m.items = invalid or m.items.count() = 0
     stopPlayer()
+    m.advancingClip = false
     showEmptyUi()
     return
   end if
   nextIt = takeNextRemainingItem()
   if nextIt = invalid
     stopPlayer()
+    m.advancingClip = false
     showEmptyUi()
     return
   end if
@@ -846,7 +948,7 @@ sub onSettingsClose()
     refreshFromRegistry()
   else if needsCredentials()
     focusRecoveryControl()
-  else if m.uiState = "error" or m.uiState = "empty"
+  else if m.uiState = "error" or m.uiState = "empty" or m.uiState = "unreachable"
     focusRecoveryControl()
   else
     if m.rowList <> invalid
@@ -884,7 +986,7 @@ function onKeyEvent(key as string, press as boolean) as boolean
     return true
   end if
   if key = "replay" or key = "play"
-    if m.uiState = "error" or m.uiState = "empty"
+    if m.uiState = "error" or m.uiState = "empty" or m.uiState = "unreachable"
       refreshFromRegistry()
       return true
     end if
