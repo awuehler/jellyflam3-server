@@ -48,12 +48,14 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Phase 4 / 02 mesh-join: skip this host’s device ID; if a peer already exists, refresh name, Tailscale `tcp://…:22000`, and introducer (stale IPs no longer stay disconnected).
 - Phase 4 / 09 screensaver captions: Kodi **0.2.12** `title_mode` (filename default / alias) plus a chrome-light overlay; Roku screensaver **1.0.11** Settings `titleMode` plus stills caption. Both read Overview `Alias:` (same as VoD). Optional Jellyfin OriginalTitle / SortName-as-alias stays parked.
 - Phase 4 / 06 library rotate **closed** (Owner OK 2026-09-19). Check + Shears rotate + worker refuse stay shipped; daily `cron_library_rotate.sh` remains off the lab crontab until a host is WARN/BAD. How-to: [Activate daily rotate](docs/phase4/06_LIBRARY_DISK_ROTATE.md#activate-daily-rotate) and [USER_GUIDE](docs/USER_GUIDE_AND_RUNBOOK.md#activate-library-rotate). LRU / soak-fill stay non-goals.
 - Cancel Phase 4 leftovers: **standalone edges** / loop-stills watermark / Kodi edge sequencer (tuples already include loop→edge→loop). **Screensaver voting** (Roku screensaver best practices / certification — VoD overlay only). **`N_max` as a Jellyfin cap** and an **Ethernet control lab** (guide 07 — this fleet is WiFi STA, `eth0 DOWN`; estimate stays ops guidance). **Auto-promote** (guide 01 — gated `promote --apply` is the receive path; no silent `peers/inbox` drain). **Furnace polish that is not drain** (2026-09-19): checkpoint/resume inside `flam3-animate` and SIGSTOP-as-pause — the binary has no resume protocol; drain (finish current job, then stop claiming) stays the pause product.
 
 ### Fixed
 
+- Phase 4 / 02 `mesh-join`: Syncthing `add-json` takes the JSON document as a **positional argument**. Stdin/heredoc was ignored (`expected 1 arugment, got 0`), so new devices never applied.
 - Healthcheck drain probe: `--config` is a parent argparse flag (`python3 -m pipeline.worker_drain --config … status`), so drain-on now WARNs with phase instead of “status unavailable”. Ops test expects that argv order.
 - Phase 4 pre-wave 3 idle-gate: supervisor-only status SoT; restore `idle_delay` across idlegate restart; stale `open` fail-closed (3× poll); `wait_for_gate` honors `seconds_until_resume` (cap 15 s); drain wait errors if the worker is frozen. Playing still does not pause `flam3-animate`.
 - Docs: how/where/when to **generate** `DISPLAY_SINK_TOKEN` (`python3 -c 'import secrets; print(secrets.token_urlsafe(32))'`) into this Pi’s `secrets.env` before enabling the sink; same string → Roku `displaySinkToken`.

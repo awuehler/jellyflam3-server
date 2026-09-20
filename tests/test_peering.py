@@ -594,8 +594,11 @@ def test_mesh_join_add_json_devices(tmp_path: Path, monkeypatch):
     inputs: list[str] = []
 
     def fake_run(cmd, *, dry_run=False, env=None, input_text=None):
-        if input_text:
-            inputs.append(input_text)
+        blob = input_text or ""
+        if len(cmd) > 5 and cmd[4] == "add-json":
+            blob = cmd[-1]
+        if blob:
+            inputs.append(blob)
         stdout = "jellyflam3-peers-inbox" if "folders" in cmd and "list" in cmd else ""
         if cmd == ["syncthing", "--device-id"]:
             stdout = "SELF\n"
@@ -607,7 +610,61 @@ def test_mesh_join_add_json_devices(tmp_path: Path, monkeypatch):
     assert out["ok"] is True
     assert len(out["added"]) == 1
     assert out["added"][0]["introducer"] is True
+    assert out["added"][0]["status"] == "added"
     assert any("DEV16A" in blob and "100.64.0.16" in blob for blob in inputs)
+
+
+def test_mesh_join_skips_self_and_updates_duplicate(tmp_path: Path, monkeypatch):
+    (tmp_path / "deploy" / "peering").mkdir(parents=True)
+    (tmp_path / "deploy" / "peering" / "stignore").write_text("!*.flam3\n*\n", encoding="utf-8")
+    cfg = _cfg(tmp_path)
+    cfg["peering"]["syncthing"] = {"home": str(tmp_path / "sthome")}
+    peers = tmp_path / "peers.json"
+    peers.write_text(
+        json.dumps(
+            {
+                "peers": [
+                    {
+                        "name": "self",
+                        "deviceID": "SELF",
+                        "tailscaleIP": "100.64.0.1",
+                        "introducer": False,
+                    },
+                    {
+                        "name": "16a",
+                        "deviceID": "DEV16A",
+                        "tailscaleIP": "100.64.0.16",
+                        "introducer": True,
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    seen: list[str] = []
+
+    def fake_run(cmd, *, dry_run=False, env=None, input_text=None):
+        seen.append(" ".join(cmd))
+        stdout = "jellyflam3-peers-inbox" if "folders" in cmd and "list" in cmd else ""
+        if cmd == ["syncthing", "--device-id"]:
+            return subprocess.CompletedProcess(cmd, 0, stdout="SELF\n", stderr="")
+        if len(cmd) >= 5 and cmd[3] == "devices" and cmd[4] == "add-json":
+            return subprocess.CompletedProcess(cmd, 1, stdout="", stderr="duplicate device")
+        if cmd[-2:] == ["addresses", "list"]:
+            return subprocess.CompletedProcess(cmd, 0, stdout="0\n", stderr="")
+        return subprocess.CompletedProcess(cmd, 0, stdout=stdout, stderr="")
+
+    monkeypatch.setattr("pipeline.peering._have", lambda cmd: cmd == "syncthing")
+    monkeypatch.setattr("pipeline.peering._run", fake_run)
+    out = mesh_join(cfg, peers, dry_run=False)
+    assert out["ok"] is True
+    assert out["skipped"][0]["reason"] == "self"
+    assert out["added"][0]["status"] == "updated"
+    assert out["added"][0]["deviceID"] == "DEV16A"
+    joined = " ".join(seen)
+    assert "introducer set true" in joined
+    assert "addresses 0 set tcp://100.64.0.16:22000" in joined
+    assert "devices add --device-id DEV16A" in joined
 
 
 def test_ensure_mesh_local_soft_fail_without_binary(tmp_path: Path, monkeypatch):

@@ -125,7 +125,7 @@ On **Opt In**, the host service SHALL:
 5. **Start** Syncthing (`jellyflam3-syncthing.service`) with HOME under `/var/lib/jellyflam3/syncthing`.
 6. **Record** Opt-In ack + `peering_status.json`; surface in `status_report.sh` / `healthcheck.sh`.
 
-**Phase 4 / 02:** `opt-in` also runs `ensure-mesh-local` (folder id `jellyflam3-peers-inbox`, discovery harden). Peer device IDs / Tailscale `tcp://100.x:22000` addresses remain `mesh-join` or the manual add-json runbook in [`deploy/peering/README.md`](../../deploy/peering/README.md#syncthing-first-time-mesh-introduce-lab-runbook).
+**Phase 4 / 02:** `opt-in` also runs `ensure-mesh-local` (folder id `jellyflam3-peers-inbox`, discovery harden). Peer device IDs / current Tailscale `tcp://100.x:22000` addresses: `mesh-join --peers-file` (skips self; refreshes existing devices) or the manual add-json runbook in [`deploy/peering/README.md`](../../deploy/peering/README.md#syncthing-first-time-mesh-introduce-lab-runbook) (JSON as a **positional** argument, not stdin).
 
 ## Opt Out (host service)
 
@@ -178,12 +178,12 @@ Smoked on `16a` / `08a` / `04a` (2026-08-11):
 
 1. Apply `deploy/peering/tailscale-acl.example.json` on the tailnet; create tagged pre-auth key(s) → `TS_AUTHKEY` per host (`secrets.env`, never commit).
 2. On each Pi: install Tailscale + Syncthing units; `opt-in`.
-3. **One-time Syncthing mesh introduce** (manual today) — full runbook: [`deploy/peering/README.md`](../../deploy/peering/README.md#syncthing-first-time-mesh-introduce-lab-runbook):
+3. **One-time Syncthing mesh introduce** — [Phase 4 / 02](../phase4/02_MESH_INTRODUCE_SCRIPTING.md) `ensure-mesh-local` + gitignored `mesh-join --peers-file` (16a `introducer: true`). Manual add-json remains in [`deploy/peering/README.md`](../../deploy/peering/README.md#syncthing-first-time-mesh-introduce-lab-runbook) (JSON as argv, not stdin):
    - `export HOME=/var/lib/jellyflam3/syncthing`
    - Harden: `global-ann-enabled` / `relays-enabled` / `natenabled` → `false`
    - Collect `syncthing --device-id` + `tailscale ip -4` per host (host-local table; do not commit)
    - Folder id `jellyflam3-peers-inbox`, absolute peers-inbox path, Send & Receive
-   - Add devices + folder via `syncthing cli config … add-json` with `tcp://100.x:22000` (prefer over GUI / flaky `--addresses`)
+   - Add devices + folder via `syncthing cli config … add-json '<json>'` with `tcp://100.x:22000` (prefer `mesh-join`; stdin/heredoc fails on this CLI)
    - Optional: mark one host introducer (lab: `16a`) to ease later joins
 4. Drop a `.flam3` (optional `*-poster.jpg`) on device A; confirm it **lands** on B/C under `genomes/peers/inbox` and is **not** yet in `genomes/inbox` / not claimed by the worker.
 5. On a receiver: run gated `promote --apply`; confirm move to `genomes/inbox` (then worker may render if idle-gate allows).
@@ -196,7 +196,7 @@ Smoked on `16a` / `08a` / `04a` (2026-08-11):
 | `.stignore` write + Syncthing unit start/stop | host service | Every Opt In / Out |
 | Tailscale / Syncthing stay-alive while Opt In | `pipeline.tailscale_watch` + `cron_tailscale_watch.sh` | Poll (~5 min); Wi‑Fi reconnect without disconnect while STA has IPv4; wedge escalate; then heal `tailscaled` + `tailscale up` + Syncthing unit |
 | Folder create + discovery harden | `ensure-mesh-local` (from `opt-in`) | Once per host |
-| Peer device IDs / introducer | `mesh-join --peers-file` or manual add-json | Once per host / new peer |
+| Peer device IDs / introducer | `mesh-join --peers-file` or manual add-json | Once per host / new peer; again when Tailscale IPs move |
 | Gated promote | Operator (`promote --apply`) | Whenever land should enter the furnace |
 
 Scripting for first-time mesh introduce is **shipped** in Phase 4 / [02](../phase4/02_MESH_INTRODUCE_SCRIPTING.md) (`ensure-mesh-local`, `mesh-join`). Manual add-json remains in [`deploy/peering/README.md`](../../deploy/peering/README.md#syncthing-first-time-mesh-introduce-lab-runbook).
@@ -205,7 +205,7 @@ Scripting for first-time mesh introduce is **shipped** in Phase 4 / [02](../phas
 
 1. Templates live under [`deploy/peering/`](../../deploy/peering/) + systemd units in [`deploy/systemd/`](../../deploy/systemd/).
 2. Document Raspberry Pi OS install path for `tailscaled` + Syncthing in [09](09_PI_FROM_SCRATCH.md).
-3. Host service stays small: Opt In / Opt Out / status / promote; no mesh admin UI in Phase 2. One-time mesh introduce stays an operator runbook (or optional later CLI) — not day-to-day UX.
+3. Host service stays small: Opt In / Opt Out / status / promote; no mesh admin UI. First-time mesh introduce is [Phase 4 / 02](../phase4/02_MESH_INTRODUCE_SCRIPTING.md) CLI (`ensure-mesh-local`, `mesh-join`) or the add-json runbook — not day-to-day UX.
 4. License: private flock peering; not republication. Eventual pedigree-only share avoids redistributing archive Free Sheep as if they were local originals.
 5. Idle-gate / furnace: peering sync is light; still avoid shipping secrets. Do not open Syncthing relays to the public Internet for this folder.
 

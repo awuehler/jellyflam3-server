@@ -58,16 +58,16 @@ Parallel after **02**: `03` (HLS) anytime; `04` once Primary images exist. `05`�
 8. [09_SHEEP_REFACTOR.md](phase3/09_SHEEP_REFACTOR.md) — refactor tool (quality / palette / encode; Jellyfin-visible preview)
 9. [10_TESTING_AND_ACCEPTANCE.md](phase3/10_TESTING_AND_ACCEPTANCE.md) — testing, acceptance, and first `release candidate`
 
-**NOTE:** Tag **`v0.3.0`** at public launch — see [CHANGELOG.md](../CHANGELOG.md). Post-launch roadmap is [docs/phase4/](./phase4) (not part of v0.3.0). Tuples ([03](phase4/03_EDGES_AND_WATERMARK.md)) shipped 2026-09-05. 09 RNG aliases shipped 2026-09-09. Other products (publish, vote, rotate) stay parked. **Phase 5** (Ventuno LLM Agent Platform, separate from the Pi furnace) is a parked slice: [docs/phase5/](./phase5).
+**NOTE:** Tag **`v0.3.0`** at public launch — see [CHANGELOG.md](../CHANGELOG.md). Post-launch roadmap is [docs/phase4/](./phase4) (not part of v0.3.0). Tuples ([03](phase4/03_EDGES_AND_WATERMARK.md)) shipped 2026-09-05. 09 RNG aliases + VoD/SS titles shipped. Mesh introduce A/B/C, private-channel path, votes, and library rotate (optional cron) shipped. **Phase 5** (Ventuno LLM Agent Platform, separate from the Pi furnace) is a parked slice: [docs/phase5/](./phase5).
 
 ## Phase 4 guides (synopsis — products parked; pre-open slices noted)
 
 1. [01_PEER_SHARE_PATH.md](phase4/01_PEER_SHARE_PATH.md) — gated `promote --apply` (**locked**; auto-promote **cancelled**)
-2. [02_MESH_INTRODUCE_SCRIPTING.md](phase4/02_MESH_INTRODUCE_SCRIPTING.md) — Syncthing introduce options (parked)
+2. [02_MESH_INTRODUCE_SCRIPTING.md](phase4/02_MESH_INTRODUCE_SCRIPTING.md) — Syncthing introduce **A/B/C shipped** (manual add-json still valid)
 3. [03_EDGES_AND_WATERMARK.md](phase4/03_EDGES_AND_WATERMARK.md) — **tuples shipped** 2026-09-05; standalone edges / loop watermark **cancelled** 2026-09-13
 4. [04_ROKU_PUBLISH.md](phase4/04_ROKU_PUBLISH.md) — private-channel path (**shipped** 2026-09-11); Store parked
 5. [05_END_USER_GUIDE.md](phase4/05_END_USER_GUIDE.md) — household guide (**baseline complete** 2026-09-03)
-6. [06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md) — disk check (**slice shipped**); rotate parked
+6. [06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md) — disk check + rotate CLI (**closed** 2026-09-19); daily cron optional
 7. [07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md) — `link_capacity` (**estimator shipped**; Owner OK 2026-09-09; no Jellyfin cap / Ethernet lab DoD)
 8. [08_VIEWER_FEEDBACK_LOOP.md](phase4/08_VIEWER_FEEDBACK_LOOP.md) — vote overlay + sidecar sink + share cron + idle-breed weights (**shipped**); auto-promote **cancelled**; screensaver voting **cancelled**
 9. [09_SHEEP_NAMING.md](phase4/09_SHEEP_NAMING.md) — RNG aliases + VoD / screensaver `titleMode` shipped; optional Jellyfin OriginalTitle parked

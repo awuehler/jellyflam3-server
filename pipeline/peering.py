@@ -7,7 +7,9 @@ Usage: ``python3 -m pipeline.peering status|opt-in|opt-out|publish|promote|ensur
 
 Assumptions: Default is Opt Out. Sync = ``*.flam3`` + optional ``*-poster.jpg`` + integrity
 sidecars via managed ``.stignore`` under peers/inbox; promote is gated (share security then
-sheep tax) and moves companion posters when present.
+sheep tax) and moves companion posters when present. ``mesh-join`` passes Syncthing
+``add-json`` JSON as a positional argument (not stdin), skips this host, and refreshes
+stale Tailscale addresses / introducer on existing devices.
 """
 
 from __future__ import annotations
@@ -149,11 +151,14 @@ def _syncthing_cli(
     dry_run: bool = False,
     input_text: str | None = None,
 ) -> subprocess.CompletedProcess[str]:
+    # syncthing cli * add-json takes the JSON document as a positional arg, not stdin.
+    cmd = ["syncthing", "cli", *args]
+    if input_text is not None:
+        cmd.append(input_text)
     return _run(
-        ["syncthing", "cli", *args],
+        cmd,
         dry_run=dry_run,
         env=_syncthing_env(cfg),
-        input_text=input_text,
     )
 
 
@@ -189,12 +194,7 @@ def ensure_mesh_local(cfg: dict[str, Any], *, dry_run: bool = False) -> dict[str
         steps.append("folder exists")
         return out
 
-    my_id_proc = _run(
-        ["syncthing", "--device-id"],
-        dry_run=dry_run,
-        env=_syncthing_env(cfg),
-    )
-    my_id = (my_id_proc.stdout or "").strip()
+    my_id = _local_device_id(cfg, dry_run=dry_run)
     folder_doc = {
         "id": PEERS_FOLDER_ID,
         "label": PEERS_FOLDER_ID,
@@ -217,6 +217,102 @@ def ensure_mesh_local(cfg: dict[str, Any], *, dry_run: bool = False) -> dict[str
             out["ok"] = False
             out["reason"] = err or "folders_add_failed"
     return out
+
+
+def _local_device_id(cfg: dict[str, Any], *, dry_run: bool = False) -> str:
+    """This host's Syncthing device ID (empty when the binary is missing)."""
+    proc = _run(
+        ["syncthing", "--device-id"],
+        dry_run=dry_run,
+        env=_syncthing_env(cfg),
+    )
+    return (proc.stdout or "").strip()
+
+
+def _upsert_syncthing_device(
+    cfg: dict[str, Any],
+    peer: dict[str, Any],
+    *,
+    dry_run: bool = False,
+) -> dict[str, Any]:
+    """Add a peer device or refresh name, Tailscale address, and introducer."""
+    addr = f"tcp://{peer['tailscaleIP']}:22000"
+    doc = {
+        "deviceID": peer["deviceID"],
+        "name": peer["name"],
+        "addresses": [addr],
+        "introducer": peer["introducer"],
+    }
+    rec: dict[str, Any] = {**peer, "address": addr}
+    proc = _syncthing_cli(
+        cfg,
+        ["config", "devices", "add-json"],
+        dry_run=dry_run,
+        input_text=json.dumps(doc),
+    )
+    rec["rc"] = proc.returncode
+    err = (proc.stderr or proc.stdout or "")[:200]
+    duplicate = proc.returncode != 0 and (
+        "duplicate" in err.lower() or "already" in err.lower()
+    )
+    if proc.returncode != 0 and not duplicate:
+        rec["error"] = err
+        rec["status"] = "error"
+        return rec
+
+    did = peer["deviceID"]
+    if duplicate:
+        rec["status"] = "updated"
+        _syncthing_cli(
+            cfg,
+            ["config", "devices", did, "name", "set", peer["name"]],
+            dry_run=dry_run,
+        )
+        _syncthing_cli(
+            cfg,
+            [
+                "config",
+                "devices",
+                did,
+                "introducer",
+                "set",
+                "true" if peer["introducer"] else "false",
+            ],
+            dry_run=dry_run,
+        )
+        listed = _syncthing_cli(
+            cfg, ["config", "devices", did, "addresses", "list"], dry_run=dry_run
+        )
+        if (listed.stdout or "").strip():
+            _syncthing_cli(
+                cfg,
+                ["config", "devices", did, "addresses", "0", "set", addr],
+                dry_run=dry_run,
+            )
+        else:
+            _syncthing_cli(
+                cfg,
+                ["config", "devices", did, "addresses", "add", addr],
+                dry_run=dry_run,
+            )
+    else:
+        rec["status"] = "added"
+
+    share = _syncthing_cli(
+        cfg,
+        [
+            "config",
+            "folders",
+            PEERS_FOLDER_ID,
+            "devices",
+            "add",
+            "--device-id",
+            did,
+        ],
+        dry_run=dry_run,
+    )
+    rec["share_rc"] = share.returncode
+    return rec
 
 
 def load_peers_file(path: Path) -> list[dict[str, Any]]:
@@ -283,39 +379,18 @@ def mesh_join(
         payload["ok"] = True
         return payload
 
+    my_id = _local_device_id(cfg, dry_run=dry_run)
+    payload["local_device_id"] = my_id
     for peer in peers:
-        doc = {
-            "deviceID": peer["deviceID"],
-            "name": peer["name"],
-            "addresses": [f"tcp://{peer['tailscaleIP']}:22000"],
-            "introducer": peer["introducer"],
-        }
-        proc = _syncthing_cli(
-            cfg,
-            ["config", "devices", "add-json"],
-            dry_run=dry_run,
-            input_text=json.dumps(doc),
-        )
-        rec = {**peer, "rc": proc.returncode}
-        err = (proc.stderr or proc.stdout or "")[:200]
-        if proc.returncode != 0 and "duplicate" not in err.lower() and "already" not in err.lower():
-            rec["error"] = err
+        if my_id and peer["deviceID"] == my_id:
+            payload["skipped"].append({**peer, "reason": "self"})
+            continue
+        rec = _upsert_syncthing_device(cfg, peer, dry_run=dry_run)
+        if rec.get("status") == "error":
             payload["skipped"].append(rec)
+            payload["ok"] = False
         else:
             payload["added"].append(rec)
-            _syncthing_cli(
-                cfg,
-                [
-                    "config",
-                    "folders",
-                    PEERS_FOLDER_ID,
-                    "devices",
-                    "add",
-                    "--device-id",
-                    peer["deviceID"],
-                ],
-                dry_run=dry_run,
-            )
     return payload
 
 

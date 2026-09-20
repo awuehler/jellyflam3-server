@@ -192,7 +192,7 @@ Run Pi commands from `/opt/jellyflam3-server` unless noted.
 
 **Hosts:** publisher Pi and receiver Pi, both **Opt In** with **share live** (Syncthing + Tailscale). See [`deploy/peering/README.md`](../deploy/peering/README.md). Trust keys exchanged (`peering gen-keys`, `trust-key`).
 
-1. On both Pis: `python3 -m pipeline.peering status` → `share_opt_in: true`, `share_live: true`.
+1. On both Pis: `python3 -m pipeline.peering status` → `share_opt_in: true`, `share_live: true`. First mesh: [Phase 4 / 02](phase4/02_MESH_INTRODUCE_SCRIPTING.md) `ensure-mesh-local` + `mesh-join --peers-file` (gitignored `configs/peering-peers.json`; 16a introducer). Re-run `mesh-join` when Tailscale IPs move.
 2. Publisher (already-taxed genome in `genomes/done` or similar):
 
    ```bash

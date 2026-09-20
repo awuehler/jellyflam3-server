@@ -153,7 +153,7 @@ IDs or Tailscale IPs to git.
 
 ### Add devices + shared folder (`add-json` preferred)
 
-Syncthing’s `config devices add --addresses …` has been flaky in lab; use **`add-json`**.
+Syncthing’s `config devices add --addresses …` has been flaky in lab; use **`add-json`**. Pass the JSON document as a **positional argument** — a heredoc on stdin fails with `expected 1 arugment, got 0`. Prefer `python3 -m pipeline.peering mesh-join` ([Phase 4 / 02](../../docs/phase4/02_MESH_INTRODUCE_SCRIPTING.md)).
 
 On **each** host (example placeholders — substitute real IDs/IPs):
 
@@ -163,8 +163,8 @@ FOLDER_ID=jellyflam3-peers-inbox
 FOLDER_PATH=/home/jellyflam3/GitHub/jellyflam3-server/genomes/peers/inbox
 MY_ID=$(syncthing --device-id)
 
-# For each *other* peer:
-syncthing cli config devices add-json <<EOF
+# For each *other* peer (JSON is an argument, not stdin):
+syncthing cli config devices add-json "$(cat <<EOF
 {
   "deviceID": "PEER_DEVICE_ID",
   "name": "rpi-jellyflam3-XXa",
@@ -172,9 +172,10 @@ syncthing cli config devices add-json <<EOF
   "introducer": false
 }
 EOF
+)"
 
 # Create folder once (share with all peer device IDs):
-syncthing cli config folders add-json <<EOF
+syncthing cli config folders add-json "$(cat <<EOF
 {
   "id": "$FOLDER_ID",
   "label": "$FOLDER_ID",
@@ -187,6 +188,7 @@ syncthing cli config folders add-json <<EOF
   ]
 }
 EOF
+)"
 ```
 
 **Introducer (recommended):** mark **one** stable host (lab: `16a`) with
@@ -217,7 +219,7 @@ See [docs/phase4/02_MESH_INTRODUCE_SCRIPTING.md](../../docs/phase4/02_MESH_INTRO
 | Option | What it does | Notes |
 |---|---|---|
 | **A. Local folder ensure** | `ensure-mesh-local` (also from `opt-in`) | Folder id, `.stignore`, discovery harden; no peer IDs |
-| **B. Peer list file** | `mesh-join --peers-file configs/peering-peers.json` | Gitignored; never commit real IDs |
+| **B. Peer list file** | `mesh-join --peers-file configs/peering-peers.json` | Gitignored; never commit real IDs; skip self; refresh existing addresses |
 | **C. Introducer** | `"introducer": true` on the 16a row in B’s file | Still one mutual introduce |
 | **D. Stay manual** | add-json runbook above | Still valid |
 

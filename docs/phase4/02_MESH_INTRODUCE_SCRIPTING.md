@@ -4,14 +4,14 @@
 
 Reduce one-time Syncthing mesh introduce toil (options A–C). Manual add-json (option D) remains valid.
 
-**Status:** **Shipped** 2026-09-13 — A local folder ensure, B gitignored peer-list CLI, C introducer flag on a B row. No mesh admin UI. Gated `promote --apply` unchanged.
+**Status:** **Shipped** 2026-09-13 — A local folder ensure, B gitignored peer-list CLI, C introducer flag on a B row. **2026-09-19:** `mesh-join` skips self, upserts stale Tailscale addresses, and passes `add-json` JSON as an argv value (stdin is ignored by this Syncthing CLI). No mesh admin UI. Gated `promote --apply` unchanged.
 
 ## Options
 
 | Option | What | State |
 |---|---|---|
 | **A. Local folder ensure** | `python3 -m pipeline.peering ensure-mesh-local` — dirs, `.stignore`, discovery harden (`global-ann-enabled` / `relays-enabled` / `natenabled` false), folder id `jellyflam3-peers-inbox` at the absolute inbox path, type sendreceive. Soft-fail if `syncthing` is missing. **`opt-in` calls this best-effort** after units start. | Shipped |
-| **B. Peer list file** | Host-local `configs/peering-peers.json` (**gitignored**). `python3 -m pipeline.peering mesh-join --peers-file …` runs `devices add-json` (`tcp://IP:22000`) and shares the folder. Copy [configs/peering-peers.json.example](../../configs/peering-peers.json.example); never commit real device IDs. | Shipped |
+| **B. Peer list file** | Host-local `configs/peering-peers.json` (**gitignored**). `python3 -m pipeline.peering mesh-join --peers-file …` runs `devices add-json` with the JSON as a **positional argument** (`tcp://IP:22000`), skips this host, shares the folder, and **refreshes** name/address/introducer when the device already exists. Copy [configs/peering-peers.json.example](../../configs/peering-peers.json.example); never commit real device IDs. | Shipped |
 | **C. Introducer** | Set `"introducer": true` on the stable host row (lab: **16a**) in the same peers file. Still one mutual introduce; not zero-touch. | Shipped (flag on B) |
 | **D. Stay manual** | [deploy/peering/README.md](../../deploy/peering/README.md#syncthing-first-time-mesh-introduce-lab-runbook) add-json | Still valid |
 
@@ -25,7 +25,7 @@ python3 -m pipeline.peering mesh-join --config configs/jellyflam3.yaml \
     --peers-file configs/peering-peers.json
 ```
 
-Placeholder `REPLACE_…` device IDs and `100.x…` IPs are skipped so an unedited example is a no-op.
+Placeholder `REPLACE_…` device IDs and `100.x…` IPs are skipped so an unedited example is a no-op. `mesh-join` skips this host’s own device ID. If a peer is already in Syncthing, it **refreshes** name, `tcp://<tailscaleIP>:22000`, and introducer (lab Tailscale IPs move).
 
 ## Non-goals
 

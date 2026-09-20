@@ -62,7 +62,7 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 | Slice | Guide | What landed | Still parked |
 |---|---|---|---|
 | Library rotate | [06](06_LIBRARY_DISK_ROTATE.md) | Oldest-mtime Shears cascade; `library_disk rotate [--apply]`; `cron_library_rotate.sh` optional ([Activate daily rotate](06_LIBRARY_DISK_ROTATE.md#activate-daily-rotate)); archive seed skips fetch if sheep still BAD; worker refuse on sheep **BAD**. **Closed** 2026-09-19 (Owner OK). | LRU / soak-fill stay non-goals |
-| Mesh introduce | [02](02_MESH_INTRODUCE_SCRIPTING.md) | `ensure-mesh-local` (opt-in best-effort); gitignored `mesh-join --peers-file`; `introducer` on 16a example row | Mesh admin UI; committing device IDs |
+| Mesh introduce | [02](02_MESH_INTRODUCE_SCRIPTING.md) | `ensure-mesh-local` (opt-in best-effort); gitignored `mesh-join --peers-file` (skip self; refresh address/introducer); `introducer` on 16a example row | Mesh admin UI; committing device IDs |
 
 ## Opened (2026-09-13, 09 C)
 
