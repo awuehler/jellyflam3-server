@@ -1494,7 +1494,7 @@ flowchart TD
 
 ## Phase 3 guideline documents (complete)
 
-Phase 3 guides **01–10** are **complete** (Owner OK 2026-08-23 @ `f37758a`). Git tag **`v0.3.0` at public launch**. **Tuples + edge watermark shipped** ([phase4/03](phase4/03_EDGES_AND_WATERMARK.md)); standalone edges / loop watermark **cancelled**. Roku publish remains post-launch ([phase4/04](phase4/04_ROKU_PUBLISH.md)). Continuous HLS from random MP4s was **dropped**. Peer share-path + mesh introduce scripting: [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md).
+Phase 3 guides **01–10** are **complete** (Owner OK 2026-08-23 @ `f37758a`). Git tag **`v0.3.0` at public launch**. **Tuples + edge watermark shipped** ([phase4/03](phase4/03_EDGES_AND_WATERMARK.md)); standalone edges / loop watermark **cancelled**. Roku publish remains post-launch ([phase4/04](phase4/04_ROKU_PUBLISH.md)). Continuous HLS from random MP4s was **dropped**. Peer share-path + mesh introduce scripting: [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md) (**02 closed**); share-out hop [phase5/04](phase5/04_PEER_SHARE_MESH.md).
 
 ### Doc map
 

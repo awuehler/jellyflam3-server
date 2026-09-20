@@ -40,7 +40,7 @@ Complements (does not replace):
 | Enable screensaver | SS Settings **1.0.10** writes Jellyfin creds, or furnace zip, or VoD Settings while sharing the developer slot; Theme → Screensavers; fade/dwell. SS always rotates (ignores `shuffleFlock`); Primary + Backdrop; no tuples; **1.0.9** wrap-refetch. Private-channel path: [04](04_ROKU_PUBLISH.md#private-channel-path-wave-2) |
 | Extract stills | Poster ingest / `backfill_posters`; operator `python3 -m pipeline.stills --dry-run` / `--limit N` |
 | Breed / seed | Manual `pipeline.breed` or daily `cron_breed_idle.sh` when inbox empty; idle-breed **weights parents by sidecar votes** when present ([08](08_VIEWER_FEEDBACK_LOOP.md)) |
-| Promote peer share | Opt In; **gated** `promote --apply` on receive. Liked sheep: `cron_share_votes.sh` copies to `peers/share-out` ([08](08_VIEWER_FEEDBACK_LOOP.md)); auto-promote **cancelled** ([01](01_PEER_SHARE_PATH.md)) |
+| Promote peer share | Opt In; **gated** `promote --apply` on receive. Liked sheep: `cron_share_votes.sh` copies to `peers/share-out` (local; not Syncthing) ([08](08_VIEWER_FEEDBACK_LOOP.md)); inbox hop → [../phase5/04](../phase5/04_PEER_SHARE_MESH.md); auto-promote **cancelled** ([01](01_PEER_SHARE_PATH.md)) |
 | Vote / like a sheep | Roku VoD overlay last **7 s** ([08](08_VIEWER_FEEDBACK_LOOP.md)); LAN-only POST; re-votes allowed; love is a stronger tally, not a different share path |
 | Clear household votes | `python3 -m pipeline.sheep_votes sweep` then `--confirm SWEEP` ([example 7](../USER_GUIDE_AND_RUNBOOK.md#7--sweep-votes-fresh-start-on-this-furnace)); does not unshare `peers/share-out` |
 | Rename / alias a sheep | [09](09_SHEEP_NAMING.md): auto `adjective_surname` or human override; VoD / Kodi SS / Roku SS `titleMode` filename vs alias |
@@ -57,7 +57,7 @@ Shipped in [USER_GUIDE_AND_RUNBOOK.md — Worked examples](../USER_GUIDE_AND_RUN
 3. Two Rokus, one Pi: Fetch TV display on both → two profile files → independent prefs.
 4. Peer receive: land in `peers/inbox` → verify → promote → furnace picks up.
 5. Pause the furnace: drain request --wait → optional restart → cancel.
-6. Vote then share: overlay OK love / Right like / Down dismiss / Up-Back exit → sidecar `share_candidate` → `share_votes` / cron copies `share-out` → receiver still `promote --apply`. Tuples skip the overlay.
+6. Vote then share: overlay OK love / Right like / Down dismiss / Up-Back exit → sidecar `share_candidate` → `share_votes` / cron copies **local** `share-out` → operator copy to inbox (or Phase 5 hop) → receiver `promote --apply`. Tuples skip the overlay.
 7. Sweep votes: `sheep_votes sweep` dry-run → `--confirm SWEEP` zeros live-catalog `viewer_feedback`; share-out copies and aliases stay.
 
 ### D — Triage cookbook

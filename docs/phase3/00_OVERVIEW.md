@@ -77,7 +77,7 @@ Deferred from Phase 3 (not v0.3.0 scope). Details under `docs/phase4/`:
 
 - [../phase4/00_OVERVIEW.md](../phase4/00_OVERVIEW.md)
 - [../phase4/01_PEER_SHARE_PATH.md](../phase4/01_PEER_SHARE_PATH.md)
-- [../phase4/02_MESH_INTRODUCE_SCRIPTING.md](../phase4/02_MESH_INTRODUCE_SCRIPTING.md) — **A/B/C shipped** (manual add-json still valid)
+- [../phase4/02_MESH_INTRODUCE_SCRIPTING.md](../phase4/02_MESH_INTRODUCE_SCRIPTING.md) — **closed** 2026-09-19 (Owner OK); share hop → [../phase5/04_PEER_SHARE_MESH.md](../phase5/04_PEER_SHARE_MESH.md)
 - [../phase4/03_EDGES_AND_WATERMARK.md](../phase4/03_EDGES_AND_WATERMARK.md) — edges + watermark (was Phase 3 / 04)
 - [../phase4/04_ROKU_PUBLISH.md](../phase4/04_ROKU_PUBLISH.md) — publish VoD + screensaver (assets, settings, Store/private)
 - [../phase4/05_END_USER_GUIDE.md](../phase4/05_END_USER_GUIDE.md) — end-user tasks / examples / triage (**baseline complete** 2026-09-03)

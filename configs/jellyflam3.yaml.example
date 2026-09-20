@@ -254,8 +254,9 @@ seed_archive:
 # Land = genomes/peers/inbox (Syncthing). Worker does NOT auto-pick — promote --apply → genomes/inbox.
 # Auto-promote cancelled (Phase 4 / 01): no silent drain of peers/inbox.
 # CLI: python3 -m pipeline.peering status|opt-in|opt-out|publish|promote|ensure-mesh-local|mesh-join|gen-keys|trust-key
-# Voted catalog sheep → share-out (not genomes/inbox): python3 -m pipeline.share_votes
+# Voted catalog sheep → share-out (local stage, not a Syncthing folder): python3 -m pipeline.share_votes
 #   scripts/cron_share_votes.sh  (lab: 41 6 * * *). Kill-switch share_votes.enabled.
+# Inbox hop / promote-vs-sendreceive: docs/phase5/04_PEER_SHARE_MESH.md (parked).
 share_votes:
   enabled: true
   min_votes: 1
@@ -288,6 +289,7 @@ peering:
     # Option B: gitignored configs/peering-peers.json + mesh-join --peers-file
     # Option C: set introducer: true on the 16a row in that file
     # Manual add-json still valid — see deploy/peering/README.md + docs/phase4/02
+    # Phase 4 / 02 closed 2026-09-19. Share-out is not synced — docs/phase5/04
   tailscale:
     enabled_when_opted_in: true
     tag: tag:jellyflam3

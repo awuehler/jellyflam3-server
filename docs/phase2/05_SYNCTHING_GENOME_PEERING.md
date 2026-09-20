@@ -98,6 +98,15 @@ When Pi **A** drops an allowed file into its Syncthing share and Pi **B** is Opt
   Pi B: genomes/inbox/foo.flam3           ← worker may render
 ```
 
+## Known limits (honest — Phase 4 / 02 closed)
+
+Mesh introduce A/B/C is **closed** ([../phase4/02](../phase4/02_MESH_INTRODUCE_SCRIPTING.md)). Remaining share **product** work is [../phase5/04_PEER_SHARE_MESH.md](../phase5/04_PEER_SHARE_MESH.md):
+
+- **`peers/share-out` is not a Syncthing folder.** `publish` and `share_votes` stage locally. Receivers do not see those files until something copies them into **inbox** (operator today; Phase 5 when opened).
+- **Inbox is sendreceive; promote moves.** Promoting on one host can delete the land file on the others.
+- **`share_live`** means Opt In + Syncthing unit + Tailscale, **not** N−1 connected devices. Re-run `mesh-join` when Tailscale IPs move (discovery/relays stay off).
+- Treat the mesh as **operator-placed inbox files** until Phase 5 A+B land.
+
 ## Commands
 
 ```bash

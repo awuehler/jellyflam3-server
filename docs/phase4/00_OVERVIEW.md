@@ -2,7 +2,7 @@
 
 ## Boundary
 
-Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 03)** which shipped 2026-09-05, **09 RNG aliases** which shipped 2026-09-09, **08 overlay + sidecar vote sink** and **04 private-channel path** which shipped 2026-09-11, **Wave 3** (01 gated promote lock + 08 share cron / idle-breed weights + 05 vote recipes) which shipped 2026-09-13, **Wave 4 slices 1–2** (06 library rotate + 02 mesh introduce A/B/C) which shipped 2026-09-13, **09 C Roku VoD titleMode** which shipped 2026-09-13, and **09 Kodi/Roku screensaver captions** which shipped 2026-09-19. Still parked: Roku Channel Store. Optional Jellyfin OriginalTitle / SortName-as-alias stays parked. **Cancelled 2026-09-13:** standalone edge files / loop-stills watermark / Kodi edge sequencer (tuples close 03); screensaver voting (Roku best practices — VoD overlay only); enforcing `N_max` as a Jellyfin cap and an Ethernet control lab (07 — this fleet is WiFi STA, `eth0 DOWN`); **auto-promote** (01 — gated `promote --apply` is the receive path). **Cancelled 2026-09-19:** furnace polish leftover that is **not drain** — checkpoint/resume inside `flam3-animate` and SIGSTOP of a live animate as “pause” (`flam3-animate` has no resume protocol). Drain stays shipped.
+Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 03)** which shipped 2026-09-05, **09 RNG aliases** which shipped 2026-09-09, **08 overlay + sidecar vote sink** and **04 private-channel path** which shipped 2026-09-11, **Wave 3** (01 gated promote lock + 08 share cron / idle-breed weights + 05 vote recipes) which shipped 2026-09-13, **Wave 4 slices 1–2** (06 library rotate + 02 mesh introduce A/B/C) which shipped 2026-09-13 (**02 closed** Owner OK 2026-09-19), **09 C Roku VoD titleMode** which shipped 2026-09-13, and **09 Kodi/Roku screensaver captions** which shipped 2026-09-19. Still parked: Roku Channel Store. Optional Jellyfin OriginalTitle / SortName-as-alias stays parked. **Cancelled 2026-09-13:** standalone edge files / loop-stills watermark / Kodi edge sequencer (tuples close 03); screensaver voting (Roku best practices — VoD overlay only); enforcing `N_max` as a Jellyfin cap and an Ethernet control lab (07 — this fleet is WiFi STA, `eth0 DOWN`); **auto-promote** (01 — gated `promote --apply` is the receive path). **Cancelled 2026-09-19:** furnace polish leftover that is **not drain** — checkpoint/resume inside `flam3-animate` and SIGSTOP of a live animate as “pause” (`flam3-animate` has no resume protocol). Drain stays shipped.
 
 **Pre-open slices** already shipped (docs + operator CLIs; not those products): end-user baseline, sheep-disk check, concurrent-client estimator, and catalog sidecar key names. **Opened 2026-09-09:** worker preserves reserved sidecar keys on re-ingest. **Opened 2026-09-09:** pasture clients re-poll the flock on mid-session 404 (quarantine / Shears). **Opened 2026-09-10:** wrap-once flock re-fetch + 313 session cap. **Opened 2026-09-10:** worker drain (finish current job, pause claiming until cancel). **Opened 2026-09-09:** 07 estimator Owner OK; 09 RNG aliases (ingest + backfill + override).
 
@@ -10,9 +10,9 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 
 | Item | State |
 |---|---|
-| Phase 4 products | **Mostly parked** (2026-08-16) — tuples (03), 09 RNG + VoD `titleMode` + Kodi/Roku SS captions, 08 overlay + Wave 3 share/breed, 04 private-channel path, **06 rotate closed**, **02 mesh A/B/C** shipped; gated promote **locked** (auto-promote **cancelled**); do not implement Store until Owner opens that slice |
-| Peer share path revisit | **Locked** — gated `promote --apply` ([01](01_PEER_SHARE_PATH.md)); share cron stages `peers/share-out` only. **Auto-promote cancelled** 2026-09-13 |
-| Mesh introduce scripting | **Shipped** A/B/C — [02](02_MESH_INTRODUCE_SCRIPTING.md); manual add-json still valid |
+| Phase 4 products | **Mostly parked** (2026-08-16) — tuples (03), 09 RNG + VoD `titleMode` + Kodi/Roku SS captions, 08 overlay + Wave 3 share/breed, 04 private-channel path, **06 rotate closed**, **02 mesh closed**; gated promote **locked** (auto-promote **cancelled**); do not implement Store until Owner opens that slice |
+| Peer share path revisit | **Locked** — gated `promote --apply` ([01](01_PEER_SHARE_PATH.md)); share cron stages `peers/share-out` only (no Syncthing folder). **Auto-promote cancelled** 2026-09-13. Inbox hop → [../phase5/04](../phase5/04_PEER_SHARE_MESH.md) |
+| Mesh introduce scripting | **Closed** 2026-09-19 (Owner OK) — [02](02_MESH_INTRODUCE_SCRIPTING.md) A/B/C; manual add-json still valid. Share-out hop / promote-vs-sendreceive → [../phase5/04](../phase5/04_PEER_SHARE_MESH.md) |
 | Edges + watermark | **Tuple slice shipped** 2026-09-05 — [03](03_EDGES_AND_WATERMARK.md). Standalone `type: edge` files, loop/stills watermark, and Kodi edge sequencer **cancelled** 2026-09-13 (tuples cover the journey) |
 | Roku VoD + screensaver publish | **Private-channel path shipped** 2026-09-11 — [04](04_ROKU_PUBLISH.md) (VoD as unpublished channel + one sideload slot for SS; SS Settings writes Jellyfin creds in **1.0.10**). Channel Store / brand assets parked |
 | End-user guide (tasks / examples / triage) | **Baseline + vote/share recipe** — [05](05_END_USER_GUIDE.md); [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md) (examples 6–7); fridge card [FRIDGE_CARD.md](../FRIDGE_CARD.md) |
@@ -54,7 +54,7 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 | Slice | Guide | What landed | Still parked |
 |---|---|---|---|
 | Gated promote lock | [01](01_PEER_SHARE_PATH.md) | Keep `peers/inbox` → `promote --apply` → `genomes/inbox`. Votes never skip that gate. | **Cancelled** 2026-09-13: auto-promote after tax + verify |
-| Share cron + idle-breed weights | [08](08_VIEWER_FEEDBACK_LOOP.md) | `python3 -m pipeline.share_votes` + `scripts/cron_share_votes.sh` copy liked `.flam3` to `peers/share-out`. Idle-breed parent weight ∝ sidecar `votes`. | — |
+| Share cron + idle-breed weights | [08](08_VIEWER_FEEDBACK_LOOP.md) | `python3 -m pipeline.share_votes` + `scripts/cron_share_votes.sh` copy liked `.flam3` to `peers/share-out` (local stage; **not** a Syncthing folder). Idle-breed parent weight ∝ sidecar `votes`. | Inbox hop → [../phase5/04](../phase5/04_PEER_SHARE_MESH.md) |
 | Vote / share household recipe | [05](05_END_USER_GUIDE.md) | Runbook example 6: OK/FF/Replay, LAN-only, love vs share, receiver still promotes | Optional Jellyfin OriginalTitle / SortName-as-alias |
 
 ## Opened (2026-09-13, Wave 4 slices 1–2)
@@ -62,7 +62,7 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 | Slice | Guide | What landed | Still parked |
 |---|---|---|---|
 | Library rotate | [06](06_LIBRARY_DISK_ROTATE.md) | Oldest-mtime Shears cascade; `library_disk rotate [--apply]`; `cron_library_rotate.sh` optional ([Activate daily rotate](06_LIBRARY_DISK_ROTATE.md#activate-daily-rotate)); archive seed skips fetch if sheep still BAD; worker refuse on sheep **BAD**. **Closed** 2026-09-19 (Owner OK). | LRU / soak-fill stay non-goals |
-| Mesh introduce | [02](02_MESH_INTRODUCE_SCRIPTING.md) | `ensure-mesh-local` (opt-in best-effort); gitignored `mesh-join --peers-file` (skip self; refresh address/introducer); `introducer` on 16a example row | Mesh admin UI; committing device IDs |
+| Mesh introduce | [02](02_MESH_INTRODUCE_SCRIPTING.md) | `ensure-mesh-local`; gitignored `mesh-join` (skip self; refresh address/introducer; positional `add-json`); 16a introducer. **Closed** 2026-09-19 (Owner OK). | Mesh admin UI; committing device IDs (non-goals). Share-out hop / promote-move → [../phase5/04](../phase5/04_PEER_SHARE_MESH.md) |
 
 ## Opened (2026-09-13, 09 C)
 
@@ -79,7 +79,7 @@ Phase 4 **products** stay parked until Owner opens them, except **tuples (guide 
 ## In scope (parked products)
 
 1. [01_PEER_SHARE_PATH.md](01_PEER_SHARE_PATH.md) — **gated `promote --apply` is the product**; auto-promote **cancelled** 2026-09-13
-2. [02_MESH_INTRODUCE_SCRIPTING.md](02_MESH_INTRODUCE_SCRIPTING.md) — **A/B/C shipped**; manual add-json still valid
+2. [02_MESH_INTRODUCE_SCRIPTING.md](02_MESH_INTRODUCE_SCRIPTING.md) — **closed** 2026-09-19 (Owner OK); share-out/promote leftovers → [../phase5/04_PEER_SHARE_MESH.md](../phase5/04_PEER_SHARE_MESH.md)
 3. [03_EDGES_AND_WATERMARK.md](03_EDGES_AND_WATERMARK.md) — **tuples shipped**; standalone edges / extra watermark / Kodi sequencer **cancelled** 2026-09-13
 4. [04_ROKU_PUBLISH.md](04_ROKU_PUBLISH.md) — **private-channel path shipped**; remaining: Store listing, brand assets, VoD Settings layout, Owner dashboard publish
 5. [05_END_USER_GUIDE.md](05_END_USER_GUIDE.md) — baseline + vote/share recipe shipped; VoD alias titles in 09 C

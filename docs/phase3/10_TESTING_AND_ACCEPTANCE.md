@@ -173,7 +173,7 @@ git log -1 --oneline
 | Sidecar Phase 4 keys | Names reserved in [phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema); 09 writes `alias`; 08 vote sink writes `viewer_feedback` |
 | Full social flock network | Aspirational |
 | Continuous / live HLS from shuffled MP4s | Dropped |
-| Peer share path + mesh introduce scripting | Gated promote locked; mesh A/B/C shipped (Phase 4 / 01–02) |
+| Peer share path + mesh introduce scripting | Gated promote locked; mesh A/B/C **closed** Owner OK 2026-09-19 (Phase 4 / 01–02); share-out hop → [phase5/04](../phase5/04_PEER_SHARE_MESH.md) |
 | Edges + watermark | Post-launch ([phase4/03](../phase4/03_EDGES_AND_WATERMARK.md); keys reserved) |
 | Sheep naming RNG | Furnace slice shipped 2026-09-09 (`pipeline.sheep_naming`); client filename/alias toggle parked |
 

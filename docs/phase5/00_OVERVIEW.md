@@ -40,7 +40,8 @@ Architecture SoT remains [Pi5_Flam3_VoD_Pipeline.md](../Pi5_Flam3_VoD_Pipeline.m
 | B — LLM Agent Platform host | Parked — [01](01_VENTUNO_Q_HOST.md) (Ventuno BOM + INT4 model store, bring-up, **non-furnace**) |
 | Agent ↔ furnace contracts | Parked — [02](02_LLM_INTEGRATION.md) (naming, breeding; vision pipeline; **VoD-as-camera**) |
 | Agent-platform gaps | Parked — [03](03_AI_PLATFORM_GAPS.md) |
-| Phase 4 products | Unchanged — [../phase4/00_OVERVIEW.md](../phase4/00_OVERVIEW.md) |
+| Phase 4 products | Unchanged except **02 mesh closed**; share-out hop → [04](04_PEER_SHARE_MESH.md) — [../phase4/00_OVERVIEW.md](../phase4/00_OVERVIEW.md) |
+| Peer share mesh leftovers | Parked — [04](04_PEER_SHARE_MESH.md) (furnace Syncthing; **not** Ventuno) |
 
 ## Goal
 
@@ -63,8 +64,9 @@ This is the deferred **LLM-assisted pedigree** note from [phase2/07](../phase2/0
 | 01 | [01_VENTUNO_Q_HOST.md](01_VENTUNO_Q_HOST.md) | Deployment B BOM, power/disks, bring-up — **not** a furnace port |
 | 02 | [02_LLM_INTEGRATION.md](02_LLM_INTEGRATION.md) | Agent → furnace map; **vision pipeline**; **VoD-as-camera** |
 | 03 | [03_AI_PLATFORM_GAPS.md](03_AI_PLATFORM_GAPS.md) | NPU / RAM / thermal / driver / eval / **Hexagon+GPU** gaps **on B** |
+| 04 | [04_PEER_SHARE_MESH.md](04_PEER_SHARE_MESH.md) | Furnace share-out → inbox hop; promote vs sendreceive delete (parked) |
 
-Execute **01 before 02**. Guide 03 is the honesty check for the agent platform. There is no Phase 5 acceptance guide until Owner opens implementation. Do **not** start from [phase2/09](../phase2/09_PI_FROM_SCRATCH.md) expecting to land models on the Pi.
+Execute **01 before 02**. Guide 03 is the honesty check for the agent platform. Guide **04** is independent (Pi Syncthing) and may open without B hardware. There is no Phase 5 acceptance guide until Owner opens implementation. Do **not** start from [phase2/09](../phase2/09_PI_FROM_SCRATCH.md) expecting to land models on the Pi.
 
 ## Locked decisions (design)
 
@@ -74,7 +76,7 @@ Execute **01 before 02**. Guide 03 is the honesty check for the agent platform. 
 4. **Sidecar SoT stays on the furnace.** LLM output is applied **on A** (`{stem}.jellyflam3.json`, breed/Shears). B may keep prompt logs; those are not flock SoT ([phase1/07](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema)).
 5. **Human override sticky.** `alias_source=human` wins over `llm` and `auto` ([phase4/09](../phase4/09_SHEEP_NAMING.md)).
 6. **License / NC unchanged.** Model suggestions cannot flip Creative Commons or commercial-safe policy ([phase1/07](../phase1/07_LICENSE_AND_METADATA.md), [phase2/07](../phase2/07_PEDIGREE_BREEDING.md)).
-7. **Phase 4 products stay on Phase 4.** Vote overlay, VoD `titleMode`, library rotate are **not** pulled into this slice. Auto-promote is cancelled on A (`promote --apply`).
+7. **Phase 4 products stay on Phase 4** except the Syncthing **share hop / promote-vs-sendreceive** leftovers, which are [04](04_PEER_SHARE_MESH.md) on **furnaces** (not B). Vote overlay, VoD `titleMode`, library rotate, mesh introduce A/B/C are **not** reopened here. Auto-promote stays cancelled on A (`promote --apply`).
 8. **16-class quality is a furnace concern only.** Agent-platform sizing does not change `quality` / supersample / VoD bands on A.
 9. **One hot 7–8B INT4 Instruct.** Do not co-resident two 7B Instruct graphs in 16 GB. Store Llama 3.1 8B / Qwen2.5 7B / Mistral 7B (all INT4) on NVMe; load **one** per session. INT16/FP16 7–8B is out of RAM budget.
 10. **Vision pipeline, small VLM co-resident.** Posters/stills: **pixels → text → Instruct JSON**. A 2B–3B INT4 VLM (Adreno) may stay loaded **in parallel** with the hot Instruct (Hexagon) as two sessions. Do **not** feed pixels into the 7B, and do **not** run a 7B VLM beside a 7B Instruct. Per sheep the stages are sequential; the graphs stay resident. See [02](02_LLM_INTEGRATION.md#vision-pipeline).
@@ -86,6 +88,7 @@ Execute **01 before 02**. Guide 03 is the honesty check for the agent platform. 
 1. [01_VENTUNO_Q_HOST.md](01_VENTUNO_Q_HOST.md) — Ubuntu agent-platform bring-up (models + LAN/Tailscale to **1..N** furnaces). Explicit **non-install** of the furnace stack.
 2. [02_LLM_INTEGRATION.md](02_LLM_INTEGRATION.md) — adapters that call **furnace** CLIs/APIs; default off.
 3. [03_AI_PLATFORM_GAPS.md](03_AI_PLATFORM_GAPS.md) — keep the gap list honest as silicon/drivers land on **B**.
+4. [04_PEER_SHARE_MESH.md](04_PEER_SHARE_MESH.md) — furnace-only; Owner picks share hop + promote semantics. **Not** a Ventuno task.
 
 ## Out of scope
 
@@ -125,4 +128,4 @@ Phase 5 is complete for a first RC when:
 
 ## See also
 
-[01_VENTUNO_Q_HOST.md](01_VENTUNO_Q_HOST.md) · [02_LLM_INTEGRATION.md](02_LLM_INTEGRATION.md) · [03_AI_PLATFORM_GAPS.md](03_AI_PLATFORM_GAPS.md) · [../phase2/09_PI_FROM_SCRATCH.md](../phase2/09_PI_FROM_SCRATCH.md) · [../phase4/09_SHEEP_NAMING.md](../phase4/09_SHEEP_NAMING.md) · [../phase2/07_PEDIGREE_BREEDING.md](../phase2/07_PEDIGREE_BREEDING.md) · [../phase4/00_OVERVIEW.md](../phase4/00_OVERVIEW.md)
+[01_VENTUNO_Q_HOST.md](01_VENTUNO_Q_HOST.md) · [02_LLM_INTEGRATION.md](02_LLM_INTEGRATION.md) · [03_AI_PLATFORM_GAPS.md](03_AI_PLATFORM_GAPS.md) · [04_PEER_SHARE_MESH.md](04_PEER_SHARE_MESH.md) · [../phase2/09_PI_FROM_SCRATCH.md](../phase2/09_PI_FROM_SCRATCH.md) · [../phase4/09_SHEEP_NAMING.md](../phase4/09_SHEEP_NAMING.md) · [../phase2/07_PEDIGREE_BREEDING.md](../phase2/07_PEDIGREE_BREEDING.md) · [../phase4/00_OVERVIEW.md](../phase4/00_OVERVIEW.md)

@@ -231,6 +231,8 @@ python3 -m pipeline.peering mesh-join --config configs/jellyflam3.yaml \
 
 Gated promote (land ≠ worker ingest) stays explicit — **auto-promote cancelled** ([docs/phase4/01](../../docs/phase4/01_PEER_SHARE_PATH.md)).
 
+**Limits (not Phase 4 / 02):** `peers/share-out` is **not** synced. Promote **moves** out of a sendreceive inbox (cluster delete). `share_live` does not mean Syncthing connected. Future work: [docs/phase5/04_PEER_SHARE_MESH.md](../../docs/phase5/04_PEER_SHARE_MESH.md).
+
 **Non-goals:** mesh admin UI; committing device IDs; re-opening global discovery/relays for flock share.
 
 ## Smoke test (fixture)

@@ -375,15 +375,15 @@ WireGuard-based **tailnet** underlay for peer Syncthing — no public discovery.
 
 ### Syncthing
 
-Folder sync for allowed globs only (`*.flam3`, optional `*-poster.jpg`, integrity sidecars). Managed config; `.stignore` enforces allowlist.
+Folder sync for allowed globs only (`*.flam3`, optional `*-poster.jpg`, integrity sidecars). Managed config; `.stignore` enforces allowlist. Only folder id `jellyflam3-peers-inbox` (`peers/inbox`, sendreceive). `peers/share-out` is **not** synced ([phase5/04](phase5/04_PEER_SHARE_MESH.md)).
 
 ### Land (peers)
 
-Files arrive in `genomes/peers/inbox/` via Syncthing — **not** worker-visible until **promote**.
+Files arrive in `genomes/peers/inbox/` via Syncthing — **not** worker-visible until **promote**. `publish` / vote cron stage `share-out` only until an operator (or Phase 5 hop) copies into inbox.
 
 ### Promote (peering)
 
-`peering promote --apply` — verify **share security** → **sheep tax** → move to `genomes/inbox/`. Fail → **quarantine**.
+`peering promote --apply` — verify **share security** → **sheep tax** → **move** to `genomes/inbox/`. Fail → **quarantine**. On sendreceive inbox, that move can delete the land file on other hosts ([phase5/04](phase5/04_PEER_SHARE_MESH.md)).
 
 ### Gated promote
 
@@ -391,7 +391,7 @@ Locked model: peer inbox never auto-drains. Operator runs `promote --apply` (tax
 
 ### Pre-share / post-share
 
-**Pre-share:** `peering publish` — tax, sign/hash, stage `peers/share-out`. **Post-share:** verify integrity before tax on inbound promote.
+**Pre-share:** `peering publish` — tax, sign/hash, stage `peers/share-out` (local). **Post-share:** verify integrity before tax on inbound promote from **inbox**.
 
 ### Share security
 

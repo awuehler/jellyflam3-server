@@ -120,6 +120,12 @@ def test_library_rotate_activate_howto_documented():
     assert "crontab -e" in runbook
     overview = _read("docs/phase4/00_OVERVIEW.md")
     assert "**Closed** 2026-09-19" in overview
+    mesh = _read("docs/phase4/02_MESH_INTRODUCE_SCRIPTING.md")
+    assert "**Closed** 2026-09-19" in mesh
+    p5 = _read("docs/phase5/04_PEER_SHARE_MESH.md")
+    assert "Share-out never enters the mesh" in p5
+    assert "Sendreceive inbox + promote-as-move" in p5
+    assert "Auto-promote stays **cancelled**" in p5 or "Auto-promote stays cancelled" in p5
 
 
 def test_operator_scripts_have_purpose_headers():

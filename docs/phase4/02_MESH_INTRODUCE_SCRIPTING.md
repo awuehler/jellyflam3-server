@@ -4,7 +4,9 @@
 
 Reduce one-time Syncthing mesh introduce toil (options A–C). Manual add-json (option D) remains valid.
 
-**Status:** **Shipped** 2026-09-13 — A local folder ensure, B gitignored peer-list CLI, C introducer flag on a B row. **2026-09-19:** `mesh-join` skips self, upserts stale Tailscale addresses, and passes `add-json` JSON as an argv value (stdin is ignored by this Syncthing CLI). No mesh admin UI. Gated `promote --apply` unchanged.
+**Status:** **Closed** 2026-09-19 (Owner OK) — A/B/C shipped 2026-09-13; `mesh-join` skip-self, address upsert, positional `add-json` (2026-09-19). Manual add-json (D) remains valid. No mesh admin UI. Gated `promote --apply` unchanged.
+
+Share **product** leftovers (share-out never hits Syncthing; promote-move on sendreceive inbox) are **not** this slice — [../phase5/04_PEER_SHARE_MESH.md](../phase5/04_PEER_SHARE_MESH.md).
 
 ## Options
 
@@ -32,8 +34,10 @@ Placeholder `REPLACE_…` device IDs and `100.x…` IPs are skipped so an unedit
 - Full mesh admin UI
 - Committing real Syncthing device IDs
 - Re-opening global discovery / relays for the flock share
+- Share-out → other hosts (inbox hop) — [../phase5/04_PEER_SHARE_MESH.md](../phase5/04_PEER_SHARE_MESH.md)
+- Promote-move deleting land copies on sendreceive inbox — same Phase 5 guide
 - Auto-promote (cancelled — [01](01_PEER_SHARE_PATH.md) gated `promote --apply`)
 
 ## See also
 
-[00_OVERVIEW.md](00_OVERVIEW.md) · [01_PEER_SHARE_PATH.md](01_PEER_SHARE_PATH.md) · [../phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_PEERING.md) · [../../deploy/peering/README.md](../../deploy/peering/README.md)
+[00_OVERVIEW.md](00_OVERVIEW.md) · [01_PEER_SHARE_PATH.md](01_PEER_SHARE_PATH.md) · [../phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_PEERING.md) · [../../deploy/peering/README.md](../../deploy/peering/README.md) · [../phase5/04_PEER_SHARE_MESH.md](../phase5/04_PEER_SHARE_MESH.md)

@@ -63,7 +63,7 @@ Parallel after **02**: `03` (HLS) anytime; `04` once Primary images exist. `05`�
 ## Phase 4 guides (synopsis — products parked; pre-open slices noted)
 
 1. [01_PEER_SHARE_PATH.md](phase4/01_PEER_SHARE_PATH.md) — gated `promote --apply` (**locked**; auto-promote **cancelled**)
-2. [02_MESH_INTRODUCE_SCRIPTING.md](phase4/02_MESH_INTRODUCE_SCRIPTING.md) — Syncthing introduce **A/B/C shipped** (manual add-json still valid)
+2. [02_MESH_INTRODUCE_SCRIPTING.md](phase4/02_MESH_INTRODUCE_SCRIPTING.md) — Syncthing introduce **closed** 2026-09-19 (Owner OK); share hop → [phase5/04](phase5/04_PEER_SHARE_MESH.md)
 3. [03_EDGES_AND_WATERMARK.md](phase4/03_EDGES_AND_WATERMARK.md) — **tuples shipped** 2026-09-05; standalone edges / loop watermark **cancelled** 2026-09-13
 4. [04_ROKU_PUBLISH.md](phase4/04_ROKU_PUBLISH.md) — private-channel path (**shipped** 2026-09-11); Store parked
 5. [05_END_USER_GUIDE.md](phase4/05_END_USER_GUIDE.md) — household guide (**baseline complete** 2026-09-03)
@@ -79,5 +79,6 @@ Overview: [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md).
 1. [01_VENTUNO_Q_HOST.md](phase5/01_VENTUNO_Q_HOST.md) — LLM Agent Platform host (Ventuno Q BOM, INT4 storage math, Tailscale flock join, 1..N furnaces; **not** a furnace)
 2. [02_LLM_INTEGRATION.md](phase5/02_LLM_INTEGRATION.md) — Instruct INT4; session switch; pixels → Instruct JSON; **VoD-as-camera** (single sheep)
 3. [03_AI_PLATFORM_GAPS.md](phase5/03_AI_PLATFORM_GAPS.md) — NPU / RAM / conversion / Hexagon+Adreno H4 lab / TBD goals **on the agent platform**
+4. [04_PEER_SHARE_MESH.md](phase5/04_PEER_SHARE_MESH.md) — furnace share-out → inbox + promote vs sendreceive (parked; **not** Ventuno)
 
 Overview: [phase5/00_OVERVIEW.md](phase5/00_OVERVIEW.md). Does not replace remaining Phase 4 products. Furnace playbook stays [phase2/09](phase2/09_PI_FROM_SCRATCH.md).

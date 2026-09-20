@@ -79,7 +79,7 @@ Overlay is visual-only (playback does not pause). Shown when remaining duration 
 
 1. **`scripts/cron_share_votes.sh`** — daily lab job **06:41** local (`41 6 * * *`) that runs `python3 -m pipeline.share_votes --apply`.
    - Selects sheep with sidecar `share_candidate` and `votes` / `loves` over `share_votes.min_votes` / `min_loves`.
-   - Copies corresponding `.flam3` from `genomes_done` (not inbox/quarantine) via `peering.publish` (tax + integrity) into **`peers/share-out`**.
+   - Copies corresponding `.flam3` from `genomes_done` (not inbox/quarantine) via `peering.publish` (tax + integrity) into **`peers/share-out`** (local stage — **not** a Syncthing folder). Other furnaces do not see the file until an operator copies it into `peers/inbox` ([../phase5/04_PEER_SHARE_MESH.md](../phase5/04_PEER_SHARE_MESH.md)).
    - Honors Opt In (`require_opt_in`, default on) and `license.commercial_mode` (NC skipped when commercial-safe).
 2. **Gate** — **does not** auto-promote into `genomes/inbox` (**cancelled** as a goal). Kill-switch: `share_votes.enabled`.
 3. **Log** — `/var/log/jellyflam3/share_votes.log`; flock lock like other cron wrappers.
@@ -125,7 +125,7 @@ Overlay is visual-only (playback does not pause). Shown when remaining duration 
 - [x] Overlay appears before end of sheep playback without stopping Video
 - [x] Remote vote records on that sheep’s catalog sidecar; same sheep can be re-voted freely
 - [x] Share cron and idle breed read **only** sidecar `viewer_feedback` (no competing store)
-- [x] Share cron publishes or stages liked `.flam3` for Tailscale/Syncthing path (Opt In + share-security honored); inbound still `promote --apply`
+- [x] Share cron stages liked `.flam3` into `peers/share-out` (tax + share-security; Opt In); **not** a Syncthing folder; inbound still `promote --apply` after an inbox copy ([../phase5/04](../phase5/04_PEER_SHARE_MESH.md))
 - [x] Daily idle breed uses vote weights when available; uniform fallback when not
 - [x] Docs: button map, privacy / LAN scope, vote/share recipe; linked from Phase 4 overview + end-user guide
 - [x] Idle-gate / Sessions behavior: vote POST is display-sink, not a Playing client
@@ -133,4 +133,4 @@ Overlay is visual-only (playback does not pause). Shown when remaining duration 
 
 ## See also
 
-[00_OVERVIEW.md](00_OVERVIEW.md) · [01_PEER_SHARE_PATH.md](01_PEER_SHARE_PATH.md) · [04_ROKU_PUBLISH.md](04_ROKU_PUBLISH.md) · [05_END_USER_GUIDE.md](05_END_USER_GUIDE.md) · [../phase1/07_LICENSE_AND_METADATA.md](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) · [../phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_PEERING.md) · [../phase2/07_PEDIGREE_BREEDING.md](../phase2/07_PEDIGREE_BREEDING.md) · [../phase3/05_SHARED_SHEEP_SECURITY.md](../phase3/05_SHARED_SHEEP_SECURITY.md)
+[00_OVERVIEW.md](00_OVERVIEW.md) · [01_PEER_SHARE_PATH.md](01_PEER_SHARE_PATH.md) · [04_ROKU_PUBLISH.md](04_ROKU_PUBLISH.md) · [05_END_USER_GUIDE.md](05_END_USER_GUIDE.md) · [../phase1/07_LICENSE_AND_METADATA.md](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) · [../phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_PEERING.md) · [../phase2/07_PEDIGREE_BREEDING.md](../phase2/07_PEDIGREE_BREEDING.md) · [../phase3/05_SHARED_SHEEP_SECURITY.md](../phase3/05_SHARED_SHEEP_SECURITY.md) · [../phase5/04_PEER_SHARE_MESH.md](../phase5/04_PEER_SHARE_MESH.md)

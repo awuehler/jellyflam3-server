@@ -249,7 +249,7 @@ python3 -m pipeline.worker_drain cancel
    ```
 
    Expect `share_candidate: true` and `votes` ≥ 1.
-3. Share-out is a **copy** into `genomes/peers/share-out` (tax + integrity). It does **not** drop a genome into this furnace’s worker inbox. Lab cron **06:41** (`scripts/cron_share_votes.sh`). Dry-run:
+3. Share-out is a **local copy** into `genomes/peers/share-out` (tax + integrity). It is **not** a Syncthing folder and does **not** appear on other furnaces until an operator copies it into `peers/inbox` (Phase 5 hop: [phase5/04_PEER_SHARE_MESH.md](phase5/04_PEER_SHARE_MESH.md)). It does **not** drop a genome into this furnace’s worker inbox. Lab cron **06:41** (`scripts/cron_share_votes.sh`). Dry-run:
 
    ```bash
    python3 -m pipeline.share_votes --json
@@ -258,7 +258,7 @@ python3 -m pipeline.worker_drain cancel
 
 4. On a **receiver** Pi (after Syncthing): still **`promote --apply`**. Loved NC sheep are not shared when this furnace’s `license.commercial_mode` is on. Opt Out skips the cron (`action=skip`, `reason=opt_out`).
 
-**Pass:** file in publisher `share-out`; receiver `peers/inbox` then inbox/quarantine only after promote. **Fail:** expecting votes to render a new sheep by themselves (they do not); cancel drain if you paused the worker.
+**Pass:** file in publisher `share-out`. Receiver `peers/inbox` only after a **manual inbox copy** (or a future Phase 5 hop) **and** `promote --apply`. **Fail:** expecting votes or `share_votes` to land on another Pi by themselves; cancel drain if you paused the worker.
 
 ### 7 — Sweep votes (fresh start on this furnace)
 
@@ -437,7 +437,7 @@ python3 -m pipeline.worker --config configs/jellyflam3.yaml --once path/to/new.f
 |---|---|---|
 | `11 5 * * *` | `scripts/cron_breed_idle.sh` | Daily idle breed when inbox empty (parents weighted by votes) |
 | _optional_ | `scripts/cron_library_rotate.sh` | Oldest-catalog Shears rotate — **not** on lab crontab; [Activate library rotate](#activate-library-rotate) (`23 5 * * *`) |
-| `41 6 * * *` | `scripts/cron_share_votes.sh` | Daily liked sheep → `peers/share-out` (not inbox) |
+| `41 6 * * *` | `scripts/cron_share_votes.sh` | Daily liked sheep → `peers/share-out` (local stage; not inbox / not Syncthing) |
 | Staggered DOM | `scripts/cron_archive_seed.sh` | ~10-day archive seed per host (skips fetch if sheep still BAD) |
 
 Both prepend `/usr/local/bin` for `flam3-*`. Missing real config → **exit 1** (no silent `.yaml.example` fallback).
@@ -634,7 +634,7 @@ python3 -m pipeline.peering promote --apply          # peers/inbox → worker in
 python3 -m pipeline.peering opt-out --config configs/jellyflam3.yaml
 ```
 
-**Receive path:** Syncthing → `peers/inbox` → **`promote --apply`** → `genomes/inbox` or quarantine → worker. Auto-promote is **not** a product ([phase4/01](phase4/01_PEER_SHARE_PATH.md)).
+**Receive path:** Syncthing → `peers/inbox` → **`promote --apply`** → `genomes/inbox` or quarantine → worker. Auto-promote is **not** a product ([phase4/01](phase4/01_PEER_SHARE_PATH.md)). `share-out` is local staging until [phase5/04](phase5/04_PEER_SHARE_MESH.md). Promote **moves** inbox files — on sendreceive that can delete the copy on other hosts.
 
 #### Opt In vs share live (do not confuse them)
 
