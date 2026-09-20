@@ -3,7 +3,7 @@
 
 On Pis with ``secrets.env`` (local Jellyfin), runs ``jellyfin_id_dump`` logic and writes:
 - ``registry/jellyflam3-presets.json`` for Roku VoD + Screensaver zips
-- Kodi ``settings.xml`` default values for server_url / api_key / user_id / library_id
+- Kodi ``settings.xml`` default values for server_url / api_key / user_id / library_id / vote sink
 
 Requirements: python3, pipeline.config, secrets.env with JELLYFIN_URL + JELLYFIN_API_KEY.
 Usage:
@@ -20,6 +20,7 @@ import argparse
 import json
 import os
 import sys
+import urllib.parse
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
@@ -52,6 +53,20 @@ KODI_MAP = {
     "user_id": "userId",
     "library_id": "libraryId",
 }
+
+
+def _sink_url_from_base(base_url: str, port: int = 8791) -> str:
+    """Match Kodi ``sink_url_from_jellyfin``: HTTP vote sink on the Jellyfin host."""
+    raw = (base_url or "").strip()
+    if not raw:
+        return ""
+    if "://" not in raw:
+        raw = "http://" + raw
+    parsed = urllib.parse.urlparse(raw)
+    host = parsed.hostname or ""
+    if not host:
+        return ""
+    return "http://%s:%s" % (host, int(port))
 
 
 def is_furnace_host(root: Path | None = None) -> bool:
@@ -134,6 +149,16 @@ def apply_kodi_settings(settings_path: Path, roku_settings: dict[str, str]) -> N
         sid = node.get("id") or ""
         if sid == "shuffle":
             node.set("default", "true")
+            continue
+        if sid == "display_sink_url":
+            derived = _sink_url_from_base(roku_settings.get("baseUrl") or "")
+            if derived:
+                node.set("default", derived)
+            continue
+        if sid == "display_sink_token":
+            token = (os.environ.get("DISPLAY_SINK_TOKEN") or "").strip()
+            if token:
+                node.set("default", token)
             continue
         roku_key = KODI_MAP.get(sid)
         if not roku_key:

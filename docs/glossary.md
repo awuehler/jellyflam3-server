@@ -163,7 +163,7 @@ Short non-catalog test via `scripts/smoke_render.sh` (`JELLYFLAM3_SMOKE=1`, ~13 
 
 ### Viewer feedback / sheep vote
 
-Phase 4 design ([phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md)): Roku VoD **1.0.32** transient overlay near end of each sheep invites like/love/vote **without stopping playback**. Tallies live on the catalog **sidecar** (`viewer_feedback`); re-votes allowed. Share cron and idle-breed bias read that sidecar only. Operator **fresh start:** `python3 -m pipeline.sheep_votes sweep` (apply with `--confirm SWEEP`) zeros live-catalog `viewer_feedback` only — it does not unshare `peers/share-out`. Sink: `POST /v1/sheep-votes` on display-sink `:8791`.
+Phase 4 design ([phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md)): Roku VoD **1.0.32** transient overlay near end of each sheep invites like/love/vote **without stopping playback**. Kodi screensaver **0.2.13** uses the same map and `POST /v1/sheep-votes` ([phase5/05](phase5/05_KODI_SCREENSAVER_VOTES.md)). Roku screensaver does not vote. Tallies live on the catalog **sidecar** (`viewer_feedback`); re-votes allowed. Operator **leaderboard:** `python3 -m pipeline.sheep_votes top` ([USER_GUIDE example 8](USER_GUIDE_AND_RUNBOOK.md#8--list-top-voted-sheep)). Operator **fresh start:** `python3 -m pipeline.sheep_votes sweep` (apply with `--confirm SWEEP`) zeros live-catalog `viewer_feedback` only — it does not unshare `peers/share-out`. Sink: `POST /v1/sheep-votes` on display-sink `:8791`.
 
 ### Sheep naming / alias
 

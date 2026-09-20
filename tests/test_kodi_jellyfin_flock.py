@@ -162,7 +162,7 @@ def test_drop_item_and_repoll_rate_limit():
     assert jf.should_repoll_flock(90.0, 100.0, min_sec=30.0) is False
     assert jf.should_repoll_flock(60.0, 100.0, min_sec=30.0) is True
     assert jf.FLOCK_REPOLL_MIN_SEC == 30.0
-    assert jf.CLIENT_VERSION == "0.2.12"
+    assert jf.CLIENT_VERSION == "0.2.13"
     assert jf.FLOCK_INDEX_CAP == 313
     assert jf.FLOCK_FETCH_LIMIT == 5000
     h = jf.auth_header("secret")
@@ -187,6 +187,8 @@ def test_screensaver_package_mentions_flock():
     assert 'id="shuffle"' in settings
     assert 'default="true"' in settings
     assert 'id="title_mode"' in settings
+    assert 'id="display_sink_url"' in settings
+    assert 'id="display_sink_token"' in settings
     assert 'default="filename"' in settings
     assert 'id="flock_limit"' in settings
     assert 'default="313"' in settings
@@ -283,3 +285,53 @@ def test_classify_fetch_error_and_probe(monkeypatch):
     monkeypatch.setattr(jf.urllib.request, "urlopen", lambda *a, **k: _Resp())
     assert jf.probe_jellyfin("http://jf:8096") is True
     assert jf.probe_jellyfin("") is False
+
+
+def test_stem_tuple_sink_and_vote_due():
+    assert jf.stem_from_media_path("/media/sheep/by-generation/247/electricsheep.247.00505.mp4") == (
+        "electricsheep.247.00505"
+    )
+    assert jf.is_tuple_sheep("/media/sheep/by-generation/tuple/electricsheep.tuple.a_b.mp4", "") is True
+    assert jf.is_tuple_sheep("", "electricsheep.tuple.aa_bb") is True
+    assert jf.is_tuple_sheep("/media/sheep/by-generation/247/electricsheep.247.00505.mp4", "electricsheep.247.00505") is False
+    assert jf.sink_url_from_jellyfin("http://192.168.156.162:8096/") == "http://192.168.156.162:8791"
+    assert jf.sink_url_from_jellyfin("") == ""
+    assert jf.vote_overlay_due(7.0, dismissed=False, is_tuple=False) is True
+    assert jf.vote_overlay_due(7.1, dismissed=False, is_tuple=False) is False
+    assert jf.vote_overlay_due(3.0, dismissed=True, is_tuple=False) is False
+    assert jf.vote_overlay_due(3.0, dismissed=False, is_tuple=True) is False
+    assert jf.vote_overlay_due(0.0, dismissed=False, is_tuple=False) is False
+    assert jf.VOTE_REMAIN_SEC == 7.0
+
+
+def test_post_sheep_vote_requires_sink_and_token():
+    assert jf.post_sheep_vote("", "tok", {"kind": "love"})["ok"] is False
+    assert jf.post_sheep_vote("http://pi:8791", "", {"kind": "love"})["ok"] is False
+    seen = {}
+
+    class _Resp:
+        status = 200
+
+        def getcode(self):
+            return 200
+
+        def read(self):
+            return b'{"ok": true}'
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    def fake_open(req, timeout=8.0):
+        seen["url"] = req.full_url
+        seen["token"] = req.headers.get("X-jellyflam3-token") or req.headers.get("X-JellyFlam3-Token")
+        return _Resp()
+
+    with patch.object(jf.urllib.request, "urlopen", fake_open):
+        out = jf.post_sheep_vote("http://pi:8791/", "secret", {"stem": "electricsheep.247.001", "kind": "love"})
+    assert out["ok"] is True
+    assert seen["url"].endswith("/v1/sheep-votes")
+    assert seen["token"] == "secret"
+

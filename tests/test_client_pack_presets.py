@@ -39,8 +39,9 @@ def test_is_furnace_host_true_with_secrets(tmp_path: Path, monkeypatch: pytest.M
     assert cpp.is_furnace_host(tmp_path) is True
 
 
-def test_apply_kodi_settings_sets_defaults(tmp_path: Path):
+def test_apply_kodi_settings_sets_defaults(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     cpp = _import_presets()
+    monkeypatch.setenv("DISPLAY_SINK_TOKEN", "sink-secret")
     settings = tmp_path / "settings.xml"
     settings.write_text(
         """<?xml version="1.0" encoding="utf-8" standalone="yes"?>
@@ -50,6 +51,8 @@ def test_apply_kodi_settings_sets_defaults(tmp_path: Path):
   <setting id="user_id" type="text" label="User id" default=""/>
   <setting id="library_id" type="text" label="Library id" default=""/>
   <setting id="shuffle" type="bool" label="Shuffle flock" default="false"/>
+  <setting id="display_sink_url" type="text" label="Vote sink" default=""/>
+  <setting id="display_sink_token" type="text" label="Vote token" default=""/>
 </settings>
 """,
         encoding="utf-8",
@@ -69,6 +72,8 @@ def test_apply_kodi_settings_sets_defaults(tmp_path: Path):
     assert 'default="user-guid"' in text
     assert 'default="lib-guid"' in text
     assert 'id="shuffle"' in text and 'default="true"' in text
+    assert 'id="display_sink_url"' in text and 'default="http://192.168.1.100:8791"' in text
+    assert 'default="sink-secret"' in text
 
 
 def test_write_roku_registry_dir(tmp_path: Path):

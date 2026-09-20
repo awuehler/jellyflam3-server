@@ -63,7 +63,7 @@ Keys **`alias`** and **`alias_source`** (`auto` \| `human` \| `llm`) are in [pha
 ### C — Peer clients
 
 1. ~~**Roku VoD**~~ — Settings `titleMode` `filename` (default) vs `alias` on flock rows / player chrome. In **1.0.42+**, OK toggles `titleMode` (and `commercialMode` / `streamMode` / `shuffleFlock`) and flushes immediately; **Save & Reload** re-fetches the flock. Reads Overview `Alias:`; missing alias falls back to filename.
-2. ~~**Kodi screensaver**~~ — **0.2.12** add-on setting `title_mode`; chrome-light caption (control 101) + JSON-RPC ListItem label. Idle video stays fullscreen; any key still exits.
+2. ~~**Kodi screensaver**~~ — **0.2.12** add-on setting `title_mode`; chrome-light caption (control 101) + JSON-RPC ListItem label. Idle video stays fullscreen. **0.2.13** last-7s vote overlay ([../phase5/05_KODI_SCREENSAVER_VOTES.md](../phase5/05_KODI_SCREENSAVER_VOTES.md)); keys while the overlay is hidden still exit.
 3. ~~**Roku screensaver**~~ — **1.0.11** Settings OK-toggle `titleMode`; stills caption from Overview `Alias:` (same fallback). Image-only path; no Sessions/Playing.
 4. ~~**Pipeline UX**~~ — `python3 -m pipeline.sheep_naming resolve` maps alias → stem; stem always valid. Shears/breed still take stems.
 

@@ -8,6 +8,8 @@
     <setting id="commercial_mode" type="bool" label="Commercial-safe (skip NC)" default="false"/>
     <setting id="shuffle" type="bool" label="Shuffle flock (rotate sheep)" default="true"/>
     <setting id="title_mode" type="labelenum" label="Titles (filename or alias)" values="filename|alias" default="filename"/>
+    <setting id="display_sink_url" type="text" label="Vote sink URL (blank = Jellyfin host:8791)" default=""/>
+    <setting id="display_sink_token" type="text" label="Vote sink token" default=""/>
     <setting id="flock_limit" type="number" label="Max items in session" default="313"/>
   </category>
 </settings>

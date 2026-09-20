@@ -20,7 +20,10 @@ from typing import Any
 CLIENT_NAME = "JellyFlam3-Screensaver"
 CLIENT_DEVICE = "Kodi"
 CLIENT_DEVICE_ID = "jellyflam3-kodi-ss"
-CLIENT_VERSION = "0.2.12"
+CLIENT_VERSION = "0.2.13"
+VOTE_REMAIN_SEC = 7.0
+VOTE_SINK_PORT = 8791
+VOTE_HINT = "OK love · RIGHT like · DOWN dismiss · UP/BACK exit"
 FLOCK_REPOLL_MIN_SEC = 30.0
 # In-memory session list after a random prune. HTTP fetch is larger so the
 # sample is not Jellyfin's first-N sort.
@@ -127,6 +130,102 @@ def overview_keyed_value(overview: str, key: str) -> str:
 
 def item_alias(item: dict[str, Any]) -> str:
     return overview_keyed_value(str(item.get("Overview") or ""), "Alias:")
+
+
+def stem_from_media_path(media_path: str) -> str:
+    """Basename without ``.mp4`` (same contract as furnace ``sheep_votes``)."""
+    raw = (media_path or "").replace("\\", "/").strip()
+    name = raw.rstrip("/").split("/")[-1] if raw else ""
+    lower = name.lower()
+    if lower.endswith(".mp4"):
+        name = name[:-4]
+    return name
+
+
+def is_tuple_sheep(path: str = "", stem: str = "") -> bool:
+    blob = ((path or "") + " " + (stem or "")).replace("\\", "/").lower()
+    if "/tuple/" in blob:
+        return True
+    st = (stem or "").lower()
+    return ".tuple." in st or st.startswith("electricsheep.tuple.")
+
+
+def sink_url_from_jellyfin(base_url: str, port: int = VOTE_SINK_PORT) -> str:
+    """Roku VoD default: ``http://{jellyfin-host}:8791`` (sink is always HTTP)."""
+    raw = (base_url or "").strip()
+    if not raw:
+        return ""
+    if "://" not in raw:
+        raw = "http://" + raw
+    parsed = urllib.parse.urlparse(raw)
+    host = parsed.hostname or ""
+    if not host:
+        return ""
+    return "http://%s:%s" % (host, int(port))
+
+
+def vote_overlay_due(
+    remain_sec: float | None,
+    *,
+    dismissed: bool,
+    is_tuple: bool,
+    threshold: float = VOTE_REMAIN_SEC,
+) -> bool:
+    if dismissed or is_tuple:
+        return False
+    if remain_sec is None:
+        return False
+    try:
+        remain = float(remain_sec)
+    except (TypeError, ValueError):
+        return False
+    return 0.0 < remain <= float(threshold)
+
+
+def post_sheep_vote(
+    sink_url: str,
+    token: str,
+    payload: dict[str, Any],
+    timeout: float = 8.0,
+) -> dict[str, Any]:
+    """POST ``/v1/sheep-votes`` (same sink as Roku VoD)."""
+    base = trim_slash(sink_url)
+    if not base:
+        return {"ok": False, "error": "display_sink_url not set"}
+    tok = (token or "").strip()
+    if not tok:
+        return {"ok": False, "error": "display_sink_token not set"}
+    url = base + "/v1/sheep-votes"
+    body = json.dumps(payload).encode("utf-8")
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "X-JellyFlam3-Token": tok,
+    }
+    req = urllib.request.Request(url, data=body, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            raw = resp.read().decode("utf-8", errors="replace")
+            code = int(getattr(resp, "status", None) or resp.getcode() or 0)
+    except urllib.error.HTTPError as exc:
+        err_body = ""
+        try:
+            err_body = exc.read().decode("utf-8", errors="replace")[:120]
+        except Exception:
+            pass
+        return {"ok": False, "error": "HTTP %s %s" % (exc.code, err_body)}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+    parsed: Any = {}
+    if raw:
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError:
+            parsed = {"raw": raw}
+    if not isinstance(parsed, dict):
+        parsed = {"raw": parsed}
+    parsed["ok"] = 200 <= code < 300
+    return parsed
 
 
 def display_title(filename: str, alias: str, title_mode: str) -> str:
@@ -239,12 +338,24 @@ def fetch_flock(
         if not item_id:
             continue
         title = it.get("Name") or item_id
+        path = str(it.get("Path") or "")
+        stem = stem_from_media_path(path) or stem_from_media_path(str(title))
+        ticks = it.get("RunTimeTicks")
+        duration_sec = ""
+        try:
+            if ticks is not None:
+                duration_sec = str(float(ticks) / 10_000_000.0)
+        except (TypeError, ValueError):
+            duration_sec = ""
         out.append(
             {
                 "id": item_id,
                 "title": title,
                 "alias": item_alias(it),
                 "url": mp4_stream_url(base, item_id, api_key),
+                "path": path,
+                "stem": stem,
+                "duration_sec": duration_sec,
             }
         )
     return prune_to_cap(out, int(limit))

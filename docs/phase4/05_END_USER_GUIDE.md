@@ -41,7 +41,8 @@ Complements (does not replace):
 | Extract stills | Poster ingest / `backfill_posters`; operator `python3 -m pipeline.stills --dry-run` / `--limit N` |
 | Breed / seed | Manual `pipeline.breed` or daily `cron_breed_idle.sh` when inbox empty; idle-breed **weights parents by sidecar votes** when present ([08](08_VIEWER_FEEDBACK_LOOP.md)) |
 | Promote peer share | Opt In; **gated** `promote --apply` on receive. Liked sheep: `cron_share_votes.sh` copies to `peers/share-out` (local; not Syncthing) ([08](08_VIEWER_FEEDBACK_LOOP.md)); inbox hop → [../phase5/04](../phase5/04_PEER_SHARE_MESH.md); auto-promote **cancelled** ([01](01_PEER_SHARE_PATH.md)) |
-| Vote / like a sheep | Roku VoD overlay last **7 s** ([08](08_VIEWER_FEEDBACK_LOOP.md)); LAN-only POST; re-votes allowed; love is a stronger tally, not a different share path |
+| Vote / like a sheep | Roku VoD overlay last **7 s** ([08](08_VIEWER_FEEDBACK_LOOP.md)); Kodi SS **0.2.13** ([../phase5/05](../phase5/05_KODI_SCREENSAVER_VOTES.md)); LAN-only POST; re-votes allowed; love is a stronger tally, not a different share path |
+| See most-voted sheep | `python3 -m pipeline.sheep_votes top` / `top -n 5` ([example 8](../USER_GUIDE_AND_RUNBOOK.md#8--list-top-voted-sheep)) |
 | Clear household votes | `python3 -m pipeline.sheep_votes sweep` then `--confirm SWEEP` ([example 7](../USER_GUIDE_AND_RUNBOOK.md#7--sweep-votes-fresh-start-on-this-furnace)); does not unshare `peers/share-out` |
 | Rename / alias a sheep | [09](09_SHEEP_NAMING.md): auto `adjective_surname` or human override; VoD / Kodi SS / Roku SS `titleMode` filename vs alias |
 | Delete a sheep | Shears dry-run → apply (Phase 3 / 03) |
@@ -59,6 +60,7 @@ Shipped in [USER_GUIDE_AND_RUNBOOK.md — Worked examples](../USER_GUIDE_AND_RUN
 5. Pause the furnace: drain request --wait → optional restart → cancel.
 6. Vote then share: overlay OK love / Right like / Down dismiss / Up-Back exit → sidecar `share_candidate` → `share_votes` / cron copies **local** `share-out` → operator copy to inbox (or Phase 5 hop) → receiver `promote --apply`. Tuples skip the overlay.
 7. Sweep votes: `sheep_votes sweep` dry-run → `--confirm SWEEP` zeros live-catalog `viewer_feedback`; share-out copies and aliases stay.
+8. List top voted: `sheep_votes top` / `top -n 5` ranks live-catalog `votes` (then loves, likes).
 
 ### D — Triage cookbook
 

@@ -4,7 +4,7 @@ Phase 3 [guide 02](../docs/phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) — Ele
 
 **Example host:** `rpi-kodi-08a` (`<Kodi_IP_Address>`), LibreELEC 12.2.1 / Kodi 21.3 Omega. SSH `root@<Kodi_IP_Address>`.
 
-## Status (0.2.12) — Phase 3 complete
+## Status (0.2.13) — Phase 3 complete; Phase 5 votes
 
 Tasks **1–4** done; **Jellyfin flock client + commercial filter + shuffle sequencer** in **0.2.0+**. Guide 02 Owner OK 2026-08-21 (loops-only).
 
@@ -19,8 +19,8 @@ Tasks **1–4** done; **Jellyfin flock client + commercial filter + shuffle sequ
 - **0.2.9:** re-fetch Jellyfin once per full shuffle wrap (one random permutation; next clip is not the one that just finished); HTTP Limit 5000 then randomly prune the session list to 313 (`flock_limit`)
 - **0.2.10:** quarantine recovery closes Kodi's playback-failed `okdialog` automatically, so the refreshed flock continues without a lingering end-user prompt
 - **0.2.11:** furnace down is “waiting for the furnace” (30s reconnect), not missing settings or empty flock; a dead host is probed before dropping sheep
-- **0.2.12:** Settings **Titles** (`title_mode` filename / alias); chrome-light caption while a sheep plays (Overview `Alias:`). Any key still exits.
-- Does **not** take votes (any remote/keyboard action exits the screensaver). If a vote overlay is opened later, use the same two-tier map as Roku VoD **1.0.38**: Enter/Select = love, Right = like, Down = dismiss, Up/Back/Esc = exit
+- **0.2.12:** Settings **Titles** (`title_mode` filename / alias); chrome-light caption while a sheep plays (Overview `Alias:`).
+- **0.2.13:** last **7 s** like/love overlay (same map as Roku VoD **1.0.38**): Enter/Select = love, Right = like, Down = dismiss, Up/Back/Esc = exit screensaver. Posts `POST /v1/sheep-votes`. Tuples skip. Keys while the overlay is **hidden** still exit (Kodi wake). Settings `display_sink_url` (blank = Jellyfin host `:8791`) and `display_sink_token`. Roku screensaver still does not vote.
 
 **Post-launch:** loop→edge→loop sequencer (edges + watermark) is not in v0.3.0.
 
@@ -41,6 +41,8 @@ Tasks **1–4** done; **Jellyfin flock client + commercial filter + shuffle sequ
 | **Commercial-safe (skip NC)** | `commercial_mode` | Client-side Items **Tags** filter only: keep `cc-by` / `cc0` / `public-domain` / `pd` / `cc-by-sa`; hide NC and untagged. Does **not** send Jellyfin `Tags=` query params. Lab CC/NC sample pairs: [docs/phase1/07_LICENSE_AND_METADATA.md](../docs/phase1/07_LICENSE_AND_METADATA.md#lab-check--commercial-mode-toggle) |
 | **Shuffle flock (rotate sheep)** | `shuffle` | Always **true** (0.2.8+): random order, one pass then wrap. Older installs that stored `false` are healed on the next screensaver start. |
 | **Titles (filename or alias)** | `title_mode` | **filename** (default) or **alias**. Alias is the Overview `Alias:` line; missing alias shows the stem. Chrome-light caption while idle video plays. |
+| **Vote sink URL** | `display_sink_url` | Blank = `http://{Jellyfin host}:8791`. Same display-sink as Roku VoD. |
+| **Vote sink token** | `display_sink_token` | Furnace `DISPLAY_SINK_TOKEN` / `X-JellyFlam3-Token`. Empty = votes are not posted. |
 | **Max items in session** | `flock_limit` | In-memory cap after fetch (default `313`). Jellyfin is queried with Limit 5000, then a random sample is kept if the flock is larger. Userdata from an older zip may still store `200` until Configure is changed. |
 
 Do **not** commit API keys or filled `settings.xml` into git.
@@ -117,7 +119,7 @@ Cached sources: `resources/posters/fleet-{16a,08a,04a}-gen*.jpg` (gen 243 / 244 
 
 Stop Kodi before editing `/storage/.kodi/userdata/guisettings.xml` or `Database/Addons33.db` by hand — a running instance will overwrite settings on exit.
 
-Any remote/keypress (and JSON-RPC) exits the screensaver (Kodi default).
+Any remote/keypress **while the vote overlay is hidden** exits the screensaver (Kodi default). In the last **7 s** of a non-tuple clip, Enter/Right/Down are votes/dismiss; Up/Back still exit.
 
 **Flock refresh (0.2.9):** a wrap is one random permutation of the in-memory list (each sheep once). The add-on then re-fetches Jellyfin (Limit 5000, randomly prune to `flock_limit` / 313) and starts a new mix whose first item is not the last-played id. Overnight ~daily ingest appears without exiting the screensaver. 404 / quarantine re-poll (0.2.7) stays 30s-gated and is separate. Household wording: [docs/USER_GUIDE_AND_RUNBOOK.md](../docs/USER_GUIDE_AND_RUNBOOK.md#flock-mix-shuffle-wrap).
 
@@ -138,4 +140,4 @@ kodi-screensaver/screensaver.jellyflam3/
 
 ## See also
 
-[Guide 02](../docs/phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) · [Jellyfin ID dump](../docs/phase3/08_JELLYFIN_ID_DUMP.md) · [Roku channel Settings](../roku-channel/README.md) · [Channel art prompts](../docs/CLIENT_CHANNEL_ART.md)
+[Guide 02](../docs/phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) · [Phase 5 / 05 votes](../docs/phase5/05_KODI_SCREENSAVER_VOTES.md) · [Jellyfin ID dump](../docs/phase3/08_JELLYFIN_ID_DUMP.md) · [Roku channel Settings](../roku-channel/README.md) · [Channel art prompts](../docs/CLIENT_CHANNEL_ART.md)

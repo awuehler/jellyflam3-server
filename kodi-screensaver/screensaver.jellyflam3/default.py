@@ -28,6 +28,14 @@ ADDON_PATH = ADDON.getAddonInfo("path")
 ADDON_ID = "screensaver.jellyflam3"
 # Must match Kodi ApplicationPowerHandling.cpp SCRIPT_ALARM
 SCRIPT_ALARM = "sssssscreensaver"
+ACTION_MOVE_LEFT = 1
+ACTION_MOVE_RIGHT = 2
+ACTION_MOVE_UP = 3
+ACTION_MOVE_DOWN = 4
+ACTION_SELECT_ITEM = 7
+ACTION_PREVIOUS_MENU = 10
+ACTION_STOP = 13
+ACTION_NAV_BACK = 92
 
 _LIB = os.path.join(ADDON_PATH, "resources", "lib")
 if _LIB not in sys.path:
@@ -219,6 +227,9 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         self._last_repoll = None
         self._waiting = False
         self._reconnect_ticks = 0
+        self._vote_visible = False
+        self._vote_dismissed = False
+        self._vote_lock = threading.Lock()
 
     def onInit(self):
         label = self.getControl(100)
@@ -282,6 +293,14 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
             self.getControl(101).setVisible(False)
         except Exception:
             pass
+        self._hide_vote_hint()
+
+    def _hide_vote_hint(self):
+        self._vote_visible = False
+        try:
+            self.getControl(102).setVisible(False)
+        except Exception:
+            pass
 
     def _show_caption(self, text: str):
         try:
@@ -293,6 +312,103 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
             cap.setVisible(True)
         except Exception as exc:
             xbmc.log("%s: caption failed: %s" % (ADDON_ID, exc), xbmc.LOGWARNING)
+
+    def _current_item(self) -> dict:
+        if not self._flock:
+            return {}
+        return self._flock[self._index % len(self._flock)]
+
+    def _resolve_sink_url(self) -> str:
+        explicit = (ADDON.getSetting("display_sink_url") or "").strip()
+        if explicit:
+            return jellyfin_flock.trim_slash(explicit)
+        return jellyfin_flock.sink_url_from_jellyfin(ADDON.getSetting("server_url") or "")
+
+    def _show_vote_overlay(self):
+        if self._vote_visible:
+            return
+        self._vote_visible = True
+        try:
+            hint = self.getControl(102)
+            hint.setLabel(jellyfin_flock.VOTE_HINT)
+            hint.setVisible(True)
+        except Exception as exc:
+            xbmc.log("%s: vote hint failed: %s" % (ADDON_ID, exc), xbmc.LOGWARNING)
+
+    def _dismiss_vote_overlay(self):
+        self._vote_dismissed = True
+        self._hide_vote_hint()
+
+    def _remain_sec(self) -> float | None:
+        item = self._current_item()
+        total = 0.0
+        cur = 0.0
+        try:
+            total = float(self._player.getTotalTime() or 0)
+            cur = float(self._player.getTime() or 0)
+        except Exception:
+            total = 0.0
+            cur = 0.0
+        if total <= 0:
+            try:
+                total = float(item.get("duration_sec") or 0)
+            except (TypeError, ValueError):
+                total = 0.0
+        if total <= 0:
+            return None
+        return total - cur
+
+    def _tick_vote_overlay(self):
+        if self._waiting or not self._flock_mode or self._exiting:
+            if self._vote_visible:
+                self._hide_vote_hint()
+            return
+        item = self._current_item()
+        is_tuple = jellyfin_flock.is_tuple_sheep(item.get("path") or "", item.get("stem") or item.get("title") or "")
+        remain = self._remain_sec()
+        due = jellyfin_flock.vote_overlay_due(
+            remain,
+            dismissed=self._vote_dismissed,
+            is_tuple=is_tuple,
+        )
+        if due:
+            self._show_vote_overlay()
+        elif self._vote_visible and not due:
+            self._hide_vote_hint()
+
+    def _submit_vote(self, kind: str):
+        item = self._current_item()
+        if jellyfin_flock.is_tuple_sheep(item.get("path") or "", item.get("stem") or item.get("title") or ""):
+            self._dismiss_vote_overlay()
+            return
+        stem = (item.get("stem") or jellyfin_flock.stem_from_media_path(item.get("title") or "")).strip()
+        payload = {
+            "stem": stem,
+            "kind": kind,
+            "itemId": item.get("id") or "",
+            "mediaPath": item.get("path") or "",
+            "deviceId": jellyfin_flock.CLIENT_DEVICE_ID,
+        }
+        sink = self._resolve_sink_url()
+        token = (ADDON.getSetting("display_sink_token") or "").strip()
+        self._dismiss_vote_overlay()
+        threading.Thread(
+            target=self._post_vote_bg,
+            args=(sink, token, payload),
+            name="jf3-ss-vote",
+            daemon=True,
+        ).start()
+
+    def _post_vote_bg(self, sink: str, token: str, payload: dict):
+        with self._vote_lock:
+            result = jellyfin_flock.post_sheep_vote(sink, token, payload)
+        if result.get("ok"):
+            xbmc.log("%s: vote %s %s" % (ADDON_ID, payload.get("kind"), payload.get("stem")), xbmc.LOGINFO)
+        else:
+            xbmc.log(
+                "%s: vote failed %s: %s" % (ADDON_ID, payload.get("stem"), result.get("error")),
+                xbmc.LOGWARNING,
+            )
 
     def _enter_wait(self):
         self._waiting = True
@@ -330,6 +446,8 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         if not self._flock_mode or not self._flock:
             return False
         self._av_started = False
+        self._vote_dismissed = False
+        self._hide_vote_hint()
         url = self._flock[self._index % len(self._flock)]["url"]
         item = self._flock[self._index % len(self._flock)]
         title = _item_caption(item) or item.get("title") or "JellyFlam3"
@@ -470,11 +588,28 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
                         self._handle_dead_sheep()
                 else:
                     idle_ticks = 0
+            self._tick_vote_overlay()
             if self._monitor.waitForAbort(0.5):
                 break
 
     def onAction(self, action):
-        self._shutdown("action_%s" % action.getId())
+        aid = action.getId()
+        if self._vote_visible:
+            if aid == ACTION_SELECT_ITEM:
+                self._submit_vote("love")
+                return
+            if aid == ACTION_MOVE_RIGHT:
+                self._submit_vote("like")
+                return
+            if aid == ACTION_MOVE_DOWN:
+                self._dismiss_vote_overlay()
+                return
+            if aid == ACTION_MOVE_LEFT:
+                return
+            if aid in (ACTION_MOVE_UP, ACTION_PREVIOUS_MENU, ACTION_NAV_BACK, ACTION_STOP):
+                self._shutdown("vote_exit_%s" % aid)
+                return
+        self._shutdown("action_%s" % aid)
 
     def _shutdown(self, reason="action"):
         if self._exiting:

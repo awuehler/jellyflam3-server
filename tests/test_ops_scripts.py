@@ -126,6 +126,13 @@ def test_library_rotate_activate_howto_documented():
     assert "Share-out never enters the mesh" in p5
     assert "Sendreceive inbox + promote-as-move" in p5
     assert "Auto-promote stays **cancelled**" in p5 or "Auto-promote stays cancelled" in p5
+    kodi_votes = _read("docs/phase5/05_KODI_SCREENSAVER_VOTES.md")
+    assert "POST /v1/sheep-votes" in kodi_votes
+    assert "0.2.13" in kodi_votes
+    assert "Roku screensaver" in kodi_votes
+    assert "### 8 — List top voted sheep" in runbook
+    assert "python3 -m pipeline.sheep_votes top" in runbook
+    assert "python3 -m pipeline.sheep_votes top -n 5" in runbook
 
 
 def test_operator_scripts_have_purpose_headers():

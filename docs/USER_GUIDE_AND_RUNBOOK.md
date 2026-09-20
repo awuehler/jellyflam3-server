@@ -5,7 +5,7 @@ One document, **three layers**. Pick your layer and stay there — you should no
 | Layer | Audience | You want to… |
 |---|---|---|
 | **[Layer 1 — End user](#layer-1--end-user)** | Household / viewer | Watch ambient loops, use Roku or Kodi screensaver, fix “nothing plays” without SSH |
-| **[Worked examples](#worked-examples)** | Viewer + operator | First-evening stories (VoD gate, screensaver, two Rokus, peer receive, drain, vote/share, **vote sweep**) |
+| **[Worked examples](#worked-examples)** | Viewer + operator | First-evening stories (VoD gate, screensaver, two Rokus, peer receive, drain, vote/share, **vote sweep**, **vote top**) |
 | **[Layer 2 — Operator](#layer-2--operator-runbook)** | Pi owner / homelab operator | Keep the flock healthy, seed/breed/delete sheep, peering, health gates, fleet updates, **private ↔ public** |
 | **[Layer 3 — Contributor](#layer-3--contributor)** | Developer / maintainer | Run tests, change pipeline code, CI, deploy conventions |
 
@@ -57,7 +57,7 @@ Video screensaver add-on **JellyFlam3 Dreams** (`screensaver.jellyflam3`) — pl
 4. **Configure Jellyfin** — if the zip was built on a furnace Pi (`package_kodi_screensaver.*`), defaults are already in the add-on settings. Otherwise open **Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → Configure** and paste Jellyfin URL, API key, user id, library id (operator runs `jellyfin_id_dump.py` on the furnace Pi).
 5. Set screensaver wait time (e.g. **1 minute** for testing), then wait or use **Activate screensaver**.
 
-**Everyday use:** leave Kodi idle; any keypress exits the screensaver (Kodi default). When flock is configured, sheep MP4s shuffle. Configure **Titles** (`title_mode`, **0.2.12+**) as filename (default) or alias for a chrome-light caption. If Jellyfin is unreachable, **0.2.11+** shows **waiting for the furnace** on black and retries every 30 seconds (not a settings lecture). Missing credentials still ask you to configure the add-on. Package **0.2.9+** re-fetches after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). If a sheep is **quarantined** while idle is running, 0.2.7+ drops that id, re-polls Jellyfin (rate-limited), and continues; **0.2.10** also dismisses Kodi's playback-failed dialog automatically.
+**Everyday use:** leave Kodi idle. Keys while idle **exit**, except in the last **7 seconds** of a non-tuple sheep (**0.2.13+**): **Enter** love, **Right** like, **Down** dismiss overlay, **Up/Back** exit — same map as Roku VoD. Configure **Titles** (`title_mode`, **0.2.12+**) as filename (default) or alias for a chrome-light caption. Vote sink URL/token live in add-on Configure (furnace zip can pre-fill). If Jellyfin is unreachable, **0.2.11+** shows **waiting for the furnace** on black and retries every 30 seconds (not a settings lecture). Missing credentials still ask you to configure the add-on. Package **0.2.9+** re-fetches after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). If a sheep is **quarantined** while idle is running, 0.2.7+ drops that id, re-polls Jellyfin (rate-limited), and continues; **0.2.10** also dismisses Kodi's playback-failed dialog automatically.
 
 **Upgrade (on the TV, no PC):** if the operator already dropped a new zip into Downloads, Kodi → **Add-ons → Install from zip file** → select the new `screensaver.jellyflam3.zip`. Jellyfin settings in add-on **Configure** are kept (`addon_data`).
 
@@ -234,7 +234,7 @@ python3 -m pipeline.worker_drain cancel
 
 ### 6 — Vote, then share
 
-**Host:** furnace Pi **Opt In** (`share_live: true`) + Roku VoD **1.0.38** (overlay) with display-sink token set. Votes never pause the clip. They stay on this Pi’s catalog sidecar (LAN only). Screensaver packages do not vote.
+**Host:** furnace Pi **Opt In** (`share_live: true`) + Roku VoD **1.0.38** (overlay) and/or Kodi screensaver **0.2.13** with display-sink token set. Votes never pause the clip. They stay on this Pi’s catalog sidecar (LAN only). **Roku screensaver** packages do not vote.
 
 1. Play a sheep (not a tuple). In the last **7 seconds**, the banner appears.
    - **OK** / keyboard **Enter** = love (`loves++`, `votes++`)
@@ -248,7 +248,7 @@ python3 -m pipeline.worker_drain cancel
    python3 -m pipeline.sheep_votes show --stem electricsheep.247.00505
    ```
 
-   Expect `share_candidate: true` and `votes` ≥ 1.
+   Expect `share_candidate: true` and `votes` ≥ 1. Rank the flock with [example 8](#8--list-top-voted-sheep).
 3. Share-out is a **local copy** into `genomes/peers/share-out` (tax + integrity). It is **not** a Syncthing folder and does **not** appear on other furnaces until an operator copies it into `peers/inbox` (Phase 5 hop: [phase5/04_PEER_SHARE_MESH.md](phase5/04_PEER_SHARE_MESH.md)). It does **not** drop a genome into this furnace’s worker inbox. Lab cron **06:41** (`scripts/cron_share_votes.sh`). Dry-run:
 
    ```bash
@@ -288,6 +288,34 @@ python3 -m pipeline.worker_drain cancel
    ```
 
 **Pass:** `sweep --confirm SWEEP` reports `action: apply` and `reset` matching the dry-run `dirty` count; `show` is zeros; `share_votes` plan has `candidates: 0` (unless new votes arrived). **Fail:** `--confirm DELETE` (Shears token) is rejected; omit `--confirm` if you only wanted the plan. Next Roku votes increment from zero again. Idle-breed parent weights return to uniform until new votes land.
+
+### 8 — List top voted sheep
+
+**Host:** furnace Pi with live catalog sidecars. Use this to see which loops the household actually liked (VoD overlay and/or Kodi screensaver **0.2.13**). Rankings read `{stem}.jellyflam3.json` `viewer_feedback` only — not Jellyfin, not `peers/share-out`. Unpublished `_refactor-*` trees are skipped.
+
+1. Default is the top **10** sheep with at least one vote (`votes`, then loves, then likes):
+
+   ```bash
+   cd /opt/jellyflam3-server
+   python3 -m pipeline.sheep_votes top
+   python3 -m pipeline.sheep_votes top -n 5
+   ```
+
+   `list` is the same command (`python3 -m pipeline.sheep_votes list --limit 20`).
+2. Include zeros (everyone, including never-voted):
+
+   ```bash
+   python3 -m pipeline.sheep_votes top --min-votes 0 -n 20
+   ```
+
+   Each row has `stem`, `alias`, `likes`, `loves`, `votes`, `last_voted_at`, `share_candidate`. `matched` is how many sheep passed `--min-votes`; `count` is how many rows were printed (`-n`).
+3. Optional: confirm one stem from the list:
+
+   ```bash
+   python3 -m pipeline.sheep_votes show --stem electricsheep.247.00505
+   ```
+
+**Pass:** JSON `ok: true`; first row has the highest `votes` (ties break by loves, then likes, then stem). After example 7, `top` (default `--min-votes 1`) is `count: 0` until new votes land. **Fail:** expecting Jellyfin Overview or share-out copies to appear here — they do not.
 
 ---
 
@@ -802,7 +830,7 @@ Folder name must stay `screensaver.jellyflam3`.
 
 | Check | How |
 |---|---|
-| Version | Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → **Information** (version in `addon.xml`, currently **0.2.12**). |
+| Version | Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → **Information** (version in `addon.xml`, currently **0.2.13**). |
 | Playback | Set short wait time → **Activate screensaver** or wait; sheep MP4s should shuffle. |
 | Idle gate | On furnace Pi: `cat /var/lib/jellyflam3/idle_gate_status.json` → `"gate": "open"` while Kodi SS runs. |
 | Jellyfin IDs | On furnace: `python3 scripts/jellyfin_id_dump.py --items --limit 5` — item count should be > 0 when flock is seeded. |
@@ -1084,7 +1112,7 @@ python3 -m pipeline.hw_profile      # apply 16a/08a/04a profile
 python3 -m pipeline.link_capacity   # concurrent-client N_max estimate
 python3 -m pipeline.library_disk    # sheep-mount WARN/BAD + rotate
 python3 -m pipeline.sheep_naming    # alias backfill / set / clear / resolve
-python3 -m pipeline.sheep_votes     # sidecar like/love/vote (show / apply / sweep)
+python3 -m pipeline.sheep_votes     # sidecar like/love/vote (show / top / apply / sweep)
 python3 -m pipeline.share_votes     # liked sheep → peers/share-out (plan / --apply)
 python3 -m pipeline.display_profiles
 ```

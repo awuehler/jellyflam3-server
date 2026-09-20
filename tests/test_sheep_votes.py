@@ -16,6 +16,7 @@ from pipeline.sheep_votes import (
     cleared_feedback,
     feedback_needs_reset,
     increment_feedback,
+    list_top_votes,
     main,
     normalize_feedback,
     resolve_vote_sidecar,
@@ -316,6 +317,71 @@ def test_sweep_one_stem_leaves_others(tmp_path: Path):
     assert out["reset"] == 1
     assert show_vote(media, STEM)["viewer_feedback"]["votes"] == 0
     assert show_vote(media, other)["viewer_feedback"]["votes"] == 5
+
+
+def test_list_top_votes_ranks_and_caps(tmp_path: Path):
+    media = tmp_path / "media"
+    _write_sidecar(
+        media, "electricsheep.247.00001", votes=2, likes=2, extra_root={"alias": "low_score"}
+    )
+    _write_sidecar(
+        media,
+        "electricsheep.247.00002",
+        votes=9,
+        likes=1,
+        loves=8,
+        extra_root={"alias": "hot_sheep"},
+    )
+    _write_sidecar(
+        media, "electricsheep.247.00003", votes=5, likes=5, extra_root={"alias": "mid_sheep"}
+    )
+    _write_sidecar(media, "electricsheep.247.00004", votes=0)
+    parked = (
+        media
+        / "_refactor-quarantine"
+        / "by-generation"
+        / "247"
+        / "electricsheep.247.09999.jellyflam3.json"
+    )
+    parked.parent.mkdir(parents=True)
+    parked.write_text(
+        json.dumps(
+            {
+                "id": "electricsheep.247.09999",
+                "viewer_feedback": {"votes": 99, "likes": 0, "loves": 0},
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = list_top_votes(media, limit=2)
+    assert out["ok"] is True
+    assert out["scanned"] == 4
+    assert out["matched"] == 3
+    assert out["count"] == 2
+    assert [r["stem"] for r in out["rows"]] == [
+        "electricsheep.247.00002",
+        "electricsheep.247.00003",
+    ]
+    assert out["rows"][0]["alias"] == "hot_sheep"
+    assert out["rows"][0]["votes"] == 9
+    assert out["rows"][0]["loves"] == 8
+    zeros = list_top_votes(media, limit=10, min_votes=0)
+    assert zeros["matched"] == 4
+    with pytest.raises(InvalidVote, match="limit"):
+        list_top_votes(media, limit=0)
+
+
+def test_top_cli(tmp_path: Path, capsys: pytest.CaptureFixture[str]):
+    media = tmp_path / "media"
+    _write_sidecar(media, STEM, votes=3, likes=1, loves=2)
+    cfg = _catalog_cfg(tmp_path, media)
+    rc = main(["--config", str(cfg), "top", "-n", "1"])
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["count"] == 1
+    assert payload["rows"][0]["stem"] == STEM
+    rc = main(["--config", str(cfg), "list", "--limit", "1"])
+    assert rc == 0
 
 
 def test_sweep_reports_unreadable_sidecar(tmp_path: Path):

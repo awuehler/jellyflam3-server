@@ -80,7 +80,9 @@ The extension should feel like Electric Sheep’s idle canvas, not a VoD browser
 
 **Cancelled 2026-09-13 (standalone edges):** a client sequencer that plays loop MP4 → edge MP4 → loop MP4 is **not** coming. **Tuples** ([03](../phase4/03_EDGES_AND_WATERMARK.md)) already bake that journey into one catalog file; Kodi’s recursive `by-generation/` walk plays them as ordinary flock items. Loops-only shuffle remains the Phase 3 DoD.
 
-**0.2.12:** chrome-light filename/alias caption (`title_mode`; Overview `Alias:`). Default filename. Any key still exits.
+**0.2.13:** last-7s like/love overlay ([../phase5/05_KODI_SCREENSAVER_VOTES.md](../phase5/05_KODI_SCREENSAVER_VOTES.md)); same furnace sink as Roku VoD. Overlay keys do not pause video. Hidden-overlay keys still exit.
+
+**0.2.12:** chrome-light filename/alias caption (`title_mode`; Overview `Alias:`). Default filename.
 
 **0.2.11:** furnace unreachable is a waiting hint with 30s reconnect (not missing settings / empty flock). Probe `/System/Info/Public` before dropping a sheep as quarantined.
 

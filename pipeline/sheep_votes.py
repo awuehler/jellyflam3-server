@@ -8,6 +8,8 @@ Usage:
   python3 -m pipeline.sheep_votes apply --stem electricsheep.247.00505 --kind love
   python3 -m pipeline.sheep_votes apply --stem electricsheep.247.00505 --kind vote
   python3 -m pipeline.sheep_votes show --stem electricsheep.247.00505
+  python3 -m pipeline.sheep_votes top
+  python3 -m pipeline.sheep_votes top -n 5
   python3 -m pipeline.sheep_votes sweep
   python3 -m pipeline.sheep_votes sweep --confirm SWEEP
   python3 -m pipeline.sheep_votes sweep --stem electricsheep.247.00505 --confirm SWEEP
@@ -35,7 +37,7 @@ from typing import Any, Iterator
 
 from pipeline.config import load_config, resolve_path
 from pipeline.media_layout import is_unpublished_media_path
-from pipeline.sheep_naming import iter_sidecars, load_sidecar_for_stem, sidecar_stem
+from pipeline.sheep_naming import alias_of, iter_sidecars, load_sidecar_for_stem, sidecar_stem
 from pipeline.stills import sidecar_path_for_mp4
 
 VOTE_KINDS = frozenset({"like", "love", "vote"})
@@ -310,6 +312,56 @@ def show_vote(media_root: Path, stem: str) -> dict[str, Any]:
     }
 
 
+def list_top_votes(
+    media_root: Path,
+    *,
+    limit: int = 10,
+    min_votes: int = 1,
+) -> dict[str, Any]:
+    """Rank live-catalog sheep by ``viewer_feedback.votes`` (then loves, likes)."""
+    if int(limit) < 1:
+        raise InvalidVote("limit must be >= 1")
+    if int(min_votes) < 0:
+        raise InvalidVote("min-votes must be >= 0")
+    rows: list[dict[str, Any]] = []
+    scanned = 0
+    for path in _iter_sweep_sidecars(media_root):
+        scanned += 1
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        fb = normalize_feedback(data.get("viewer_feedback"))
+        if int(fb.get("votes") or 0) < int(min_votes):
+            continue
+        rows.append(
+            {
+                "stem": sidecar_stem(path),
+                "alias": alias_of(data) or None,
+                "likes": fb["likes"],
+                "loves": fb["loves"],
+                "votes": fb["votes"],
+                "last_voted_at": fb.get("last_voted_at"),
+                "share_candidate": fb["share_candidate"],
+            }
+        )
+    rows.sort(
+        key=lambda r: (-int(r["votes"]), -int(r["loves"]), -int(r["likes"]), str(r["stem"]))
+    )
+    capped = rows[: int(limit)]
+    return {
+        "ok": True,
+        "limit": int(limit),
+        "min_votes": int(min_votes),
+        "scanned": scanned,
+        "matched": len(rows),
+        "count": len(capped),
+        "rows": capped,
+    }
+
+
 def _iter_sweep_sidecars(media_root: Path, stem: str = "") -> list[Path]:
     """Live catalog sidecars, or one resolved stem. Never unpublished trees."""
     want = (stem or "").strip()
@@ -384,7 +436,7 @@ def _media_root(config: Path) -> Path:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """CLI: apply, show, or sweep sidecar vote tallies."""
+    """CLI: apply, show, top, or sweep sidecar vote tallies."""
     ap = argparse.ArgumentParser(description="Catalog sidecar viewer votes (like/love/vote)")
     ap.add_argument("--config", default="configs/jellyflam3.yaml")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -396,6 +448,26 @@ def main(argv: list[str] | None = None) -> int:
 
     p_show = sub.add_parser("show", help="Print viewer_feedback for a stem")
     p_show.add_argument("--stem", required=True)
+
+    p_top = sub.add_parser(
+        "top",
+        aliases=["list"],
+        help="List live-catalog sheep with the most votes",
+    )
+    p_top.add_argument(
+        "-n",
+        "--limit",
+        type=int,
+        default=10,
+        help="Max rows (default 10)",
+    )
+    p_top.add_argument(
+        "--min-votes",
+        type=int,
+        default=1,
+        dest="min_votes",
+        help="Omit sheep with fewer votes (default 1)",
+    )
 
     p_sweep = sub.add_parser(
         "sweep",
@@ -413,6 +485,14 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.cmd == "show":
             print(json.dumps(show_vote(media, args.stem), indent=2))
+            return 0
+        if args.cmd in {"top", "list"}:
+            print(
+                json.dumps(
+                    list_top_votes(media, limit=args.limit, min_votes=args.min_votes),
+                    indent=2,
+                )
+            )
             return 0
         if args.cmd == "sweep":
             if args.confirm and args.confirm != SWEEP_CONFIRM_TOKEN:

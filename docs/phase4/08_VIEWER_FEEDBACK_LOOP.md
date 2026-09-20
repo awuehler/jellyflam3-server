@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — close the **end-user → furnace** feedback loop: during VoD playback the Roku channel shows a **transient overlay** near the end of each sheep MP4 that invites a remote **like / love / vote** without stopping playback. Captured votes on the furnace drive (a) **share promotion** of the corresponding `.flam3` into the Tailscale / Syncthing peer path, and (b) **weighted bias** in daily idle pedigree breeding so well-liked sheep are more likely parents. Complements the existing **~10-day archive-seed** and **daily idle-breed** crons with **one additional cron** that detects shareable (voted) sheep, and enhances the daily breed job with viewer weights.
 
-**Status:** Overlay + sidecar vote sink **shipped** 2026-09-11 (Wave 2). Share cron + idle-breed weights **shipped** 2026-09-13 (Wave 3). **Auto-promote cancelled** 2026-09-13 ([01](01_PEER_SHARE_PATH.md) — gated `promote --apply` is the receive path). **Screensaver voting cancelled** 2026-09-13 — violates Roku screensaver best practices / certification requirements; votes stay on the **VoD** overlay only. Household vote/share recipes: [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md#6--vote-then-share).
+**Status:** Overlay + sidecar vote sink **shipped** 2026-09-11 (Wave 2). Share cron + idle-breed weights **shipped** 2026-09-13 (Wave 3). **Auto-promote cancelled** 2026-09-13 ([01](01_PEER_SHARE_PATH.md) — gated `promote --apply` is the receive path). **Roku screensaver voting cancelled** 2026-09-13. **Kodi screensaver votes shipped** 2026-09-19 ([../phase5/05_KODI_SCREENSAVER_VOTES.md](../phase5/05_KODI_SCREENSAVER_VOTES.md)). Household vote/share recipes: [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md#6--vote-then-share).
 
 Depends on Phase 1–2 Roku VoD playback ([../phase1/08_ROKU_BRIGHTSCRIPT.md](../phase1/08_ROKU_BRIGHTSCRIPT.md), [../phase2/04_ROKU_CHANNEL_POLISH.md](../phase2/04_ROKU_CHANNEL_POLISH.md)), pedigree idle breed ([../phase2/07_PEDIGREE_BREEDING.md](../phase2/07_PEDIGREE_BREEDING.md)), and Syncthing-over-Tailscale peering ([../phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_PEERING.md)). Interacts with [01_PEER_SHARE_PATH.md](01_PEER_SHARE_PATH.md) (how votes trigger share-out / promote) and [04_ROKU_PUBLISH.md](04_ROKU_PUBLISH.md) (overlay UX polish for published builds). Does **not** replace archive seed or idle-breed — it **biases and extends** flock evolution with household interest.
 
@@ -33,7 +33,7 @@ Depends on Phase 1–2 Roku VoD playback ([../phase1/08_ROKU_BRIGHTSCRIPT.md](..
 1. **Overlay must not stop or pause** the Video node — prompt is decorative / input-only; seek/loop behavior unchanged.
 2. **Any remote key that maps to vote** records feedback; other keys may dismiss the overlay without voting (Back) or leave playback controls as today.
 3. **Re-votes are unrestricted** — no “one vote per sheep per device” gate in MVP; each event increments sidecar tallies.
-4. **Screensaver voting is cancelled** (2026-09-13) — interactive chrome while a screensaver is running violates Roku best practices and Channel Store requirements. Votes happen only in the **VoD channel** during MP4/HLS playback, never in `roku-screensaver/` or the Kodi screensaver.
+4. **Screensaver voting on Roku is cancelled** (2026-09-13) — interactive chrome while a Roku screensaver is running violates best practices and Channel Store requirements. Roku votes happen only in the **VoD channel**. **Kodi screensaver votes shipped** 2026-09-19 ([../phase5/05_KODI_SCREENSAVER_VOTES.md](../phase5/05_KODI_SCREENSAVER_VOTES.md)) using this same overlay map and sink.
 5. **Idle-gate** — vote HTTP must stay light (no Sessions Playing as a second client); prefer a small host-service / sink like display-profile upsert, not a fake playback session.
 6. **License / commercial-safe** — share cron and breed bias still respect NC / commercial filters; a loved NC sheep does not bypass Opt Out or commercial Mode policy.
 7. **Sidecar is the sole metadata SoT** for a catalog sheep — `{stem}.jellyflam3.json` beside the MP4. License, tags, duration/signals, poster/stills index, pedigree hints, **and viewer vote tallies** live there. **No parallel vote store** under `/var/lib/jellyflam3/` (no `sheep_vote_weights.json` as competing truth). Jellyfin Items Tags / Overview are derived caches only. Binary artifacts stay themselves: `.mp4` (video), `.flam3` (genome), poster/stills **files** (sidecar indexes them). Optional append-only log is debug-only and must not be read for share/breed decisions.
@@ -45,7 +45,7 @@ Key **`viewer_feedback`** (likes / loves / votes / last_voted_at / share_candida
 
 ### Remote map (VoD **1.0.38**)
 
-Overlay is visual-only (playback does not pause). Shown when remaining duration ≤ **7 s**. Two kinds only: **love** and **like**. Both increment sidecar `votes` (share cron + idle-breed). Plain `kind=vote` stays on the furnace CLI/API for compatibility; the channel does not POST it. The arrows match a keyboard so a later Kodi overlay can use Enter / Right / Down / Up-Esc without a third vote kind. **Roku screensaver voting stays cancelled.** Kodi screensaver still exits on any key and does not vote.
+Overlay is visual-only (playback does not pause). Shown when remaining duration ≤ **7 s**. Two kinds only: **love** and **like**. Both increment sidecar `votes` (share cron + idle-breed). Plain `kind=vote` stays on the furnace CLI/API for compatibility; the channel does not POST it. The arrows match a keyboard so Kodi screensaver **0.2.13+** can use Enter / Right / Down / Up-Esc without a third vote kind. **Roku screensaver voting stays cancelled.**
 
 | Key | Action | Keyboard / future Kodi |
 |---|---|---|
@@ -55,7 +55,7 @@ Overlay is visual-only (playback does not pause). Shown when remaining duration 
 | **Up** / **BACK** | exit playback | Up arrow / Esc |
 | **\*** / Options / Info | Settings on Home (not consumed during overlay) | — |
 
-`POST /v1/sheep-votes` on `jellyflam3-display-sink` (:8791, header `X-JellyFlam3-Token`). CLI: `python3 -m pipeline.sheep_votes apply --stem … --kind like\|love\|vote`; `show --stem …`; flock fresh start `sweep` (dry-run) / `sweep --confirm SWEEP`. Restart **display-sink** (not the worker) to load the route.
+`POST /v1/sheep-votes` on `jellyflam3-display-sink` (:8791, header `X-JellyFlam3-Token`). CLI: `python3 -m pipeline.sheep_votes apply --stem … --kind like\|love\|vote`; `show --stem …`; `top` / `top -n N` (live catalog ranked by votes); flock fresh start `sweep` (dry-run) / `sweep --confirm SWEEP`. Restart **display-sink** (not the worker) to load the route.
 
 ## Work items (when Phase 4 opens)
 
@@ -94,14 +94,14 @@ Overlay is visual-only (playback does not pause). Shown when remaining duration 
 ### E — Ops & docs
 
 1. Crontab example alongside archive + idle-breed in the runbook and this cron header.
-2. End-user vote/share recipe: [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md#6--vote-then-share). Vote sweep (fresh start): [example 7](../USER_GUIDE_AND_RUNBOOK.md#7--sweep-votes-fresh-start-on-this-furnace).
+2. End-user vote/share recipe: [USER_GUIDE_AND_RUNBOOK.md](../USER_GUIDE_AND_RUNBOOK.md#6--vote-then-share). Vote sweep (fresh start): [example 7](../USER_GUIDE_AND_RUNBOOK.md#7--sweep-votes-fresh-start-on-this-furnace). Vote leaderboard: [example 8](../USER_GUIDE_AND_RUNBOOK.md#8--list-top-voted-sheep).
 3. Glossary + SoT cross-links. Vote POST is still display-sink (not a Playing client).
 
 ## Non-goals
 
 - Stopping, pausing, or seeking playback as part of the vote UX
 - Requiring unique votes / anti-ballot stuffing in MVP (household re-vote is a feature)
-- Voting inside the Roku or Kodi **screensaver** packages (**cancelled** 2026-09-13 — Roku best practices / certification)
+- Voting inside the Roku **screensaver** package (**cancelled** 2026-09-13 — Roku best practices / certification). Kodi screensaver votes: [../phase5/05_KODI_SCREENSAVER_VOTES.md](../phase5/05_KODI_SCREENSAVER_VOTES.md)
 - Replacing archive-seed or removing uniform random entirely
 - Public internet vote API or Electric Sheep P2P ratings network
 - Auto-render / auto-promote of new sheep solely because of a vote (votes bias **selection** and **share-out**, not furnace kick without `promote --apply`)
@@ -114,6 +114,7 @@ Overlay is visual-only (playback does not pause). Shown when remaining duration 
 | VoD overlay + key handler | `roku-channel/` | Transient like/love/vote UI |
 | Vote ingest endpoint / sink | host service | Capture events from Roku(s) |
 | `{stem}.jellyflam3.json` `viewer_feedback` | sidecar | Sole metadata SoT for vote tallies / share_candidate |
+| `python3 -m pipeline.sheep_votes top` | CLI | Rank live-catalog sheep by votes (`-n` / `--limit`; `--min-votes`) |
 | `python3 -m pipeline.sheep_votes sweep` | CLI | Zero live-catalog tallies (`--confirm SWEEP`); dry-run default |
 | `scripts/cron_share_votes.sh` | cron | Scan sidecars → peer share-out |
 | Weighted `breed_idle` | pipeline | Viewer-biased parent picks |
@@ -128,9 +129,10 @@ Overlay is visual-only (playback does not pause). Shown when remaining duration 
 - [x] Share cron stages liked `.flam3` into `peers/share-out` (tax + share-security; Opt In); **not** a Syncthing folder; inbound still `promote --apply` after an inbox copy ([../phase5/04](../phase5/04_PEER_SHARE_MESH.md))
 - [x] Daily idle breed uses vote weights when available; uniform fallback when not
 - [x] Docs: button map, privacy / LAN scope, vote/share recipe; linked from Phase 4 overview + end-user guide
+- [x] Operator `sheep_votes top` ranks live-catalog tallies (`-n`, `--min-votes`)
 - [x] Idle-gate / Sessions behavior: vote POST is display-sink, not a Playing client
 - [x] Operator can dry-run then `--confirm SWEEP` to zero live-catalog `viewer_feedback` without touching share-out copies
 
 ## See also
 
-[00_OVERVIEW.md](00_OVERVIEW.md) · [01_PEER_SHARE_PATH.md](01_PEER_SHARE_PATH.md) · [04_ROKU_PUBLISH.md](04_ROKU_PUBLISH.md) · [05_END_USER_GUIDE.md](05_END_USER_GUIDE.md) · [../phase1/07_LICENSE_AND_METADATA.md](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) · [../phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_PEERING.md) · [../phase2/07_PEDIGREE_BREEDING.md](../phase2/07_PEDIGREE_BREEDING.md) · [../phase3/05_SHARED_SHEEP_SECURITY.md](../phase3/05_SHARED_SHEEP_SECURITY.md) · [../phase5/04_PEER_SHARE_MESH.md](../phase5/04_PEER_SHARE_MESH.md)
+[00_OVERVIEW.md](00_OVERVIEW.md) · [01_PEER_SHARE_PATH.md](01_PEER_SHARE_PATH.md) · [04_ROKU_PUBLISH.md](04_ROKU_PUBLISH.md) · [05_END_USER_GUIDE.md](05_END_USER_GUIDE.md) · [../phase1/07_LICENSE_AND_METADATA.md](../phase1/07_LICENSE_AND_METADATA.md#catalog-sidecar-schema) · [../phase2/05_SYNCTHING_GENOME_PEERING.md](../phase2/05_SYNCTHING_GENOME_PEERING.md) · [../phase2/07_PEDIGREE_BREEDING.md](../phase2/07_PEDIGREE_BREEDING.md) · [../phase3/05_SHARED_SHEEP_SECURITY.md](../phase3/05_SHARED_SHEEP_SECURITY.md) · [../phase5/04_PEER_SHARE_MESH.md](../phase5/04_PEER_SHARE_MESH.md) · [../phase5/05_KODI_SCREENSAVER_VOTES.md](../phase5/05_KODI_SCREENSAVER_VOTES.md)

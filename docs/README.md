@@ -69,7 +69,7 @@ Parallel after **02**: `03` (HLS) anytime; `04` once Primary images exist. `05`�
 5. [05_END_USER_GUIDE.md](phase4/05_END_USER_GUIDE.md) — household guide (**baseline complete** 2026-09-03)
 6. [06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md) — disk check + rotate CLI (**closed** 2026-09-19); daily cron optional
 7. [07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md) — `link_capacity` (**estimator shipped**; Owner OK 2026-09-09; no Jellyfin cap / Ethernet lab DoD)
-8. [08_VIEWER_FEEDBACK_LOOP.md](phase4/08_VIEWER_FEEDBACK_LOOP.md) — vote overlay + sidecar sink + share cron + idle-breed weights (**shipped**); auto-promote **cancelled**; screensaver voting **cancelled**
+8. [08_VIEWER_FEEDBACK_LOOP.md](phase4/08_VIEWER_FEEDBACK_LOOP.md) — vote overlay + sidecar sink + share cron + idle-breed weights (**shipped**); auto-promote **cancelled**; **Roku** screensaver voting **cancelled**; Kodi SS votes [phase5/05](phase5/05_KODI_SCREENSAVER_VOTES.md)
 9. [09_SHEEP_NAMING.md](phase4/09_SHEEP_NAMING.md) — RNG aliases + VoD / screensaver `titleMode` shipped; optional Jellyfin OriginalTitle parked
 
 Overview: [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md).
@@ -80,5 +80,6 @@ Overview: [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md).
 2. [02_LLM_INTEGRATION.md](phase5/02_LLM_INTEGRATION.md) — Instruct INT4; session switch; pixels → Instruct JSON; **VoD-as-camera** (single sheep)
 3. [03_AI_PLATFORM_GAPS.md](phase5/03_AI_PLATFORM_GAPS.md) — NPU / RAM / conversion / Hexagon+Adreno H4 lab / TBD goals **on the agent platform**
 4. [04_PEER_SHARE_MESH.md](phase5/04_PEER_SHARE_MESH.md) — furnace share-out → inbox + promote vs sendreceive (parked; **not** Ventuno)
+5. [05_KODI_SCREENSAVER_VOTES.md](phase5/05_KODI_SCREENSAVER_VOTES.md) — Kodi screensaver like/love overlay = Roku VoD map (same furnace sink)
 
 Overview: [phase5/00_OVERVIEW.md](phase5/00_OVERVIEW.md). Does not replace remaining Phase 4 products. Furnace playbook stays [phase2/09](phase2/09_PI_FROM_SCRATCH.md).
