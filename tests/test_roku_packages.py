@@ -31,6 +31,10 @@ def test_roku_vod_tree_has_manifest_and_entry():
     assert "supports_input_launch=1" in text
     assert "rsg_version=1.3" in text
     assert "subtitle=" not in text
+    assert "splash_screen_hd=" in text
+    assert "mm_icon_focus_hd=" in text
+    assert "splash_screen_sd=" not in text
+    assert "mm_icon_focus_sd=" not in text
     assert (VOD / "source" / "main.brs").is_file()
     main = (VOD / "source" / "main.brs").read_text(encoding="utf-8")
     assert 'CreateObject("roInput")' in main
@@ -107,8 +111,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=48" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.48""' in text
+    assert "build_version=49" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.49""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home

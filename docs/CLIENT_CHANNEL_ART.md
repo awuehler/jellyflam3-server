@@ -37,6 +37,8 @@ Generate **one** 16:9 hero and **one** square mark, then crop.
 | Kodi fanart (this repo) | **1280×720** JPEG | `resources/fanart.jpg` — `build_kodi_screensaver_assets.py` currently prefers **live flock posters**; a custom hero is an operator override |
 | GitHub README header | **1280×640** or 16:9 | optional; not required for sideload |
 
+VoD **1.0.49+** omits `splash_screen_sd` and `mm_icon_focus_sd` so Store analysis does not demand 720×480 / 246×140 files. Screensaver still lists SD keys pointing at the HD PNGs until its own Store pass.
+
 VoD live files are unnumbered (`splash-screen.png`, `mm_icon_focus_hd.png`). Numbered `*-NN.png` backups were dropped from `roku-channel/images/` so they cannot inflate a Store zip; screensaver and Kodi still keep `-00` / `-01` (and some older `-02` / `-04`) as prior generations.
 
 **Safe area:** keep title glyphs and the mark’s bell inside the center ~80%. Roku splash can letterbox; do not put the only readable word on the extreme left/right edge.
