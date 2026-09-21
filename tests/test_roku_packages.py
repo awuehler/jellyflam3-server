@@ -34,11 +34,15 @@ def test_roku_vod_tree_has_manifest_and_entry():
     assert (VOD / "source" / "main.brs").is_file()
     main = (VOD / "source" / "main.brs").read_text(encoding="utf-8")
     assert 'CreateObject("roInput")' in main
-    assert "input.SetMessagePort(m.port)" in main
-    assert 'msgType = "roInputEvent"' in main
-    # Roku's static analysis matches the documented API casing.
+    assert "m.input = CreateObject" in main
+    assert "m.input.SetMessagePort(m.port)" in main
+    assert 'type(msg) = "roInputEvent"' in main
     assert "msg.IsInput()" in main
     assert "msg.GetInfo()" in main
+    assert 'info.DoesExist("mediatype")' in main
+    assert 'info.DoesExist("contentid")' in main
+    assert "mediaType = info.mediatype" in main
+    assert "contentId = info.contentid" in main
     assert 'signalBeacon("AppLaunchComplete")' in main
     settings = (VOD / "components" / "SettingsScreen.brs").read_text(encoding="utf-8")
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
@@ -46,6 +50,9 @@ def test_roku_vod_tree_has_manifest_and_entry():
     assert 'createObject("roSGNode", "StandardKeyboardDialog")' in settings
     assert 'signalBeacon("AppDialogInitiate")' in home
     assert 'signalBeacon("AppDialogComplete")' in home
+    assert "function handleDeepLink" in home
+    assert "args.contentid" in home
+    assert "args.mediatype" in home or "args.mediaType" in home
     assert 'if state = "ready" then m.homeReady = true' in home
     assert "if m.homeReady <> true and m.launchCredentialDialog <> true" in home
     assert 'CreateObject("roAppMemoryMonitor")' in main
@@ -100,8 +107,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=47" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.47""' in text
+    assert "build_version=48" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.48""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home

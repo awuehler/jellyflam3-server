@@ -7,15 +7,13 @@ sub Main(args as dynamic)
   ' Roku certification launch-performance beacon: the initial Scene is visible.
   scene.signalBeacon("AppLaunchComplete")
 
-  ' Cold-launch deep link (ECP launch / input params in the manifest's
-  ' supports_input_launch=1 contract).
-  if args <> invalid
-    scene.callFunc("handleDeepLink", args)
-  end if
+  ' Cold launch: ECP / voice deep link parameters arrive on Main(args).
+  if args <> invalid then applyDeepLink(scene, args)
 
-  ' Warm deep link: roInput delivers roInputEvent while the app is running.
-  input = CreateObject("roInput")
-  input.SetMessagePort(m.port)
+  ' Warm deep link (cert 5.2): keep roInput on `m` so it is not garbage-collected.
+  ' supports_input_launch=1 in the manifest opts the channel into this path.
+  m.input = CreateObject("roInput")
+  m.input.SetMessagePort(m.port)
   attachAppMemoryMonitor()
 
   while true
@@ -23,11 +21,16 @@ sub Main(args as dynamic)
     msgType = type(msg)
     if msgType = "roSGScreenEvent"
       if msg.isScreenClosed() then return
-    else if msgType = "roInputEvent"
+    else if type(msg) = "roInputEvent"
       if msg.IsInput()
         info = msg.GetInfo()
-        if info <> invalid
-          scene.callFunc("handleDeepLink", info)
+        ' Strings mediatype / contentid match Roku's sample and Store static analysis 5.2.
+        if info <> invalid and info.DoesExist("mediatype") and info.DoesExist("contentid")
+          mediaType = info.mediatype
+          contentId = info.contentid
+          applyDeepLink(scene, { mediaType: mediaType, contentId: contentId })
+        else if info <> invalid
+          applyDeepLink(scene, info)
         end if
       end if
     else if msgType = "roAppMemoryNotificationEvent"
@@ -36,6 +39,11 @@ sub Main(args as dynamic)
       handleDeviceMemoryEvent(msg)
     end if
   end while
+end sub
+
+sub applyDeepLink(scene as object, params as object)
+  if scene = invalid or params = invalid then return
+  scene.callFunc("handleDeepLink", params)
 end sub
 
 sub attachAppMemoryMonitor()

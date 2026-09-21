@@ -976,8 +976,15 @@ function handleDeepLink(args as object) as void
   if args = invalid then return
   cid = args.contentId
   if cid = invalid or cid = "" then cid = args.contentID
+  if cid = invalid or cid = "" then cid = args.contentid
   if cid = invalid or cid = "" then return
+  ' mediaType is required by cert 5.2 / voice Direct to Play. Unknown types still
+  ' try the Jellyfin item id; empty type is ignored the same as a missing id.
+  mediaType = args.mediaType
+  if mediaType = invalid then mediaType = args.mediatype
+  if mediaType = invalid then mediaType = ""
   m.pendingDeepLink = cid
+  m.pendingMediaType = mediaType
   setUiState("loading", "Deep link " + cid + "…")
   t = createObject("roSGNode", "JellyfinTask")
   t.observeField("resultJson", "onDeepLinkResult")

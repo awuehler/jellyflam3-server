@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Roku VoD **1.0.48** cert **5.2** deep link: keep `m.input` (`roInput`) alive; handle `roInputEvent` with Roku's sample `DoesExist("mediatype")` / `DoesExist("contentid")` plus `mediaType`/`contentId` on cold launch. Missing or empty ids still land on home (no crash).
 - Roku VoD **1.0.47** public-app compliance: `roInput` handling uses the documented casing (`SetMessagePort`, `IsInput`, `GetInfo`) so Store static analysis recognizes it; `AppDialogInitiate` / `AppDialogComplete` now bracket **any** Settings dialog opened before the flock first renders, not only the empty-credential first run. **Static analysis reads the uploaded package** — re-package the `.pkg` on a Roku after sideloading this build before re-submitting.
 - Roku VoD **1.0.46** public-app compliance: keep `supports_input_launch=1` and `roInputEvent`; fire `AppDialogInitiate` / `AppDialogComplete` around first-run credential Settings; replace `KeyboardDialog` with `StandardKeyboardDialog` (voice-safe).
 - Roku VoD **1.0.45** public-app compliance: keep `supports_input_launch=1` and live `roInputEvent` handling; set `rsg_version=1.3`; drop deprecated manifest `subtitle`; subscribe `roAppMemoryMonitor` (`EnableMemoryWarningEvent`, `GetMemoryLimitPercent`, `GetChannelMemoryLimit`, `GetChannelAvailableMemory`) with `roDeviceInfo.EnableLowGeneralMemoryEvent` fallback.
