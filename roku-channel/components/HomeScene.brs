@@ -32,6 +32,9 @@ sub init()
     m.retryBtn.observeField("buttonSelected", "onRetryButton")
   end if
 
+  ' Beacon state: any dialog shown before the flock first renders is a
+  ' pre-home dialog and must be bracketed by AppDialogInitiate/Complete.
+  m.homeReady = false
   m.launchCredentialDialog = false
   m.registry = CreateObject("roRegistrySection", "JellyFlam3")
   clearDetailChrome()
@@ -40,8 +43,6 @@ sub init()
 
   ' First-run: open settings when credentials are missing (* often never reaches Scene)
   if needsCredentials()
-    m.launchCredentialDialog = true
-    m.top.signalBeacon("AppDialogInitiate")
     openSettings()
   end if
 end sub
@@ -105,6 +106,7 @@ end sub
 
 sub setUiState(state as string, message as string)
   m.uiState = state
+  if state = "ready" then m.homeReady = true
   showRetry = (state = "error" or state = "empty" or state = "unreachable")
   if m.retryBtn <> invalid
     m.retryBtn.visible = showRetry
@@ -929,6 +931,11 @@ end sub
 
 sub openSettings()
   if m.settings <> invalid then return
+  ' Credential entry before the home flock is a pre-home dialog.
+  if m.homeReady <> true and m.launchCredentialDialog <> true
+    m.launchCredentialDialog = true
+    m.top.signalBeacon("AppDialogInitiate")
+  end if
   if m.settingsBtn <> invalid then m.settingsBtn.focusable = false
   if m.retryBtn <> invalid then m.retryBtn.focusable = false
   if m.rowList <> invalid then m.rowList.focusable = false
