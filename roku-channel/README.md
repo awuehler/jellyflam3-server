@@ -2,6 +2,8 @@
 
 Sideloadable SceneGraph channel that lists sheep from Jellyfin with **poster tiles** (`FlockItem`). Tiles use `ImageTags.Primary` only — empty tag shows the **No poster** placeholder (`stills/.ignore` JPEGs are not Primaries). **Ambient loop** defaults to Static MP4; HLS remux remains available for lab compare.
 
+**1.0.45 public-app compliance:** `supports_input_launch=1` + `roInputEvent`; `rsg_version=1.3`; no deprecated manifest `subtitle`; `roAppMemoryMonitor` plus `EnableLowGeneralMemoryEvent` fallback. **1.0.44** added `AppLaunchComplete` after Scene show and excluded numbered source-art PNGs (under Roku's 4 MB limit).
+
 ## Playback
 
 | `streamMode` (registry) | URL | `streamFormat` | Sessions | Notes |

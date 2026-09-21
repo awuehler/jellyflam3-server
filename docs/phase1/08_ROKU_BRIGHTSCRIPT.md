@@ -11,7 +11,7 @@ Custom JellyFlam3 channel only — not jellyfin-roku, not screensaver.
 | Path | Role |
 |---|---|
 | `manifest` | Channel metadata + splash/icon |
-| `source/main.brs` | `roSGScreen` + deep link / `roInput` |
+| `source/main.brs` | `roSGScreen` + deep link / `roInput` + `roAppMemoryMonitor` |
 | `components/HomeScene.*` | RowList flock browser + Options→settings |
 | `components/FlockRowList.*` | RowList that forwards `*` / Options to settings |
 | `components/PlayerScreen.*` | Single `Video` (`loop=true`); default `streamFormat=hls`; stop before restart |
@@ -24,6 +24,8 @@ Settings registry section `JellyFlam3`: `baseUrl`, `apiKey`, `userId`, `libraryI
 VoD **1.0.37+** persists each valid keyboard edit when **OK** is pressed; Back does not discard accepted edits. In **1.0.42**, `commercialMode`, `streamMode`, `shuffleFlock`, and `titleMode` are OK-toggles with an immediate registry flush; **Save & Reload** refreshes the flock. Text credentials still use the keyboard. Boolean/title reads are normalized at startup. Home status shows effective commercial filtering and alias fallback counts. NC tags override safe tags regardless of order, including deep links. PlayerScreen—not Video—owns playback focus so vote keys are not swallowed. **1.0.38** overlay: **OK** love, **Right** like, **Down** dismiss, **Up/Back** exit (keyboard Enter / Right / Down / Up-Esc). **1.0.40** shows that map on one 55% line in the last **7 s** (name left, keys right). **1.0.41** puts loading-next on the same bar and SmallSystemFont so the two banners swap in place.
 
 VoD **1.0.43** distinguishes an unreachable furnace from an empty library: the waiting screen keeps Retry focused and automatically tries again every 30 seconds. A playback-open failure probes Jellyfin before dropping the item, so a service outage does not drain the cached flock. Session registration is fire-and-forget, leaving one 15-second Items timeout on cold failure.
+
+VoD **1.0.44** emits `AppLaunchComplete` after Scene show and keeps `supports_input_launch=1` plus live `roInputEvent` handling. Packagers omit every numbered `*-NN.png` source-art file so the Store zip stays under Roku’s **4 MB** limit. **1.0.45** sets `rsg_version=1.3`, drops deprecated manifest `subtitle`, and subscribes `roAppMemoryMonitor` (`EnableMemoryWarningEvent`, `GetMemoryLimitPercent`, `GetChannelMemoryLimit`, `GetChannelAvailableMemory`) with `roDeviceInfo.EnableLowGeneralMemoryEvent` fallback.
 
 Deep link: `contentId` = Jellyfin item id → dedicated item Task → `PlayerScreen` with `loop=true`.  
 Roku allows only **one** `Video` play instance: HomeScene always `stopPlayer()` before starting another stream (build 8+). List refresh never autoplays while a deep link is in flight.
@@ -90,7 +92,7 @@ Note: build **1.0.9+** reports `/Sessions/Playing` (and progress/stopped) from `
 | Artifact | Kind | Role |
 |---|---|---|
 | `roku-channel/` | channel | JellyFlam3 SceneGraph channel source |
-| `scripts/package_roku_channel.{sh,ps1}` | script | Produce `dist/jellyflam3-roku.zip` |
+| `scripts/package_roku_channel.{sh,ps1}` | script | Produce `dist/jellyflam3-roku.zip` (exclude `images/*-NN.png`) |
 | `dist/jellyflam3-roku.zip` | channel | Sideload artifact |
 | `scripts/jellyfin_id_dump.py` | script | Dump userId / libraryId for channel Settings |
 | Roku ECP (`:8060`) | binary | Deep-link / active-app / media-player smoke |

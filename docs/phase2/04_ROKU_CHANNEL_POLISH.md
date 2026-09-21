@@ -101,7 +101,7 @@ python3 -m pipeline.display_profiles list
 | Artifact | Kind | Role |
 |---|---|---|
 | `roku-channel/` | channel | Posters, metadata chrome, shuffle, TV probe |
-| `scripts/package_roku_channel.{sh,ps1}` | script | Package sideload zip |
+| `scripts/package_roku_channel.{sh,ps1}` | script | Package sideload zip (omit numbered source-art PNGs) |
 | `pipeline/display_profile_sink.py` | pipeline | HTTP upsert of per-screen profiles (:8791) |
 | `pipeline/display_profiles.py` | pipeline | CLI list / upsert display profiles |
 | `deploy/systemd/jellyflam3-display-sink.service` | deploy | Always-on sink service |

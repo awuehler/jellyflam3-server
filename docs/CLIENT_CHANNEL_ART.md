@@ -112,7 +112,7 @@ Do **not** drop generator filenames (`DALL·E 2026-….png`) into the client tre
 
 ## Operator: swap into client trees
 
-Work from a **clone of this repo** (Windows workstation or a furnace at `/opt/jellyflam3-server`). The sideload/add-on zips only ship the **unnumbered** live files. Numbered `*-00.png` / `*-01.png` stay in git as previous generations and are **excluded** from `package_roku_*` / `package_kodi_screensaver.*`. Do **not** add `*-02.png` under `images/` or `resources/` — packaging does not exclude `-02`, so it would ship as junk.
+Work from a **clone of this repo** (Windows workstation or a furnace at `/opt/jellyflam3-server`). The sideload/add-on zips only ship the **unnumbered** live files. Numbered `*-NN.png` backups stay in git as previous generations. **Roku VoD** packagers (`package_roku_channel.*`, **1.0.44+**) exclude every `images/*-NN.png`. **Roku screensaver** and **Kodi** packagers still exclude only `*-00.png` / `*-01.png` — do not leave `*-02.png` (and higher) under those trees unless you extend those scripts.
 
 Assume cropped files are in `~/jf3-art/` (Linux/macOS) or `$HOME\jf3-art\` (Windows):
 

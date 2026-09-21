@@ -46,7 +46,7 @@ Do not merge VoD and screensaver into one zip (Roku policy: no `RunScreenSaver` 
 ### A — Brand & storefront assets
 
 1. **Icons / logos** — replace placeholder `mm_icon_focus_*`, splash, and any Store poster / screenshot set for **both** packages (distinct VoD vs Dreams screensaver identity). Use **original JellyFlam3 art**. Prompt pack + crop sizes: [CLIENT_CHANNEL_ART.md](../CLIENT_CHANNEL_ART.md). Do **not** use `docs/media/watermark/Electric-Sheep-Icon*.png` or `Electric-Sheep-Logo.svg` as channel/Store marks (Cesari / Spotworks brand — [NOTICE](../../NOTICE)).
-2. Manifest **title** / **screensaver_title** / subtitle copy pass; version scheme aligned with Store builds (not only sideload `1.0.x` bumps).
+2. Manifest **title** / **screensaver_title** copy pass; version scheme aligned with Store builds (not only sideload `1.0.x` bumps). VoD **1.0.45** dropped deprecated manifest `subtitle` (home UI label is unchanged). Screensaver may still carry `subtitle` until its own Store pass.
 3. Optional FHD/SD asset matrix per [Roku channel packaging](https://developer.roku.com/docs/developer-program/getting-started/developer-setup.md) / Store checklist.
 
 ### B — Settings layout & user input
@@ -62,6 +62,7 @@ Do not merge VoD and screensaver into one zip (Roku policy: no `RunScreenSaver` 
 2. Client / DeviceName strings stable for idle-gate (`JellyFlam3` VoD vs `JellyFlam3-Screensaver`); DeviceId / screen identity unique **per physical Roku**.
 3. Debug ports: VoD **8085**, screensaver context **8087**; package scripts keep POSIX zip paths.
 4. Do **not** embed `RunScreenSaver` / `screensaver_title` inside the VoD streaming app (Roku policy — packages stay separate).
+5. Store static analysis (VoD **1.0.45**): `supports_input_launch=1` + `roInput`; `rsg_version=1.3`; no deprecated VoD `subtitle`; `roAppMemoryMonitor` + `EnableLowGeneralMemoryEvent`. Keep sideload zips under **4 MB** (numbered source-art PNGs stay out of the VoD package).
 
 ### D — Publish path
 

@@ -28,7 +28,22 @@ def test_roku_vod_tree_has_manifest_and_entry():
     assert (VOD / "manifest").is_file()
     text = (VOD / "manifest").read_text(encoding="utf-8")
     assert "title=JellyFlam3" in text
+    assert "supports_input_launch=1" in text
+    assert "rsg_version=1.3" in text
+    assert "subtitle=" not in text
     assert (VOD / "source" / "main.brs").is_file()
+    main = (VOD / "source" / "main.brs").read_text(encoding="utf-8")
+    assert 'CreateObject("roInput")' in main
+    assert 'msgType = "roInputEvent"' in main
+    assert 'signalBeacon("AppLaunchComplete")' in main
+    assert 'CreateObject("roAppMemoryMonitor")' in main
+    assert "EnableMemoryWarningEvent(true)" in main
+    assert "GetMemoryLimitPercent()" in main
+    assert "GetChannelMemoryLimit()" in main
+    assert "GetChannelAvailableMemory()" in main
+    assert "EnableLowGeneralMemoryEvent(true)" in main
+    assert 'msgType = "roAppMemoryNotificationEvent"' in main
+    assert 'msgType = "roDeviceInfoEvent"' in main
     assert (VOD / "components" / "HomeScene.xml").is_file()
     assert (VOD / "components" / "RegistryPresets.brs").is_file()
 
@@ -50,6 +65,14 @@ def test_roku_vod_zip_is_archive_root(tmp_path: Path):
     assert all("\\" not in n for n in names)
 
 
+def test_roku_packagers_exclude_all_numbered_source_art():
+    ps1 = (ROOT / "scripts" / "package_roku_channel.ps1").read_text(encoding="utf-8")
+    sh = (ROOT / "scripts" / "package_roku_channel.sh").read_text(encoding="utf-8")
+    assert r"-\d{2}\.png$" in ps1
+    assert "images/*-[0-9][0-9].png" in sh
+    assert "p.stem[-2:].isdigit()" in sh
+
+
 def test_roku_screensaver_zip_is_archive_root(tmp_path: Path):
     names = _zip_tree(SS, tmp_path / "jellyflam3-screensaver.zip")
     assert "manifest" in names
@@ -65,8 +88,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=43" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.43""' in text
+    assert "build_version=45" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.45""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home

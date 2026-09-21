@@ -41,7 +41,9 @@ foreach ($folder in $folders) {
   $dir = Join-Path $Channel $folder
   if (-not (Test-Path $dir)) { continue }
   Get-ChildItem -Path $dir -Recurse -File | Where-Object {
-    $_.Name -ne ".gitkeep" -and $_.Name -notmatch '-(00|01)\.png$'
+    # Numbered PNGs are source-art revisions; packages ship only the
+    # unnumbered manifest targets (mm_icon_focus_hd.png / splash-screen.png).
+    $_.Name -ne ".gitkeep" -and $_.Name -notmatch '-\d{2}\.png$'
   } | ForEach-Object {
     $rel = $_.FullName.Substring($Channel.Length + 1).Replace("\", "/")
     Add-File $_.FullName $rel
