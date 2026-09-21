@@ -32,6 +32,7 @@ sub init()
     m.retryBtn.observeField("buttonSelected", "onRetryButton")
   end if
 
+  m.launchCredentialDialog = false
   m.registry = CreateObject("roRegistrySection", "JellyFlam3")
   clearDetailChrome()
   ensureDefaults()
@@ -39,6 +40,8 @@ sub init()
 
   ' First-run: open settings when credentials are missing (* often never reaches Scene)
   if needsCredentials()
+    m.launchCredentialDialog = true
+    m.top.signalBeacon("AppDialogInitiate")
     openSettings()
   end if
 end sub
@@ -942,6 +945,10 @@ sub onSettingsClose()
   if m.settings <> invalid
     m.top.removeChild(m.settings)
     m.settings = invalid
+  end if
+  if m.launchCredentialDialog = true
+    m.top.signalBeacon("AppDialogComplete")
+    m.launchCredentialDialog = false
   end if
   if m.settingsBtn <> invalid then m.settingsBtn.focusable = true
   if saved

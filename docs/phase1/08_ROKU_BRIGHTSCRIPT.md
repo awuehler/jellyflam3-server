@@ -27,6 +27,8 @@ VoD **1.0.43** distinguishes an unreachable furnace from an empty library: the w
 
 VoD **1.0.44** emits `AppLaunchComplete` after Scene show and keeps `supports_input_launch=1` plus live `roInputEvent` handling. Packagers omit every numbered `*-NN.png` source-art file so the Store zip stays under Roku’s **4 MB** limit. **1.0.45** sets `rsg_version=1.3`, drops deprecated manifest `subtitle`, and subscribes `roAppMemoryMonitor` (`EnableMemoryWarningEvent`, `GetMemoryLimitPercent`, `GetChannelMemoryLimit`, `GetChannelAvailableMemory`) with `roDeviceInfo.EnableLowGeneralMemoryEvent` fallback.
 
+VoD **1.0.46** fires `AppDialogInitiate` / `AppDialogComplete` when first-run credential Settings open before the home flock, and uses `StandardKeyboardDialog` for text fields (not `KeyboardDialog`).
+
 Deep link: `contentId` = Jellyfin item id → dedicated item Task → `PlayerScreen` with `loop=true`.  
 Roku allows only **one** `Video` play instance: HomeScene always `stopPlayer()` before starting another stream (build 8+). List refresh never autoplays while a deep link is in flight.
 

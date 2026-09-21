@@ -36,6 +36,12 @@ def test_roku_vod_tree_has_manifest_and_entry():
     assert 'CreateObject("roInput")' in main
     assert 'msgType = "roInputEvent"' in main
     assert 'signalBeacon("AppLaunchComplete")' in main
+    settings = (VOD / "components" / "SettingsScreen.brs").read_text(encoding="utf-8")
+    home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
+    assert 'createObject("roSGNode", "KeyboardDialog")' not in settings
+    assert 'createObject("roSGNode", "StandardKeyboardDialog")' in settings
+    assert 'signalBeacon("AppDialogInitiate")' in home
+    assert 'signalBeacon("AppDialogComplete")' in home
     assert 'CreateObject("roAppMemoryMonitor")' in main
     assert "EnableMemoryWarningEvent(true)" in main
     assert "GetMemoryLimitPercent()" in main
@@ -88,8 +94,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=45" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.45""' in text
+    assert "build_version=46" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.46""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home

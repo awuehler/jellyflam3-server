@@ -621,7 +621,7 @@ sub editField(name as string)
     toggleChoice(name)
     return
   end if
-  kb = createObject("roSGNode", "KeyboardDialog")
+  kb = createObject("roSGNode", "StandardKeyboardDialog")
   kb.title = "Edit " + name
   cur = m.values[name]
   if cur = invalid then cur = ""
@@ -631,21 +631,46 @@ sub editField(name as string)
     if teb <> invalid then teb.secureMode = true
   end if
   kb.buttons = ["OK", "Cancel"]
-  m.top.appendChild(kb)
   kb.observeField("buttonSelected", "onKeyboardButton")
-  kb.setFocus(true)
+  kb.observeField("wasClosed", "onKeyboardClosed")
   m.keyboard = kb
   m.editingField = name
+  scene = m.top.getScene()
+  if scene <> invalid
+    scene.dialog = kb
+  else
+    m.top.appendChild(kb)
+    kb.setFocus(true)
+  end if
+end sub
+
+sub keyboardEnteredText() as string
+  if m.keyboard = invalid then return ""
+  text = m.keyboard.text
+  if (text = invalid or text = "") and m.keyboard.textEditBox <> invalid
+    text = m.keyboard.textEditBox.text
+  end if
+  if text = invalid then return ""
+  return text.Trim()
 end sub
 
 sub onKeyboardButton()
   if m.keyboard = invalid then return
-  btn = m.keyboard.buttonSelected
+  applyOk = false
+  if m.keyboard.buttonSelected = 0 then applyOk = true
+  dismissKeyboard(applyOk)
+end sub
+
+sub onKeyboardClosed()
+  if m.keyboard = invalid then return
+  dismissKeyboard(false)
+end sub
+
+sub dismissKeyboard(applyOk as boolean)
+  if m.keyboard = invalid then return
   name = m.editingField
-  if btn = 0
-    text = m.keyboard.text
-    if text = invalid then text = ""
-    text = text.Trim()
+  if applyOk = true
+    text = keyboardEnteredText()
     accepted = applyEditedValue(name, text)
     if accepted = true
       ' Persist each accepted edit now. Back should never silently discard a
@@ -664,8 +689,13 @@ sub onKeyboardButton()
     end if
     refreshRowLabel(name)
   end if
-  m.top.removeChild(m.keyboard)
+  scene = m.top.getScene()
+  if scene <> invalid then scene.dialog = invalid
+  if m.keyboard <> invalid and m.keyboard.getParent() <> invalid
+    m.top.removeChild(m.keyboard)
+  end if
   m.keyboard = invalid
+  m.editingField = ""
   focusIndex(m.idx)
 end sub
 

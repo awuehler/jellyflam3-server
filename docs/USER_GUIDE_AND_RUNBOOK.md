@@ -759,7 +759,7 @@ powershell -NoProfile -File scripts/lab_smoke05_fleet.ps1
 | Roku VoD / Screensaver | `registry/jellyflam3-presets.json` in the zip; first launch writes empty `JellyFlam3` registry keys |
 | Kodi screensaver | `resources/settings.xml` default values in the staged zip |
 
-Each furnace Pi produces zips pointed at **its own** Jellyfin (`http://<that-pi-lan-ip>:8096`). Do not commit preset JSON or distribute zips outside the household — they contain the API key. Current VoD sideload is **1.0.45** (`rsg_version=1.3`, memory-monitor APIs, no deprecated manifest `subtitle`).
+Each furnace Pi produces zips pointed at **its own** Jellyfin (`http://<that-pi-lan-ip>:8096`). Do not commit preset JSON or distribute zips outside the household — they contain the API key. Current VoD sideload is **1.0.46** (`StandardKeyboardDialog`, first-run `AppDialogInitiate`/`AppDialogComplete`, `rsg_version=1.3`).
 
 Splash / icon refresh: prompts + **file swap** in [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md#operator-swap-into-client-trees).
 

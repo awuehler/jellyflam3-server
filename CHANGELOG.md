@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Roku VoD **1.0.46** public-app compliance: keep `supports_input_launch=1` and `roInputEvent`; fire `AppDialogInitiate` / `AppDialogComplete` around first-run credential Settings; replace `KeyboardDialog` with `StandardKeyboardDialog` (voice-safe).
 - Roku VoD **1.0.45** public-app compliance: keep `supports_input_launch=1` and live `roInputEvent` handling; set `rsg_version=1.3`; drop deprecated manifest `subtitle`; subscribe `roAppMemoryMonitor` (`EnableMemoryWarningEvent`, `GetMemoryLimitPercent`, `GetChannelMemoryLimit`, `GetChannelAvailableMemory`) with `roDeviceInfo.EnableLowGeneralMemoryEvent` fallback.
 - Roku VoD **1.0.44** public-app compliance: retain `supports_input_launch=1` plus live `roInputEvent` deep-link handling; emit the `AppLaunchComplete` beacon after the Scene is shown; exclude every numbered source-art PNG from packages so the public zip stays below Roku's **4 MB** limit.
 - Operator flock vote leaderboard: `python3 -m pipeline.sheep_votes top` (default 10) / `top -n 5` ranks live-catalog sidecar `votes` (then loves, likes). Zeros omitted unless `--min-votes 0`. Unpublished trees are skipped.

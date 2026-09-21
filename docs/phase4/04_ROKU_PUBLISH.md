@@ -62,7 +62,7 @@ Do not merge VoD and screensaver into one zip (Roku policy: no `RunScreenSaver` 
 2. Client / DeviceName strings stable for idle-gate (`JellyFlam3` VoD vs `JellyFlam3-Screensaver`); DeviceId / screen identity unique **per physical Roku**.
 3. Debug ports: VoD **8085**, screensaver context **8087**; package scripts keep POSIX zip paths.
 4. Do **not** embed `RunScreenSaver` / `screensaver_title` inside the VoD streaming app (Roku policy — packages stay separate).
-5. Store static analysis (VoD **1.0.45**): `supports_input_launch=1` + `roInput`; `rsg_version=1.3`; no deprecated VoD `subtitle`; `roAppMemoryMonitor` + `EnableLowGeneralMemoryEvent`. Keep sideload zips under **4 MB** (numbered source-art PNGs stay out of the VoD package).
+5. Store static analysis (VoD **1.0.46**): `supports_input_launch=1` + `roInput`; `rsg_version=1.3`; no deprecated VoD `subtitle`; `roAppMemoryMonitor` + `EnableLowGeneralMemoryEvent`; first-run Settings `AppDialogInitiate`/`AppDialogComplete`; `StandardKeyboardDialog` for text fields. Keep sideload zips under **4 MB** (numbered source-art PNGs stay out of the VoD package).
 
 ### D — Publish path
 
