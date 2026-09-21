@@ -6,6 +6,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Roku Channel Store listing drafts: [privacy policy](docs/roku-store/PRIVACY_POLICY.md), [terms of use](docs/roku-store/TERMS_OF_USE.md), [support contact](docs/roku-store/SUPPORT.md) ([dashboard URL map](docs/roku-store/README.md)).
 - Roku VoD **1.0.49** Store packaging: omit `splash_screen_sd` and `mm_icon_focus_sd` so analysis does not require 720×480 / 246×140 crops of the HD splash and icon. Keep `splash_screen_hd` (1280×720) and `mm_icon_focus_hd` (290×218) with `ui_resolutions=fhd`.
 - Roku VoD **1.0.48** cert **5.2** deep link: keep `m.input` (`roInput`) alive; handle `roInputEvent` with Roku's sample `DoesExist("mediatype")` / `DoesExist("contentid")` plus `mediaType`/`contentId` on cold launch. Missing or empty ids still land on home (no crash).
 - Roku VoD **1.0.47** public-app compliance: `roInput` handling uses the documented casing (`SetMessagePort`, `IsInput`, `GetInfo`) so Store static analysis recognizes it; `AppDialogInitiate` / `AppDialogComplete` now bracket **any** Settings dialog opened before the flock first renders, not only the empty-credential first run. **Static analysis reads the uploaded package** — re-package the `.pkg` on a Roku after sideloading this build before re-submitting.

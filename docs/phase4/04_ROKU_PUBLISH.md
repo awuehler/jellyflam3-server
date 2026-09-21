@@ -69,7 +69,7 @@ Do not merge VoD and screensaver into one zip (Roku policy: no `RunScreenSaver` 
 ### D — Publish path
 
 1. Developer account, package signing / rekey, **private channel** (lab households) and/or **Channel Store** submission for VoD and screensaver as appropriate.
-2. Store listing: descriptions, screenshots, categories, age rating, privacy / network disclosure (Jellyfin LAN URL + API key).
+2. Store listing: descriptions, screenshots, categories, age rating, privacy / network disclosure (Jellyfin LAN URL + API key). Draft pages: [roku-store/](../roku-store/README.md) (privacy, terms, support).
 3. Coexistence runbook: private VoD + sideload SS (or both private) so Theme screensavers and Home VoD tile both remain available.
 4. Update operator docs (`roku-channel/README.md`, `roku-screensaver/README.md`, packaging scripts) for signed builds vs sideload zips.
 5. Household install: same published channel/screensaver on **every** Roku (no per-TV sideload chore once private/Store is live).
@@ -114,7 +114,7 @@ Baseline already shipped: two live Roku profiles on one Pi (Phase 2 Owner OK). P
 | Updated `roku-channel/` + `roku-screensaver/` assets | brand | Icons, splash, Store posters |
 | Settings UX (VoD + SS) | channel | Layout, keyboard input, validation; optional screen name |
 | Signed `.pkg` / private-channel builds | release | Coexistence beyond single sideload; same apps on every household Roku |
-| Store / private listing copy | docs | Descriptions, screenshots, privacy |
+| Store / private listing copy | docs | [roku-store/](../roku-store/README.md) privacy, terms, support; descriptions, screenshots |
 | Operator publish + multi-TV runbook | docs | Rekey, upload, version, rollback; N Rokus → one server |
 | `display_profiles/` + sink `:8791` | ops | Per-screen identity (extend Phase 2; friendly labels) |
 
