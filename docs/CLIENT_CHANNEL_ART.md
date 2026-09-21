@@ -37,7 +37,7 @@ Generate **one** 16:9 hero and **one** square mark, then crop.
 | Kodi fanart (this repo) | **1280×720** JPEG | `resources/fanart.jpg` — `build_kodi_screensaver_assets.py` currently prefers **live flock posters**; a custom hero is an operator override |
 | GitHub README header | **1280×640** or 16:9 | optional; not required for sideload |
 
-Keep a numbered source (`splash-screen-02.png`, `icon-03.png`) beside the unnumbered package files, matching the existing `-00` / `-01` convention.
+VoD live files are unnumbered (`splash-screen.png`, `mm_icon_focus_hd.png`). Numbered `*-NN.png` backups were dropped from `roku-channel/images/` so they cannot inflate a Store zip; screensaver and Kodi still keep `-00` / `-01` (and some older `-02` / `-04`) as prior generations.
 
 **Safe area:** keep title glyphs and the mark’s bell inside the center ~80%. Roku splash can letterbox; do not put the only readable word on the extreme left/right edge.
 
@@ -112,7 +112,7 @@ Do **not** drop generator filenames (`DALL·E 2026-….png`) into the client tre
 
 ## Operator: swap into client trees
 
-Work from a **clone of this repo** (Windows workstation or a furnace at `/opt/jellyflam3-server`). The sideload/add-on zips only ship the **unnumbered** live files. Numbered `*-NN.png` backups stay in git as previous generations. **Roku VoD** packagers (`package_roku_channel.*`, **1.0.44+**) exclude every `images/*-NN.png`. **Roku screensaver** and **Kodi** packagers still exclude only `*-00.png` / `*-01.png` — do not leave `*-02.png` (and higher) under those trees unless you extend those scripts.
+Work from a **clone of this repo** (Windows workstation or a furnace at `/opt/jellyflam3-server`). The sideload/add-on zips only ship the **unnumbered** live files. **Roku VoD** has no numbered backups in-tree; packagers (`package_roku_channel.*`, **1.0.44+**) still exclude every `images/*-NN.png` if one is dropped in. **Roku screensaver** and **Kodi** packagers still exclude only `*-00.png` / `*-01.png` — do not leave `*-02.png` (and higher) under those trees unless you extend those scripts.
 
 Assume cropped files are in `~/jf3-art/` (Linux/macOS) or `$HOME\jf3-art\` (Windows):
 
@@ -127,16 +127,12 @@ Manifests already point at those live names (`splash_screen_hd`, `mm_icon_focus_
 
 ### 1 — Archive the outgoing live files
 
-Rotate two generations in-tree: live → `-00`, old `-00` → `-01`. That overwrites the previous `-01` slot (copy off-tree first if you want a longer history).
+Rotate two generations in-tree for **screensaver and Kodi**: live → `-00`, old `-00` → `-01`. That overwrites the previous `-01` slot (copy off-tree first if you want a longer history). **VoD** does not keep numbered backups; git history is the archive.
 
 **Linux / furnace / macOS** (repo root):
 
 ```bash
-# VoD
-cp roku-channel/images/splash-screen-00.png     roku-channel/images/splash-screen-01.png
-cp roku-channel/images/splash-screen.png        roku-channel/images/splash-screen-00.png
-cp roku-channel/images/mm_icon_focus_hd-00.png  roku-channel/images/mm_icon_focus_hd-01.png
-cp roku-channel/images/mm_icon_focus_hd.png     roku-channel/images/mm_icon_focus_hd-00.png
+# VoD: replace live files only (no numbered backups in-tree)
 
 # Roku Dreams (same rotation)
 cp roku-screensaver/images/splash-screen-00.png     roku-screensaver/images/splash-screen-01.png
@@ -158,10 +154,6 @@ function Rotate-Live($live, $slot0, $slot1) {
   if (Test-Path $slot0) { Copy-Item $slot0 $slot1 -Force }
   Copy-Item $live $slot0 -Force
 }
-Rotate-Live roku-channel\images\splash-screen.png `
-  roku-channel\images\splash-screen-00.png roku-channel\images\splash-screen-01.png
-Rotate-Live roku-channel\images\mm_icon_focus_hd.png `
-  roku-channel\images\mm_icon_focus_hd-00.png roku-channel\images\mm_icon_focus_hd-01.png
 Rotate-Live roku-screensaver\images\splash-screen.png `
   roku-screensaver\images\splash-screen-00.png roku-screensaver\images\splash-screen-01.png
 Rotate-Live roku-screensaver\images\mm_icon_focus_hd.png `
@@ -262,12 +254,14 @@ Roku holds **one** sideload at a time. Do not sideload SS over household VoD unl
 
 ### 6 — Rollback
 
-Copy `-00` (previous live) back over the unnumbered name, package, sideload/install again:
+**Roku VoD:** restore prior pixels from git history (`git show HEAD~:roku-channel/images/splash-screen.png`), not from a local `-00` copy.
+
+**Screensaver / Kodi:** copy `-00` (previous live) back over the unnumbered name, package, sideload/install again:
 
 ```bash
-cp roku-channel/images/splash-screen-00.png roku-channel/images/splash-screen.png
-cp roku-channel/images/mm_icon_focus_hd-00.png roku-channel/images/mm_icon_focus_hd.png
-# same for roku-screensaver/ and Kodi icon-00.png → icon.png
+cp roku-screensaver/images/splash-screen-00.png roku-screensaver/images/splash-screen.png
+cp roku-screensaver/images/mm_icon_focus_hd-00.png roku-screensaver/images/mm_icon_focus_hd.png
+# Kodi: icon-00.png → icon.png
 ```
 
 **License of the pixels:** you (or the generator’s terms) own the result. The repo does not treat AI chrome as Free Sheep CC. Do not imply affiliation with Spotworks or Jellyfin.
