@@ -759,7 +759,7 @@ powershell -NoProfile -File scripts/lab_smoke05_fleet.ps1
 | Roku VoD / Screensaver | `registry/jellyflam3-presets.json` in the zip; first launch writes empty `JellyFlam3` registry keys |
 | Kodi screensaver | `resources/settings.xml` default values in the staged zip |
 
-Each furnace Pi produces zips pointed at **its own** Jellyfin (`http://<that-pi-lan-ip>:8096`). Do not commit preset JSON or distribute zips outside the household — they contain the API key. Current VoD sideload is **1.0.50** (one-way MP4 stream fallback; HD-only splash/icon; cert **5.2** `roInput`; `rsg_version=1.3`).
+Each furnace Pi produces zips pointed at **its own** Jellyfin (`http://<that-pi-lan-ip>:8096`). Do not commit preset JSON or distribute zips outside the household — they contain the API key. Current VoD sideload is **1.0.51** (launch beacon at an operable home screen; one-way MP4 stream fallback; HD-only splash/icon; cert **5.2** `roInput`; `rsg_version=1.3`).
 
 For a Roku **Channel Store** package the presets must be public, not LAN. Pack to a separate zip so the household artifact keeps its LAN `baseUrl`, and clear the preset cache first — `fetch_roku_settings` returns `dist/client-presets/jellyflam3-presets.json` whenever it already has a `baseUrl` + `apiKey`, so `JELLYFIN_PUBLIC_URL` is ignored until that file is gone.
 

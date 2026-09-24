@@ -4,8 +4,8 @@ sub Main(args as dynamic)
   screen.SetMessagePort(m.port)
   scene = screen.CreateScene("HomeScene")
   screen.Show()
-  ' Roku certification launch-performance beacon: the initial Scene is visible.
-  scene.signalBeacon("AppLaunchComplete")
+  ' HomeScene owns the AppLaunchComplete beacon: Roku requires it at a fully rendered
+  ' home screen or at deep-link playback, which is later than screen.Show().
 
   ' Cold launch: ECP / voice deep link parameters arrive on Main(args).
   if args <> invalid then applyDeepLink(scene, args)

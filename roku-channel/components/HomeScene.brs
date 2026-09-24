@@ -36,6 +36,9 @@ sub init()
   ' pre-home dialog and must be bracketed by AppDialogInitiate/Complete.
   m.homeReady = false
   m.launchCredentialDialog = false
+  m.launchBeaconFired = false
+  m.launchBeaconTimer = invalid
+  startLaunchBeaconGuard()
   m.registry = CreateObject("roRegistrySection", "JellyFlam3")
   clearDetailChrome()
   ensureDefaults()
@@ -104,9 +107,53 @@ sub onReconnectTimer()
   refreshFromRegistry()
 end sub
 
+' Cert launch beacon. Roku measures AppLaunchComplete against the first render pass
+' after it is signaled, so it must mark an operable screen — the flock, an actionable
+' empty/error/unreachable screen, or deep-link playback — not bare screen.Show().
+sub signalAppLaunchComplete()
+  if m.launchBeaconFired = true then return
+  ' Dialog time is excluded from launch time; wait for the pre-home dialog to close.
+  if m.launchCredentialDialog = true then return
+  m.launchBeaconFired = true
+  stopLaunchBeaconGuard()
+  m.top.signalBeacon("AppLaunchComplete")
+end sub
+
+' A furnace that never answers must not cost the beacon: the chrome below is already
+' rendered and Settings / Retry already work, well inside the 15 s launch budget.
+sub startLaunchBeaconGuard()
+  if m.launchBeaconFired = true then return
+  if m.launchBeaconTimer = invalid
+    t = createObject("roSGNode", "Timer")
+    t.duration = 5
+    t.repeat = false
+    t.observeField("fire", "onLaunchBeaconGuard")
+    m.top.appendChild(t)
+    m.launchBeaconTimer = t
+  end if
+  m.launchBeaconTimer.control = "start"
+end sub
+
+sub stopLaunchBeaconGuard()
+  if m.launchBeaconTimer = invalid then return
+  m.launchBeaconTimer.control = "stop"
+end sub
+
+sub onLaunchBeaconGuard()
+  if m.launchCredentialDialog = true
+    ' Still waiting on the user; re-arm so the beacon lands after the dialog closes.
+    startLaunchBeaconGuard()
+    return
+  end if
+  signalAppLaunchComplete()
+end sub
+
 sub setUiState(state as string, message as string)
   m.uiState = state
   if state = "ready" then m.homeReady = true
+  if state = "ready" or state = "empty" or state = "error" or state = "unreachable"
+    signalAppLaunchComplete()
+  end if
   showRetry = (state = "error" or state = "empty" or state = "unreachable")
   if m.retryBtn <> invalid
     m.retryBtn.visible = showRetry
@@ -956,6 +1003,7 @@ sub onSettingsClose()
   if m.launchCredentialDialog = true
     m.top.signalBeacon("AppDialogComplete")
     m.launchCredentialDialog = false
+    startLaunchBeaconGuard()
   end if
   if m.settingsBtn <> invalid then m.settingsBtn.focusable = true
   if saved

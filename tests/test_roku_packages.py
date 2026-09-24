@@ -47,7 +47,7 @@ def test_roku_vod_tree_has_manifest_and_entry():
     assert 'info.DoesExist("contentid")' in main
     assert "mediaType = info.mediatype" in main
     assert "contentId = info.contentid" in main
-    assert 'signalBeacon("AppLaunchComplete")' in main
+    assert 'signalBeacon("AppLaunchComplete")' not in main
     settings = (VOD / "components" / "SettingsScreen.brs").read_text(encoding="utf-8")
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert 'createObject("roSGNode", "KeyboardDialog")' not in settings
@@ -69,6 +69,22 @@ def test_roku_vod_tree_has_manifest_and_entry():
     assert 'msgType = "roDeviceInfoEvent"' in main
     assert (VOD / "components" / "HomeScene.xml").is_file()
     assert (VOD / "components" / "RegistryPresets.brs").is_file()
+
+
+def test_roku_vod_launch_beacon_marks_an_operable_screen():
+    """Roku measures AppLaunchComplete against the first render pass after it fires."""
+    main = (VOD / "source" / "main.brs").read_text(encoding="utf-8")
+    home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
+    assert 'signalBeacon("AppLaunchComplete")' not in main
+    assert "sub signalAppLaunchComplete()" in home
+    assert 'm.top.signalBeacon("AppLaunchComplete")' in home
+    assert "if m.launchBeaconFired = true then return" in home
+    # Dialog time is excluded from launch time, so the beacon waits for the dialog.
+    assert "if m.launchCredentialDialog = true then return" in home
+    # A furnace that never answers still has to produce a beacon inside 15 s.
+    assert "sub startLaunchBeaconGuard()" in home
+    assert "sub onLaunchBeaconGuard()" in home
+    assert 'if state = "ready" or state = "empty" or state = "error" or state = "unreachable"' in home
 
 
 def test_roku_vod_stream_fallback_never_escalates_to_hls():
@@ -119,8 +135,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=50" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.50""' in text
+    assert "build_version=51" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.51""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
