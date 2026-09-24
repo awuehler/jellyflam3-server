@@ -73,6 +73,16 @@ def _mask(secret: str, *, show: bool) -> str:
     return secret[:2] + "..." + secret[-4:] + f" ({len(secret)} chars)"
 
 
+def stream_mode_pref() -> str:
+    """Roku ambient stream mode preset. ``JELLYFIN_STREAM_MODE=hls`` builds an HLS pack.
+
+    HLS only starts promptly on media with regular keyframes; keyframe-sparse sheep make
+    Jellyfin emit the whole clip as segment 0. Default stays ``mp4`` (Static Direct Play).
+    """
+    mode = (os.environ.get("JELLYFIN_STREAM_MODE") or "").strip().lower()
+    return mode if mode in ("mp4", "hls") else "mp4"
+
+
 def _generation_from_item(it: dict[str, Any]) -> str:
     """Best-effort generation id from Tags, by-generation path, or electricsheep name."""
     for t in it.get("Tags") or []:
@@ -323,7 +333,7 @@ def build_report(
         "userId": uid,
         "libraryId": lib,
         "commercialMode": "false",
-        "streamMode": "mp4",
+        "streamMode": stream_mode_pref(),
         "shuffleFlock": "true",
     }
 

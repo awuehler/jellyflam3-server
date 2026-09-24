@@ -765,10 +765,13 @@ For a Roku **Channel Store** package the presets must be public, not LAN. Pack t
 
 ```bash
 rm -f dist/client-presets/jellyflam3-presets.json
-JELLYFIN_PUBLIC_URL=https://<funnel-host> ./scripts/package_roku_channel.sh dist/jellyflam3-roku-store.zip
+JELLYFIN_PUBLIC_URL=https://<funnel-host> JELLYFIN_STREAM_MODE=hls \
+  ./scripts/package_roku_channel.sh dist/jellyflam3-roku-store.zip
 rm -f dist/client-presets/jellyflam3-presets.json
 ./scripts/package_roku_channel.sh          # restore the LAN household zip
 ```
+
+`JELLYFIN_STREAM_MODE` presets the ambient stream mode (`mp4` default, `hls` opt-in). HLS only starts promptly on media with **regular keyframes**. Measured over the Funnel relay: a 720p clip encoded with `-g 48 -keyint_min 48` returns segment 0 in **1.4 MB / 0.7 s**, while a stock keyframe-sparse sheep returns the entire clip as segment 0 — **21.8 MB / 12.6 s**, far past Roku cert **3.6**.
 
 Package presets only fill **empty** registry keys (`RegistryPresets.brs`), so sideloading either zip on a TV that already has credentials leaves its `baseUrl` alone.
 

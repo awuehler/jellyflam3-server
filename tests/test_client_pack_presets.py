@@ -23,6 +23,34 @@ def _import_presets():
     return cpp
 
 
+def _import_id_dump():
+    import sys
+
+    if str(SCRIPTS) not in sys.path:
+        sys.path.insert(0, str(SCRIPTS))
+    import jellyfin_id_dump as jfd
+
+    return jfd
+
+
+def test_stream_mode_pref_defaults_to_mp4(monkeypatch: pytest.MonkeyPatch):
+    jfd = _import_id_dump()
+    monkeypatch.delenv("JELLYFIN_STREAM_MODE", raising=False)
+    assert jfd.stream_mode_pref() == "mp4"
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [("hls", "hls"), ("HLS", "hls"), ("mp4", "mp4"), ("", "mp4"), ("dash", "mp4")],
+)
+def test_stream_mode_pref_accepts_only_mp4_or_hls(
+    value: str, expected: str, monkeypatch: pytest.MonkeyPatch
+):
+    jfd = _import_id_dump()
+    monkeypatch.setenv("JELLYFIN_STREAM_MODE", value)
+    assert jfd.stream_mode_pref() == expected
+
+
 def test_is_furnace_host_false_without_secrets(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     cpp = _import_presets()
     monkeypatch.chdir(tmp_path)
