@@ -761,7 +761,16 @@ powershell -NoProfile -File scripts/lab_smoke05_fleet.ps1
 
 Each furnace Pi produces zips pointed at **its own** Jellyfin (`http://<that-pi-lan-ip>:8096`). Do not commit preset JSON or distribute zips outside the household — they contain the API key. Current VoD sideload is **1.0.50** (one-way MP4 stream fallback; HD-only splash/icon; cert **5.2** `roInput`; `rsg_version=1.3`).
 
-For a Roku **Channel Store** package the presets must be public, not LAN — export `JELLYFIN_PUBLIC_URL=https://<funnel-host>` before `./scripts/package_roku_channel.sh` so `baseUrl` is reachable from Roku's cert lab, and set Jellyfin's published server URL to the same host.
+For a Roku **Channel Store** package the presets must be public, not LAN. Pack to a separate zip so the household artifact keeps its LAN `baseUrl`, and clear the preset cache first — `fetch_roku_settings` returns `dist/client-presets/jellyflam3-presets.json` whenever it already has a `baseUrl` + `apiKey`, so `JELLYFIN_PUBLIC_URL` is ignored until that file is gone.
+
+```bash
+rm -f dist/client-presets/jellyflam3-presets.json
+JELLYFIN_PUBLIC_URL=https://<funnel-host> ./scripts/package_roku_channel.sh dist/jellyflam3-roku-store.zip
+rm -f dist/client-presets/jellyflam3-presets.json
+./scripts/package_roku_channel.sh          # restore the LAN household zip
+```
+
+Package presets only fill **empty** registry keys (`RegistryPresets.brs`), so sideloading either zip on a TV that already has credentials leaves its `baseUrl` alone.
 
 Splash / icon refresh: prompts + **file swap** in [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md#operator-swap-into-client-trees).
 
