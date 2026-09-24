@@ -71,6 +71,14 @@ def test_roku_vod_tree_has_manifest_and_entry():
     assert (VOD / "components" / "RegistryPresets.brs").is_file()
 
 
+def test_roku_vod_stream_fallback_never_escalates_to_hls():
+    """Cert 3.6: Jellyfin emits the whole keyframe-sparse clip as HLS segment 0."""
+    player = (VOD / "components" / "PlayerScreen.brs").read_text(encoding="utf-8")
+    assert 'if m.streamFormat = "hls" and m.mp4Url <> ""' in player
+    assert 'else if m.streamFormat = "mp4" and m.hlsUrl <> ""' not in player
+    assert 'altFmt = "hls"' not in player
+
+
 def test_roku_screensaver_tree_has_manifest_and_entry():
     assert (SS / "manifest").is_file()
     text = (SS / "manifest").read_text(encoding="utf-8")
@@ -111,8 +119,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=49" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.49""' in text
+    assert "build_version=50" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.50""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home

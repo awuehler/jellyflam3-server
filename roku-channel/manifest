@@ -1,7 +1,7 @@
 title=JellyFlam3
 major_version=1
 minor_version=0
-build_version=49
+build_version=50
 mm_icon_focus_hd=pkg:/images/mm_icon_focus_hd.png
 splash_screen_hd=pkg:/images/splash-screen.png
 splash_color=#0a0a12

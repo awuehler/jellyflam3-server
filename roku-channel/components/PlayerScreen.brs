@@ -299,12 +299,12 @@ sub tryAltFallback() as boolean
   if m.triedAltFallback = true then return false
   altUrl = ""
   altFmt = ""
+  ' Only fall back toward MP4. Sheep loops are keyframe-sparse, so Jellyfin emits the
+  ' whole clip as HLS segment 0 (~21 MB labelled 6 s) — slower than the Static MP4 it
+  ' would be retrying, and past Roku cert 3.6's 8 s start budget.
   if m.streamFormat = "hls" and m.mp4Url <> ""
     altUrl = m.mp4Url
     altFmt = "mp4"
-  else if m.streamFormat = "mp4" and m.hlsUrl <> ""
-    altUrl = m.hlsUrl
-    altFmt = "hls"
   end if
   if altUrl = "" then return false
 
