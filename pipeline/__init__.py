@@ -5,4 +5,4 @@ Usage: ``import pipeline`` or ``python -m pipeline.<module>`` (see ``pipeline.__
 Assumptions: Package version is informational; workers/tools load config via ``pipeline.config``.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.3.2"

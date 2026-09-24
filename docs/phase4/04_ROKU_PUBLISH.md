@@ -4,7 +4,7 @@
 
 Phase 4 synopsis — take the **existing** JellyFlam3 Roku packages from lab sideload to **publishable** distribution: VoD player (`roku-channel/`) and standalone screensaver (`roku-screensaver/`). Includes Store/private-channel packaging, brand assets, settings UX / input polish, Roku publishing best-practices, and **multi-Roku households on a single JellyFlam3-server**.
 
-**Status:** Private-channel coexistence path **shipped in-repo** 2026-09-11 (Wave 2): runbook below, SS Settings writes Jellyfin creds (**1.0.10**). Channel Store listing, brand-asset refresh, and VoD Settings layout polish stay parked. Owner dashboard publish is an ops step after merge (do not sideload SS over VoD unless asked).
+**Status:** **Implemented** 2026-09-23 (`v0.3.2`). Private-channel coexistence path **shipped** 2026-09-11 (SS Settings writes Jellyfin creds in **1.0.10**). VoD Channel Store package (**1.0.51**, no Funnel URL, no Jellyfin keys) **submitted** 2026-09-23 — pending Roku review. Listing copy: [roku-store/](../roku-store/README.md). **Leftover:** JellyFlam3 Dreams Store listing (screensaver package is not cert-clean). Do not sideload SS over VoD unless asked.
 
 Depends on Phase 2 VoD polish ([../phase2/04_ROKU_CHANNEL_POLISH.md](../phase2/04_ROKU_CHANNEL_POLISH.md)) and Phase 3 screensaver MVP ([../phase3/01_SCREENSAVERS_AND_STILLS.md](../phase3/01_SCREENSAVERS_AND_STILLS.md)). Does **not** replace those guides; this is the publish + productization + multi-TV track.
 
@@ -20,7 +20,7 @@ Lab constraint (one sideload at a time **per device**) is **not** a product bug 
 
 ## Private-channel path (Wave 2)
 
-Prefer **VoD as a private/unpublished channel** (Home tile; does not occupy developer mode). Leave the **single sideload slot for the screensaver** on lab TVs (or publish SS later the same way). Channel Store stays Wave 4.
+Prefer **VoD as a private/unpublished channel** (Home tile; does not occupy developer mode). Leave the **single sideload slot for the screensaver** on lab TVs (or publish SS later the same way). Public Channel Store for VoD is **submitted** (pending review); Dreams screensaver Store remains leftover.
 
 ### Registry split
 
@@ -41,7 +41,7 @@ Sideload zips stay the lab iterate path (`./scripts/package_roku_channel.sh`). A
 
 Do not merge VoD and screensaver into one zip (Roku policy: no `RunScreenSaver` inside a streaming app).
 
-## Work items (when Phase 4 opens)
+## Work items
 
 ### A — Brand & storefront assets
 
@@ -120,23 +120,23 @@ Baseline already shipped: two live Roku profiles on one Pi (Phase 2 Owner OK). P
 | Operator publish + multi-TV runbook | docs | Rekey, upload, version, rollback; N Rokus → one server |
 | `display_profiles/` + sink `:8791` | ops | Per-screen identity (extend Phase 2; friendly labels) |
 
-## Exit criteria (when Phase 4 opens)
+## Exit criteria
 
-- [ ] VoD and screensaver brand assets replaced (icons/logos/splash at minimum)
-- [ ] VoD Settings: improved layout + reliable text input for Jellyfin fields
+- [x] VoD and screensaver brand assets replaced (icons/logos/splash at minimum; numbered `-00`/`-01` source art stays out of packages)
+- [x] VoD Settings: OK-toggles, `StandardKeyboardDialog`, Save & Reload (**1.0.36–1.0.42**). Optional friendly screen name leftover
 - [x] Screensaver Settings: credential + fade/dwell/fade-duration editors; Back exits (**1.0.10**); `titleMode` stills captions (**1.0.11**)
-- [ ] Both packages build via existing (or extended) package scripts; signed/private path documented
-- [x] Private-channel path documented (VoD unpublished + one sideload slot); Store listing parked
-- [ ] At least one publish path exercised (private channel **or** Store) for each package, or Owner waiver for Store
-- [ ] Idle-gate still open under published screensaver; VoD still reports Playing as today
-- [ ] **Multi-Roku:** ≥2 physical Rokus against one JellyFlam3-server — each has its own display profile; concurrent SS does not close gate; concurrent VoD closes gate as designed; operator can list screens
-- [ ] Owner OK
+- [x] Both packages build via existing package scripts; signed/private path documented
+- [x] Private-channel path documented (VoD unpublished + one sideload slot)
+- [x] VoD Channel Store submitted 2026-09-23 (pending review). Screensaver Store **leftover** (not cert-clean) — Owner waiver for Dreams
+- [x] Idle-gate still open under screensaver; VoD still reports Playing as today
+- [x] **Multi-Roku:** ≥2 physical Rokus against one JellyFlam3-server — each has its own display profile; concurrent SS does not close gate; concurrent VoD closes gate as designed; operator can list screens
+- [x] Owner OK 2026-09-23 (`v0.3.2`)
 
 ### Sign-off
 
 | Role | Name | Date | OK |
 |---|---|---|---|
-| Owner | Project owner | _TBD_ | [ ] |
+| Owner | Project owner | 2026-09-23 | [x] |
 
 ## See also
 

@@ -9,7 +9,7 @@
 | [phase1/00_OVERVIEW.md](phase1/00_OVERVIEW.md) | Phase 1 scope, reading order, definition of done — **complete** |
 | [phase2/00_OVERVIEW.md](phase2/00_OVERVIEW.md) | Phase 2 scope, reading order, definition of done — **complete** |
 | [phase3/00_OVERVIEW.md](phase3/00_OVERVIEW.md) | Phase 3 scope, reading order, definition of done — **complete** |
-| [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md) | Phase 4 synopsis, future features to be determined — **parked** |
+| [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md) | Phase 4 synopsis — **implemented** (`v0.3.2`); leftovers noted |
 | [phase5/00_OVERVIEW.md](phase5/00_OVERVIEW.md) | Phase 5 synopsis — 1..N furnaces (Pi) vs one LLM Agent Platform (Ventuno); Tailscale agent tag; one hot INT4 7–8B + small GPU VLM — **parked** |
 |||
 | [glossary.md](glossary.md) | Terms, keywords, and definitions for project + collateral vocabulary |
@@ -58,14 +58,14 @@ Parallel after **02**: `03` (HLS) anytime; `04` once Primary images exist. `05`�
 8. [09_SHEEP_REFACTOR.md](phase3/09_SHEEP_REFACTOR.md) — refactor tool (quality / palette / encode; Jellyfin-visible preview)
 9. [10_TESTING_AND_ACCEPTANCE.md](phase3/10_TESTING_AND_ACCEPTANCE.md) — testing, acceptance, and first `release candidate`
 
-**NOTE:** Tag **`v0.3.0`** at public launch — see [CHANGELOG.md](../CHANGELOG.md). Post-launch roadmap is [docs/phase4/](./phase4) (not part of v0.3.0). Tuples ([03](phase4/03_EDGES_AND_WATERMARK.md)) shipped 2026-09-05. 09 RNG aliases + VoD/SS titles shipped. Mesh introduce A/B/C, private-channel path, votes, and library rotate (optional cron) shipped. **Phase 5** (Ventuno LLM Agent Platform, separate from the Pi furnace) is a parked slice: [docs/phase5/](./phase5).
+**NOTE:** Tag **`v0.3.0`** at public launch — see [CHANGELOG.md](../CHANGELOG.md). Phase 4 close-out is **`v0.3.2`**. Tuples ([03](phase4/03_EDGES_AND_WATERMARK.md)) shipped 2026-09-05. 09 RNG aliases + VoD/SS titles shipped. Mesh introduce A/B/C, private-channel path, votes, library rotate (optional cron), and VoD Store submission shipped. **Phase 5** (Ventuno LLM Agent Platform, separate from the Pi furnace) is a parked slice: [docs/phase5/](./phase5).
 
-## Phase 4 guides (synopsis — products parked; pre-open slices noted)
+## Phase 4 guides (implemented — leftovers noted)
 
 1. [01_PEER_SHARE_PATH.md](phase4/01_PEER_SHARE_PATH.md) — gated `promote --apply` (**locked**; auto-promote **cancelled**)
 2. [02_MESH_INTRODUCE_SCRIPTING.md](phase4/02_MESH_INTRODUCE_SCRIPTING.md) — Syncthing introduce **closed** 2026-09-19 (Owner OK); share hop → [phase5/04](phase5/04_PEER_SHARE_MESH.md)
 3. [03_EDGES_AND_WATERMARK.md](phase4/03_EDGES_AND_WATERMARK.md) — **tuples shipped** 2026-09-05; standalone edges / loop watermark **cancelled** 2026-09-13
-4. [04_ROKU_PUBLISH.md](phase4/04_ROKU_PUBLISH.md) — private-channel path (**shipped** 2026-09-11); Store parked
+4. [04_ROKU_PUBLISH.md](phase4/04_ROKU_PUBLISH.md) — private-channel path (**shipped** 2026-09-11); VoD Channel Store **submitted** 2026-09-23 (pending review); Dreams Store leftover
 5. [05_END_USER_GUIDE.md](phase4/05_END_USER_GUIDE.md) — household guide (**baseline complete** 2026-09-03)
 6. [06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md) — disk check + rotate CLI (**closed** 2026-09-19); daily cron optional
 7. [07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md) — `link_capacity` (**estimator shipped**; Owner OK 2026-09-09; no Jellyfin cap / Ethernet lab DoD)
@@ -82,4 +82,4 @@ Overview: [phase4/00_OVERVIEW.md](phase4/00_OVERVIEW.md).
 4. [04_PEER_SHARE_MESH.md](phase5/04_PEER_SHARE_MESH.md) — furnace share-out → inbox + promote vs sendreceive (parked; **not** Ventuno)
 5. [05_KODI_SCREENSAVER_VOTES.md](phase5/05_KODI_SCREENSAVER_VOTES.md) — Kodi screensaver like/love overlay = Roku VoD map (same furnace sink)
 
-Overview: [phase5/00_OVERVIEW.md](phase5/00_OVERVIEW.md). Does not replace remaining Phase 4 products. Furnace playbook stays [phase2/09](phase2/09_PI_FROM_SCRATCH.md).
+Overview: [phase5/00_OVERVIEW.md](phase5/00_OVERVIEW.md). Does not reopen Phase 4 (implemented in `v0.3.2`). Furnace playbook stays [phase2/09](phase2/09_PI_FROM_SCRATCH.md).

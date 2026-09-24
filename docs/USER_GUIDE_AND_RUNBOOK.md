@@ -1211,4 +1211,4 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 
 ---
 
-*Document version: 2026-08-23 — Public launch (`v0.3.0`); fleet tip `2fca790` (post-launch OSS hygiene + share-security trust-key fix in `v0.3.1`).*
+*Document version: 2026-09-23 — Phase 4 close-out (`v0.3.2`); VoD Channel Store pending Roku review. Public launch was `v0.3.0` / `v0.3.1` (2026-08-23).*

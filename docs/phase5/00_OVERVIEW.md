@@ -111,7 +111,7 @@ Execute **01 before 02**. Guide 03 is the honesty check for the agent platform. 
 - Phase 3 complete ([../phase3/00_OVERVIEW.md](../phase3/00_OVERVIEW.md))
 - At least one live **furnace** (16a class preferred) per [../phase2/09_PI_FROM_SCRATCH.md](../phase2/09_PI_FROM_SCRATCH.md); B must support **additional** furnaces on the same tailnet
 - RNG aliases shipped so `alias` / `alias_source` are real sidecar fields ([../phase4/09_SHEEP_NAMING.md](../phase4/09_SHEEP_NAMING.md))
-- Owner waiver to open this slice **without** waiting for remaining Phase 4 products
+- Phase 4 closed (`v0.3.2`); leftover Dreams Store listing is **not** a Phase 5 blocker
 
 ## Definition of done (when opened)
 
