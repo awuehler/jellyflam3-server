@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """Purpose: Build Kodi addon fanart + screenshot JPGs from flock poster images.
 
 Default: three sheep posters from the operator fleet (16a / 08a / 04a), resized for

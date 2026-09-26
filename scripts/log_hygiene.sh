@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 # Purpose: 72h log rollover entrypoint — logrotate then age compress/purge.
 # Requirements: root (or sudo); logrotate; scripts/log_hygiene_age.sh.
 #

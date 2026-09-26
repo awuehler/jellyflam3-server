@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 # Purpose: Age-based compress (≥11 days) and purge (≥23 days) for furnace file logs.
 # Requirements: bash, gzip, find; readable log dirs.
 #

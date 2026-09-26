@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 # Purpose: Enable persistent journald + 72h logrotate hygiene on a furnace Pi.
 # Requirements: root; repo at /opt/jellyflam3-server (or run from checkout).
 #

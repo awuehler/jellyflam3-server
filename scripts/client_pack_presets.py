@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """Purpose: Pre-fill client package Jellyfin settings when packaging on a furnace host.
 
 On Pis with ``secrets.env`` (local Jellyfin), runs ``jellyfin_id_dump`` logic and writes:
