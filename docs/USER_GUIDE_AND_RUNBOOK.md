@@ -699,7 +699,7 @@ sudo ./scripts/enable_log_hygiene.sh
 sudo ./scripts/enable_log_hygiene.sh --check
 ```
 
-Policy: rotate `/var/log/jellyflam3/*.log` every **72h**; **gzip** backups after **11 days**; **purge** after **23 days** (same ages for Jellyfin dated logs). Details: [phase2/09_PI_FROM_SCRATCH.md](phase2/09_PI_FROM_SCRATCH.md) step 12.
+Policy: rotate `/var/log/jellyflam3/*.log` every **72h**; **gzip** backups after **11 days**; **purge** after **23 days** (same ages for Jellyfin dated logs). Details: [phase2/09_PI_FROM_SCRATCH.md](phase2/09_PI_FROM_SCRATCH.md) step 12. What to open during an incident: [Furnace logs](#furnace-logs-triage-activity-history).
 
 `healthcheck.sh` probes **live** unit + Tailscale state (not stale JSON). On Opt In without live share:
 
@@ -1037,6 +1037,66 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 ./scripts/backup.sh --config-only
 ```
 
+### Furnace logs (triage, activity, history)
+
+Systemd units log to **journald**, not to a file under the repo. Cron wrappers append to **`/var/log/jellyflam3/`** only when the `jellyflam3` crontab redirects them (the lab lines in each `scripts/cron_*.sh` header do). Python CLIs started by systemd (`worker`, `idle_gate`, `display_profile_sink`) use stdout, so their history is the unit journal. `paths.log_dir` (`/var/lib/jellyflam3/logs`) is the older drop-in; logrotate still covers `*.log` there if anything writes it. Hammer can wipe that directory.
+
+```bash
+# Last boot of one unit, or the previous boot after a power cycle:
+journalctl -u jellyflam3-worker -n 200 --no-pager
+journalctl -u jellyflam3-worker -b -1 --no-pager
+journalctl --disk-usage
+sudo ./scripts/enable_log_hygiene.sh --check
+```
+
+**Journal (activity — start here)**
+
+| Unit | What it records |
+|---|---|
+| `jellyflam3-worker` | Claim, quality gate, `flam3-animate`, encode, ingest, quarantine |
+| `jellyflam3-idlegate` | Gate open/closed, `reason`, idle-delay hold |
+| `jellyflam3-display-sink` | Profile upserts and `POST /v1/sheep-votes` (token failures, crash-loop on missing `DISPLAY_SINK_TOKEN`) |
+| `jellyfin` | Sessions, Direct Play / transcode, Images API |
+| `jellyflam3-syncthing` | Genome mesh serve (also Syncthing’s own log under `HOME=/var/lib/jellyflam3/syncthing`) |
+| `jellyflam3-peering` | Oneshot layout / Opt In marker (not the live sync stream) |
+| `tailscaled` | Tailnet, Funnel, ACL drops |
+| `jellyflam3-logrotate` | 72h rotate + age gzip/purge |
+| kernel (`journalctl -k`) | Wi‑Fi wedge (`brcmfmac`, `SCAN-FAILED -110`); watchdog reads this |
+
+Persistent journal lives in `/var/log/journal` (`Storage=persistent`; **512M** on `-16`/`-08`, **200M** on `-04`; retain **23 days**).
+
+**Cron files (history of scheduled work)** — `/var/log/jellyflam3/`
+
+| File | Cadence (lab crontab) | Look for |
+|---|---|---|
+| `archive_seed.log` | ~10-day DOM (16a 07:27 days 7/17/27; 08a 05:19 days 1/11/21; 04a 03:17 days 3/13/23) | `DONE archive seed` or `SKIP` (backlog, sheep still BAD) |
+| `breed_idle.log` | Daily 05:11 | `action=breed` or skip (`inbox_not_empty`, `gate_closed`, `live_render`) |
+| `share_votes.log` | Daily 06:41 | `action=share` / `plan` / `skip` |
+| `tailscale_watch.log` | Every 5 min on Opt-In hosts | `action=ok` / `heal`; exit 1 if still not live |
+| `library_rotate.log` | **Not** on the lab crontab until [Activate library rotate](#activate-library-rotate) | `action=rotate` / `skip` |
+
+Rotated copies are `*.log-YYYYMMDD-HHMMSS`, then `.gz` after **11 days**, deleted after **23 days**. A missing file means that crontab line is not installed, not that the job never ran in the journal.
+
+**Other hosts’ file logs**
+
+| Path | Role |
+|---|---|
+| `/var/log/jellyfin/jellyfinYYYYMMDD.log` | Jellyfin’s dated log (playback, library scan). Same 11/23-day compress/purge; we do not rename the live file mid-day |
+| `/var/lib/tailscale/tailscaled.log*.txt.*` | Tailscale’s own ring, if present; age script only deletes copies older than 23 days. Prefer `journalctl -u tailscaled` |
+| `/var/lib/jellyflam3/logs/*.log` | Legacy `paths.log_dir`. Empty on current units |
+
+**State files (current fact, not a scrollback)**
+
+| Path | Use in triage |
+|---|---|
+| `/var/lib/jellyflam3/idle_gate_status.json` | `gate`, `reason`, `seconds_until_resume` |
+| `/var/lib/jellyflam3/worker_drain.json` | `drain`, `phase`, in-flight job |
+| `/var/lib/jellyflam3/peering_status.json` | `share_opt_in` vs `share_live` (refreshed by healthcheck) |
+| `/var/lib/jellyflam3/jobs/<id>/job.json` | One render: state, `quality_gate`, src genome |
+| `/var/cache/jellyflam3/frames` | Scratch frames for the live job (not a log) |
+
+Kodi screensaver messages go to **Kodi’s** log on the pasture box (`/storage/.kodi/temp/kodi.log` on LibreELEC), not to the furnace.
+
 ### Operator triage
 
 | Symptom | Check | Fix |
@@ -1044,7 +1104,7 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 | No new sheep | `healthcheck.sh`; `gate` in status JSON; inbox count | Open gate / fix worker / seed or breed. If Jellyfin already has the item, wait for a client **wrap** ([Flock mix](#flock-mix-shuffle-wrap)) |
 | Gate stuck closed | Status JSON `reason`; VoD open even on Home? | Stop VoD / wait `idle_delay_sec` (**600**). Screensaver does not close the gate |
 | `idle-gate closed; waiting 15s before backfill continues` | `cat /var/lib/jellyflam3/idle_gate_status.json` | 15s is the retry cap. `idle_delay` = 10 min hold after last TV-class activity; no `--skip-gate` |
-| Worker quiet, gate open | `ls genomes/inbox/*.flam3`; journal `-u jellyflam3-worker`; `python3 -m pipeline.worker_drain status` | Seed inbox; inspect quarantine; **cancel** drain if `drain: true` |
+| Worker quiet, gate open | `ls genomes/inbox/*.flam3`; `journalctl -u jellyflam3-worker`; [Furnace logs](#furnace-logs-triage-activity-history); `python3 -m pipeline.worker_drain status` | Seed inbox; inspect quarantine; **cancel** drain if `drain: true` |
 | `jellyflam3-display-sink` crash-loop (`activating` / `NRestarts` climbing) | journal: `DISPLAY_SINK_TOKEN required when binding a non-loopback host` | On **this** Pi: `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'` → `DISPLAY_SINK_TOKEN=` in `secrets.env`; `systemctl reset-failed` + restart. Same string → Roku `displaySinkToken`. Do not copy another furnace. See [Display sink token](#display-sink-token-how--where--when). |
 | healthcheck exit 1 | Read script sections (units, tools, status file, **peering share_live**, **library disk BAD**) | See [offline peering](#opt-in-vs-share-live-do-not-confuse-them); `opt-in` or `opt-out`; free space on `/media/sheep` |
 | Sheep disk WARN / BAD | `python3 -m pipeline.library_disk check`; `df -h /media/sheep` | `python3 -m pipeline.library_disk rotate --apply`; arm daily cron with [Activate library rotate](#activate-library-rotate); Shears for one sheep; do not Hammer unless wiping the factory |
@@ -1187,6 +1247,9 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | `genomes/done` | Rendered parent pool (breeding) |
 | `genomes/peers/inbox` | Syncthing land (promote required; no auto-furnace) |
 | `/var/lib/jellyflam3/peering_status.json` | Opt In / **share_live** / Tailscale / Syncthing (live snapshot) |
+| `/var/log/journal` | Persistent systemd journal (worker, gate, Jellyfin, Tailscale) |
+| `/var/log/jellyflam3/*.log` | Cron history (seed, breed, share, Tailscale watch, optional rotate) |
+| `/var/log/jellyfin/jellyfinYYYYMMDD.log` | Jellyfin dated log |
 | `/storage/downloads/` on Kodi Pi | Zip drop for **Install from zip** (LibreELEC SMB share **Downloads**) |
 | `/storage/.kodi/addons/screensaver.jellyflam3` | Installed add-on files |
 | `/storage/.kodi/userdata/addon_data/screensaver.jellyflam3/settings.xml` | Jellyfin URL / API key / user / library (persists across zip upgrades) |
@@ -1211,4 +1274,4 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 
 ---
 
-*Document version: 2026-09-23 — Phase 4 close-out (`v0.3.2`); VoD Channel Store pending Roku review. Public launch was `v0.3.0` / `v0.3.1` (2026-08-23).*
+*Document version: 2026-09-25 — furnace log index for triage. Phase 4 close-out (`v0.3.2`); VoD Channel Store pending Roku review.*
