@@ -19,6 +19,8 @@ paths:
   # Pause-before-next-inbox (furnace polish). Missing key → file beside status_file.
   # python3 -m pipeline.worker_drain request|status|wait|cancel
   worker_drain_file: /var/lib/jellyflam3/worker_drain.json
+  # FIFO claim order (not filename). Missing key → inbox_fifo.json beside worker_drain_file.
+  inbox_fifo_file: /var/lib/jellyflam3/inbox_fifo.json
   log_dir: /var/lib/jellyflam3/logs
   # Guide 04 F: one JSON file per TV/screen (Roku sticks/TVs, Kodi, …)
   display_profiles: /var/lib/jellyflam3/display_profiles

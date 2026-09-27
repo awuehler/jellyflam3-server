@@ -24,6 +24,7 @@ from typing import Any
 
 from pipeline.choose_duration import duration_for_nframes, effective_max_sec, nframes_for_duration
 from pipeline.config import load_config, resolve_path
+from pipeline.inbox_queue import stamp_inbox_arrival
 from pipeline.genome_signals import _flames, _parse_root, is_linear_only_genome, is_orbit_frozen
 from pipeline.sheep_names import SHEEP_PREFIX, kind_of, normalize_stem, stem_of
 
@@ -351,6 +352,7 @@ def stage_tuple_inbox(
     body = combine_parent_genomes(xml_a, xml_b, from_stem=from_stem, to_stem=to_stem)
     inbox.mkdir(parents=True, exist_ok=True)
     dest.write_text(body, encoding="utf-8")
+    stamp_inbox_arrival(dest)
     log.info("staged tuple genome %s", dest)
     return dest
 

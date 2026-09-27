@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import Any
 
 from pipeline.config import load_config, resolve_path
+from pipeline.inbox_queue import stamp_inbox_arrival
 
 log = logging.getLogger("jellyflam3.peering")
 
@@ -939,6 +940,7 @@ def promote(
                 entry["dest"] = str(dest)
             else:
                 shutil.move(str(src), str(dest))
+                stamp_inbox_arrival(dest)
                 entry["dest"] = str(dest)
                 entry["sidecars"] = _move_companions(src, worker_inbox)
                 if poster_src.is_file() and not poster_dest.exists():

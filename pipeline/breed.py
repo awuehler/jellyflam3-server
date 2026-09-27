@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any
 
 from pipeline.config import load_config, resolve_path
+from pipeline.inbox_queue import stamp_inbox_arrival
 from pipeline.license_filter import infer_tags_from_genome
 from pipeline.sheep_tax import scan_file, tax_xml
 from pipeline.tool_lookup import tool as _tool
@@ -179,6 +180,7 @@ def breed_mutate(
             _run_flam3_genome(cfg, {"mutate": str(prep)}, child)
             inbox.mkdir(parents=True, exist_ok=True)
             shutil.move(str(child), str(dest))
+            stamp_inbox_arrival(dest)
             tags = inherit_license_tags([parent])
             write_pedigree_sidecar(
                 dest, method="mutate", parents=[parent.resolve()], tags=tags
@@ -238,6 +240,7 @@ def breed_cross(
         )
         inbox.mkdir(parents=True, exist_ok=True)
         shutil.move(str(child), str(dest))
+        stamp_inbox_arrival(dest)
         tags = inherit_license_tags([parent_a, parent_b])
         write_pedigree_sidecar(
             dest,

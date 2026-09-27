@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 from pipeline.config import load_config, resolve_path
+from pipeline.inbox_queue import stamp_inbox_arrival
 
 log = logging.getLogger("jellyflam3.job_recovery")
 
@@ -211,6 +212,7 @@ def _ensure_inbox(cfg: dict[str, Any], job: JobRecord, *, dry_run: bool) -> str 
                     return dest_name
                 inbox.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(cand, dest)
+                stamp_inbox_arrival(dest)
                 return dest_name
         return None
 
@@ -232,6 +234,7 @@ def _ensure_inbox(cfg: dict[str, Any], job: JobRecord, *, dry_run: bool) -> str 
         return dest_name
     inbox.mkdir(parents=True, exist_ok=True)
     shutil.copy2(candidates[0], dest)
+    stamp_inbox_arrival(dest)
     log.info("re-queued %s -> %s", candidates[0], dest)
     return dest_name
 

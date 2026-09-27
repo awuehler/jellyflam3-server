@@ -9,6 +9,7 @@ Assumptions: Single-threaded; sheep tax then TV-port then active artistic-qualit
   desaturated jobs quarantine before publication. Tuple genomes render three sequence
   stages then watermark the middle edge; successful genomes archive to genomes_done.
   Drain flag (pipeline.worker_drain) skips the next inbox claim after the current job.
+  Inbox claim order is FIFO (pipeline.inbox_queue), not filename / ASCII order.
 """
 
 from __future__ import annotations
@@ -49,6 +50,7 @@ from pipeline.sheep_tuple import (
 from pipeline.config import load_config, resolve_path
 from pipeline.cpu_limit import effective_cpus, ffmpeg_thread_args, flam3_nthreads, wrap_cmd
 from pipeline.flock_artwork import apply_flock_artwork
+from pipeline.inbox_queue import inbox_fifo_path, sync_inbox_fifo
 from pipeline.idle_gate import closed_wait_seconds, is_gate_open
 from pipeline.job_recovery import reclaim_orphans
 from pipeline.worker_drain import is_drain_requested
@@ -882,16 +884,17 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
 
 
 def poll_inbox(cfg: dict[str, Any]) -> None:
-    """Watch genomes_inbox forever: reclaim orphans, process .flam3/.flame, archive done."""
+    """Watch genomes_inbox forever: reclaim orphans, claim oldest genome, archive done."""
     inbox = resolve_path(cfg, "genomes_inbox")
     inbox.mkdir(parents=True, exist_ok=True)
+    ledger = inbox_fifo_path(cfg)
     # Single-threaded worker: reclaim in-flight jobs with no live animate/ffmpeg.
     wr = cfg.get("worker") or {}
     if wr.get("reclaim_orphans_on_start", True):
         actions = reclaim_orphans(cfg, startup=False, requeue=wr.get("requeue_orphans", True))
         n = sum(1 for a in actions if a.outcome in ("orphaned", "superseded"))
         log.info("startup orphan reclaim: %s job(s)", n)
-    log.info("watching inbox %s", inbox)
+    log.info("watching inbox %s (fifo %s)", inbox, ledger)
     last_drain_log = 0.0
     while True:
         if is_drain_requested(cfg):
@@ -905,28 +908,33 @@ def poll_inbox(cfg: dict[str, Any]) -> None:
         wait_for_gate(cfg, abort_if_drain=True)
         if is_drain_requested(cfg):
             continue
-        files = sorted(inbox.glob("*.flam3")) + sorted(inbox.glob("*.flame"))
-        for src in files:
-            if is_drain_requested(cfg):
-                log.info("worker drain: stopping before next inbox genome")
-                break
-            log.info("processing %s", src)
-            try:
-                dest = process_genome(cfg, src)
-                log.info("ingested %s", dest)
-                # Non-inbox --once-style paths are not claimed; archive leftover inbox file.
-                if src.is_file():
-                    archive_rendered_genome(cfg, src)
-            except Exception as exc:  # noqa: BLE001
-                log.exception("job failed for %s: %s", src, exc)
-                # Claim moves the genome into the job work dir; process_genome quarantines.
-                # If claim never ran, best-effort quarantine any leftover inbox file.
-                if src.is_file():
-                    try:
-                        quarantine_genome(src, resolve_path(cfg, "genomes_quarantine"), remove_src=True)
-                    except RuntimeError as qexc:
-                        log.error("post-fail quarantine incomplete for %s: %s", src, qexc)
-        time.sleep(10)
+        queued = sync_inbox_fifo(inbox, ledger)
+        if not queued:
+            time.sleep(10)
+            continue
+        if is_drain_requested(cfg):
+            log.info("worker drain: stopping before next inbox genome")
+            continue
+        src = queued[0]
+        log.info("processing %s (%s queued)", src, len(queued))
+        try:
+            dest = process_genome(cfg, src)
+            log.info("ingested %s", dest)
+            # Non-inbox --once-style paths are not claimed; archive leftover inbox file.
+            if src.is_file():
+                archive_rendered_genome(cfg, src)
+        except Exception as exc:  # noqa: BLE001
+            log.exception("job failed for %s: %s", src, exc)
+            # Claim moves the genome into the job work dir; process_genome quarantines.
+            # If claim never ran, best-effort quarantine any leftover inbox file.
+            if src.is_file():
+                try:
+                    quarantine_genome(src, resolve_path(cfg, "genomes_quarantine"), remove_src=True)
+                except RuntimeError as qexc:
+                    log.error("post-fail quarantine incomplete for %s: %s", src, qexc)
+            # Same file still at the head: back off so a failed claim does not spin.
+            if src.is_file():
+                time.sleep(10)
 
 
 def main(argv: list[str] | None = None) -> int:

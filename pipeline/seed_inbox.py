@@ -19,6 +19,7 @@ from typing import Any, Iterable
 
 from pipeline.archive_seed import default_fetch_count, ensure_manifest, materialize_sheep, pick_random
 from pipeline.config import load_config, resolve_path
+from pipeline.inbox_queue import stamp_inbox_arrival
 from pipeline.tool_lookup import tool as _tool
 
 log = logging.getLogger("jellyflam3.seed_inbox")
@@ -87,6 +88,7 @@ def stage_file(
         shutil.move(str(src), str(dest))
     else:
         shutil.copy2(src, dest)
+    stamp_inbox_arrival(dest)
     log.info("staged %s", dest)
     return dest
 
@@ -113,6 +115,7 @@ def generate_random(cfg: dict[str, Any], inbox: Path, *, dry_run: bool = False) 
     if dest.stat().st_size < 32:
         dest.unlink(missing_ok=True)
         raise RuntimeError(f"{genome_bin} produced empty genome")
+    stamp_inbox_arrival(dest)
     log.info("generated %s", dest)
     return dest
 
@@ -145,6 +148,7 @@ def mutate_seed(
     if dest.stat().st_size < 32:
         dest.unlink(missing_ok=True)
         raise RuntimeError(f"{genome_bin} mutate produced empty genome")
+    stamp_inbox_arrival(dest)
     log.info("mutated %s -> %s", seed, dest)
     return dest
 
