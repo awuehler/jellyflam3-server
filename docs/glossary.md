@@ -11,7 +11,7 @@ Terms, keywords, and phrases used across the **jellyflam3-server** project — d
 | | | | |
 |---|---|---|---|
 | [Archive seed](#archive-seed) | [Direct Play](#direct-play) | [Idle gate](#idle-gate) | [Pedigree](#pedigree) |
-| [BrightScript](#brightscript) | [Direct Stream](#direct-stream) | [Inbox](#inbox) | [Peering](#peering) |
+| [BrightScript](#brightscript) | [Direct Stream](#direct-stream) | [Inbox](#inbox) / [FIFO](#inbox-fifo) | [Peering](#peering) |
 | [Brood](#brood) | [Display profile sink](#display-profile-sink) | [JellyFlam3 Hammer](#jellyflam3-hammer) | [Promote (peering)](#promote-peering) |
 | [Catalog](#catalog) | [Edge](#edge) / [Tuple](#tuple) | [Jellyfin flock](#jellyfin-flock) | [Quarantine](#quarantine) |
 | [Closed loop](#closed-loop) | [Electric Sheep](#electric-sheep) | [Land (peers)](#land-peers) | [Release candidate (RC)](#release-candidate-rc) |
@@ -111,7 +111,7 @@ Electric Sheep flock epoch (e.g. **247**). Archive URLs: `…/generation-{N}/bes
 
 ### Worker
 
-`pipeline/worker.py` / `jellyflam3-worker.service`. Polls **`genomes/inbox`**, runs tax → TV-optimize → animate → ffmpeg → ingest to **catalog**, writes **sidecar**, optional Jellyfin poster/metadata (`jellyfin.attach_posters`: auto / true / false). Honors **worker drain** before the next claim.
+`pipeline/worker.py` / `jellyflam3-worker.service`. Polls **`genomes/inbox`**, claims the oldest arrival ([Inbox FIFO](#inbox-fifo)), runs tax → TV-optimize → animate → ffmpeg → ingest to **catalog**, writes **sidecar**, optional Jellyfin poster/metadata (`jellyfin.attach_posters`: auto / true / false). Honors **worker drain** before the next claim.
 
 ### Worker drain
 
@@ -119,7 +119,11 @@ Operator pause: finish the **current** inbox job, then do not claim another unti
 
 ### Inbox
 
-`paths.genomes_inbox` — staging queue for genomes awaiting render. Sources: archive seed, **idle breed**, **Shears** add/modify, manual seed, **peering promote** (after gate).
+`paths.genomes_inbox` — staging queue for genomes awaiting render. Sources: archive seed, **idle breed**, **Shears** add/modify, manual seed, **peering promote** (after gate). Claim order is [FIFO](#inbox-fifo).
+
+### Inbox FIFO
+
+Oldest genome in `genomes/inbox` renders next (`.flam3` and `.flame` in one queue). `pipeline/inbox_queue.py` stores the order in `/var/lib/jellyflam3/inbox_fifo.json` (`paths.inbox_fifo_file`). The first sight of an inode gets a sequence number that stays until the file leaves the inbox. The first ledger build orders files already waiting by inode change time. Later arrivals append at the tail, including a manual copy and a same-name replacement. Seed, breed, tuple staging, promote, and job recovery stamp enqueue time so a preserved source mtime cannot reorder a batch. The worker sleeps 10 s only when the inbox is empty. Household detail: [Feed the furnace](USER_GUIDE_AND_RUNBOOK.md#feed-the-furnace).
 
 ### Quarantine
 

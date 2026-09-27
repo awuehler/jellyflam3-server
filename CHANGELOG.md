@@ -4,7 +4,9 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+
+- Worker inbox claim is FIFO. `pipeline.inbox_queue` records arrival in `/var/lib/jellyflam3/inbox_fifo.json` and the worker renders the oldest `.flam3` / `.flame` next. Seed, breed, tuple staging, promote, and job recovery stamp enqueue time so a low generation id or an early name cannot render ahead of genomes that have been waiting longer. Runbook: [Feed the furnace](docs/USER_GUIDE_AND_RUNBOOK.md#feed-the-furnace).
 
 ## [v0.3.2] — 2026-09-23
 

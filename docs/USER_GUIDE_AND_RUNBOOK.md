@@ -441,7 +441,21 @@ healthcheck prints **WARN** while drain is on (does not fail). `status_report.sh
 
 ### Feed the furnace
 
-The **worker** polls `genomes/inbox` for `.flam3` files, renders to `/media/sheep/by-generation/`, and archives successful genomes to `genomes/done`.
+The **worker** polls `genomes/inbox` for `.flam3` and `.flame` files, renders to `/media/sheep/by-generation/`, and archives successful genomes to `genomes/done`.
+
+**Render order is FIFO.** The worker claims the genome that has been waiting the longest, one file at a time. Arrival time sets the order. Generation numbers and kind tokens (`tuple`, `pedigree`, `mutate`) stay in line until genomes that landed earlier have been claimed. A late `electricsheep.165…` waits behind an `electricsheep.247…` that landed first, and a tuple takes its turn with everything else.
+
+The order lives in `/var/lib/jellyflam3/inbox_fifo.json` (`paths.inbox_fifo_file`, otherwise beside the drain flag). The first time the worker sees an inode it stores a sequence number and keeps it until that file leaves the inbox. When the current job finishes, it claims the head of that list immediately. It sleeps **10 seconds** only when the inbox is empty. A closed [idle gate](#idle-gate-behavior) or an active [drain](#worker-drain-pause-before-next-sheep) also holds the next claim.
+
+The first time that ledger is created, genomes already in the inbox are ordered by inode change time (when a copy or a cross-device move landed). After the ledger exists, a file the worker has not seen goes to the **tail**. That includes a manual copy and a replaced file (same name, new inode). Several files that show up during one render are ordered by the enqueue stamp these landing paths write:
+
+- archive seed, Shears add/modify, and other `pipeline.seed_inbox` staging
+- pedigree breed (mutate / cross / interpolate)
+- tuple staging (`pipeline.sheep_tuple`)
+- `peering promote --apply`
+- job recovery re-queue
+
+The enqueue stamp is the arrival time used for a batch, including when a copy would otherwise keep an older source mtime. The running `jellyflam3-worker` process loads this order at start, so a unit restart (after drain reaches `phase=idle`) is what picks it up.
 
 **Manual seed (archive Free Sheep):**
 
@@ -1091,6 +1105,7 @@ Rotated copies are `*.log-YYYYMMDD-HHMMSS`, then `.gz` after **11 days**, delete
 |---|---|
 | `/var/lib/jellyflam3/idle_gate_status.json` | `gate`, `reason`, `seconds_until_resume` |
 | `/var/lib/jellyflam3/worker_drain.json` | `drain`, `phase`, in-flight job |
+| `/var/lib/jellyflam3/inbox_fifo.json` | Inbox claim order (oldest sequence first) |
 | `/var/lib/jellyflam3/peering_status.json` | `share_opt_in` vs `share_live` (refreshed by healthcheck) |
 | `/var/lib/jellyflam3/jobs/<id>/job.json` | One render: state, `quality_gate`, src genome |
 | `/var/cache/jellyflam3/frames` | Scratch frames for the live job (not a log) |
@@ -1201,7 +1216,7 @@ Bare `python3 -m pipeline` prints this list and exits 2.
 | Integration | same suite | HTTP sink, gate exits, package zips |
 | Smoke / e2e | Pi scripts | `smoke_render`, `hls_smoke`, `lab_smoke05_fleet` |
 
-Key test modules added for review hardening: `test_gate_script_exits.py`, `test_tool_lookup.py`, `test_refactor_modules.py`, `test_shears_id_match.py`, `test_worker_claim.py`.
+Key test modules added for review hardening: `test_gate_script_exits.py`, `test_tool_lookup.py`, `test_refactor_modules.py`, `test_shears_id_match.py`, `test_worker_claim.py`, `test_inbox_queue.py`.
 
 ### Conventions
 
@@ -1218,6 +1233,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | Worker quality admission | `pipeline/quality_gate.py`, [Active quality intervention](#active-quality-intervention), [phase1/05](phase1/05_RENDER_PIPELINE.md) |
 | Render duration bands | `pipeline/choose_duration.py`, `docs/phase2/08_DYNAMIC_DURATION.md` |
 | Worker drain / pause | `pipeline/worker_drain.py`, [Worker drain](#worker-drain-pause-before-next-sheep), [phase1/05](phase1/05_RENDER_PIPELINE.md) |
+| Inbox claim order (FIFO) | `pipeline/inbox_queue.py`, [Feed the furnace](#feed-the-furnace), [phase1/05](phase1/05_RENDER_PIPELINE.md) |
 | TV-port / palette | `pipeline/tv_optimize.py`, `pipeline/palette_harmony.py` |
 | Share security | `pipeline/share_security.py`, `docs/phase3/05_SHARED_SHEEP_SECURITY.md` |
 | Link capacity / N_max | `pipeline/link_capacity.py`, `docs/phase4/07_CONCURRENT_CLIENTS.md` |
@@ -1242,7 +1258,8 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | `/var/lib/jellyflam3/jobs` | In-flight job state |
 | `/var/lib/jellyflam3/idle_gate_status.json` | Gate SoT |
 | `/var/lib/jellyflam3/worker_drain.json` | Drain flag (pause before next inbox claim) |
-| `genomes/inbox` | Worker input queue |
+| `/var/lib/jellyflam3/inbox_fifo.json` | FIFO claim order for `genomes/inbox` (oldest sequence first) |
+| `genomes/inbox` | Worker input queue (oldest arrival renders next) |
 | `genomes/quarantine` | Failed genomes |
 | `genomes/done` | Rendered parent pool (breeding) |
 | `genomes/peers/inbox` | Syncthing land (promote required; no auto-furnace) |
@@ -1274,4 +1291,4 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 
 ---
 
-*Document version: 2026-09-25 — furnace log index for triage. Phase 4 close-out (`v0.3.2`); VoD Channel Store pending Roku review.*
+*Document version: 2026-09-27 — inbox FIFO claim order. Phase 4 close-out (`v0.3.2`); VoD Channel Store pending Roku review.*

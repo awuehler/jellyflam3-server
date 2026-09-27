@@ -89,7 +89,7 @@ python3 -m pipeline.peering opt-out --config configs/jellyflam3.yaml
 |---|---|---|
 | Syncthing land | `genomes/peers/inbox` | Yes (when Opt In + mesh) |
 | Sheep tax + promote | → `genomes/inbox` or `genomes/quarantine` | **No** — `promote --apply` |
-| Render | worker polls `genomes/inbox` | Yes (after promote) |
+| Render | worker claims the oldest arrival in `genomes/inbox` (FIFO) | Yes (after promote) |
 
 See [guide 05 — Pi → Pi receive path](../../docs/phase2/05_SYNCTHING_GENOME_PEERING.md#pi--pi-receive-path-locked).
 

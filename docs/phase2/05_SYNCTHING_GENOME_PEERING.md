@@ -84,7 +84,7 @@ When Pi **A** drops an allowed file into its Syncthing share and Pi **B** is Opt
 | **1. Land** | `genomes/peers/inbox/` (`*.flam3`, optional `*-poster.jpg`) | Syncthing only |
 | **2. Gate** | Still in `genomes/peers/inbox/` until operator runs promote | **No** automatic drain |
 | **3. Promote** | Sheep tax → move to `genomes/inbox/` (companion `{stem}-poster.jpg` moves alongside when present); tax fail → `genomes/quarantine/` | `python3 -m pipeline.peering promote --apply` |
-| **4. Render** | Worker polls **`genomes/inbox/` only** | `pipeline.worker` / `jellyflam3-worker` |
+| **4. Render** | Worker claims the oldest arrival in **`genomes/inbox/`** (FIFO) | `pipeline.worker` / `jellyflam3-worker` |
 
 **Important:** a newly synced peer genome does **not** enter the render queue by itself. The worker never watches `genomes/peers/inbox`. Until gated promote `--apply`, files sit in the peers land folder with no furnace pickup.
 

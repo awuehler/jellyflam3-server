@@ -48,9 +48,13 @@ python3 -m pipeline.seed_inbox --config configs/jellyflam3.yaml --mutate genomes
 
 `--archive` loads `configs/archive_seed_manifest.json` (or scrapes with `--refresh-manifest`), downloads `.flam3`, then **TV-ports**: 16:9 **1920×1080**, **Gold Sheep Lite** quality (3-core), and ambient **OkLCh** complementary palette. The worker re-applies the same optimize before sequence/encode/ingest.
 
+## Claim order
+
+The running worker claims **one** inbox genome at a time: the oldest arrival (FIFO). `.flam3` and `.flame` share that queue. Sequence numbers live in `paths.inbox_fifo_file` (default `/var/lib/jellyflam3/inbox_fifo.json`). A new file appends at the tail. Arrival time chooses the next sheep; generation numbers and kind tokens stay in line. Detail: [Feed the furnace](../USER_GUIDE_AND_RUNBOOK.md#feed-the-furnace).
+
 ## Steps
 
-1. Take `.flam3` from inbox or `--once` (inbox claim skips when drain is requested — [Worker drain](../USER_GUIDE_AND_RUNBOOK.md#worker-drain-pause-before-next-sheep))
+1. Claim the oldest `.flam3` / `.flame` in the inbox, or run `--once` (inbox claim skips when drain is requested — [Worker drain](../USER_GUIDE_AND_RUNBOOK.md#worker-drain-pause-before-next-sheep))
 2. Sheep Tax, then TV-optimize: 16:9 + Gold Sheep Lite quality + OkLCh palette.
 3. **Active pre-render gate:** quarantine linear-only, `singularity="cloned"`, frozen single-flame, or washed-palette genomes before full animation.
 4. Render one Lite preview still; quarantine when mean saturation is below `quality_gate.desat_mean_max` (default **0.12**).
@@ -75,7 +79,8 @@ Default `render.max_cpus: 3` (leave 1 of 4 Pi cores free): `flam3-animate` `nthr
 
 | Artifact | Kind | Role |
 |---|---|---|
-| `pipeline/worker.py` | pipeline | Job queue: tax → TV-optimize → quality gate → sequence → animate → encode → visual gate → ingest |
+| `pipeline/worker.py` | pipeline | Job queue: FIFO claim → tax → TV-optimize → quality gate → sequence → animate → encode → visual gate → ingest |
+| `pipeline/inbox_queue.py` | pipeline | Inbox arrival ledger (`inbox_fifo.json`); oldest sequence is claimed next |
 | `pipeline/quality_gate.py` | pipeline | Fail-closed artistic admission (genome / palette / preview / encoded midpoint) |
 | `pipeline/worker_drain.py` | pipeline | Finish current job, then pause inbox claiming until cancel. Mid-animate checkpoint / SIGSTOP pause **cancelled** (Phase 4, 2026-09-19) |
 | `pipeline/seed_inbox.py` | pipeline | Feed inbox (samples / archive / mutate / generate) |
