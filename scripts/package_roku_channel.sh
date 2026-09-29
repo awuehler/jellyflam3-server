@@ -3,7 +3,8 @@
 # Purpose: Build a sideloadable Roku channel zip for the Developer Application Installer.
 # Requirements: bash; zip preferred, else python3 with zipfile.
 #
-# Usage: ./scripts/package_roku_channel.sh [out.zip]
+# Usage: ./scripts/package_roku_channel.sh [--no-presets] [out.zip]
+#   --no-presets  Channel Store zip: skip Jellyfin presets (empty Settings).
 #
 # When to run: Before sideload / Phase 3 RC packaging. Default: dist/jellyflam3-roku.zip
 # Success: Zip entries at archive root (manifest, source/, components/, images/) — not a nested folder.
@@ -15,16 +16,25 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CHANNEL="$ROOT/roku-channel"
-OUT="${1:-$ROOT/dist/jellyflam3-roku.zip}"
+OUT="$ROOT/dist/jellyflam3-roku.zip"
+NO_PRESETS=0
+for arg in "$@"; do
+  case "$arg" in
+    --no-presets) NO_PRESETS=1 ;;
+    *) OUT="$arg" ;;
+  esac
+done
 
 mkdir -p "$(dirname "$OUT")"
 rm -f "$OUT"
 
-python3 "$ROOT/scripts/client_pack_presets.py" prepare --roku-registry "$CHANNEL/registry" || true
+if [[ "$NO_PRESETS" -eq 0 ]]; then
+  python3 "$ROOT/scripts/client_pack_presets.py" prepare --roku-registry "$CHANNEL/registry" || true
+fi
 
 # Roku expects zip contents at archive root (manifest, source/, components/, images/, registry/)
 ZIP_DIRS=(manifest source components images)
-if [[ -f "$CHANNEL/registry/jellyflam3-presets.json" ]]; then
+if [[ "$NO_PRESETS" -eq 0 && -f "$CHANNEL/registry/jellyflam3-presets.json" ]]; then
   ZIP_DIRS+=(registry)
 fi
 (
@@ -42,7 +52,10 @@ out = Path(r"$OUT")
 skip = {".gitkeep", ".DS_Store"}
 with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
     zf.write(channel / "manifest", "manifest")
-    for folder in ("source", "components", "images", "registry"):
+    folders = ("source", "components", "images")
+    if r"$NO_PRESETS" == "0":
+        folders = folders + ("registry",)
+    for folder in folders:
         d = channel / folder
         if not d.is_dir():
             continue

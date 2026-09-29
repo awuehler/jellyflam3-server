@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+### Added
+
+- Roku VoD **1.0.52** Channel Store zip: revision bump for resubmission. `--no-presets` builds `dist/jellyflam3-roku-store.zip` with empty Settings (no `registry/jellyflam3-presets.json`, no Funnel host, no Jellyfin key). Behavior matches **1.0.51**.
+
 ### Changed
 
 - Worker inbox claim is FIFO. `pipeline.inbox_queue` records arrival in `/var/lib/jellyflam3/inbox_fifo.json` and the worker renders the oldest `.flam3` / `.flame` next. Seed, breed, tuple staging, promote, and job recovery stamp enqueue time so a low generation id or an early name cannot render ahead of genomes that have been waiting longer. Runbook: [Feed the furnace](docs/USER_GUIDE_AND_RUNBOOK.md#feed-the-furnace).

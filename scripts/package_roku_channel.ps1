@@ -2,7 +2,8 @@
 #
 # Requirements: PowerShell 5.1 or 7+; .NET System.IO.Compression.FileSystem.
 #
-# Usage: .\scripts\package_roku_channel.ps1 [OutPath]
+# Usage: .\scripts\package_roku_channel.ps1 [-NoPresets] [OutPath]
+#   -NoPresets  Channel Store zip: skip Jellyfin presets (empty Settings).
 #
 # When to run: Windows operator packaging before sideload / Phase 3 RC. Default: dist\jellyflam3-roku.zip
 # Success: Zip entries at archive root with forward-slash paths (manifest, source/, …).
@@ -16,7 +17,8 @@
 # keeps POSIX-style paths on both hosts. Compress-Archive also still uses .NET under the hood.
 
 param(
-  [string]$OutPath = ""
+  [string]$OutPath = "",
+  [switch]$NoPresets
 )
 $Root = Split-Path -Parent $PSScriptRoot
 if (-not $OutPath) { $OutPath = Join-Path $Root "dist\jellyflam3-roku.zip" }
@@ -24,7 +26,9 @@ $Channel = Join-Path $Root "roku-channel"
 New-Item -ItemType Directory -Force -Path (Split-Path $OutPath) | Out-Null
 if (Test-Path $OutPath) { Remove-Item -Force $OutPath }
 
-python (Join-Path $Root "scripts\client_pack_presets.py") prepare --roku-registry (Join-Path $Channel "registry") 2>$null | Out-Null
+if (-not $NoPresets) {
+  python (Join-Path $Root "scripts\client_pack_presets.py") prepare --roku-registry (Join-Path $Channel "registry") 2>$null | Out-Null
+}
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip = [System.IO.Compression.ZipFile]::Open($OutPath, "Create")
@@ -34,7 +38,7 @@ function Add-File($full, $entry) {
 }
 Add-File (Join-Path $Channel "manifest") "manifest"
 $folders = @("source", "components", "images")
-if (Test-Path (Join-Path $Channel "registry\jellyflam3-presets.json")) {
+if ((-not $NoPresets) -and (Test-Path (Join-Path $Channel "registry\jellyflam3-presets.json"))) {
   $folders += "registry"
 }
 foreach ($folder in $folders) {

@@ -116,7 +116,9 @@ def test_roku_packagers_exclude_all_numbered_source_art():
     ps1 = (ROOT / "scripts" / "package_roku_channel.ps1").read_text(encoding="utf-8")
     sh = (ROOT / "scripts" / "package_roku_channel.sh").read_text(encoding="utf-8")
     assert r"-\d{2}\.png$" in ps1
+    assert "NoPresets" in ps1
     assert "images/*-[0-9][0-9].png" in sh
+    assert "--no-presets" in sh
     assert "p.stem[-2:].isdigit()" in sh
 
 
@@ -135,8 +137,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=51" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.51""' in text
+    assert "build_version=52" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.52""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
