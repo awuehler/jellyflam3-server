@@ -1,4 +1,6 @@
-# JellyFlam3 Server [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/awuehler/jellyflam3-server)
+# JellyFlam3 Server
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/awuehler/jellyflam3-server)
 
 JellyFlam3 Server is a self-hosted generative media server that renders flam3-inspired visuals, processes them with ffmpeg, and serves continuous ambient streams to **Roku** and **Kodi** clients (and any Jellyfin/HLS-capable player on your LAN).
 
