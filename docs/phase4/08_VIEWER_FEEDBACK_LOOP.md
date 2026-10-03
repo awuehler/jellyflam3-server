@@ -88,7 +88,7 @@ Overlay is visual-only (playback does not pause). Shown when remaining duration 
 
 1. `pipeline.breed_idle` parent picks use **weights from each catalog sidecar** `viewer_feedback.votes` when `breed.idle_breed.vote_bias_enabled` (default on) and `votes >= min_votes_for_bias`; else weight **1** (uniform).
 2. Config: `vote_bias_enabled`, `vote_weight_power`, `min_votes_for_bias`.
-3. Existing gates unchanged: empty inbox, idle gate, not imminent archive cron, dedup fingerprints.
+3. Gates: inbox at or under `inbox_low_water` (default 3), not imminent archive cron, dedup fingerprints. Worker state and idle gate are not consulted.
 4. Archive-seed cron stays **unbiased**; viewer bias applies to **pedigree idle breed** only.
 
 ### E — Ops & docs

@@ -167,7 +167,7 @@ Once pedigree / tuple VoDs land in the catalog, JellyFlam3 continuous shuffle in
 
 ## Daily idle breed cron
 
-When the inbox is **empty**, the worker is **idle** (gate open, no live render), and the next archive-seed cron is not imminent, a daily cron breeds **exactly one** pedigree sheep so the furnace keeps working between archive fills. Parent picks are **weighted** by catalog sidecar `viewer_feedback.votes` when that block exists ([../phase4/08_VIEWER_FEEDBACK_LOOP.md](../phase4/08_VIEWER_FEEDBACK_LOOP.md)); otherwise uniform. `python3 -m pipeline.sheep_votes sweep --confirm SWEEP` returns those weights to uniform on this furnace.
+When the inbox has **`inbox_low_water` genomes or fewer** still waiting (default **3**) and the next archive-seed cron is not imminent, a daily cron stages **exactly one** child so the furnace keeps working between archive fills. That count is the only furnace test: worker state, the idle gate, and live renders are not consulted, and the child waits on the FIFO tail. `inbox_low_water: 0` requires an empty inbox. The JSON `action` is `breed` for mutate / cross / blend / interpolate and `tuple` when the pick pairs two existing sheep (a tuple is not a new genome). Parent picks are **weighted** by catalog sidecar `viewer_feedback.votes` when that block exists ([../phase4/08_VIEWER_FEEDBACK_LOOP.md](../phase4/08_VIEWER_FEEDBACK_LOOP.md)); otherwise uniform. `python3 -m pipeline.sheep_votes sweep --confirm SWEEP` returns those weights to uniform on this furnace.
 
 ```bash
 # Dry-run gates + plan
@@ -186,7 +186,7 @@ Lab crontab (user `jellyflam3`, all of 16a / 08a / 04a):
 
 The wrapper prepends `/usr/local/bin` to `PATH`. Cron’s default `PATH` is often `/usr/bin:/bin`, which misses `flam3-genome` after `make install` (`FileNotFoundError: flam3-genome`).
 
-**Benign stderr:** `flam3-genome` may print `warning: reached maximum attempts, giving up.` to stderr during **mutate** / **cross** when its internal optimizer exhausts retries. That message is **not** from JellyFlam3 Python. If the cron log ends with `DONE action=breed` and JSON shows a staged child, the run succeeded — ignore the warning. Persistent failures (no staged file, non-zero exit) are real errors.
+**Benign stderr:** `flam3-genome` may print `warning: reached maximum attempts, giving up.` to stderr during **mutate** / **cross** when its internal optimizer exhausts retries. That message is **not** from JellyFlam3 Python. If the cron log ends with `DONE action=breed` (or `action=tuple`) and JSON shows a staged child, the run succeeded — ignore the warning. Persistent failures (no staged file, non-zero exit) are real errors.
 
 Behavior:
 

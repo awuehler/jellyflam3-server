@@ -349,6 +349,10 @@ breed:
     archive_cron_hour: 3
     archive_cron_minute: 17
     min_hours_before_archive: 1.0
+    # Stage one child when this many genomes or fewer are still waiting.
+    # This count is the only furnace test; worker state, idle gate, and
+    # live renders are not consulted. 0 requires an empty inbox.
+    inbox_low_water: 3
     include_samples: true
     include_pedigree: true
     # Wave 3: weight parents by catalog sidecar viewer_feedback.votes (uniform if missing).

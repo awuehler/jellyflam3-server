@@ -1081,7 +1081,7 @@ Persistent journal lives in `/var/log/journal` (`Storage=persistent`; **512M** o
 | File | Cadence (lab crontab) | Look for |
 |---|---|---|
 | `archive_seed.log` | ~10-day DOM (16a 07:27 days 7/17/27; 08a 05:19 days 1/11/21; 04a 03:17 days 3/13/23) | `DONE archive seed` or `SKIP` (backlog, sheep still BAD) |
-| `breed_idle.log` | Daily 05:11 | `action=breed` or skip (`inbox_not_empty`, `gate_closed`, `live_render`) |
+| `breed_idle.log` | Daily 05:11 | `action=breed`, `action=tuple`, or skip (`inbox_above_low_water`, `archive_cron_imminent`, `parent_pool_empty`) |
 | `share_votes.log` | Daily 06:41 | `action=share` / `plan` / `skip` |
 | `tailscale_watch.log` | Every 5 min on Opt-In hosts | `action=ok` / `heal`; exit 1 if still not live |
 | `library_rotate.log` | **Not** on the lab crontab until [Activate library rotate](#activate-library-rotate) | `action=rotate` / `skip` |

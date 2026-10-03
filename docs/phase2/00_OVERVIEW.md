@@ -88,11 +88,11 @@ Phase 2 is complete when guides 01–10 exit criteria pass, including:
 | `pipeline/peering.py` | pipeline | Tailscale + Syncthing Opt In/Out / promote |
 | `pipeline/sheep_tax.py` | pipeline | Genome XML / vocab scan & repair |
 | `pipeline/breed.py` | pipeline | Mutate / cross / interpolate pedigree CLI |
-| `pipeline/breed_idle.py` | pipeline | Daily idle pedigree breed when inbox empty (one child) |
+| `pipeline/breed_idle.py` | pipeline | Daily pedigree breed when inbox is at or under low water (one child) |
 | `pipeline/hw_profile.py` | pipeline | Apply 16 / 08 / 04 Pi presets |
 | `pipeline/choose_duration.py` / `genome_signals.py` | pipeline | Dynamic duration chooser |
 | `scripts/cron_archive_seed.sh` | script | Backlog-gated scheduled archive fill |
-| `scripts/cron_breed_idle.sh` | script | Daily idle pedigree breed (empty inbox) |
+| `scripts/cron_breed_idle.sh` | script | Daily pedigree breed when inbox is at or under low water |
 | `scripts/status_report.sh` | script | Phase 2 ops status surface |
 
 ## Exit criteria

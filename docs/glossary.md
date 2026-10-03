@@ -175,7 +175,7 @@ Phase 4 design ([phase4/09](phase4/09_SHEEP_NAMING.md)): furnace auto-generates 
 
 ### flam3-genome maximum attempts warning
 
-Benign stderr from **flam3-genome** (not JellyFlam3): `warning: reached maximum attempts, giving up.` during mutate/cross when the upstream optimizer exhausts retries. Safe to ignore when cron ends `DONE action=breed` and a child lands in inbox.
+Benign stderr from **flam3-genome** (not JellyFlam3): `warning: reached maximum attempts, giving up.` during mutate/cross when the upstream optimizer exhausts retries. Safe to ignore when cron ends `DONE action=breed` (or `action=tuple`) and a child lands in inbox.
 
 ### Archive seed
 

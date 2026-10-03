@@ -129,13 +129,82 @@ def test_hours_until_archive_differs_by_host_schedule():
     assert h16 > h08  # 16a next fire is Aug 27; 08a is Aug 21
 
 
-def test_evaluate_skip_when_inbox_not_empty(tmp_path: Path):
+def test_evaluate_skip_when_inbox_above_low_water(tmp_path: Path):
     cfg = _cfg(tmp_path)
+    inbox = tmp_path / "genomes" / "inbox"
+    for name in ("a.flam3", "b.flam3", "c.flam3", "d.flam3"):
+        (inbox / name).write_text("<flame/>", encoding="utf-8")
+    (tmp_path / "genomes" / "done" / "parent.flam3").write_text("<flame/>", encoding="utf-8")
+    result = evaluate_idle_breed(cfg)
+    assert result.action == "skip"
+    assert result.reason == "inbox_above_low_water"
+    assert result.inbox_count == 4
+    assert result.inbox_low_water == 3
+
+
+def test_evaluate_breed_when_inbox_within_low_water(tmp_path: Path):
+    cfg = _cfg(tmp_path)
+    inbox = tmp_path / "genomes" / "inbox"
+    for name in ("a.flam3", "b.flam3", "c.flam3"):
+        (inbox / name).write_text("<flame/>", encoding="utf-8")
+    (tmp_path / "genomes" / "done" / "parent.flam3").write_text("<flame/>", encoding="utf-8")
+    now = datetime(2026, 8, 17, 12, 0, tzinfo=timezone.utc)
+    result = evaluate_idle_breed(cfg, now=now)
+    assert result.action == "breed"
+    assert result.inbox_count == 3
+    assert result.plan is not None
+
+
+def test_evaluate_zero_low_water_skips_any_waiting_genome(tmp_path: Path):
+    cfg = _cfg(tmp_path, inbox_low_water=0)
     (tmp_path / "genomes" / "inbox" / "pending.flam3").write_text("<flame/>", encoding="utf-8")
     (tmp_path / "genomes" / "done" / "parent.flam3").write_text("<flame/>", encoding="utf-8")
     result = evaluate_idle_breed(cfg)
     assert result.action == "skip"
-    assert result.reason == "inbox_not_empty"
+    assert result.reason == "inbox_above_low_water"
+    assert result.inbox_low_water == 0
+
+
+def test_evaluate_ignores_worker_state(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Closed idle gate and a live render job do not block staging."""
+    cfg = _cfg(tmp_path)
+    cfg["idle_gate"] = {"enabled": True}
+    (tmp_path / "genomes" / "done" / "parent.flam3").write_text("<flame/>", encoding="utf-8")
+    job = tmp_path / "jobs" / "abc123"
+    job.mkdir(parents=True)
+    (job / "job.json").write_text(
+        json.dumps({"id": "abc123", "state": "rendering", "src": "x.flam3"}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr("pipeline.idle_gate.is_gate_open", lambda _cfg: False)
+    now = datetime(2026, 8, 17, 12, 0, tzinfo=timezone.utc)
+    result = evaluate_idle_breed(cfg, now=now)
+    assert result.action == "breed"
+    assert result.reason is None
+
+
+def test_tuple_plan_reports_tuple_action(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    cfg = _cfg(tmp_path)
+    a = tmp_path / "genomes" / "done" / "a.flam3"
+    b = tmp_path / "genomes" / "done" / "b.flam3"
+    a.write_text("<flame/>", encoding="utf-8")
+    b.write_text("<flame/>", encoding="utf-8")
+    monkeypatch.setattr(
+        "pipeline.breed_idle.pick_unique_plan",
+        lambda cfg, pool, rng=None: BreedPlan("tuple", (a, b)),
+    )
+    now = datetime(2026, 8, 17, 12, 0, tzinfo=timezone.utc)
+    result = evaluate_idle_breed(cfg, now=now)
+    assert result.action == "tuple"
+
+    def fake_stage(cfg, pa, pb, *, dry_run=False):
+        return tmp_path / "genomes" / "inbox" / "electricsheep.tuple.a_to_b.flam3"
+
+    monkeypatch.setattr("pipeline.sheep_tuple.stage_tuple_inbox", fake_stage)
+    ran = run_idle_breed(cfg, dry_run=True, now=now)
+    assert ran.action == "tuple"
+    assert ran.staged and ran.staged[0].endswith("electricsheep.tuple.a_to_b.flam3")
+    assert ran.to_dict()["action"] == "tuple"
 
 
 def test_evaluate_skip_archive_imminent(tmp_path: Path):

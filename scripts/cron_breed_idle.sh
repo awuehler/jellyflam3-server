@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-# Purpose: Daily cron — breed one pedigree sheep or tuple when inbox is empty and worker is idle
-#          so the furnace keeps working between ~10-day archive fills (Phase 2 guide 07).
+# Purpose: Daily cron — breed one pedigree sheep or tuple when the inbox is at or
+#          under inbox_low_water (default 3) so the furnace keeps working between
+#          ~10-day archive fills (Phase 2 guide 07).
 # Requirements: bash, python3, flock; pipeline.breed_idle; flam3-genome on PATH
 #          (/usr/local/bin — this wrapper prepends it; cron PATH is often /usr/bin:/bin).
 #          Writable inbox + history file (breed.idle_breed.history_file).
@@ -11,15 +12,17 @@
 #   python3 -m pipeline.breed_idle --config configs/jellyflam3.yaml --json
 #
 # When to run: crontab as user jellyflam3 (not root). Lab fleet: 05:11 local daily.
-# Success: log DONE action=breed (one child in genomes/inbox) or action=skip with a reason
-#   (inbox_not_empty, gate_closed, live_render, too_close_to_archive, …).
+# Success: log DONE action=breed (one pedigree child in genomes/inbox), action=tuple
+#   (one tuple of two existing sheep), or action=skip with a reason
+#   (inbox_above_low_water, archive_cron_imminent, parent_pool_empty, …).
 # Fail: FileNotFoundError flam3-genome → PATH; see /var/log/jellyflam3/breed_idle.log.
 # Benign stderr: flam3-genome may print "warning: reached maximum attempts, giving up."
-#   during mutate/cross when its internal optimizer exhausts retries — OK if JSON shows action=breed.
+#   during mutate/cross when its internal optimizer exhausts retries — OK if JSON shows action=breed or tuple.
 # Docs: docs/phase2/07_PEDIGREE_BREEDING.md
 #
-# Assumptions: Inbox must be empty; idle gate open; no live render jobs; parent pool
-# from genomes_done + genomes/samples + genomes/pedigree; vote-weighted when sidecar
+# Assumptions: Inbox count <= inbox_low_water (default 3) is the only furnace test
+# (worker, idle gate, and live renders are not consulted); parent pool from
+# genomes_done + genomes/samples + genomes/pedigree; vote-weighted when sidecar
 # tallies exist; dedup vs recent history.
 # Random mode may be mutate/cross/blend/interpolate or tuple (Phase 4 guide 03).
 #

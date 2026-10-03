@@ -1,14 +1,17 @@
-"""Purpose: Daily idle-window pedigree breed when inbox is empty (cron helper).
+"""Purpose: Daily stage of one pedigree child or tuple when the inbox is at or under low water.
 
-Requirements: pipeline.breed, idle_gate, job_recovery; parent pool under genomes_done,
+Requirements: pipeline.breed, pipeline.sheep_tuple; parent pool under genomes_done,
 genomes/samples, genomes/pedigree; optional history file under /var/lib/jellyflam3.
 
 Usage:
   python3 -m pipeline.breed_idle --config configs/jellyflam3.yaml
   python3 -m pipeline.breed_idle --dry-run --json
 
-Assumptions: Archive seed cron schedule is configured via breed.idle_breed or env;
-breed only when inbox is empty, idle gate is open, and no live render jobs exist.
+Assumptions: Archive seed cron schedule is configured via breed.idle_breed or env.
+The inbox count against inbox_low_water (default 3) is the only furnace test. The
+worker, idle gate, and live renders are not consulted; the child waits on the FIFO tail.
+Result action is "breed" for mutate/cross/blend/interpolate, "tuple" for a tuple pair
+(two existing sheep, not a new genome), or "skip".
 Random modes: mutate, cross (union), blend (alternate), interpolate, tuple — exactly one child per run.
 flam3-genome may emit "warning: reached maximum attempts, giving up." on stderr during
 mutate/cross; benign when the run still stages a child (see docs/phase2/07_PEDIGREE_BREEDING.md).
@@ -28,8 +31,6 @@ from typing import Any, Iterable
 
 from pipeline.breed import breed_cross, breed_mutate, breed_cfg
 from pipeline.config import load_config, resolve_path
-from pipeline.idle_gate import is_gate_open
-from pipeline.job_recovery import classify_jobs
 from pipeline.worker import genomes_done_dir
 
 log = logging.getLogger("jellyflam3.breed_idle")
@@ -68,6 +69,7 @@ class IdleBreedResult:
     parent_pool_size: int = 0
     hours_until_archive: float | None = None
     next_archive_at: str | None = None
+    inbox_low_water: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         hours = self.hours_until_archive
@@ -77,6 +79,7 @@ class IdleBreedResult:
             "action": self.action,
             "reason": self.reason,
             "inbox_count": self.inbox_count,
+            "inbox_low_water": self.inbox_low_water,
             "parent_pool_size": self.parent_pool_size,
             "hours_until_archive": hours,
             "next_archive_at": self.next_archive_at,
@@ -107,6 +110,9 @@ def idle_breed_cfg(cfg: dict[str, Any]) -> dict[str, Any]:
         "archive_cron_hour": 3,
         "archive_cron_minute": 17,
         "min_hours_before_archive": 1.0,
+        # Breed while this many genomes (or fewer) are still waiting.
+        # 0 restores the exact-empty rule.
+        "inbox_low_water": 3,
         "include_samples": True,
         "include_pedigree": True,
         "vote_bias_enabled": True,
@@ -463,34 +469,40 @@ def pick_unique_plan(
     return pick_random_plan(pool, rng, cfg)
 
 
-def worker_is_idle(cfg: dict[str, Any]) -> tuple[bool, str]:
-    if not is_gate_open(cfg):
-        return False, "idle_gate_closed"
-    jobs = classify_jobs(cfg)
-    if jobs.get("live_jobs"):
-        return False, "worker_rendering"
-    return True, "ok"
+def inbox_low_water_limit(ib: dict[str, Any]) -> int:
+    """Waiting genomes at or under this count allow one daily stage."""
+    try:
+        limit = int(ib.get("inbox_low_water", 3))
+    except (TypeError, ValueError):
+        limit = 3
+    return max(0, limit)
+
+
+def action_for_plan(plan: BreedPlan | None) -> str:
+    """``tuple`` pairs two existing sheep; every other mode breeds a new genome."""
+    if plan is not None and plan.method == "tuple":
+        return "tuple"
+    return "breed"
 
 
 def evaluate_idle_breed(cfg: dict[str, Any], *, now: datetime | None = None) -> IdleBreedResult:
+    """Inbox count against ``inbox_low_water`` is the only furnace test.
+
+    The worker, the idle gate, and any live render are not consulted: the
+    staged child waits on the FIFO tail until the worker claims it.
+    """
     ib = idle_breed_cfg(cfg)
+    low_water = inbox_low_water_limit(ib)
     if not ib.get("enabled", True):
-        return IdleBreedResult(action="skip", reason="disabled")
+        return IdleBreedResult(action="skip", reason="disabled", inbox_low_water=low_water)
 
     inbox_count = count_inbox(cfg)
-    if inbox_count > 0:
+    if inbox_count > low_water:
         return IdleBreedResult(
             action="skip",
-            reason="inbox_not_empty",
+            reason="inbox_above_low_water",
             inbox_count=inbox_count,
-        )
-
-    idle_ok, idle_reason = worker_is_idle(cfg)
-    if not idle_ok:
-        return IdleBreedResult(
-            action="skip",
-            reason=idle_reason,
-            inbox_count=inbox_count,
+            inbox_low_water=low_water,
         )
 
     dom = parse_dom_list(ib.get("archive_cron_dom"))
@@ -515,6 +527,7 @@ def evaluate_idle_breed(cfg: dict[str, Any], *, now: datetime | None = None) -> 
             action="skip",
             reason="archive_cron_imminent",
             inbox_count=inbox_count,
+            inbox_low_water=low_water,
             hours_until_archive=hours_archive,
             next_archive_at=next_archive_at,
         )
@@ -525,6 +538,7 @@ def evaluate_idle_breed(cfg: dict[str, Any], *, now: datetime | None = None) -> 
             action="skip",
             reason="parent_pool_empty",
             inbox_count=inbox_count,
+            inbox_low_water=low_water,
             hours_until_archive=hours_archive,
             next_archive_at=next_archive_at,
         )
@@ -535,15 +549,17 @@ def evaluate_idle_breed(cfg: dict[str, Any], *, now: datetime | None = None) -> 
             action="skip",
             reason="no_plan",
             inbox_count=inbox_count,
+            inbox_low_water=low_water,
             parent_pool_size=len(pool),
             hours_until_archive=hours_archive,
             next_archive_at=next_archive_at,
         )
 
     return IdleBreedResult(
-        action="breed",
+        action=action_for_plan(plan),
         plan=plan,
         inbox_count=inbox_count,
+        inbox_low_water=low_water,
         parent_pool_size=len(pool),
         hours_until_archive=hours_archive,
         next_archive_at=next_archive_at,
@@ -590,13 +606,14 @@ def run_idle_breed(
     now: datetime | None = None,
 ) -> IdleBreedResult:
     result = evaluate_idle_breed(cfg, now=now)
-    if result.action != "breed" or result.plan is None:
+    if result.action == "skip" or result.plan is None:
         return result
 
     # Re-pick with optional seeded rng for tests.
     pool = collect_parent_pool(cfg)
     plan = pick_unique_plan(cfg, pool, rng=rng) or result.plan
     result.plan = plan
+    result.action = action_for_plan(plan)
 
     staged = execute_plan(cfg, plan, dry_run=dry_run)
     result.staged = [str(p) for p in staged]
@@ -608,7 +625,7 @@ def run_idle_breed(
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     ap = argparse.ArgumentParser(
-        description="Idle-window pedigree breed when inbox is empty (daily cron helper)"
+        description="Stage one pedigree child or tuple when the inbox is at or under low water (daily cron helper)"
     )
     ap.add_argument("--config", default=os.environ.get("JELLYFLAM3_CONFIG", "configs/jellyflam3.yaml"))
     ap.add_argument("--dry-run", action="store_true")
@@ -625,9 +642,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.json:
         print(json.dumps(result.to_dict(), indent=2))
     else:
-        if result.action == "breed":
+        if result.action != "skip":
             log.info(
-                "bred method=%s parents=%s staged=%s",
+                "%s method=%s parents=%s staged=%s",
+                "staged tuple" if result.action == "tuple" else "bred",
                 result.plan.method if result.plan else "?",
                 [str(p) for p in result.plan.parents] if result.plan else [],
                 result.staged,
