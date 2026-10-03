@@ -532,12 +532,46 @@ published. The job file records `quality_gate.status=rejected`, stage, reasons,
 and visual metrics:
 
 ```bash
-python3 -m json.tool /var/cache/jellyflam3/lib/jobs/<job-id>/job.json
+python3 -m json.tool /var/lib/jellyflam3/jobs/<job-id>/job.json
 ```
 
 Defaults are active even when `quality_gate` is absent from the live yaml.
 See `configs/jellyflam3.yaml.example` for explicit switches. Disabling a check
-is an operator exception and can expose sub-standard output.
+is an operator exception and can expose sub-standard output. The full isolate
+and remove list is [When a sheep is isolated or removed](#when-a-sheep-is-isolated-or-removed).
+
+### When a sheep is isolated or removed
+
+**Isolated** means the genome is held so the worker will not render it. **Removed** means files are deleted. Isolation is a move. A published sheep leaves the live catalog only when an operator unpublishes it or a delete cascade runs.
+
+Two holding areas:
+
+| Path | What lands there |
+|---|---|
+| `genomes/quarantine` (`paths.genomes_quarantine`) | The `.flam3` and any integrity companions. The worker does not claim this directory. |
+| `/media/sheep/_refactor-quarantine/<stem>/` | Parked MP4, sidecar, poster, and stills after `refactor quarantine` unpublish. The Jellyfin item is deleted. The files stay on disk. |
+
+#### Isolated
+
+| When | Why | Where it goes |
+|---|---|---|
+| Worker, sheep tax | XML will not parse (`xml_invalid`), no `<flame>` (`no_flame`), or the file cannot be read or written (`read_error`, `write_error`). Extra flames are stripped to the first flame. They quarantine only when `sheep_tax.multi_flame` is `reject` or `quarantine`. | Copy into `genomes/quarantine`. The claimed inbox file is removed. No MP4 is published. |
+| Worker, `pre_render_genome` | `genome_linear_only`, `genome_singularity_cloned`, `genome_orbit_frozen` (single flame; a tuple is not frozen-orbit rejected), or `palette_washed_out` (both harmony poles under chroma **0.40**). | Same. Full animation does not start. |
+| Worker, `pre_render_preview` | One Lite still has mean saturation under **0.12** (`catalog_desaturated`), or the still cannot be read (`quality_image_unreadable`). | Same. |
+| Worker, `pre_publish_output` | Encoded midpoint fails the same saturation check. | Same. The MP4 never enters `by-generation/`. |
+| Worker, any other failure after claim | Scratch free space under `render.free_space_gb_min`, sheep mount **BAD**, or `flam3-animate` / `ffmpeg` / `ffprobe` failure. | Same. `job.json` `state` is `failed` and `error` names the cause. Artistic rejects also store `quality_gate`. |
+| `peering promote --apply` | Share security fails (missing or empty sha256 sidecar, sha256 mismatch, missing or bad signature, untrusted key) or sheep tax is not ok. | Move from `genomes/peers/inbox` to `genomes/quarantine`. Without `--apply` the file stays in the peers inbox and is only listed. |
+| `refactor quarantine --confirm QUARANTINE` | Pathway A verdict is `quarantine`: score **≥ 80**, or a hard reason (`missing_genome`, `sheep_tax_fail`, `genome_linear_only`, `genome_singularity_cloned`, `genome_orbit_frozen`). Any other verdict needs `--force`. | Genetics move to `genomes/quarantine`. Default also parks the live catalog under `_refactor-quarantine/<stem>/` and deletes the Jellyfin item. `--no-unpublish` leaves the catalog in `by-generation/`. |
+
+`job.json` for a worker reject is `paths.jobs_dir/<id>/job.json` (lab default `/var/lib/jellyflam3/jobs/<id>/job.json`). Copying the same `.flam3` back into the inbox sends it through the same gate again.
+
+#### Removed
+
+| When | Why | What is deleted |
+|---|---|---|
+| `shears delete --confirm DELETE` | Operator removes one sheep. Dry-run first; the token is exactly `DELETE`. | Catalog MP4, sidecar, poster, stills, jobs, edges, the Jellyfin item, and peer copies when Opt In. |
+| `library_disk rotate --apply` | Sheep disk is **WARN** or **BAD**. Oldest catalog MP4s go first. At least one playable catalog MP4 stays. | The same Shears cascade. `_refactor-quarantine/` and `_refactor-preview/` are skipped. Git `genomes/samples` and `genomes/pedigree` stay. This cron is off until [Activate library rotate](#activate-library-rotate). |
+| `hammer --all --confirm HAMMER` | Factory wipe of local render I/O and the catalog. Token is `HAMMER` or the hostname. | Inbox, quarantine, done, jobs, frames, and `by-generation/`. Secrets, git pedigree, and samples stay. |
 
 ### Catalog posters (after render)
 
@@ -631,27 +665,37 @@ Cascade removes catalog MP4/sidecar/poster, jobs, edges (best-effort), Jellyfin 
 
 ### Quality repair: Sheep refactor
 
-The worker actively blocks these defects for new jobs. Use refactor to audit
-and remediate **older catalog sheep** created before enforcement (palette
-clash, bad encode, linear-only / cloned voids, frozen or desaturated output).
-`report` is read-only; only explicit `quarantine --confirm QUARANTINE`
-unpublishes an existing sheep.
+Refactor repairs sheep **already in the catalog**. New inbox jobs are stopped by the worker quality gate before they publish; this CLI is for older MP4s. It does not delete files. Isolation details are in [When a sheep is isolated or removed](#when-a-sheep-is-isolated-or-removed). Shears deletes one sheep. Hammer wipes the furnace.
+
+`scan` and `report` are the same read-only command (Pathway A). A row is `ok` below score **1**, `candidate` from **1** up to **80**, and `quarantine` at **80** or above or on a hard reason (`missing_genome`, `sheep_tax_fail`, `genome_linear_only`, `genome_singularity_cloned`, `genome_orbit_frozen`).
+
+| Pathway | Command | What it does |
+|---|---|---|
+| **A** Scan | `report` or `scan` | Scores the live catalog. Writes nothing. Prints `ok` / `candidate` / `quarantine`, the score, reasons, and the current palette (`mode`, `seed_hex`, `complement_hex`). |
+| **P** Preview | `preview --id … --preview-poster` | Optional look before apply. Writes a retinted genome, a still, a short loop, and a palette-pole clip under `/media/sheep/_refactor-preview/<stem>/`, then refreshes Jellyfin. The live `by-generation/` MP4 stays. Point a separate library at that folder if you want it in the console. Flock clients stay on the Sheep library. `--discard` removes that preview folder. |
+| **B** Apply | `apply --id … --confirm APPLY` | Keeps the genetics and the same id. TV-optimizes the source `.flam3` (optional `--palette-mode` / `--palette-seed`), stages it into `genomes/inbox`, writes `{stem}.refactor.json` beside it, and appends `refactor[]` on the live sidecar. Discards the Pathway P folder unless `--keep-preview`. The worker encodes and replaces the catalog MP4 later. Omit `--confirm` to print the plan only. |
+| **C** Quarantine | `quarantine --id … --confirm QUARANTINE` | For verdict `quarantine` only, unless `--force`. Moves the `.flam3` to `genomes/quarantine`. Default `--unpublish` parks the MP4, sidecar, poster, and stills under `/media/sheep/_refactor-quarantine/<stem>/` and deletes the Jellyfin item. `--no-unpublish` leaves the catalog on the live library. Omit `--confirm` to print the plan only. |
+| **D** Batch | `batch --limit 10 --confirm BATCH` | Runs A, then sends each `quarantine` row through C and each `candidate` row through B. `ok` rows are skipped. Default scope is failing rows; `--all` includes `ok` and still skips them. Does not run Pathway P. Jellyfin refresh is off unless `--jellyfin-refresh`. Omit `--confirm` to print the plan only. |
+
+Confirm tokens are exactly `APPLY`, `QUARANTINE`, and `BATCH`. These subcommands have no `--dry-run` flag. Leaving `--confirm` off is the dry run.
 
 ```bash
-python3 -m pipeline.refactor scan --config configs/jellyflam3.yaml
+cd /opt/jellyflam3-server
 python3 -m pipeline.refactor report --id electricsheep.247.00505
-
 python3 -m pipeline.refactor preview --id electricsheep.247.00505 --preview-poster
-python3 -m pipeline.refactor apply --id electricsheep.247.00505              # dry-run
+python3 -m pipeline.refactor preview --id electricsheep.247.00505 --discard
+
+python3 -m pipeline.refactor apply --id electricsheep.247.00505
 python3 -m pipeline.refactor apply --id electricsheep.247.00505 --confirm APPLY
 
+python3 -m pipeline.refactor quarantine --id electricsheep.247.00505
 python3 -m pipeline.refactor quarantine --id electricsheep.247.00505 --confirm QUARANTINE
-python3 -m pipeline.refactor batch --failing --limit 10 --dry-run
+
+python3 -m pipeline.refactor batch --limit 10
+python3 -m pipeline.refactor batch --limit 10 --confirm BATCH
 ```
 
-Preview lands under `media_library/_refactor-preview/` (Jellyfin-visible). Apply stages retinted genome to inbox; worker finishes async. Sidecar `refactor[]` history merges on ingest.
-
-Pathways split in code: `refactor_scan`, `refactor_preview`, `refactor_history`, `refactor_actions` — CLI facade: `pipeline.refactor`.
+Code: `pipeline.refactor` is the CLI. Scoring is `refactor_scan`, preview is `refactor_preview`, apply and quarantine are `refactor_actions`, and sidecar history is `refactor_history`. Guide: [phase3/09](phase3/09_SHEEP_REFACTOR.md).
 
 ### Nuclear reset: JellyFlam3 Hammer
 
@@ -1116,7 +1160,7 @@ Kodi screensaver messages go to **Kodi’s** log on the pasture box (`/storage/.
 | No new sheep | `healthcheck.sh`; `gate` in status JSON; inbox count | Open gate / fix worker / seed or breed. If Jellyfin already has the item, wait for a client **wrap** ([Flock mix](#flock-mix-shuffle-wrap)) |
 | Gate stuck closed | Status JSON `reason`; VoD open even on Home? | Stop VoD / wait `idle_delay_sec` (**600**). Screensaver does not close the gate |
 | `idle-gate closed; waiting 15s before backfill continues` | `cat /var/lib/jellyflam3/idle_gate_status.json` | 15s is the retry cap. `idle_delay` = 10 min hold after last TV-class activity; no `--skip-gate` |
-| Worker quiet, gate open | `ls genomes/inbox/*.flam3`; `journalctl -u jellyflam3-worker`; [Furnace logs](#furnace-logs-triage-activity-history); `python3 -m pipeline.worker_drain status` | Seed inbox; inspect quarantine; **cancel** drain if `drain: true` |
+| Worker quiet, gate open | `ls genomes/inbox/*.flam3`; `journalctl -u jellyflam3-worker`; [Furnace logs](#furnace-logs-triage-activity-history); `python3 -m pipeline.worker_drain status` | Seed inbox; inspect [quarantine](#when-a-sheep-is-isolated-or-removed); **cancel** drain if `drain: true` |
 | `jellyflam3-display-sink` crash-loop (`activating` / `NRestarts` climbing) | journal: `DISPLAY_SINK_TOKEN required when binding a non-loopback host` | On **this** Pi: `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'` → `DISPLAY_SINK_TOKEN=` in `secrets.env`; `systemctl reset-failed` + restart. Same string → Roku `displaySinkToken`. Do not copy another furnace. See [Display sink token](#display-sink-token-how--where--when). |
 | healthcheck exit 1 | Read script sections (units, tools, status file, **peering share_live**, **library disk BAD**) | See [offline peering](#opt-in-vs-share-live-do-not-confuse-them); `opt-in` or `opt-out`; free space on `/media/sheep` |
 | Sheep disk WARN / BAD | `python3 -m pipeline.library_disk check`; `df -h /media/sheep` | `python3 -m pipeline.library_disk rotate --apply`; arm daily cron with [Activate library rotate](#activate-library-rotate); Shears for one sheep; do not Hammer unless wiping the factory |
@@ -1128,8 +1172,8 @@ Kodi screensaver messages go to **Kodi’s** log on the pasture box (`/storage/.
 | Kodi zip push fails | SMB `\\<Kodi_IP>\Downloads` vs SSH key | Use LibreELEC SMB; or install SSH key for `root@<Kodi_IP_Address>` |
 | Offline peering (Opt In, no sync) | `healthcheck`: `BAD share not live`; `peering status` → `share_live: false` | `opt-in` with `TS_AUTHKEY` + Syncthing up, or `opt-out` |
 | Peering stuck (live mesh) | `peering status`; inbox under `peers/inbox` | `promote --apply`; trust keys; share-security verify |
-| Bad palette / encode / frozen still on TV | `python3 -m pipeline.refactor report --id …`; `job.json` `quality_gate` | New jobs: worker quarantines before catalog. Existing: `refactor quarantine --confirm QUARANTINE` |
-| Worker `quality gate … rejected` | `/var/cache/jellyflam3/lib/jobs/<id>/job.json` | Expected fail-closed. Genome is in `genomes/quarantine`. Do not re-seed the same `.flam3` |
+| Bad palette / encode / frozen still on TV | `python3 -m pipeline.refactor report --id …`; `job.json` `quality_gate` | New jobs: worker isolates before catalog. Existing: `refactor quarantine --confirm QUARANTINE`. See [isolate or remove](#when-a-sheep-is-isolated-or-removed) |
+| Worker `quality gate … rejected` | `/var/lib/jellyflam3/jobs/<id>/job.json` | Expected fail-closed. Genome is in `genomes/quarantine`. Copying it back into the inbox repeats the reject |
 | Black / error after quarantine | Item gone from disk/Jellyfin; client still has old flock list | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id and re-poll (30s rate limit). Kodi SS **0.2.10** also closes the native playback-failed dialog. Overnight new-sheep pickup is wrap-once (VoD 1.0.31 / Roku SS 1.0.9 / Kodi SS 0.2.9+) — [Flock mix](#flock-mix-shuffle-wrap) |
 | Playback stutters / several TVs | `python3 -m pipeline.link_capacity estimate --profile wifi-pi`; this lab is WiFi STA (`eth0` DOWN) | Direct Play; fewer TVs — stay at/under `N_max`. Jellyfin will not refuse extras. Cable the Pi only if that host actually has Ethernet |
 | Wipe everything local | — | `hammer --dry-run` then `--confirm HAMMER` (not Shears) |
@@ -1227,7 +1271,8 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 
 | Change | Read first |
 |---|---|
-| Worker quality admission | `pipeline/quality_gate.py`, [Active quality intervention](#active-quality-intervention), [phase1/05](phase1/05_RENDER_PIPELINE.md) |
+| Worker quality admission | `pipeline/quality_gate.py`, [Active quality intervention](#active-quality-intervention), [When a sheep is isolated or removed](#when-a-sheep-is-isolated-or-removed), [phase1/05](phase1/05_RENDER_PIPELINE.md) |
+| Catalog refactor (A / P / B / C / D) | `pipeline/refactor.py`, [Quality repair](#quality-repair-sheep-refactor), [phase3/09](phase3/09_SHEEP_REFACTOR.md) |
 | Render duration bands | `pipeline/choose_duration.py`, `docs/phase2/08_DYNAMIC_DURATION.md` |
 | Worker drain / pause | `pipeline/worker_drain.py`, [Worker drain](#worker-drain-pause-before-next-sheep), [phase1/05](phase1/05_RENDER_PIPELINE.md) |
 | Inbox claim order (FIFO) | `pipeline/inbox_queue.py`, [Feed the furnace](#feed-the-furnace), [phase1/05](phase1/05_RENDER_PIPELINE.md) |
@@ -1251,13 +1296,14 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 |---|---|
 | `/media/sheep/by-generation/` | Catalog MP4 + sidecar; posters + frames under `stills/{stem}/` (`.ignore`) |
 | `/media/sheep/_refactor-preview/` | Refactor Jellyfin-visible previews |
+| `/media/sheep/_refactor-quarantine/<stem>/` | Parked catalog after refactor unpublish (MP4, sidecar, poster, stills). Genetics are in `genomes/quarantine` |
 | `/var/cache/jellyflam3/frames` | Render scratch |
 | `/var/lib/jellyflam3/jobs` | In-flight job state |
 | `/var/lib/jellyflam3/idle_gate_status.json` | Gate SoT |
 | `/var/lib/jellyflam3/worker_drain.json` | Drain flag (pause before next inbox claim) |
 | `/var/lib/jellyflam3/inbox_fifo.json` | FIFO claim order for `genomes/inbox` (oldest sequence first) |
 | `genomes/inbox` | Worker input queue (oldest arrival renders next) |
-| `genomes/quarantine` | Failed genomes |
+| `genomes/quarantine` | Isolated genomes (tax, quality gate, peer integrity, render failure, refactor). Not rendered. See [isolate or remove](#when-a-sheep-is-isolated-or-removed) |
 | `genomes/done` | Rendered parent pool (breeding) |
 | `genomes/peers/inbox` | Syncthing land (promote required; no auto-furnace) |
 | `/var/lib/jellyflam3/peering_status.json` | Opt In / **share_live** / Tailscale / Syncthing (live snapshot) |
@@ -1288,4 +1334,4 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 
 ---
 
-*Document version: 2026-09-27 — inbox FIFO claim order. Phase 4 close-out (`v0.3.2`); VoD Channel Store pending Roku review.*
+*Document version: 2026-10-02 — quarantine isolate/remove list and refactor pathways A/P/B/C/D. Phase 4 close-out (`v0.3.2`); VoD Channel Store pending Roku review.*

@@ -127,7 +127,7 @@ Oldest genome in `genomes/inbox` renders next (`.flam3` and `.flame` in one queu
 
 ### Quarantine
 
-`paths.genomes_quarantine` — failed sheep tax, bad peer integrity, **quality-gate reject**, or unrecoverable genomes. Not auto-rendered.
+`paths.genomes_quarantine` — isolated `.flam3` files the worker will not render. Landings: sheep tax failure, peer share-security or tax failure on `promote --apply`, quality-gate reject, any other worker failure after claim, and `refactor quarantine`. Catalog bytes for an already published sheep park under `/media/sheep/_refactor-quarantine/<stem>/` and the Jellyfin item is deleted; the genome file is not deleted. Shears, library rotate, and Hammer are the delete paths. Household list: [When a sheep is isolated or removed](USER_GUIDE_AND_RUNBOOK.md#when-a-sheep-is-isolated-or-removed).
 
 ### genomes_done
 
@@ -431,7 +431,7 @@ Curated `genomes/pedigree/` in repo (smoke + examples). Distinct from archive `g
 
 ### Sheep refactor
 
-Phase 3 guide [09](phase3/09_SHEEP_REFACTOR.md) (**complete** — Owner OK 2026-08-21) — detect and remediate sub-standard sheep (quality / palette / encode). The worker now actively reuses these signals: hard-reject linear-only, cloned-singularity, frozen single-flame, washed-palette, and desaturated preview/output before publication. Scan/report remains read-only for older catalog audit; explicit quarantine/batch performs the move and Jellyfin unpublish. Optional palette override + preview lives under `/media/sheep/_refactor-preview/`. Not Shears (CRUD) and not Hammer (wipe).
+Phase 3 guide [09](phase3/09_SHEEP_REFACTOR.md) (**complete** — Owner OK 2026-08-21) — repair sheep already in the catalog. **A** `report`/`scan` is read-only (`ok` under score 1, `candidate` from 1, `quarantine` at 80 or a hard genetic reason). **P** `preview --preview-poster` writes under `/media/sheep/_refactor-preview/` and leaves the live MP4. **B** `apply --confirm APPLY` stages a TV-optimized retint of the same id into the inbox; the worker replaces the catalog later. **C** `quarantine --confirm QUARANTINE` moves genetics to `genomes/quarantine` and, by default, parks the catalog under `_refactor-quarantine/`. **D** `batch --confirm BATCH` routes quarantine rows to C and candidate rows to B. Omit `--confirm` to dry-run; these subcommands have no `--dry-run` flag. Not Shears (delete) and not Hammer (wipe). Household steps: [Quality repair](USER_GUIDE_AND_RUNBOOK.md#quality-repair-sheep-refactor).
 
 ---
 

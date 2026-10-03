@@ -69,7 +69,7 @@ Received peers still pass **sheep tax** ([06](06_SHEEP_TAX.md)) before gated pro
 | Default | Sharing/peering **off** — Tailscale flock node inactive (or logged out), Syncthing **stopped/disabled**, `share_opt_in: false` |
 | User action | **Opt In** or **Opt Out** via host service only (CLI) |
 | Shared | **`*.flam3`** + optional **`*-poster.jpg`** (see tiers above) |
-| Receive | Land in `genomes/peers/inbox`; **sheep tax** then **gated** promote to worker inbox (no auto-drain on first connect) |
+| Receive | Land in `genomes/peers/inbox`; **share security** then **sheep tax**, then **gated** promote to worker inbox (no auto-drain on first connect). Either check failing moves the file to `genomes/quarantine` on `--apply` |
 | Transport | Tailscale tailnet only for peer Syncthing; do not rely on global discovery for flock share |
 | Secrets | Never commit Tailscale auth keys, Syncthing API keys, or device IDs with private material |
 
@@ -83,7 +83,7 @@ When Pi **A** drops an allowed file into its Syncthing share and Pi **B** is Opt
 |---|---|---|
 | **1. Land** | `genomes/peers/inbox/` (`*.flam3`, optional `*-poster.jpg`) | Syncthing only |
 | **2. Gate** | Still in `genomes/peers/inbox/` until operator runs promote | **No** automatic drain |
-| **3. Promote** | Sheep tax → move to `genomes/inbox/` (companion `{stem}-poster.jpg` moves alongside when present); tax fail → `genomes/quarantine/` | `python3 -m pipeline.peering promote --apply` |
+| **3. Promote** | Share security, then sheep tax, then move to `genomes/inbox/` (companion `{stem}-poster.jpg` moves alongside when present). Integrity or tax failure → `genomes/quarantine/` | `python3 -m pipeline.peering promote --apply` |
 | **4. Render** | Worker claims the oldest arrival in **`genomes/inbox/`** (FIFO) | `pipeline.worker` / `jellyflam3-worker` |
 
 **Important:** a newly synced peer genome does **not** enter the render queue by itself. The worker never watches `genomes/peers/inbox`. Until gated promote `--apply`, files sit in the peers land folder with no furnace pickup.
@@ -93,7 +93,7 @@ When Pi **A** drops an allowed file into its Syncthing share and Pi **B** is Opt
            │  Syncthing (Tailscale)
            ▼
   Pi B: genomes/peers/inbox/foo.flam3     ← land (idle for worker)
-           │  promote --apply (+ sheep tax)
+           │  promote --apply (share security, then sheep tax)
            ▼
   Pi B: genomes/inbox/foo.flam3           ← worker may render
 ```
@@ -150,9 +150,10 @@ On **Opt Out**, the host service SHALL:
 | Step | Behavior |
 |---|---|
 | Land | Syncthing writes `*.flam3` (and optional `*-poster.jpg`) into `genomes/peers/inbox` |
+| Security | `pipeline.share_security.verify_integrity` before tax (missing or bad sha256, untrusted or invalid signature) |
 | Tax | [06](06_SHEEP_TAX.md) `pipeline.sheep_tax.scan_file` (`sheep_tax.on_peer_promote`) |
 | Gate | `python3 -m pipeline.peering promote` **lists** only unless `--apply` |
-| Fail | Quarantine under `genomes/quarantine` (when tax returns not ok) |
+| Fail | Move to `genomes/quarantine` when share security or tax is not ok (`--apply` only; otherwise the file stays in `peers/inbox`) |
 | Pass | Move genome into `genomes/inbox` for the render worker; move companion `{stem}-poster.jpg` alongside when present |
 | Bypass | Lab-only `--skip-tax` (not DoD sign-off) |
 

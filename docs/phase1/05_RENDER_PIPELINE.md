@@ -55,7 +55,7 @@ The running worker claims **one** inbox genome at a time: the oldest arrival (FI
 ## Steps
 
 1. Claim the oldest `.flam3` / `.flame` in the inbox, or run `--once` (inbox claim skips when drain is requested — [Worker drain](../USER_GUIDE_AND_RUNBOOK.md#worker-drain-pause-before-next-sheep))
-2. Sheep Tax, then TV-optimize: 16:9 + Gold Sheep Lite quality + OkLCh palette.
+2. Sheep Tax, then TV-optimize: 16:9 + Gold Sheep Lite quality + OkLCh palette. Tax failure (`xml_invalid`, `no_flame`, `read_error`, `write_error`, or `multi_flame` when policy is `reject` / `quarantine`) quarantines before TV-optimize. Default `strip_to_first` keeps the first flame and continues.
 3. **Active pre-render gate:** quarantine linear-only, `singularity="cloned"`, frozen single-flame, or washed-palette genomes before full animation.
 4. Render one Lite preview still; quarantine when mean saturation is below `quality_gate.desat_mean_max` (default **0.12**).
 5. Choose duration / nframes (fixed **23 s** default → **552** frames @ 24 fps).
@@ -63,7 +63,7 @@ The running worker claims **one** inbox genome at a time: the oldest arrival (FI
 7. `flam3-animate` → scratch frames, then `ffmpeg` H.264 High 4.2 + silent AAC.
 8. `ffprobe` duration + codec gates.
 9. **Pre-publication gate:** extract the encoded midpoint and re-check visual saturation. A rejection never moves the MP4 into `by-generation/`.
-10. Only after every gate passes: move to library; Jellyfin refresh + tags / sidecar; archive the genome to `paths.genomes_done`. Any rejection/failure records `quality_gate.checks` in `job.json` and moves the claimed genome to quarantine.
+10. Only after every gate passes: move to library; Jellyfin refresh + tags / sidecar; archive the genome to `paths.genomes_done`. Any rejection or later failure (disk, mount, animate, encode, ffprobe) records the error in `job.json` and copies the claimed genome to `paths.genomes_quarantine`. Artistic rejects also store `quality_gate.checks`. Household list: [When a sheep is isolated or removed](../USER_GUIDE_AND_RUNBOOK.md#when-a-sheep-is-isolated-or-removed).
 
 `quality_gate` defaults to enabled even when omitted from a live yaml. The old
 `render.still_loop_if_orbit_frozen` path is only a fallback when an operator

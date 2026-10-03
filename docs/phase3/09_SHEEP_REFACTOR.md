@@ -162,7 +162,7 @@ Hard-fail gate: stage duds without destroying genetics. Default is **dry-run**; 
 | Step | Reuse | Notes |
 |---|---|---|
 | Score gate | Pathway A `score_sheep` | Requires `verdict=quarantine` unless `--force` |
-| Move genetics | `paths.genomes_quarantine` (+ integrity companions) | Shears-compatible; **no delete** |
+| Move genetics | `paths.genomes_quarantine` (+ integrity companions) | Same directory the worker uses for tax, quality-gate, and render-failure isolation. **No delete.** A worker reject never had a catalog MP4 to park |
 | Optional unpublish | park MP4/sidecar/poster under `/media/sheep/_refactor-quarantine/<id>/` + soft Jellyfin `delete_item` | Holding area is not the live Sheep library path. Pasture clients that already cached the item id **404** then drop + re-poll (VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7). New catalog sheep appear after a shuffle wrap (VoD 1.0.31 / SS 1.0.9 / Kodi 0.2.9). |
 | Report | JSON: score, reasons, genome_src/dest, catalog_moved, jellyfin | Operator may later Shears delete |
 
@@ -183,13 +183,13 @@ python3 -m pipeline.refactor preview --id <sheep_id> \
   --palette-mode split_complementary --palette-seed '#88aaff' --preview-poster
 python3 -m pipeline.refactor quarantine --id <sheep_id>
 python3 -m pipeline.refactor quarantine --id <sheep_id> --confirm QUARANTINE
-python3 -m pipeline.refactor apply --id <sheep_id> --dry-run
-python3 -m pipeline.refactor apply --id <sheep_id> --palette-mode complementary
-python3 -m pipeline.refactor batch --failing --limit 10 --dry-run
-python3 -m pipeline.refactor batch --failing --limit 10
+python3 -m pipeline.refactor apply --id <sheep_id>
+python3 -m pipeline.refactor apply --id <sheep_id> --confirm APPLY --palette-mode complementary
+python3 -m pipeline.refactor batch --limit 10
+python3 -m pipeline.refactor batch --limit 10 --confirm BATCH
 ```
 
-`batch` = Pathway A filter → Pathway B/C per item with `--limit`, always defaulting to dry-run until `--confirm` / explicit flag (match Shears safety). Batch may omit per-Id poster preview unless `--preview-poster` is explicitly set (expensive).
+`batch` = Pathway A filter → `quarantine` verdicts to C and `candidate` verdicts to B, with `--limit`. Omitting `--confirm` is the dry run (`BATCH` applies). There is no `--dry-run` flag on `apply`, `quarantine`, or `batch`. Batch does not run Pathway P. Household steps: [When a sheep is isolated or removed](../USER_GUIDE_AND_RUNBOOK.md#when-a-sheep-is-isolated-or-removed) and [Quality repair](../USER_GUIDE_AND_RUNBOOK.md#quality-repair-sheep-refactor).
 
 ### Framework alignment
 

@@ -10,6 +10,9 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Runbook lists when a sheep is isolated (`genomes/quarantine`, and `_refactor-quarantine/` for an unpublished catalog) and when it is deleted (Shears, library rotate, Hammer). Peer promote docs now match the code: share security runs before sheep tax, and either failure quarantines on `--apply`.
+- Runbook states refactor pathways A (read-only score), P (preview), B (`APPLY` re-furnace, same id), C (`QUARANTINE` isolate), and D (`BATCH` routes quarantine to C and candidates to B). Omitting `--confirm` is the dry run; those subcommands have no `--dry-run` flag.
+
 - Daily idle breed stages one child when the inbox has `breed.idle_breed.inbox_low_water` genomes or fewer waiting (default 3). That count is the only furnace test; the old empty-inbox, idle-gate, and no-live-render checks are gone, and the child waits on the FIFO tail. JSON `action` is `breed` for pedigree modes and `tuple` when the pick pairs two existing sheep. `inbox_low_water: 0` requires an empty inbox.
 
 - Worker inbox claim is FIFO. `pipeline.inbox_queue` records arrival in `/var/lib/jellyflam3/inbox_fifo.json` and the worker renders the oldest `.flam3` / `.flame` next. Seed, breed, tuple staging, promote, and job recovery stamp enqueue time so a low generation id or an early name cannot render ahead of genomes that have been waiting longer. Runbook: [Feed the furnace](docs/USER_GUIDE_AND_RUNBOOK.md#feed-the-furnace).
