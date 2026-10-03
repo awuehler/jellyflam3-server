@@ -10,6 +10,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Replaced five quality-gate-rejected `genomes/samples` genomes with archive picks that keep one CC BY and one CC BY-NC in generations 244 and 245, and a CC BY-NC in generation 243: `244.75688`, `244.01221`, `245.05215`, `245.08610`, `243.16930`.
+
 - Runbook lists when a sheep is isolated (`genomes/quarantine`, and `_refactor-quarantine/` for an unpublished catalog) and when it is deleted (Shears, library rotate, Hammer). Peer promote docs now match the code: share security runs before sheep tax, and either failure quarantines on `--apply`.
 - Runbook states refactor pathways A (read-only score), P (preview), B (`APPLY` re-furnace, same id), C (`QUARANTINE` isolate), and D (`BATCH` routes quarantine to C and candidates to B). Omitting `--confirm` is the dry run; those subcommands have no `--dry-run` flag.
 

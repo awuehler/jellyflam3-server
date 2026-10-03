@@ -1,16 +1,16 @@
-<flame name="electricsheep.245.08693" time="0" size="800 592" center="0.0118871 0.00426533" scale="379.918" rotate="1800" supersample="4" filter="1" filter_shape="gaussian" temporal_filter_type="box" temporal_filter_width="1" quality="2000" passes="1" temporal_samples="1000" background="0 0 0" brightness="2" gamma="2" vibrancy="1" estimator_radius="11" estimator_minimum="0" estimator_curve="0.6" gamma_threshold="0.01" palette_mode="linear" interpolation_type="log" parents="8610">
-   <xform weight="18" color="0" symmetry="0.862" polar="0.001" disc="0.958" coefs="0.697997 0.716102 -0.716102 0.697997 0.05722 0.151904" post="-0.145749 0.989322 -0.989322 -0.145749 0 0"/>
-   <xform weight="0.5" color="1" symmetry="0" julia="1" coefs="-0.707107 -0.707107 0.707107 -0.707107 0 0" post="-0.145749 0.989322 -0.989322 -0.145749 0 0"/>
-   <xform weight="2.00775" color="0" symmetry="0" julian="0.97472" julian_power="23.3158" julian_dist="-1.60716" coefs="-0.0132331 -0.160475 -0.0320004 -0.016679 0.159494 -0.0553465" post="-0.145749 0.989322 -0.989322 -0.145749 0 0"/>
-   <xform weight="0.082" color="1" symmetry="0" linear="1" coefs="-0.259939 0.125156 0.028882 0.240684 1.70689 -0.687582" post="-0.145749 0.989322 -0.989322 -0.145749 0 0"/>
-   <xform weight="0.002" color="0" symmetry="0" linear="0.98" disc="0.01" waves="0.01" coefs="-0.809168 0.0382395 0.0903547 0.96419 -0.00787939 0.0406799" post="-0.145749 0.989322 -0.989322 -0.145749 0 0"/>
-   <xform weight="0.0789477" color="1" symmetry="0" linear="0.842105" polar="-0.00221053" heart="0.000947372" coefs="1.47689 -0.102445 -0.344543 1.88713 -14.8322 0.278823" post="-0.145749 0.989322 -0.989322 -0.145749 0 0"/>
-   <xform weight="0.049" color="0" symmetry="0" sinusoidal="0.36" polar="0.89" waves="0.56" coefs="-2.48224 -1.29438 -0.261668 -0.200718 0.110096 -4.51859" post="-0.145749 0.989322 -0.989322 -0.145749 0 0"/>
-   <xform weight="0.0771543" color="1" symmetry="0" linear="0.64" hyperbolic="0.05" ex="0.22" julia="0.05" waves="0.05" coefs="1 0 0 1 0 0" post="-0.145749 0.989322 -0.989322 -0.145749 0 0"/>
-   <xform weight="0.0681363" color="0" symmetry="0" linear="0.85" hyperbolic="0.05" julia="0.05" waves="0.05" coefs="0.867727 0.263916 -0.263916 0.867727 0 0" post="-0.145749 0.989322 -0.989322 -0.145749 0 0"/>
-   <xform weight="0.0621242" color="1" symmetry="0" linear="0.85" hyperbolic="0.05" julia="0.05" waves="0.05" coefs="0.668055 0.440887 -0.440887 0.668055 0 0" post="-0.145749 0.989322 -0.989322 -0.145749 0 0"/>
-   <xform weight="0.0571142" color="0" symmetry="0" linear="0.85" hyperbolic="0.05" julia="0.05" waves="0.05" coefs="0.442706 0.519756 -0.519756 0.442706 0 0" post="-0.145749 0.989322 -0.989322 -0.145749 0 0"/>
-   <xform weight="0.0511022" color="1" symmetry="0" linear="0.85" hyperbolic="0.05" julia="0.05" waves="0.05" coefs="0.231954 0.50661 -0.50661 0.231954 0 0" post="-0.145749 0.989322 -0.989322 -0.145749 0 0"/>
+<flame name="electricsheep.245.08610" time="0" size="800 592" center="-0.04 0.05" scale="380.794" rotate="1800" supersample="4" filter="1" filter_shape="gaussian" temporal_filter_type="box" temporal_filter_width="1" quality="2000" passes="1" temporal_samples="1000" background="0 0 0" brightness="2" gamma="2" vibrancy="1" estimator_radius="11" estimator_minimum="0" estimator_curve="0.6" gamma_threshold="0.01" palette_mode="linear" interpolation_type="log" parents="3439 1517" notes="cross 0 0 ">
+   <xform weight="18" color="0" symmetry="0.862" polar="0.001" disc="0.958" coefs="-0.810188 0.586172 -0.586172 -0.810188 0.05722 0.151904"/>
+   <xform weight="0.5" color="1" symmetry="0" julia="1" coefs="-0.707107 -0.707107 0.707107 -0.707107 0 0"/>
+   <xform weight="2.00775" color="0" symmetry="0" julian="0.97472" julian_power="23.3158" julian_dist="-1.60716" coefs="-0.0132331 -0.160475 -0.0320004 -0.016679 0.159494 -0.0553465"/>
+   <xform weight="0.082" color="1" symmetry="0" linear="1" coefs="-0.259939 0.125156 0.028882 0.240684 1.70689 -0.687582"/>
+   <xform weight="0.002" color="0" symmetry="0" linear="0.98" disc="0.01" waves="0.01" coefs="-0.809168 0.0382395 0.0903547 0.96419 -0.00787939 0.0406799"/>
+   <xform weight="0.0789477" color="1" symmetry="0" linear="0.842105" polar="-0.00221053" heart="0.000947372" coefs="1.47689 -0.102445 -0.344543 1.88713 -14.8322 0.278823" post="0.987496 0.157647 -0.157647 0.987496 0.246986 0.345781"/>
+   <xform weight="0.049" color="0" symmetry="0" sinusoidal="0.36" polar="0.89" waves="0.56" coefs="-2.48224 -1.29438 -0.261668 -0.200718 0.110096 -4.51859"/>
+   <xform weight="0.0771543" color="1" symmetry="0" linear="0.64" hyperbolic="0.05" ex="0.22" julia="0.05" waves="0.05" coefs="1 0 0 1 0 0"/>
+   <xform weight="0.0681363" color="0" symmetry="0" linear="0.85" hyperbolic="0.05" julia="0.05" waves="0.05" coefs="0.867727 0.263916 -0.263916 0.867727 0 0"/>
+   <xform weight="0.0621242" color="1" symmetry="0" linear="0.85" hyperbolic="0.05" julia="0.05" waves="0.05" coefs="0.668055 0.440887 -0.440887 0.668055 0 0"/>
+   <xform weight="0.0571142" color="0" symmetry="0" linear="0.85" hyperbolic="0.05" julia="0.05" waves="0.05" coefs="0.442706 0.519756 -0.519756 0.442706 0 0"/>
+   <xform weight="0.0511022" color="1" symmetry="0" linear="0.85" hyperbolic="0.05" julia="0.05" waves="0.05" coefs="0.231954 0.50661 -0.50661 0.231954 0 0"/>
    <color index="0" rgb="147 86 81"/>
    <color index="1" rgb="134 71 70"/>
    <color index="2" rgb="128 64 64"/>
@@ -267,25 +267,26 @@
    <color index="253" rgb="159 231 254"/>
    <color index="254" rgb="165 230 249"/>
    <color index="255" rgb="159 232 249"/>
-   <edit date="Tue Apr 12 09:10:57 -0400 2016" id="8693" action="mutate post reframed">
-      <edit date="Wed Apr  6 09:08:01 -0400 2016" id="8610" action="cross alternate 1: 1 1 0 1 0 0 0 1 1 1 1 1" filename="p0" index="0">
-         <edit date="Tue Jun 16 22:37:55 -0400 2015" id="3439" action="clone brood" filename="p0" index="0">
-            <edit date="Thu Apr  2 09:01:58 -0400 2015" id="1651" action="cross alternate 1: 0 1 1 1 1 1 1" filename="upload" index="0">
-               <edit date="Sun Mar 26 15:47:39 PST 2006" action="genebank 198 7644" filename="genebank.flam3" index="357"/>
-               <edit date="Sat Jun 13 01:19:38 EDT 2009" id="16435" action="clone brood" filename="genebank2.flam3" index="1498">
-                  <edit date="Tue Jun  9 04:14:08 EDT 2009" id="16326" action="mutate all improved colors" filename="upload" index="0">
-                     <edit date="Wed May  6 18:08:15 EDT 2009" id="15496" action="clone brood" filename="spex" index="0">
-                        <edit date="Thu Apr 30 04:10:56 EDT 2009" id="15349" action="cross alternate 1: 0 0 0 0 1 0 1" filename="upload" index="0"/>
+   <edit date="Wed Apr  6 09:08:01 -0400 2016" id="8610" action="cross alternate 1: 1 1 0 1 0 0 0 1 1 1 1 1">
+      <edit date="Tue Jun 16 22:37:55 -0400 2015" id="3439" action="clone brood" filename="p0" index="0">
+         <edit date="Thu Apr  2 09:01:58 -0400 2015" id="1651" action="cross alternate 1: 0 1 1 1 1 1 1" filename="upload" index="0">
+            <edit date="Sun Mar 26 15:47:39 PST 2006" action="genebank 198 7644" filename="genebank.flam3" index="357"/>
+            <edit date="Sat Jun 13 01:19:38 EDT 2009" id="16435" action="clone brood" filename="genebank2.flam3" index="1498">
+               <edit date="Tue Jun  9 04:14:08 EDT 2009" id="16326" action="mutate all improved colors" filename="upload" index="0">
+                  <edit date="Wed May  6 18:08:15 EDT 2009" id="15496" action="clone brood" filename="spex" index="0">
+                     <edit date="Thu Apr 30 04:10:56 EDT 2009" id="15349" action="cross alternate 1: 0 0 0 0 1 0 1" filename="upload" index="0">
+                        <edit date="Tue Mar 31 00:15:25 EDT 2009" id="14726" action="clone brood" filename="spex" index="0"/>
+                        <edit date="Mon Feb  2 21:30:12 EST 2009" id="12129" action="clone brood" filename="spex" index="0"/>
                      </edit>
                   </edit>
                </edit>
             </edit>
          </edit>
-         <edit date="Wed Mar 25 23:35:11 -0400 2015" id="1517" action="clone brood" filename="p1" index="0">
-            <edit date="Sat Mar  7 09:02:04 -0500 2015" id="1100" action="cross alternate 1: 1 0 1 0 1 1 1 1 1 1 1 1 cmap_cross 0: 45 52 65 166 253" filename="upload" index="0">
-               <edit filename="genebank2.flam3" index="789"/>
-               <edit filename="genebank2.flam3" index="960"/>
-            </edit>
+      </edit>
+      <edit date="Wed Mar 25 23:35:11 -0400 2015" id="1517" action="clone brood" filename="p1" index="0">
+         <edit date="Sat Mar  7 09:02:04 -0500 2015" id="1100" action="cross alternate 1: 1 0 1 0 1 1 1 1 1 1 1 1 cmap_cross 0: 45 52 65 166 253" filename="upload" index="0">
+            <edit filename="genebank2.flam3" index="789"/>
+            <edit filename="genebank2.flam3" index="960"/>
          </edit>
       </edit>
    </edit>
