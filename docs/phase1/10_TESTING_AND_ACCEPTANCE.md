@@ -34,7 +34,7 @@ python3 -m pytest tests/ -q
 | Jellyfin Items API `Tags` populated | Private-first: sidecar `*.jellyflam3.json` is SoT; API tags optional polish |
 | BrightScript / Kodi commercial-safe toggle | **Works when Items Tags carry `cc-by` / `cc-by-nc`**. Empty Tags → empty commercial flock (not a silent no-op). Lab feedstock: balanced CC+NC under `genomes/samples/` — see [07](07_LICENSE_AND_METADATA.md#lab-check--commercial-mode-toggle). Venue use uncommon; default `false` |
 | Skip-if-exists idempotency | Re-run **overwrites** same catalog path (deterministic enough) |
-| Channel Store / certification | Explicit Phase 1 non-goal |
+| Channel Store / certification | Phase 1 non-goal; VoD **published** in Phase 4 ([../phase4/04_ROKU_PUBLISH.md](../phase4/04_ROKU_PUBLISH.md)) |
 | Roku screensaver package | Phase 3 |
 | Archive seed random picker (gens 247–165) | Baseline shipped (Phase 2 guide 01) |
 | Dynamic duration weighting | Phase 2 guide 06 |

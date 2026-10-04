@@ -283,7 +283,7 @@ Already shipped on the lab flock path — verify on the **new** Pi:
 |---|---|
 | Primary poster | Jellyfin web + filesystem `stills/{stem}/{stem}-poster.jpg` ([02](02_JELLYFIN_FLOCK_UX.md)) |
 | HLS smoke | `./scripts/hls_smoke.sh` ([03](03_HLS_CLIENT_STREAMING.md)) |
-| JellyFlam3 sideload | Package on **this** furnace Pi + sideload; furnace zip pre-fills Jellyfin IDs; play one item ([04](04_ROKU_CHANNEL_POLISH.md), [08](../phase3/08_JELLYFIN_ID_DUMP.md)) |
+| JellyFlam3 on the TV | Channel Store → **JellyFlam3**, then Settings from `jellyfin_id_dump.py`. Lab alternative: package on **this** furnace Pi and sideload; that zip pre-fills Jellyfin IDs ([04](04_ROKU_CHANNEL_POLISH.md), [08](../phase3/08_JELLYFIN_ID_DUMP.md)) |
 
 ```bash
 ./scripts/package_roku_channel.sh          # dist/jellyflam3-roku.zip (presets from secrets.env)

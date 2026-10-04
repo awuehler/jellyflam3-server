@@ -19,7 +19,7 @@ Stills serve **Roku** (image-only screensaver). Kodi plays video loops and does 
 ## Roku Screensaver / Backdrop
 
 - Standalone package: `RunScreenSaver()` only; **no** Video node; no deep links.
-- Cycle Primary posters **and** Backdrop stills via HTTP from all library folders except `tuple`. **1.0.11** Settings `titleMode` (filename default / alias) plus a chrome-light stills caption from Overview `Alias:`. **1.0.10** Screensaver Settings can create Jellyfin registry keys (needed when VoD is a private channel). Always rotates (does not read VoD `shuffleFlock`). Honors `commercialMode` like VoD. **1.0.9** wrap-refetches after a full stills permutation (Limit 5000, prune URLs to 313). The wrap re-fetch replaces the URL list and **rotates** so the next still is not the one on screen (same seam rule as VoD 1.0.31 / Kodi 0.2.9). Without `BackdropImageTags` the mix is Primaries only.
+- Cycle Primary posters **and** Backdrop stills via HTTP from all library folders except `tuple`. **1.0.11** Settings `titleMode` (filename default / alias) plus a chrome-light stills caption from Overview `Alias:`. **1.0.10** Screensaver Settings can create Jellyfin registry keys (needed when VoD is the Channel Store app or a private channel). Always rotates (does not read VoD `shuffleFlock`). Honors `commercialMode` like VoD. **1.0.9** wrap-refetches after a full stills permutation (Limit 5000, prune URLs to 313). The wrap re-fetch replaces the URL list and **rotates** so the next still is not the one on screen (same seam rule as VoD 1.0.31 / Kodi 0.2.9). Without `BackdropImageTags` the mix is Primaries only.
 - Platform rules: [Roku Screensavers](https://developer.roku.com/docs/developer-program/media-playback/screensavers.md).
 
 ## Work items (implementation)
@@ -45,13 +45,13 @@ Optional AI guidance for parent selection / aesthetic briefs atop Phase 2 `flam3
 3. Prefer existing flock Primaries when Backdrop stills are not yet uploaded; extract + **Images API Backdrop** upload is the durable screensaver path (never from tuples). Disk frames under `stills/` are not cycled until `BackdropImageTags` exist.
 4. Reuse Jellyfin auth/library contract from guide 08; do not invent a second secrets scheme. **Screensaver 1.0.10:** Settings can write `baseUrl` / `apiKey` / `userId` / `libraryId` (private-channel coexistence). **1.0.11** also writes `titleMode`. Zip-swap with VoD still shares the developer-slot registry; private VoD does not. Furnace-built zip presets remain. Fade/dwell stay on this screen.
 5. Watermark bake on stills (if any) waits on [Phase 4 edges/watermark](../phase4/03_EDGES_AND_WATERMARK.md) unless a minimal unwatermarked MVP is accepted.
-6. **Lab sideload:** developer mode holds **one** custom package. Sideloading the screensaver **replaces** VoD on that Roku; restore by re-sideloading `jellyflam3-roku.zip`. Registry keys **survive** the zip swap. On the Roku, pick the SS only under **Settings → Theme → Screensavers** (nothing named idle-gate appears there). Idle-gate confirmation is a **Pi** check (`idle_gate_status.json` stays `open` while SS runs). For both packages installed at once, use a private channel for one.
+6. **Lab sideload:** developer mode holds **one** custom package. Sideloading the screensaver **replaces a sideloaded** VoD on that Roku; restore by re-sideloading `jellyflam3-roku.zip`. Registry keys **survive** that zip swap. A Channel Store VoD install is a different channel and stays on Home; its registry does not fill the screensaver. On the Roku, pick the SS only under **Settings → Theme → Screensavers** (nothing named idle-gate appears there). Idle-gate confirmation is a **Pi** check (`idle_gate_status.json` stays `open` while SS runs).
 
 ## Non-goals
 
 - Kodi add-on (guide [02](02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md))
 - Video / edge playback inside the Roku screensaver
-- Channel Store / private-channel publish of VoD + screensaver → [Phase 4 / 04](../phase4/04_ROKU_PUBLISH.md)
+- VoD is in the Channel Store; screensaver Store listing leftover → [Phase 4 / 04](../phase4/04_ROKU_PUBLISH.md)
 - Mid-session flock **re-poll on 404** when a sheep is quarantined while SS is cycling Primaries → **shipped** screensaver **1.0.8** (drop dead URL, 30s rate-limited StillsTask re-poll, continue). Wrap-once re-fetch + 313 URL cap → **shipped** screensaver **1.0.9**.
 - Long-running screensaver **session re-fetch** (once per full shuffle wrap so ~daily ingest appears without exit) → **shipped** screensaver **1.0.9** (one random URL permutation; HTTP Limit 5000; prune to 313; wrap re-fetch **rotates the new mix** past the still on screen). Same contract on VoD 1.0.31 and Kodi 0.2.9.
 - LLM pedigree MVP → [Phase 5 / 02](../phase5/02_LLM_INTEGRATION.md)

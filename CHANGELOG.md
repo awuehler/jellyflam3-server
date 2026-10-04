@@ -10,6 +10,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- JellyFlam3 VoD is published on the Roku Channel Store. Household install is the store channel (empty Settings). Sideload remains the furnace-preset zip and the only path for the Roku screensaver.
+
 - Jellyfin CachePath and `JELLYFIN_CACHE_DIR` for bring-up are `/var/cache/jellyflam3/jellyfin` on the NVMe. Clean Cache Directory no longer walks the furnace `lib` bind. HLS temp stays `/var/cache/jellyflam3/transcodes`.
 
 - The first like or love changes idle-breed parent odds. Weight is `1 + votes ** power` once `votes` meet `min_votes_for_bias` (defaults: one vote weighs 2, an unvoted parent weighs 1). The same first vote still meets the share cron. A genome already in `peers/share-out` is skipped (`already_shared`) when later votes arrive.
@@ -25,7 +27,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [v0.3.2] — 2026-09-23
 
-Phase 4 close-out. Tuples, votes, naming, mesh introduce, library rotate, worker drain, and Roku VoD Channel Store submission (pending review). **117** commits since `v0.3.1`.
+Phase 4 close-out. Tuples, votes, naming, mesh introduce, library rotate, worker drain, and Roku VoD Channel Store submission (review completed after this tag; the channel is published — see Unreleased). **117** commits since `v0.3.1`.
 
 Client tip: Roku VoD **1.0.51**, Roku screensaver **1.0.11**, Kodi screensaver **0.2.13**.
 
@@ -90,7 +92,7 @@ Client tip: Roku VoD **1.0.51**, Roku screensaver **1.0.11**, Kodi screensaver *
 - Phase 4 / 09 screensaver captions: Kodi **0.2.12** `title_mode` (filename default / alias) plus a chrome-light overlay; Roku screensaver **1.0.11** Settings `titleMode` plus stills caption. Both read Overview `Alias:` (same as VoD). Optional Jellyfin OriginalTitle / SortName-as-alias stays parked.
 - Phase 4 / 06 library rotate **closed** (Owner OK 2026-09-19). Check + Shears rotate + worker refuse stay shipped; daily `cron_library_rotate.sh` remains off the lab crontab until a host is WARN/BAD. How-to: [Activate daily rotate](docs/phase4/06_LIBRARY_DISK_ROTATE.md#activate-daily-rotate) and [USER_GUIDE](docs/USER_GUIDE_AND_RUNBOOK.md#activate-library-rotate). LRU / soak-fill stay non-goals.
 - Cancel Phase 4 leftovers: **standalone edges** / loop-stills watermark / Kodi edge sequencer (tuples already include loop→edge→loop). **Roku screensaver voting** (best practices / certification — VoD overlay only; Kodi SS votes are [phase5/05](docs/phase5/05_KODI_SCREENSAVER_VOTES.md)). **`N_max` as a Jellyfin cap** and an **Ethernet control lab** (guide 07 — this fleet is WiFi STA, `eth0 DOWN`; estimate stays ops guidance). **Auto-promote** (guide 01 — gated `promote --apply` is the receive path; no silent `peers/inbox` drain). **Furnace polish that is not drain** (2026-09-19): checkpoint/resume inside `flam3-animate` and SIGSTOP-as-pause — the binary has no resume protocol; drain (finish current job, then stop claiming) stays the pause product.
-- Phase 4 **implemented** 2026-09-23 (`v0.3.2`): VoD Channel Store submitted (pending Roku review). Leftovers: JellyFlam3 Dreams Store listing; optional Jellyfin OriginalTitle / SortName-as-alias; friendly screen-name registry key.
+- Phase 4 **implemented** 2026-09-23 (`v0.3.2`): VoD Channel Store submitted (review completed after this tag; the channel is published — see Unreleased). Leftovers: JellyFlam3 Dreams Store listing; optional Jellyfin OriginalTitle / SortName-as-alias; friendly screen-name registry key.
 - Catalog posters live with screensaver frames under `by-generation/{gen}/stills/{stem}/{stem}-poster.jpg`. Jellyfin skips that tree via `stills/.ignore` so the library console lists MP4s (and sidecars) without extra JPEG items. Backfill relocates leftover sibling `{stem}-poster.jpg` next to the MP4. Unpublished quarantine/preview trees keep a sibling poster. Clients still use Jellyfin Images Primary/Backdrop APIs (no Roku/Kodi version bump).
 - Commercial-safe furnaces skip the Cesari Electric Sheep logo on tuple edges and burn the ES attribution sentence instead (`license.commercial_mode: true`). Private flock may still overlay the PNG pending permission.
 - NOTICE / LICENSE carve-out for Cesari watermark assets; Layer 2 operator warning; furnace `commercial_mode` no longer documented as culling NC at render.
@@ -130,9 +132,9 @@ Generic client zips (no baked-in Jellyfin credentials — configure in channel/a
 
 ### Known limitations
 
-- Roku VoD Channel Store is **pending review** (unset 1.0.51 package). Household TVs still use furnace-preset sideload zips (LAN `baseUrl`).
+- Roku VoD Channel Store review has completed. Household install is the published channel (empty Settings). Furnace-preset sideload zips remain the lab path (LAN `baseUrl`).
 - JellyFlam3 Dreams (Roku screensaver) is **not** Store-submitted (`rsg_version=1.2`, deprecated `subtitle`, no launch beacons).
-- One Roku sideload slot until Store VoD is live on a box (then SS can occupy developer mode).
+- Store VoD does not use the developer slot, so the screensaver can occupy it. A sideloaded VoD still shares that one slot with the screensaver.
 - Optional Jellyfin OriginalTitle / SortName-as-alias remains parked; LLM naming is Phase 5.
 - Render time: hours per sheep; months for a large flock.
 

@@ -70,12 +70,12 @@ Symptom-oriented table (extend as lab learns):
 |---|---|---|
 | No new sheep appearing | Worker active? inbox count? gate open? drain off? | Open gate / `worker_drain cancel` / fix worker / seed inbox |
 | Gate stuck closed | Status JSON `reason`; VoD open even on Home? | Stop VoD / wait `idle_delay_sec` (**600**). CLI `waiting 15s` is the retry cap ([runbook](../USER_GUIDE_AND_RUNBOOK.md#idle-gate-behavior)) |
-| Blank screensaver | Empty `JellyFlam3` registry (SS never configured VoD on this box) | Sideload VoD → save Settings → re-sideload SS; then id dump / Primary+Backdrop |
+| Blank screensaver | Empty screensaver `JellyFlam3` registry (store VoD credentials do not copy) | Screensaver Settings or a furnace SS zip; then id dump / Primary+Backdrop |
 | VoD **No poster** tiles | No `ImageTags.Primary` (`stills/` JPEGs are ignored) | Images API Primary upload (base64); relaunch VoD |
 | Roku SS posters only | No `BackdropImageTags` | `backfill_posters` until `jellyfin_stills` uploaded |
 | Kodi SS missing brand-new sheep | Jellyfin shows item, but screensaver has not wrapped the shuffle yet | Wait for a full pass (0.2.9 wrap re-fetch) or exit screensaver / start a new idle session. Same wrap-once contract on VoD 1.0.31 and Roku SS 1.0.9 ([USER_GUIDE flock mix](../USER_GUIDE_AND_RUNBOOK.md#flock-mix-shuffle-wrap)) |
 | Playback 404 after quarantine | Client still playing; operator just quarantined/Shears-deleted that sheep | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id, re-poll Jellyfin (30s rate limit), and continue. Sideload/install the new packages. Overnight new-sheep refresh is wrap-once (VoD 1.0.31 / SS 1.0.9 / Kodi 0.2.9) |
-| Screensaver replaced VoD | One sideload slot | Re-sideload VoD or use private/Store ([04](04_ROKU_PUBLISH.md)) |
+| Screensaver replaced a sideloaded VoD | One sideload slot | Install store VoD, or re-sideload the VoD zip ([04](04_ROKU_PUBLISH.md)) |
 | Peering empty | Opt In? Syncthing? trust keys? | Peering README; share-security verify |
 | Healthcheck mount fail | USB/NVMe | Phase 2 from-scratch mounts |
 | Sheep disk WARN / BAD | `library_disk check`; `df` | `library_disk rotate --apply`; [Activate daily rotate](06_LIBRARY_DISK_ROTATE.md#activate-daily-rotate); Shears for one sheep ([06](06_LIBRARY_DISK_ROTATE.md)) |

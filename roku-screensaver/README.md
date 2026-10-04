@@ -68,7 +68,7 @@ Roku developer mode allows **only one sideloaded package** at a time. Installing
 |---|---|
 | Smoke the screensaver | **VoD Settings already saved on this box**, then sideload SS zip; Theme → Screensavers |
 | Restore VoD after SS smoke | Re-sideload `dist/jellyflam3-roku.zip` |
-| Keep both installed long-term | Publish VoD as a **private/unpublished** channel ([phase4/04](../docs/phase4/04_ROKU_PUBLISH.md#private-channel-path-wave-2)); leave SS as the single sideload (or publish both) |
+| Keep both installed long-term | Install **JellyFlam3** from the Channel Store (or a private channel) and leave SS as the single sideload ([phase4/04](../docs/phase4/04_ROKU_PUBLISH.md)) |
 
 Roku also **forbids** embedding a screensaver in a streaming app (`screensaver_title` / `RunScreenSaver` are screensaver-only). VoD and screensaver must stay separate packages.
 

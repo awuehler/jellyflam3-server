@@ -18,11 +18,11 @@ Never use `127.0.0.1` or `localhost` on a TV — those are the Pi talking to its
 
 | Device | Everyday |
 |---|---|
-| **Roku VoD** | Launch **JellyFlam3** → pick a sheep. Loop plays. Overnight new sheep after a full mix (package 1.0.31). Near the end (**1.0.41**): last **7 s**, same 55% bar as loading-next — name left, **OK** love / **Right** like / **Down** dismiss / **Up-Back** exit right. Liked genomes can copy to peers overnight if Opt In; receivers still promote. |
+| **Roku VoD** | Channel Store → **JellyFlam3** (no sideload). Launch → pick a sheep. First run: Settings on the TV. Overnight new sheep after a full mix (1.0.31). Near the end (**1.0.41**): last **7 s**, same 55% bar as loading-next — name left, **OK** love / **Right** like / **Down** dismiss / **Up-Back** exit right. Liked genomes can copy to peers overnight if Opt In; receivers still promote. |
 | **Roku screensaver** | **Settings → Theme → Screensavers → JellyFlam3**. Images only (not video). Enter Jellyfin in Screensaver Settings (1.0.10) or use a furnace zip. **1.0.11** Titles filename/alias. New stills after a full mix (1.0.9). |
 | **Kodi** | **Settings → Interface → Screensaver → JellyFlam3 Dreams**. Leave idle. Keys exit, except last **7 s** (**0.2.13**): Enter love / Right like / Down dismiss / Up-Back exit (same as VoD). **0.2.12** Titles filename/alias. New sheep after a full mix (0.2.9). |
 
-**One Roku sideload slot:** installing screensaver **replaces** VoD until you re-sideload VoD. Keep both: private-channel VoD, then sideload SS.
+**Store VoD stays installed** when you sideload the screensaver. Sideloading the screensaver replaces VoD only when VoD itself was the sideloaded zip.
 
 ---
 
@@ -55,7 +55,7 @@ Furnace-built zips often pre-fill these. If the flock is empty, open VoD **Setti
 |---|---|
 | Empty flock / blank screensaver | Re-open VoD Settings; save; same Wi‑Fi as the Pi |
 | “Waiting for the furnace” / cannot connect | URL must be the Pi’s **LAN IP**, not `127.0.0.1`. Wait or Retry — VoD 1.0.43+ / Kodi 0.2.11+ retry every 30s |
-| Screensaver replaced VoD | Re-sideload the VoD zip |
+| Sideloaded screensaver replaced a sideloaded VoD | Install **JellyFlam3** from the Channel Store, or re-sideload the VoD zip |
 | Kodi black / settings hint | Add-on **Configure** → furnace LAN URL |
 | Kodi “waiting for the furnace” | Pi or Jellyfin is down; leave idle — it reconnects |
 | Nothing new for days | Often normal. Ask the operator if the TV was left on VoD |

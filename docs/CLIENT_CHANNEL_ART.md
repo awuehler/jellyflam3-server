@@ -6,7 +6,7 @@ Household / operator **prompts** for a favorite **external** image generator (Mi
 
 This is **not** furnace work. Do **not** ask `jellyflam3-worker`, idle-breed, or the parked Phase 5 Ventuno agent to mint these files. Do **not** ingest the PNGs into the Sheep library. Catalog posters stay mid-loop JPEGs from flam3 stills ([USER_GUIDE](USER_GUIDE_AND_RUNBOOK.md#catalog-posters-after-render)).
 
-**Status:** Prompt pack for sideload / private-channel refresh. Store listing still parked ([phase4/04](phase4/04_ROKU_PUBLISH.md)).
+**Status:** Prompt pack for channel chrome. VoD is published on the Channel Store ([phase4/04](phase4/04_ROKU_PUBLISH.md)); a new splash or icon still needs a store package rebuild to appear on installed channels. Sideload zips pick up a file swap on the next upload.
 
 ## Intent
 
@@ -249,7 +249,7 @@ Do not commit `registry/jellyflam3-presets.json` or a filled Kodi `settings.xml`
 | Client | How the new art appears |
 |---|---|
 | **Roku VoD** | Developer installer → upload `dist/jellyflam3-roku.zip` (replaces the sideload slot). Splash shows on launch; Home tile uses `mm_icon_focus_hd`. If the tile is stale, remove the sideloaded channel and upload again. Private-channel `.pkg` must be **re-packaged on a Roku** ([phase4/04](phase4/04_ROKU_PUBLISH.md#private-channel-path-wave-2)) — a zip swap does not update an already-published private channel. |
-| **Roku Dreams** | Sideload `dist/jellyflam3-screensaver.zip` (replaces VoD in the developer slot unless VoD is a private channel). Theme → Screensavers still points at JellyFlam3 Dreams. |
+| **Roku Dreams** | Sideload `dist/jellyflam3-screensaver.zip`. That replaces VoD only when VoD is the sideloaded package. A Channel Store or private-channel VoD stays installed. Theme → Screensavers still points at JellyFlam3 Dreams. |
 | **Kodi Dreams** | Copy zip to the Kodi box → Add-ons → Install from zip (overwrite). Icon/fanart refresh in the add-on browser; if Kodi caches art, disable/re-enable the add-on or reboot LibreELEC. |
 
 Roku holds **one** sideload at a time. Do not sideload SS over household VoD unless Owner asked.

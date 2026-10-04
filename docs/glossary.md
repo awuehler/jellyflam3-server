@@ -333,7 +333,7 @@ SceneGraph media descriptor — `url`, `streamFormat` (`hls` | `mp4`), `title`, 
 
 ### Sideload
 
-Install dev channel zip via Roku Developer Application Installer (`package_roku_*.sh` → `dist/*.zip`). On a **furnace Pi**, zips include `registry/jellyflam3-presets.json` (Jellyfin URL, API key, user/library ids for that host). One sideload slot per device (VoD vs Screensaver alternate).
+Install a dev channel zip via the Roku Developer Application Installer (`package_roku_*.sh` → `dist/*.zip`). Household VoD does not need this: **JellyFlam3** is in the Channel Store and that install leaves the sideload slot free. On a **furnace Pi**, sideload zips include `registry/jellyflam3-presets.json` (Jellyfin URL, API key, user/library ids for that host). One sideload slot per device, so a sideloaded screensaver replaces a sideloaded VoD. The Roku screensaver is still sideload-only.
 
 ### Deep link
 

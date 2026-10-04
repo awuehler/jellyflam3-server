@@ -49,7 +49,7 @@ Phase 3 is **closed**. Post-launch roadmap: [../phase4/00_OVERVIEW.md](../phase4
 9. [09_SHEEP_REFACTOR.md](09_SHEEP_REFACTOR.md) — refactor tool for sub-standard sheep (quality / palette / encode; Jellyfin-visible preview) — **complete** (Owner OK 2026-08-21)
 10. [10_TESTING_AND_ACCEPTANCE.md](10_TESTING_AND_ACCEPTANCE.md) — testing, acceptance, and **release candidate** — **complete** (Owner OK 2026-08-23)
 
-Also named (not numbered guides): aspirational DeepDream/AI backends; broader social flock (household vote → share/breed bias — post-launch [../phase4/08_VIEWER_FEEDBACK_LOOP.md](../phase4/08_VIEWER_FEEDBACK_LOOP.md)). **LLM-assisted pedigree** → [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md). Channel Store / private publish of Roku VoD + screensaver → post-launch [../phase4/04_ROKU_PUBLISH.md](../phase4/04_ROKU_PUBLISH.md).
+Also named (not numbered guides): aspirational DeepDream/AI backends; broader social flock (household vote → share/breed bias — post-launch [../phase4/08_VIEWER_FEEDBACK_LOOP.md](../phase4/08_VIEWER_FEEDBACK_LOOP.md)). **LLM-assisted pedigree** → [../phase5/02_LLM_INTEGRATION.md](../phase5/02_LLM_INTEGRATION.md). Roku VoD is **published** on the Channel Store; the screensaver Store listing is leftover — [../phase4/04_ROKU_PUBLISH.md](../phase4/04_ROKU_PUBLISH.md).
 
 ## Definition of done
 

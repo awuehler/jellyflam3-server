@@ -18,7 +18,8 @@ Architecture SoT: [Pi5_Flam3_VoD_Pipeline.md](../Pi5_Flam3_VoD_Pipeline.md) (re-
 - **Git pedigree sheep** — curated in-repo pedigree `.flam3` for smoke/examples; replace legacy samples ([../phase3/06_GIT_PEDIGREE_SHEEP.md](../phase3/06_GIT_PEDIGREE_SHEEP.md))
 - **JellyFlam3 Hammer** — purge history, reset worker env, wipe all render inputs/outputs ([../phase3/07_JELLYFLAM3_HAMMER.md](../phase3/07_JELLYFLAM3_HAMMER.md))
 - **Sheep refactor** — sub-standard quality / palette / encode repair ([../phase3/09_SHEEP_REFACTOR.md](../phase3/09_SHEEP_REFACTOR.md))
-- DeepDream / AI render backends, Channel Store certification, full social flock network
+- DeepDream / AI render backends, full social flock network
+- Channel Store certification → **published** for VoD ([../phase4/04_ROKU_PUBLISH.md](../phase4/04_ROKU_PUBLISH.md)); Roku screensaver listing leftover
 - First-class web player (may appear later; not required for Phase 2 DoD)
 - Continuous / live HLS from shuffled flock MP4s (dropped from Phase 3)
 

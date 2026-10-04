@@ -166,7 +166,7 @@ git log -1 --oneline
 |---|---|
 | LLM-assisted pedigree | Beyond flam3-genome tooling |
 | DeepDream / AI backends | Aspirational |
-| Channel Store / Roku publish (VoD + screensaver) | Post-launch ([phase4/04](../phase4/04_ROKU_PUBLISH.md)) |
+| Channel Store / Roku publish (VoD + screensaver) | VoD **published**; screensaver listing leftover ([phase4/04](../phase4/04_ROKU_PUBLISH.md)) |
 | Sheep library disk rotate | **Closed** 2026-09-19 — [phase4/06](../phase4/06_LIBRARY_DISK_ROTATE.md); daily cron optional |
 | Concurrent clients / link capacity | Estimator shipped 2026-09-03 (`pipeline.link_capacity`); Owner OK 2026-09-09 |
 | End-user guide | Baseline complete 2026-09-03 ([phase4/05](../phase4/05_END_USER_GUIDE.md)); vote recipes shipped with 08; VoD/SS alias titles with 09 |

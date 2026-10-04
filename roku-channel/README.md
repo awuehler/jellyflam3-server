@@ -99,7 +99,9 @@ cd /opt/jellyflam3-server
 # Upload dist/jellyflam3-roku.zip at http://<roku-ip>/ (Developer installer)
 ```
 
-Developer mode holds **one** sideloaded package. Installing the screensaver zip replaces this VoD channel on that box; re-sideload this zip to restore. To keep **both** installed, publish VoD as a private/unpublished channel ([docs/phase4/04](../docs/phase4/04_ROKU_PUBLISH.md#private-channel-path-wave-2)).
+**Channel Store:** search for **JellyFlam3** and install it. That build matches the `--no-presets` zip (empty Settings). It does not use developer mode.
+
+Developer mode holds **one** sideloaded package. Installing the screensaver zip replaces a **sideloaded** VoD on that box; re-sideload this zip to restore. The store channel stays installed. See [docs/phase4/04](../docs/phase4/04_ROKU_PUBLISH.md).
 
 **1.0.41 player chrome:** loading-next (`{alias}(MP4)` / Loading…) and the vote overlay use the same 55% bar and SmallSystemFont line at the bottom of the picture.
 
@@ -107,7 +109,7 @@ Developer mode holds **one** sideloaded package. Installing the screensaver zip 
 
 **Title mode (1.0.33):** Settings `titleMode=alias` shows the memorable `adjective_surname` on flock tiles and player status. Default remains the filename. Sideload this package and, for sheep ingested before this slice, run `python3 -m pipeline.sheep_naming backfill --push-jellyfin` so Overview has `Alias:` lines.
 
-**Screensaver depends on Jellyfin registry keys** (`baseUrl` / `apiKey` / `userId` / `libraryId`). While both packages share the developer slot, VoD Settings populate them and the zip swap keeps them. Private-channel VoD does **not** share registry with sideload SS — use SS Settings **1.0.10** or a furnace-built SS zip. See [`roku-screensaver/README.md`](../roku-screensaver/README.md) and [docs/phase3/08_JELLYFIN_ID_DUMP.md](../docs/phase3/08_JELLYFIN_ID_DUMP.md).
+**Screensaver depends on Jellyfin registry keys** (`baseUrl` / `apiKey` / `userId` / `libraryId`). While both packages share the developer slot, VoD Settings populate them and the zip swap keeps them. Store and private-channel VoD do **not** share registry with sideload SS — use SS Settings **1.0.10** or a furnace-built SS zip. See [`roku-screensaver/README.md`](../roku-screensaver/README.md) and [docs/phase3/08_JELLYFIN_ID_DUMP.md](../docs/phase3/08_JELLYFIN_ID_DUMP.md).
 
 See [docs/phase1/08_ROKU_BRIGHTSCRIPT.md](../docs/phase1/08_ROKU_BRIGHTSCRIPT.md) and [docs/phase2/03_HLS_CLIENT_STREAMING.md](../docs/phase2/03_HLS_CLIENT_STREAMING.md). Splash / Home icon prompts: [docs/CLIENT_CHANNEL_ART.md](../docs/CLIENT_CHANNEL_ART.md).
 

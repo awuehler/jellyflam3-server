@@ -65,7 +65,7 @@ Parallel after **02**: `03` (HLS) anytime; `04` once Primary images exist. `05`�
 1. [01_PEER_SHARE_PATH.md](phase4/01_PEER_SHARE_PATH.md) — gated `promote --apply` (auto-promote **cancelled**)
 2. [02_MESH_INTRODUCE_SCRIPTING.md](phase4/02_MESH_INTRODUCE_SCRIPTING.md) — share hop → [phase5/04](phase5/04_PEER_SHARE_MESH.md)
 3. [03_EDGES_AND_WATERMARK.md](phase4/03_EDGES_AND_WATERMARK.md) — tuples (standalone edges / loop watermark **cancelled**)
-4. [04_ROKU_PUBLISH.md](phase4/04_ROKU_PUBLISH.md) — VoD Channel Store **submitted** (pending review)
+4. [04_ROKU_PUBLISH.md](phase4/04_ROKU_PUBLISH.md) — VoD **published** on the Channel Store (screensaver Store listing leftover)
 5. [05_END_USER_GUIDE.md](phase4/05_END_USER_GUIDE.md) — household guide
 6. [06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md) — disk check + rotate CLI (daily cron optional)
 7. [07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md) — `link_capacity` (no Jellyfin cap / Ethernet lab DoD)

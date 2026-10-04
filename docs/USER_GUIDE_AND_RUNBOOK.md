@@ -25,9 +25,9 @@ You do **not** need the Pi terminal for normal viewing. Printable one-pager: [FR
 
 **First time on a Roku (one-time setup per TV):**
 
-1. Sideload the JellyFlam3 VoD channel zip (e.g. `dist/jellyflam3-roku.zip` from `scripts/package_roku_channel.*` on a furnace Pi).
-2. **Furnace-built zips are pre-configured:** when packaged on a Pi with `secrets.env`, the zip includes that furnace’s Jellyfin URL, API key, user id, and library id. Launch the channel — credentials apply on first run if the registry is empty; the flock list should load without manual paste.
-3. **Otherwise** (Windows packaging host or empty registry): open the channel → **Settings** → enter Jellyfin connection values. An operator runs `python3 scripts/jellyfin_id_dump.py` on the Pi and gives you `baseUrl`, `apiKey`, `userId`, `libraryId` (never share the API key in chat/email — paste on the TV only). VoD **1.0.37+** persists each valid keyboard **OK** immediately. In **1.0.42**, highlight `commercialMode`, `streamMode`, `shuffleFlock`, or `titleMode` and press OK to toggle and save immediately; **Save & Reload** refreshes the flock.
+1. Install **JellyFlam3** from the Roku Channel Store. Developer mode stays off. The store package does not occupy the sideload slot and ships with **empty Settings** (no furnace URL and no API key).
+2. Open the channel → **Settings** → enter Jellyfin connection values. An operator runs `python3 scripts/jellyfin_id_dump.py` on the Pi and gives you `baseUrl`, `apiKey`, `userId`, `libraryId` (never share the API key in chat/email — paste on the TV only). VoD **1.0.37+** persists each valid keyboard **OK** immediately. In **1.0.42**, highlight `commercialMode`, `streamMode`, `shuffleFlock`, or `titleMode` and press OK to toggle and save immediately; **Save & Reload** refreshes the flock.
+3. **Lab sideload** (`dist/jellyflam3-roku.zip` from `scripts/package_roku_channel.*` on a furnace Pi) is the preset path: a zip built on a Pi with `secrets.env` fills an empty registry with that furnace’s Jellyfin URL, API key, user id, and library id. That zip uses the one developer slot. The store channel does not.
 
 **Everyday use:** launch JellyFlam3 → pick a sheep → ambient loop plays. If the furnace is temporarily unreachable, VoD **1.0.43+** waits without declaring the flock empty and retries every 30 seconds; **Retry** checks immediately. Shuffle is always on (channel **1.0.30+**): archive gens plus **pedigree** and **tuple**. After a full mix, **1.0.31** asks Jellyfin again so overnight ingest can appear without leaving the player ([Flock mix](#flock-mix-shuffle-wrap)). Near the end of each clip (**1.0.41**, last **7 s**), a one-line 55% banner invites a vote without pausing in the same place as loading-next: filename/alias on the left, **OK** love, **Right** like, **Down** dismiss, **Up / Back** exit on the right. **Tuples skip the vote overlay.** Votes stay on the Pi (LAN only). A **tuple** is one longer clip: sheep A, then a morph into sheep B. During that middle morph only, a quiet mark sits in the lower-right corner (the Electric Sheep logo PNG on the default private furnace; your own PNG if the operator set one; or the credit “artwork by Scott Draves and the Electric Sheep” on a commercial-safe furnace that still uses the Cesari file). Loops A and B have no mark. That mark is **not** a license to post the clip as official Electric Sheep — operators, see [Private vs public furnace](#private-vs-public-furnace) and [Use your own PNG](#use-your-own-png-private-and-public). When you press **Play**, the Pi **stops rendering** new sheep until the TV has been idle for several minutes (see [idle gate](#idle-gate-behavior) below).
 
@@ -35,13 +35,13 @@ You do **not** need the Pi terminal for normal viewing. Printable one-pager: [FR
 
 ### Roku Screensaver / Backdrop
 
-The screensaver is a **separate sideload package** (`jellyflam3-screensaver.zip`). It shows **Jellyfin Primary posters and Backdrop stills** from every library folder except `tuple` — no video node (Roku policy). It always rotates (ignores VoD `shuffleFlock`) and honors the same `commercialMode` Tag filter as VoD. Package **1.0.9** re-fetches stills after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). **1.0.10** Screensaver Settings can enter Jellyfin URL / API key / user / library (needed when VoD is a private channel). **1.0.11** adds Settings `titleMode` (`filename` default / `alias`) and a chrome-light stills caption from Overview `Alias:`.
+The screensaver is a **separate sideload package** (`jellyflam3-screensaver.zip`). It shows **Jellyfin Primary posters and Backdrop stills** from every library folder except `tuple` — no video node (Roku policy). It always rotates (ignores VoD `shuffleFlock`) and honors the same `commercialMode` Tag filter as VoD. Package **1.0.9** re-fetches stills after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). **1.0.10** Screensaver Settings can enter Jellyfin URL / API key / user / library (needed when VoD is the store channel or a private channel — those have a different channel id than a sideload). **1.0.11** adds Settings `titleMode` (`filename` default / `alias`) and a chrome-light stills caption from Overview `Alias:`.
 
-**Credentials:** Screensaver reads registry section `JellyFlam3` on **this** package. A **furnace-built** zip ships `registry/jellyflam3-presets.json`. Otherwise paste in **Screensaver Settings** (**1.0.10+**) or, while both packages still share the developer slot, save VoD Settings first then sideload SS (registry survives the zip swap). Private-channel VoD does **not** share registry with sideload SS.
+**Credentials:** Screensaver reads registry section `JellyFlam3` on **this** package. A **furnace-built** zip ships `registry/jellyflam3-presets.json`. Otherwise paste in **Screensaver Settings** (**1.0.10+**). Store VoD and a sideloaded screensaver do **not** share that section. They share it only when both packages take turns in the same developer slot (save VoD Settings, then sideload SS — the keys survive the zip swap).
 
 **Enable:** sideload screensaver zip → on Roku go to **Settings → Theme → Screensavers** → select JellyFlam3.
 
-**Developer-mode note:** only **one** sideload slot. Installing screensaver **replaces** VoD until you re-sideload VoD. Long-term coexistence: publish VoD as a **private/unpublished** channel ([phase4/04](phase4/04_ROKU_PUBLISH.md#private-channel-path-wave-2)), then sideload SS in the free slot.
+**Developer-mode note:** only **one** sideload slot. Sideloading the screensaver **replaces a sideloaded VoD** until you re-sideload that zip. A Channel Store VoD install is a different channel and stays on the Home screen. Coexistence is store VoD plus sideload SS ([phase4/04](phase4/04_ROKU_PUBLISH.md)).
 
 **While screensaver runs:** the Pi idle gate should stay **open** (rendering may continue). Operator verifies with `cat /var/lib/jellyflam3/idle_gate_status.json`.
 
@@ -109,7 +109,7 @@ Sideload packages already ship a splash and Home/add-on icon. To make **your** h
 | Screensaver blank | VoD was never configured on **this** Roku | After VoD Settings saved, still blank |
 | VoD tiles say **No poster** | Jellyfin item has no `ImageTags.Primary` | Operator: Images API Primary upload (disk JPEG under `stills/` is hidden). Relaunch VoD after tags exist |
 | Screensaver posters only / no extra stills | No `BackdropImageTags` on items | Operator: backfill Backdrops (`jellyfin_stills`); SS cycles Primaries until then |
-| Screensaver “replaced” VoD | Re-sideload VoD channel zip | — |
+| Screensaver replaced a **sideloaded** VoD | Re-sideload the VoD zip, or install **JellyFlam3** from the Channel Store (store VoD is not removed by a screensaver sideload) | — |
 | Kodi screensaver “waiting for the furnace” | Furnace or Jellyfin is down; **0.2.11+** reconnects every 30s | Hint lasts after the Pi is healthy |
 | Kodi screensaver asks for settings | Add-on **Configure** → furnace **LAN IP**, not `127.0.0.1` | Settings correct but no sheep play |
 | Nothing new for days | Normal if gate was closed or inbox empty | Gate open + inbox empty for a week; or client package older than wrap-once ([Flock mix](#flock-mix-shuffle-wrap)) |
@@ -135,7 +135,7 @@ Run Pi commands from `/opt/jellyflam3-server` unless noted.
    python3 scripts/jellyfin_id_dump.py
    ```
 
-2. Sideload `dist/jellyflam3-roku.zip` (furnace-built zip pre-fills Settings). Otherwise open **JellyFlam3 → Settings**, enter `baseUrl` / `apiKey` / `userId` / `libraryId`, save.
+2. Install **JellyFlam3** from the Roku Channel Store and open **Settings**. Enter `baseUrl` / `apiKey` / `userId` / `libraryId`, save. A furnace sideload of `dist/jellyflam3-roku.zip` is the lab shortcut that pre-fills those fields.
 3. Launch JellyFlam3 → pick one sheep → **Play**. Confirm the loop is running.
 4. On the Pi, confirm the furnace paused:
 
@@ -152,7 +152,7 @@ Run Pi commands from `/opt/jellyflam3-server` unless noted.
 
 **Host:** same furnace Pi + the **same** Roku as example 1 (VoD Settings already saved on this box).
 
-1. Sideload `dist/jellyflam3-screensaver.zip`. Developer mode has **one** sideload slot — this **replaces** VoD until you re-sideload VoD; registry keys survive.
+1. Sideload `dist/jellyflam3-screensaver.zip`. Developer mode has **one** sideload slot. That replaces a **sideloaded** VoD until you re-sideload it; registry keys survive that swap. A Channel Store VoD install stays put. Enter Jellyfin in Screensaver Settings — the store channel’s registry is a different channel id.
 2. Roku **Settings → Theme → Screensavers → JellyFlam3**. Optional: screensaver Settings for fade/dwell only (no credential editors).
 3. Idle the TV (or use the Theme screensaver preview). You should see **posters and stills** (Jellyfin Primary + Backdrop), never tuple frames, always rotating. Not video. A full stills mix then wrap-refetches (package **1.0.9**).
 4. On the Pi, while the screensaver is up:
@@ -162,7 +162,7 @@ Run Pi commands from `/opt/jellyflam3-server` unless noted.
    # Expect: "gate": "open"  (Client JellyFlam3-Screensaver is ignored)
    ```
 
-**Pass:** images on the TV and gate still open (rendering may continue). **Fail:** blank SS → VoD was never configured on **this** Roku (example 1 step 2). Re-sideload VoD when you want the channel tile back.
+**Pass:** images on the TV and gate still open (rendering may continue). **Fail:** blank SS → this screensaver package has no Jellyfin credentials yet (example 1 step 2 fills the store channel, not the screensaver). Store VoD remains on Home. Re-sideload VoD only when the channel itself was the sideloaded zip.
 
 ### 3 — Two Rokus, one Pi
 
@@ -817,7 +817,7 @@ powershell -NoProfile -File scripts/lab_smoke05_fleet.ps1
 | Roku VoD / Screensaver | `registry/jellyflam3-presets.json` in the zip; first launch writes empty `JellyFlam3` registry keys |
 | Kodi screensaver | `resources/settings.xml` default values in the staged zip |
 
-Each furnace Pi produces zips pointed at **its own** Jellyfin (`http://<that-pi-lan-ip>:8096`). Do not commit preset JSON or distribute zips outside the household — they contain the API key. Current VoD sideload is **1.0.52** (same channel as 1.0.51: launch beacon at an operable home screen; one-way MP4 stream fallback; HD-only splash/icon; cert **5.2** `roInput`; `rsg_version=1.3`).
+Household Rokus install **JellyFlam3** from the Channel Store and type Settings. Each furnace Pi can still produce a sideload zip pointed at **its own** Jellyfin (`http://<that-pi-lan-ip>:8096`). Do not commit preset JSON or distribute those zips outside the household — they contain the API key. Current VoD sideload is **1.0.52** (same channel as 1.0.51: launch beacon at an operable home screen; one-way MP4 stream fallback; HD-only splash/icon; cert **5.2** `roInput`; `rsg_version=1.3`).
 
 The Roku **Channel Store** zip ships with **empty Settings**: no `registry/jellyflam3-presets.json`, no Funnel host, no Jellyfin key. First-run users type their own server in Settings. `--no-presets` skips the furnace preset step so a Pi build cannot bake the LAN `baseUrl`. Pack to a separate zip so the household artifact keeps its presets.
 
@@ -919,7 +919,7 @@ See [kodi-screensaver/README.md](../kodi-screensaver/README.md) for setting ids 
 
 ### Private vs public furnace
 
-Default install is a **private mixed** flock (BY + BY-NC, household). **Public** here means the **commercial-safe / venue / published-playback** path — not Roku Channel Store (still parked). JellyFlam3 is not affiliated with Spotworks LLC.
+Default install is a **private mixed** flock (BY + BY-NC, household). **Public** here means the **commercial-safe / venue / published-playback** path. The Roku Channel Store listing is a separate fact: the VoD channel is published there. JellyFlam3 is not affiliated with Spotworks LLC.
 
 These knobs are **independent**. `git pull` does **not** flip them (`configs/jellyflam3.yaml` is gitignored).
 
@@ -1165,7 +1165,7 @@ Kodi screensaver messages go to **Kodi’s** log on the pasture box (`/storage/.
 | healthcheck exit 1 | Read script sections (units, tools, status file, **peering share_live**, **library disk BAD**) | See [offline peering](#opt-in-vs-share-live-do-not-confuse-them); `opt-in` or `opt-out`; free space on `/media/sheep` |
 | Sheep disk WARN / BAD | `python3 -m pipeline.library_disk check`; `df -h /media/sheep` | `python3 -m pipeline.library_disk rotate --apply`; arm daily cron with [Activate library rotate](#activate-library-rotate); Shears for one sheep; do not Hammer unless wiping the factory |
 | Empty flock with commercial-safe on | Items Tags missing | `jellyfin_id_dump.py --items`; [private vs public](#private-vs-public-furnace) step 2 |
-| Blank Roku SS | VoD Settings ever saved on this device? | Sideload VoD → Settings → re-sideload SS |
+| Blank Roku SS | Screensaver Settings filled on this package? Store VoD credentials do not copy over | Screensaver Settings, or a furnace SS zip |
 | VoD **No poster** tiles | Items lack `ImageTags.Primary` (stills JPEGs are ignored) | `backfill_posters` (base64 Images POST); relaunch VoD |
 | Roku SS posters only | Items lack `BackdropImageTags` | `backfill_posters` until sidecar `jellyfin_stills.status=uploaded` |
 | Kodi SS hint / no video | `server_url` uses LAN IP? flock empty on Jellyfin? | `jellyfin_id_dump.py --items`; re-install zip after client fix |
@@ -1345,4 +1345,4 @@ Recorded 2026-10-03 from the vote-path review. Not scheduled. The first-vote wei
 
 ---
 
-*Document version: 2026-10-03 — first-vote breed weight, one-time share copy, and vote-outcome notes for later. Phase 4 close-out (`v0.3.2`); VoD Channel Store pending Roku review.*
+*Document version: 2026-10-04 — JellyFlam3 VoD installs from the Roku Channel Store; sideload remains the furnace-preset and screensaver path. Phase 4 close-out (`v0.3.2`).*
