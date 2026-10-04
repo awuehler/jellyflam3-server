@@ -451,7 +451,7 @@ USB/NVMe **mount** for catalog. Jellyfin libraries are hard-separated under it: 
 
 ### `/var/cache/jellyflam3`
 
-Scratch: frames, transcodes, images, smoke. Jellyfin CachePath.
+NVMe scratch: frames, transcodes, images, smoke, and the `lib` bind. Jellyfin CachePath is the `jellyfin/` subdirectory so Clean Cache Directory does not walk furnace state. HLS temp stays `transcodes/`.
 
 ### `/var/lib/jellyflam3`
 

@@ -10,6 +10,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Jellyfin CachePath and `JELLYFIN_CACHE_DIR` for bring-up are `/var/cache/jellyflam3/jellyfin` on the NVMe. Clean Cache Directory no longer walks the furnace `lib` bind. HLS temp stays `/var/cache/jellyflam3/transcodes`.
+
 - The first like or love changes idle-breed parent odds. Weight is `1 + votes ** power` once `votes` meet `min_votes_for_bias` (defaults: one vote weighs 2, an unvoted parent weighs 1). The same first vote still meets the share cron. A genome already in `peers/share-out` is skipped (`already_shared`) when later votes arrive.
 
 - Replaced five quality-gate-rejected `genomes/samples` genomes with archive picks that keep one CC BY and one CC BY-NC in generations 244 and 245, and a CC BY-NC in generation 243: `244.75688`, `244.01221`, `245.05215`, `245.08610`, `243.16930`.

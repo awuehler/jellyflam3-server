@@ -188,3 +188,16 @@ def test_bringup_maps_healthcheck_failure_to_bad_not_warn():
     text = _read("scripts/bringup_check.sh")
     assert 'bad "healthcheck.sh failed' in text
     assert 'warn "healthcheck.sh failed' not in text
+
+
+def test_jellyfin_cache_path_is_nvme_subdirectory():
+    cache = "/var/cache/jellyflam3/jellyfin"
+    trans = "/var/cache/jellyflam3/transcodes"
+    for rel in ("scripts/bootstrap_pi.sh", "scripts/install_jellyfin.sh", "scripts/bringup_check.sh"):
+        text = _read(rel)
+        assert cache in text, rel
+        assert trans in text, rel
+    install = _read("scripts/install_jellyfin.sh")
+    assert "Do not set CachePath to /var/cache/jellyflam3." in install
+    assert 'JELLYFIN_CACHE_DIR="/var/cache/jellyflam3/jellyfin"' in install
+    assert 'JELLYFIN_CACHE_DIR="/var/cache/jellyflam3/jellyfin"' in _read("scripts/bootstrap_pi.sh")

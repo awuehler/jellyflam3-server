@@ -105,11 +105,38 @@ if id jellyfin &>/dev/null; then
   else
     bad "jellyfin not in group $(id -un) — sudo usermod -aG $(id -un) jellyfin && sudo systemctl restart jellyfin"
   fi
-  if sudo -n -u jellyfin test -w /var/cache/jellyflam3 2>/dev/null \
+  if sudo -n -u jellyfin test -w /var/cache/jellyflam3/jellyfin 2>/dev/null \
+    && sudo -n -u jellyfin test -w /var/cache/jellyflam3/transcodes 2>/dev/null \
     && sudo -n -u jellyfin test -w /var/lib/jellyflam3 2>/dev/null; then
-    ok "jellyfin can write CachePath + MetadataPath roots"
+    ok "jellyfin can write CachePath, transcodes, and MetadataPath"
   else
     warn "could not verify jellyfin write (passwordless sudo -n required, or run install_jellyfin.sh prep)"
+  fi
+  if [[ -r /etc/jellyfin/system.xml ]]; then
+    cache_path="$(python3 -c 'import re; t=open("/etc/jellyfin/system.xml", encoding="utf-8", errors="replace").read(); m=re.search(r"<CachePath>([^<]*)</CachePath>", t); print(m.group(1) if m else "")')"
+    if [[ "$cache_path" == "/var/cache/jellyflam3/jellyfin" ]]; then
+      ok "CachePath $cache_path"
+    elif [[ "$cache_path" == "/var/cache/jellyflam3" ]]; then
+      bad "CachePath is the NVMe root; Clean Cache Directory will walk furnace state. Use /var/cache/jellyflam3/jellyfin"
+    else
+      warn "CachePath is '${cache_path:-missing}'"
+    fi
+  fi
+  if [[ -r /etc/default/jellyfin ]]; then
+    cache_env="$(grep -E '^JELLYFIN_CACHE_DIR=' /etc/default/jellyfin | head -1 | cut -d= -f2- | tr -d '"')"
+    if [[ "$cache_env" == "/var/cache/jellyflam3/jellyfin" ]]; then
+      ok "JELLYFIN_CACHE_DIR $cache_env"
+    else
+      bad "JELLYFIN_CACHE_DIR is '${cache_env:-missing}'; startup still wants that directory"
+    fi
+  fi
+  if [[ -r /etc/jellyfin/encoding.xml ]]; then
+    trans_path="$(python3 -c 'import re; t=open("/etc/jellyfin/encoding.xml", encoding="utf-8", errors="replace").read(); m=re.search(r"<TranscodingTempPath>([^<]*)</TranscodingTempPath>", t); print(m.group(1) if m else "")')"
+    if [[ "$trans_path" == "/var/cache/jellyflam3/transcodes" ]]; then
+      ok "TranscodingTempPath $trans_path"
+    else
+      warn "TranscodingTempPath is '${trans_path:-missing}' (HLS segments should stay on /var/cache/jellyflam3/transcodes)"
+    fi
   fi
 else
   warn "jellyfin user not present yet — install before setting Dashboard Cache/Metadata paths"

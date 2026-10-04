@@ -11,7 +11,8 @@
 #
 # Assumptions: Prefer NVMe/SSD mounts; if /var/cache/jellyflam3 is a volume, bind-mount
 #   /var/cache/jellyflam3/lib → /var/lib/jellyflam3 and persist in fstab.
-#   Prepares CachePath/MetadataPath so Jellyfin can write temp files (see install_jellyfin.sh).
+#   Prepares MetadataPath and a Jellyfin-only CachePath subdirectory so Clean Cache
+#   Directory does not walk furnace state (see install_jellyfin.sh).
 
 set -euo pipefail
 
@@ -20,7 +21,7 @@ USER_NAME="${SUDO_USER:-$USER}"
 
 sudo mkdir -p /media/sheep/by-generation \
   /media/sheep/_refactor-preview \
-  /var/cache/jellyflam3/{frames,transcodes,images,smoke} \
+  /var/cache/jellyflam3/{frames,transcodes,images,smoke,jellyfin} \
   /var/cache/jellyflam3/lib/{jobs,logs,genomes/inbox,genomes/quarantine,genomes/done,display_profiles} \
   /var/lib/jellyflam3
 
@@ -44,12 +45,73 @@ sudo chmod 2775 /media/sheep /media/sheep/by-generation /media/sheep/_refactor-p
 if id jellyfin &>/dev/null; then
   sudo usermod -aG "${USER_NAME}" jellyfin || true
   sudo usermod -aG jellyfin,video,render "${USER_NAME}" || true
-  # Jellyfin-owned scratch (matches lab 08a)
-  sudo mkdir -p /var/cache/jellyflam3/transcodes /var/lib/jellyflam3/library
-  sudo chown jellyfin:jellyfin /var/cache/jellyflam3/transcodes /var/lib/jellyflam3/library
-  sudo chmod 775 /var/cache/jellyflam3/transcodes
-  echo "Jellyfin user present: group membership + transcodes/library ownership set."
-  echo "Verify write: sudo -u jellyfin touch /var/cache/jellyflam3/.write_ok /var/lib/jellyflam3/.write_ok && sudo rm -f /var/cache/jellyflam3/.write_ok /var/lib/jellyflam3/.write_ok"
+  # CachePath is the jellyfin/ subdirectory, not the NVMe root (lib bind lives there).
+  # TranscodingTempPath stays transcodes/ so HLS segments remain on the NVMe.
+  sudo mkdir -p /var/cache/jellyflam3/jellyfin /var/cache/jellyflam3/transcodes /var/lib/jellyflam3/library
+  sudo chown jellyfin:jellyfin /var/cache/jellyflam3/jellyfin /var/cache/jellyflam3/transcodes /var/lib/jellyflam3/library
+  sudo chmod 775 /var/cache/jellyflam3/jellyfin /var/cache/jellyflam3/transcodes
+  echo "Jellyfin user present: cache dir, transcodes, and library ownership set."
+  echo "Verify write: sudo -u jellyfin touch /var/cache/jellyflam3/jellyfin/.write_ok /var/cache/jellyflam3/transcodes/.write_ok /var/lib/jellyflam3/.write_ok && sudo rm -f /var/cache/jellyflam3/jellyfin/.write_ok /var/cache/jellyflam3/transcodes/.write_ok /var/lib/jellyflam3/.write_ok"
+  if [[ -f /etc/jellyfin/system.xml ]]; then
+    tmp="$(mktemp)"
+    cat > "$tmp" <<'PY'
+from pathlib import Path
+import re
+import shutil
+
+cache = "/var/cache/jellyflam3/jellyfin"
+trans = "/var/cache/jellyflam3/transcodes"
+system = Path("/etc/jellyfin/system.xml")
+encoding = Path("/etc/jellyfin/encoding.xml")
+text = system.read_text(encoding="utf-8")
+new, n = re.subn(r"(<CachePath>)[^<]*(</CachePath>)", rf"\1{cache}\2", text, count=1)
+if n != 1:
+    raise SystemExit("system.xml has no single CachePath element")
+if new != text:
+    shutil.copy2(system, system.with_name("system.xml.bak-cachepath"))
+    system.write_text(new, encoding="utf-8")
+    print("updated CachePath in system.xml; restart jellyfin to load it")
+else:
+    print("CachePath already", cache)
+if encoding.is_file():
+    enc = encoding.read_text(encoding="utf-8")
+    if "<TranscodingTempPath>" not in enc and "<TranscodingTempPath " not in enc:
+        if "</EncodingOptions>" not in enc:
+            raise SystemExit("encoding.xml has no EncodingOptions close")
+        shutil.copy2(encoding, encoding.with_name("encoding.xml.bak-cachepath"))
+        enc = enc.replace(
+            "</EncodingOptions>",
+            f"  <TranscodingTempPath>{trans}</TranscodingTempPath>\n</EncodingOptions>",
+            1,
+        )
+        encoding.write_text(enc, encoding="utf-8")
+        print("set TranscodingTempPath; restart jellyfin to load it")
+    else:
+        enc2, n2 = re.subn(
+            r"<TranscodingTempPath\s*/>|<TranscodingTempPath>.*?</TranscodingTempPath>",
+            f"<TranscodingTempPath>{trans}</TranscodingTempPath>",
+            enc,
+            count=1,
+            flags=re.DOTALL,
+        )
+        if n2 == 1 and enc2 != enc:
+            shutil.copy2(encoding, encoding.with_name("encoding.xml.bak-cachepath"))
+            encoding.write_text(enc2, encoding="utf-8")
+            print("updated TranscodingTempPath; restart jellyfin to load it")
+        else:
+            print("TranscodingTempPath already", trans)
+PY
+    sudo python3 "$tmp"
+    rm -f "$tmp"
+  fi
+  if [[ -f /etc/default/jellyfin ]]; then
+    if grep -q '^JELLYFIN_CACHE_DIR=' /etc/default/jellyfin; then
+      sudo sed -i 's|^JELLYFIN_CACHE_DIR=.*|JELLYFIN_CACHE_DIR="/var/cache/jellyflam3/jellyfin"|' /etc/default/jellyfin
+    else
+      echo 'JELLYFIN_CACHE_DIR="/var/cache/jellyflam3/jellyfin"' | sudo tee -a /etc/default/jellyfin >/dev/null
+    fi
+    echo "JELLYFIN_CACHE_DIR set; restart jellyfin to load it"
+  fi
 else
   echo "Jellyfin not installed yet — re-run this script after apt install jellyfin,"
   echo "  or follow ./scripts/install_jellyfin.sh permission prep before setting Cache/Metadata paths."

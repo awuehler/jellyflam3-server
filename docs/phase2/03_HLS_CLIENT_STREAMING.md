@@ -88,7 +88,7 @@ Dashboard sanity (Playback / Transcoding): allow Direct Stream / remux for H.264
 
 **Locked decision (E):** Keep ambient default = MP4 + seek-reloop (minimize gap; do not pretend gapless). Accept residual hitch on Roku VOD. Gapless / crossfade belongs to Phase 4 [edges](../phase4/03_EDGES_AND_WATERMARK.md). Hours-long continuous / live HLS from shuffled flock MP4s is **not** a Phase 3 deliverable (randomizer dropped). HLS remains first-class for VLC / jellyfin-roku / lab remux (A–D).
 
-**Jellyfin server:** no `encoding.xml` change required for Gold Sheep Lite remux (A–C already confirmed `-codec:v copy -codec:a copy`). Ensure `/var/cache/jellyflam3/transcodes/` is writable by `jellyfin` (existing lab layout).
+**Jellyfin server:** Gold Sheep Lite remux stays `-codec:v copy -codec:a copy`. CachePath is `/var/cache/jellyflam3/jellyfin` so the nightly cleaner does not walk furnace state. `encoding.xml` `TranscodingTempPath` stays `/var/cache/jellyflam3/transcodes/` and that directory must be writable by `jellyfin`.
 
 ### jellyfin-roku (Path 1) — Owner OK 2026-08-01
 

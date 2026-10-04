@@ -28,30 +28,33 @@ Axios error and the Jellyfin log shows PermissionDenied / UnauthorizedAccessExce
 creating temporary files.
 
 Lab layout (rpi-jellyflam3-08a):
-  /var/cache/jellyflam3  → CachePath   (mode 0775, owner jellyflam3:jellyflam3)
-  /var/lib/jellyflam3    → MetadataPath (mode 0775, owner jellyflam3:jellyflam3)
+  /var/cache/jellyflam3/jellyfin    → CachePath (Jellyfin-only; Clean Cache Directory)
+  /var/cache/jellyflam3/transcodes  → TranscodingTempPath (HLS remux, stays on the NVMe)
+  /var/lib/jellyflam3               → MetadataPath (mode 0775, owner jellyflam3:jellyflam3)
+  Do not set CachePath to /var/cache/jellyflam3. That tree holds the lib bind,
+  frames, and smoke, and the nightly cleaner will try to delete them.
   jellyfin ∈ group jellyflam3  (and jellyflam3 ∈ group jellyfin)
   jellyfin also needs video/render groups for V4L2 encode when used
 
 Prep (adjust USER if your login is not jellyflam3):
 
-  sudo mkdir -p /var/cache/jellyflam3/{frames,transcodes,images} \
+  sudo mkdir -p /var/cache/jellyflam3/{frames,transcodes,images,jellyfin} \
                 /var/lib/jellyflam3/{jobs,logs,library,display_profiles}
   sudo chown -R jellyflam3:jellyflam3 /var/cache/jellyflam3 /var/lib/jellyflam3
   sudo chmod 775 /var/cache/jellyflam3 /var/lib/jellyflam3
   sudo usermod -aG jellyflam3 jellyfin          # jellyfin can write group dirs
   sudo usermod -aG jellyfin jellyflam3          # lab: mutual membership (08a)
   sudo usermod -aG video,render jellyfin        # V4L2 / DRM encode devices
-  # Jellyfin-owned scratch under those roots (matches 08a):
-  sudo mkdir -p /var/cache/jellyflam3/transcodes /var/lib/jellyflam3/library
-  sudo chown jellyfin:jellyfin /var/cache/jellyflam3/transcodes /var/lib/jellyflam3/library
-  sudo chmod 775 /var/cache/jellyflam3/transcodes
+  # Jellyfin-owned cache and transcode dirs (not the NVMe root):
+  sudo mkdir -p /var/cache/jellyflam3/jellyfin /var/cache/jellyflam3/transcodes /var/lib/jellyflam3/library
+  sudo chown jellyfin:jellyfin /var/cache/jellyflam3/jellyfin /var/cache/jellyflam3/transcodes /var/lib/jellyflam3/library
+  sudo chmod 775 /var/cache/jellyflam3/jellyfin /var/cache/jellyflam3/transcodes
   sudo systemctl restart jellyfin
 
 Verify jellyfin can write before pointing Dashboard paths here:
 
-  sudo -u jellyfin touch /var/cache/jellyflam3/.write_ok /var/lib/jellyflam3/.write_ok \
-    && sudo rm -f /var/cache/jellyflam3/.write_ok /var/lib/jellyflam3/.write_ok
+  sudo -u jellyfin touch /var/cache/jellyflam3/jellyfin/.write_ok /var/cache/jellyflam3/transcodes/.write_ok /var/lib/jellyflam3/.write_ok \
+    && sudo rm -f /var/cache/jellyflam3/jellyfin/.write_ok /var/cache/jellyflam3/transcodes/.write_ok /var/lib/jellyflam3/.write_ok
 
 Sheep catalog trickplay also needs group-write under /media/sheep — see
 docs/phase1/04_JELLYFIN_LIBRARY.md and: python3 -m pipeline.media_layout
@@ -68,17 +71,26 @@ docs/phase1/04_JELLYFIN_LIBRARY.md and: python3 -m pipeline.media_layout
   Dashboard → Administration → Dashboard → Paths (label may be Host / Paths
   depending on Jellyfin version), set:
 
-    Cache path:    /var/cache/jellyflam3
+    Cache path:    /var/cache/jellyflam3/jellyfin
     Metadata path: /var/lib/jellyflam3
 
-  Equivalent in /etc/jellyfin/system.xml then restart jellyfin:
+  Equivalent in /etc/jellyfin/system.xml and /etc/default/jellyfin, then restart:
 
-    <CachePath>/var/cache/jellyflam3</CachePath>
+    <CachePath>/var/cache/jellyflam3/jellyfin</CachePath>
     <MetadataPath>/var/lib/jellyflam3</MetadataPath>
 
-  Remux/HLS segments land under /var/cache/jellyflam3/transcodes (must stay
-  writable by jellyfin). Gold Sheep Lite H.264+AAC remux needs no encoding.xml
-  change for Direct Stream / HLS remux.
+    JELLYFIN_CACHE_DIR="/var/cache/jellyflam3/jellyfin"
+
+  The Debian unit reads JELLYFIN_CACHE_DIR at process start. system.xml CachePath
+  is what Clean Cache Directory walks. Set both to the same directory.
+
+  Keep remux segments on the NVMe by setting encoding.xml:
+
+    <TranscodingTempPath>/var/cache/jellyflam3/transcodes</TranscodingTempPath>
+
+  That directory must stay writable by jellyfin. Gold Sheep Lite H.264+AAC
+  remux needs no other encoding.xml change for Direct Stream / HLS remux.
+  bootstrap_pi.sh writes both paths when system.xml already exists.
 
 ========================================================================
 3) Library, API key, ParentId (libraryId)

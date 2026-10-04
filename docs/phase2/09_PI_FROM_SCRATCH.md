@@ -131,7 +131,7 @@ Appendix: [../phase1/01_HARDWARE_AND_OS.md](../phase1/01_HARDWARE_AND_OS.md).
 | Mount | Disk | Contents |
 |---|---|---|
 | `/` (root) | microSD | OS only — **not** media or frame scratch |
-| `/var/cache/jellyflam3` | PCIe NVMe | **Jellyfin CachePath** + render frames + (via bind) state |
+| `/var/cache/jellyflam3` | PCIe NVMe | Render frames, HLS `transcodes/`, smoke, and the `lib` bind. Jellyfin **CachePath** is the `jellyfin/` subdirectory only |
 | `/var/lib/jellyflam3` | bind → `…/cache/…/lib` | **Jellyfin MetadataPath** + jobs, logs, display_profiles |
 | `/media/sheep` | USB SSD | Catalog mount; Jellyfin **Sheep** → `by-generation/…`; previews → `_refactor-preview/` |
 
@@ -213,7 +213,8 @@ Appendix: [../phase1/03_FLAM3_AND_FFMPEG.md](../phase1/03_FLAM3_AND_FFMPEG.md).
 # Follow printed steps:
 #   0) permission prep (or re-run bootstrap_pi.sh after jellyfin package install)
 #   1) https://jellyfin.org/docs/general/post-install/setup-wizard
-#   2) Cache path=/var/cache/jellyflam3  Metadata path=/var/lib/jellyflam3
+#   2) Cache path=/var/cache/jellyflam3/jellyfin  Metadata path=/var/lib/jellyflam3
+#      Transcoding temp path=/var/cache/jellyflam3/transcodes
 #   3) library Sheep → /media/sheep/by-generation (+ Rework Poster → _refactor-preview); API key; ParentId via jellyfin_id_dump.py
 #   4) Playback → Transcoding → Hardware acceleration → Video4Linux2 (V4L2)
 python3 scripts/jellyfin_id_dump.py

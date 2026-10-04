@@ -67,7 +67,7 @@ Phases 1–4 are **complete** (`v0.3.2` — [overview](docs/phase4/00_OVERVIEW.m
 End-to-end bring-up is documented in **[docs/phase2/09_PI_FROM_SCRATCH.md](docs/phase2/09_PI_FROM_SCRATCH.md)** (RPi hardware profiles `-16` / `-08` / `-04`, mounts, Jellyfin paths/perms, systemd). Use `./scripts/bringup_check.sh` after each major stage.
 
 1. **Flash OS** — Raspberry Pi OS 64-bit; user `jellyflam3`; hostname `rpi-jellyflam3-{16,08,04}a` (letter suffix); Active Cooler + NVMe + USB SSD; **SSH key** (`ssh-copy-id`).
-2. **Disks** — NVMe → `/var/cache/jellyflam3` (Jellyfin CachePath + frames); bind `…/lib` → `/var/lib/jellyflam3` (MetadataPath); USB SSD → `/media/sheep`. Then `./scripts/bootstrap_pi.sh`.
+2. **Disks** — NVMe → `/var/cache/jellyflam3` (frames, transcodes, and the `lib` bind). Jellyfin CachePath is `/var/cache/jellyflam3/jellyfin`, not that NVMe root. Bind `…/lib` → `/var/lib/jellyflam3` (MetadataPath); USB SSD → `/media/sheep`. Then `./scripts/bootstrap_pi.sh`.
 3. **Clone + config** — prefer SSH remote; symlink `/opt/jellyflam3-server`; append JellyFlam3 `PATH` / `PYTHONPATH` to `~/.bashrc`; copy example yaml/secrets; **never commit** `secrets.env` or a filled `jellyflam3.yaml`.
 4. **Toolchain** — `./scripts/install_flam3.sh` then smoke (`JELLYFLAM3_SMOKE=1 ./scripts/smoke_render.sh`).
 5. **Jellyfin** — `./scripts/install_jellyfin.sh` (perms **before** Cache/Metadata paths; wizard; Sheep → `/media/sheep/by-generation`; Rework Poster → `/media/sheep/_refactor-preview`; API key; V4L2). Fill `secrets.env`; `python3 scripts/jellyfin_id_dump.py`; `python3 -m pipeline.media_layout`.
