@@ -355,7 +355,8 @@ breed:
     inbox_low_water: 3
     include_samples: true
     include_pedigree: true
-    # Wave 3: weight parents by catalog sidecar viewer_feedback.votes (uniform if missing).
+    # Weight is 1 until votes reach min_votes_for_bias, then 1 + votes**power.
+    # Defaults: one like or love weighs 2; an unvoted parent weighs 1.
     vote_bias_enabled: true
     vote_weight_power: 1.0
     min_votes_for_bias: 1

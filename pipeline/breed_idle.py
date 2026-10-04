@@ -181,7 +181,11 @@ def collect_parent_pool(cfg: dict[str, Any]) -> list[Path]:
 
 
 def parent_vote_weight(cfg: dict[str, Any], flam3: Path) -> float:
-    """Weight ∝ sidecar ``viewer_feedback.votes``; 1.0 when missing or below min."""
+    """Parent draw weight. Unvoted (or below min) is 1; the first vote steps off that.
+
+    Once ``votes >= min_votes_for_bias``, weight is ``1 + votes ** vote_weight_power``.
+    With the defaults, one like or love weighs 2 against a field of 1s.
+    """
     ib = idle_breed_cfg(cfg)
     if not ib.get("vote_bias_enabled", True):
         return 1.0
@@ -204,9 +208,9 @@ def parent_vote_weight(cfg: dict[str, Any], flam3: Path) -> float:
     if votes < min_votes:
         return 1.0
     try:
-        weight = float(votes) ** power
+        weight = 1.0 + (float(votes) ** power)
     except (OverflowError, ValueError):
-        weight = float(votes)
+        weight = 1.0 + float(votes)
     return max(1.0, weight)
 
 

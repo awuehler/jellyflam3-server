@@ -355,8 +355,10 @@ def test_parent_vote_weight_from_sidecar(tmp_path: Path):
     cold.write_text("<flame/>", encoding="utf-8")
     _sidecar_votes(tmp_path, "electricsheep.247.00001", 9)
     _sidecar_votes(tmp_path, "electricsheep.247.00002", 0)
-    assert parent_vote_weight(cfg, hot) == 9.0
+    assert parent_vote_weight(cfg, hot) == 10.0
     assert parent_vote_weight(cfg, cold) == 1.0
+    _sidecar_votes(tmp_path, "electricsheep.247.00001", 1)
+    assert parent_vote_weight(cfg, hot) == 2.0
     from pipeline.sheep_votes import sweep_votes
 
     swept = sweep_votes(tmp_path / "media", apply=True)

@@ -163,7 +163,7 @@ Short non-catalog test via `scripts/smoke_render.sh` (`JELLYFLAM3_SMOKE=1`, ~13 
 
 ### Idle breed
 
-`pipeline/breed_idle.py` / daily cron. When inbox empty + gate open + not near archive cron: breed **one** pedigree child (mutate/cross/blend/interpolate). History: `breed_idle_history.json`. Per-host archive cron for the `archive_cron_imminent` skip is merged from `configs/profiles/rpi-jellyflam3-{16,08,04}.yaml` via `hw_profile apply`. JSON `--evaluate` output includes `hours_until_archive` (rounded) and `next_archive_at`. Parent selection weights catalog sidecar `viewer_feedback.votes` when `vote_bias_enabled` ([phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md)).
+`pipeline/breed_idle.py` / daily cron. When inbox empty + gate open + not near archive cron: breed **one** pedigree child (mutate/cross/blend/interpolate). History: `breed_idle_history.json`. Per-host archive cron for the `archive_cron_imminent` skip is merged from `configs/profiles/rpi-jellyflam3-{16,08,04}.yaml` via `hw_profile apply`. JSON `--evaluate` output includes `hours_until_archive` (rounded) and `next_archive_at`. Parent selection uses catalog sidecar `viewer_feedback.votes` when `vote_bias_enabled`: weight is 1 below the minimum, otherwise `1 + votes ** power` (one vote weighs 2) ([phase4/08](phase4/08_VIEWER_FEEDBACK_LOOP.md)).
 
 ### Viewer feedback / sheep vote
 

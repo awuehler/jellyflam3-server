@@ -210,3 +210,20 @@ def test_vote_sweep_stops_share_selection_leaves_share_out(tmp_path: Path):
     assert dest.read_bytes() == dest_bytes
     assert flam.is_file()
     assert list((tmp_path / "genomes" / "inbox").glob("*.flam3")) == []
+
+
+def test_extra_votes_do_not_reshare(tmp_path: Path):
+    cfg = _cfg(tmp_path)
+    gen_keypair(cfg)
+    flam = _write_voted_sheep(tmp_path, votes=1, likes=1)
+    first = run_share_votes(cfg, apply=True)
+    assert first["action"] == "share"
+    dest = peers_share_out(cfg) / flam.name
+    dest_bytes = dest.read_bytes()
+    _write_voted_sheep(tmp_path, votes=4, likes=2, loves=2)
+    again = run_share_votes(cfg, apply=True)
+    assert again["action"] == "skip"
+    assert again["reason"] == "no_candidates"
+    assert again["candidates"] == 0
+    assert any(s.get("reason") == "already_shared" for s in again["skipped"])
+    assert dest.read_bytes() == dest_bytes

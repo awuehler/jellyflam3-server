@@ -54,7 +54,7 @@ Phase 4 **products are implemented** as of **v0.3.2** (2026-09-23). Shipped: **t
 | Slice | Guide | What landed | Still parked |
 |---|---|---|---|
 | Gated promote lock | [01](01_PEER_SHARE_PATH.md) | Keep `peers/inbox` → `promote --apply` → `genomes/inbox`. Votes never skip that gate. | **Cancelled** 2026-09-13: auto-promote after tax + verify |
-| Share cron + idle-breed weights | [08](08_VIEWER_FEEDBACK_LOOP.md) | `python3 -m pipeline.share_votes` + `scripts/cron_share_votes.sh` copy liked `.flam3` to `peers/share-out` (local stage; **not** a Syncthing folder). Idle-breed parent weight ∝ sidecar `votes`. | Inbox hop → [../phase5/04](../phase5/04_PEER_SHARE_MESH.md) |
+| Share cron + idle-breed weights | [08](08_VIEWER_FEEDBACK_LOOP.md) | `python3 -m pipeline.share_votes` + `scripts/cron_share_votes.sh` copy liked `.flam3` to `peers/share-out` (local stage; **not** a Syncthing folder). Idle-breed parent weight is `1 + votes ** power` (one vote weighs 2). A genome already in `share-out` is not copied again when more votes arrive. | Inbox hop → [../phase5/04](../phase5/04_PEER_SHARE_MESH.md) |
 | Vote / share household recipe | [05](05_END_USER_GUIDE.md) | Runbook example 6: OK love / Right like; LAN-only; love vs share; receiver still promotes. Example 8: `sheep_votes top`. | Optional Jellyfin OriginalTitle / SortName-as-alias |
 
 ## Opened (2026-09-13, Wave 4 slices 1–2)

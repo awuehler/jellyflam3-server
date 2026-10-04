@@ -16,7 +16,7 @@ Depends on Phase 1–2 Roku VoD playback ([../phase1/08_ROKU_BRIGHTSCRIPT.md](..
 | **Vote ingest** | Channel POSTs (or queues) vote events to the furnace — identity = catalog sheep / genome stem, strength = like vs love (optional tiers), device / screen optional |
 | **Unlimited re-vote** | Same end-user may vote the **same sheep again** without cooldown or unique-vote restriction; each event counts (or accumulates) for furnace weight |
 | **Share path** | Votes mark sheep as **share candidates**; a dedicated cron promotes corresponding `.flam3` for fleet sharing (Tailscale + Syncthing Opt In path) |
-| **Breed bias** | Daily `cron_breed_idle.sh` / `pipeline.breed_idle` picks parents with **weight ∝ viewer interest** instead of pure uniform random over the parent pool |
+| **Breed bias** | Daily `cron_breed_idle.sh` / `pipeline.breed_idle` picks parents with weight `1 + votes ** power` once `votes` meet the minimum; otherwise weight 1. The first like or love weighs 2. |
 | **Flock evolution** | Archive fill + idle breed stay the mechanical cadence; viewer feedback steers **what** is shared and **who** becomes pedigree parents |
 
 ```text
@@ -79,14 +79,14 @@ Overlay is visual-only (playback does not pause). Shown when remaining duration 
 
 1. **`scripts/cron_share_votes.sh`** — daily lab job **06:41** local (`41 6 * * *`) that runs `python3 -m pipeline.share_votes --apply`.
    - Selects sheep with sidecar `share_candidate` and `votes` / `loves` over `share_votes.min_votes` / `min_loves`.
-   - Copies corresponding `.flam3` from `genomes_done` (not inbox/quarantine) via `peering.publish` (tax + integrity) into **`peers/share-out`** (local stage — **not** a Syncthing folder). Other furnaces do not see the file until an operator copies it into `peers/inbox` ([../phase5/04_PEER_SHARE_MESH.md](../phase5/04_PEER_SHARE_MESH.md)).
+   - Copies corresponding `.flam3` from `genomes_done` (not inbox/quarantine) via `peering.publish` (tax + integrity) into **`peers/share-out`** (local stage — **not** a Syncthing folder). A stem whose `.flam3` is already in `share-out` is skipped (`already_shared`); later votes change the breed weight and do not copy the genome again. Other furnaces do not see the file until an operator copies it into `peers/inbox` ([../phase5/04_PEER_SHARE_MESH.md](../phase5/04_PEER_SHARE_MESH.md)).
    - Honors Opt In (`require_opt_in`, default on) and `license.commercial_mode` (NC skipped when commercial-safe).
 2. **Gate** — **does not** auto-promote into `genomes/inbox` (**cancelled** as a goal). Kill-switch: `share_votes.enabled`.
 3. **Log** — `/var/log/jellyflam3/share_votes.log`; flock lock like other cron wrappers.
 
 ### D — Idle-breed weight bias (shipped Wave 3)
 
-1. `pipeline.breed_idle` parent picks use **weights from each catalog sidecar** `viewer_feedback.votes` when `breed.idle_breed.vote_bias_enabled` (default on) and `votes >= min_votes_for_bias`; else weight **1** (uniform).
+1. `pipeline.breed_idle` parent picks use each catalog sidecar `viewer_feedback.votes` when `breed.idle_breed.vote_bias_enabled` (default on). Below `min_votes_for_bias` the weight is **1**. At or above it the weight is **`1 + votes ** vote_weight_power`**. Defaults: one vote weighs **2**, nine votes weigh **10**.
 2. Config: `vote_bias_enabled`, `vote_weight_power`, `min_votes_for_bias`.
 3. Gates: inbox at or under `inbox_low_water` (default 3), not imminent archive cron, dedup fingerprints. Worker state and idle gate are not consulted.
 4. Archive-seed cron stays **unbiased**; viewer bias applies to **pedigree idle breed** only.

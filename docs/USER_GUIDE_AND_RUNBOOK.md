@@ -241,7 +241,7 @@ python3 -m pipeline.worker_drain cancel
    - **Right** = like (`likes++`, `votes++`)
    - **Down** = dismiss overlay; keep playing
    - **Up** / **Back** / keyboard **Esc** = exit playback
-   There is no plain-vote key; both love and like already increment `votes` (share + idle-breed). Tuples play in shuffle but never show the overlay.
+   There is no plain-vote key; both love and like already increment `votes`. The first vote is enough for both outcomes: idle-breed weight becomes `1 + votes` (one vote weighs 2 against unvoted parents at 1), and the 06:41 share cron may copy the genome once. Later votes on that sheep keep raising the breed weight and do not copy it into `share-out` again. Tuples play in shuffle but never show the overlay.
 2. On the Pi, confirm the sidecar (stem = MP4 basename):
 
    ```bash
@@ -258,7 +258,7 @@ python3 -m pipeline.worker_drain cancel
 
 4. On a **receiver** Pi (after Syncthing): still **`promote --apply`**. Loved NC sheep are not shared when this furnace’s `license.commercial_mode` is on. Opt Out skips the cron (`action=skip`, `reason=opt_out`).
 
-**Pass:** file in publisher `share-out`. Receiver `peers/inbox` only after a **manual inbox copy** (or a future Phase 5 hop) **and** `promote --apply`. **Fail:** expecting votes or `share_votes` to land on another Pi by themselves; cancel drain if you paused the worker.
+**Pass:** file in publisher `share-out` after the first qualifying vote. A later `share_votes` run on that same stem reports `already_shared` and leaves the copy untouched. Receiver `peers/inbox` only after a **manual inbox copy** (or a future Phase 5 hop) **and** `promote --apply`. **Fail:** expecting votes or `share_votes` to land on another Pi by themselves; expecting extra votes to publish a second copy; cancel drain if you paused the worker.
 
 ### 7 — Sweep votes (fresh start on this furnace)
 
@@ -1288,6 +1288,17 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | Kodi screensaver | `kodi-screensaver/`, [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md), [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md) |
 | Architecture | `docs/Pi5_Flam3_VoD_Pipeline.md` |
 
+### Future consideration — vote outcomes
+
+Recorded 2026-10-03 from the vote-path review. Not scheduled. The first-vote weight (`1 + votes ** power`) and the one-time share copy are already in `pipeline/breed_idle.py` and `pipeline/share_votes.py`.
+
+- Four parent-pool stems are listed twice on the lab furnaces (`242.00483`, `242.02652`, `243.13770`, and pedigree mutate `9334119d`): once under `genomes/done` and again under `genomes/samples` or `genomes/pedigree`. Each identity holds two uniform tickets before any vote. Drawing by stem once would remove that.
+- License follows the parents, not the screen that voted. If any parent is CC BY-NC or human, the child is forced CC BY-NC. A Roku with commercial mode off, on the same Pi as a commercial-mode Roku, can vote an NC sheep into the shared pool, and that child then drops out of the commercial flock.
+- Re-votes are unlimited and `deviceId` is discarded. One remote replaying a sheep can outgrow the rest of the household, and a later per-device cap cannot be reconstructed from the sidecar.
+- There is no decay. After the first vote, that sheep’s advantage lasts until `python3 -m pipeline.sheep_votes sweep --confirm SWEEP`.
+- The Roku screensaver never posts. A household that mostly runs the screensaver produces an empty tally. A Kodi screensaver on that Pi writes the same counter the Rokus use.
+- VoD shuffle stays a uniform permutation. Votes do not change what plays tonight, and they are not a render priority. Idle breed reads them once a day, and only when the inbox is at or under `inbox_low_water`. The bred child’s sidecar has no `viewer_feedback`, so the offspring starts at weight 1.
+
 ---
 
 ## Appendix A — Key paths (lab defaults)
@@ -1334,4 +1345,4 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 
 ---
 
-*Document version: 2026-10-02 — quarantine isolate/remove list and refactor pathways A/P/B/C/D. Phase 4 close-out (`v0.3.2`); VoD Channel Store pending Roku review.*
+*Document version: 2026-10-03 — first-vote breed weight, one-time share copy, and vote-outcome notes for later. Phase 4 close-out (`v0.3.2`); VoD Channel Store pending Roku review.*

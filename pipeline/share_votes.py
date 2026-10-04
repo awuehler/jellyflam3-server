@@ -26,7 +26,7 @@ from typing import Any
 from pipeline.config import load_config, resolve_path
 from pipeline.license_filter import is_commercial_allowed
 from pipeline.media_layout import is_unpublished_media_path
-from pipeline.peering import is_opted_in, publish
+from pipeline.peering import is_opted_in, peers_share_out, publish
 from pipeline.refactor_scan import find_genome_for_stem
 from pipeline.sheep_naming import iter_sidecars, sidecar_stem
 from pipeline.sheep_votes import normalize_feedback
@@ -136,6 +136,11 @@ def _scan_candidates(cfg: dict[str, Any]) -> tuple[list[Path], list[dict[str, An
         genome = find_shareable_genome(cfg, stem)
         if genome is None:
             rec["reason"] = "genome_missing"
+            skipped.append(rec)
+            continue
+        # Extra votes update the breed weight. They do not copy the genome again.
+        if (peers_share_out(cfg) / genome.name).is_file():
+            rec["reason"] = "already_shared"
             skipped.append(rec)
             continue
         key = genome.resolve().as_posix()
