@@ -10,6 +10,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Kodi screensaver **0.2.14**: furnace reconnect polls Kodi’s stop flag and closes the screensaver window, so a dead furnace no longer holds the script past Kodi’s 5-second StopScript limit.
+
 - JellyFlam3 VoD is published on the Roku Channel Store. Household install is the store channel (empty Settings). Sideload remains the furnace-preset zip and the only path for the Roku screensaver.
 
 - Jellyfin CachePath and `JELLYFIN_CACHE_DIR` for bring-up are `/var/cache/jellyflam3/jellyfin` on the NVMe. Clean Cache Directory no longer walks the furnace `lib` bind. HLS temp stays `/var/cache/jellyflam3/transcodes`.

@@ -4,7 +4,7 @@ Phase 3 [guide 02](../docs/phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) — Ele
 
 **Example host:** `rpi-kodi-08a` (`<Kodi_IP_Address>`), LibreELEC 12.2.1 / Kodi 21.3 Omega. SSH `root@<Kodi_IP_Address>`.
 
-## Status (0.2.13) — Phase 3 complete; Phase 5 votes
+## Status (0.2.14) — Phase 3 complete; Phase 5 votes
 
 Tasks **1–4** done; **Jellyfin flock client + commercial filter + shuffle sequencer** in **0.2.0+**. Guide 02 Owner OK 2026-08-21 (loops-only).
 
@@ -20,6 +20,7 @@ Tasks **1–4** done; **Jellyfin flock client + commercial filter + shuffle sequ
 - **0.2.10:** quarantine recovery closes Kodi's playback-failed `okdialog` automatically, so the refreshed flock continues without a lingering end-user prompt
 - **0.2.11:** furnace down is “waiting for the furnace” (30s reconnect), not missing settings or empty flock; a dead host is probed before dropping sheep
 - **0.2.12:** Settings **Titles** (`title_mode` filename / alias); chrome-light caption while a sheep plays (Overview `Alias:`).
+- **0.2.14:** furnace reconnect stays abortable. A Jellyfin read polls Kodi’s stop flag and the screensaver window closes, so Kodi can start a fresh session on the next idle cycle instead of killing a stuck script.
 - **0.2.13:** last **7 s** like/love overlay (same map as Roku VoD **1.0.38**): Enter/Select = love, Right = like, Down = dismiss, Up/Back/Esc = exit screensaver. Posts `POST /v1/sheep-votes`. Tuples skip. Keys while the overlay is **hidden** still exit (Kodi wake). Settings `display_sink_url` (blank = Jellyfin host `:8791`) and `display_sink_token`. Roku screensaver still does not vote.
 
 **Post-launch:** loop→edge→loop sequencer (edges + watermark) is not in v0.3.0.

@@ -16,7 +16,7 @@ def test_addon_xml_screensaver_entry():
     tree = ET.parse(ADDON_XML)
     root = tree.getroot()
     assert root.attrib["id"] == "screensaver.jellyflam3"
-    assert root.attrib["version"] == "0.2.13"
+    assert root.attrib["version"] == "0.2.14"
     req = root.find("requires/import")
     assert req is not None
     assert req.attrib["addon"] == "xbmc.python"
@@ -49,6 +49,8 @@ def test_screensaver_entry_files_exist():
     assert "def onPlayBackError" in text
     assert "_handle_dead_sheep" in text
     assert "_enter_wait" in text
+    assert "_kodi_abort" in text
+    assert '_shutdown("kodi_abort")' in text
     assert "HINT_UNREACHABLE" in text
     assert "waiting for the furnace" in text
     assert "Dialog.Close(okdialog,true)" in text

@@ -57,7 +57,7 @@ Video screensaver add-on **JellyFlam3 Dreams** (`screensaver.jellyflam3`) — pl
 4. **Configure Jellyfin** — if the zip was built on a furnace Pi (`package_kodi_screensaver.*`), defaults are already in the add-on settings. Otherwise open **Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → Configure** and paste Jellyfin URL, API key, user id, library id (operator runs `jellyfin_id_dump.py` on the furnace Pi).
 5. Set screensaver wait time (e.g. **1 minute** for testing), then wait or use **Activate screensaver**.
 
-**Everyday use:** leave Kodi idle. Keys while idle **exit**, except in the last **7 seconds** of a non-tuple sheep (**0.2.13+**): **Enter** love, **Right** like, **Down** dismiss overlay, **Up/Back** exit — same map as Roku VoD. Configure **Titles** (`title_mode`, **0.2.12+**) as filename (default) or alias for a chrome-light caption. Vote sink URL/token live in add-on Configure (furnace zip can pre-fill). If Jellyfin is unreachable, **0.2.11+** shows **waiting for the furnace** on black and retries every 30 seconds (not a settings lecture). Missing credentials still ask you to configure the add-on. Package **0.2.9+** re-fetches after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). If a sheep is **quarantined** while idle is running, 0.2.7+ drops that id, re-polls Jellyfin (rate-limited), and continues; **0.2.10** also dismisses Kodi's playback-failed dialog automatically.
+**Everyday use:** leave Kodi idle. Keys while idle **exit**, except in the last **7 seconds** of a non-tuple sheep (**0.2.13+**): **Enter** love, **Right** like, **Down** dismiss overlay, **Up/Back** exit — same map as Roku VoD. Configure **Titles** (`title_mode`, **0.2.12+**) as filename (default) or alias for a chrome-light caption. Vote sink URL/token live in add-on Configure (furnace zip can pre-fill). If Jellyfin is unreachable, **0.2.11+** shows **waiting for the furnace** on black and retries every 30 seconds (not a settings lecture). **0.2.14** leaves that wait when Kodi stops the screensaver, so the next idle cycle can start clean. Missing credentials still ask you to configure the add-on. Package **0.2.9+** re-fetches after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). If a sheep is **quarantined** while idle is running, 0.2.7+ drops that id, re-polls Jellyfin (rate-limited), and continues; **0.2.10** also dismisses Kodi's playback-failed dialog automatically.
 
 **Upgrade (on the TV, no PC):** if the operator already dropped a new zip into Downloads, Kodi → **Add-ons → Install from zip file** → select the new `screensaver.jellyflam3.zip`. Jellyfin settings in add-on **Configure** are kept (`addon_data`).
 
@@ -899,7 +899,7 @@ Folder name must stay `screensaver.jellyflam3`.
 
 | Check | How |
 |---|---|
-| Version | Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → **Information** (version in `addon.xml`, currently **0.2.13**). |
+| Version | Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → **Information** (version in `addon.xml`, currently **0.2.14**). |
 | Playback | Set short wait time → **Activate screensaver** or wait; sheep MP4s should shuffle. |
 | Idle gate | On furnace Pi: `cat /var/lib/jellyflam3/idle_gate_status.json` → `"gate": "open"` while Kodi SS runs. |
 | Jellyfin IDs | On furnace: `python3 scripts/jellyfin_id_dump.py --items --limit 5` — item count should be > 0 when flock is seeded. |

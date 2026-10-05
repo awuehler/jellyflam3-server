@@ -11,16 +11,20 @@ from __future__ import annotations
 
 import json
 import random
+import threading
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Any
+from typing import Any, Callable
 
 # Must match configs idle_gate.ignore_client_patterns / Roku screensaver intent.
 CLIENT_NAME = "JellyFlam3-Screensaver"
 CLIENT_DEVICE = "Kodi"
 CLIENT_DEVICE_ID = "jellyflam3-kodi-ss"
-CLIENT_VERSION = "0.2.13"
+CLIENT_VERSION = "0.2.14"
+# Poll interval while a Jellyfin read is in flight. Kodi kills a screensaver
+# script that has not returned within 5 seconds of StopScript.
+ABORT_POLL_SEC = 0.4
 VOTE_REMAIN_SEC = 7.0
 VOTE_SINK_PORT = 8791
 VOTE_HINT = "OK love · RIGHT like · DOWN dismiss · UP/BACK exit"
@@ -70,6 +74,45 @@ def filter_commercial(items: list[dict[str, Any]], commercial_mode: bool) -> lis
     return [it for it in items if is_commercial_safe(it.get("Tags") or it.get("tags"))]
 
 
+class AbortFetch(Exception):
+    """Stop was requested while a Jellyfin read was still in flight."""
+
+
+def run_abortable(
+    fn: Callable[[], Any],
+    should_abort: Callable[[], bool] | None = None,
+    poll_sec: float = ABORT_POLL_SEC,
+) -> Any:
+    """Run ``fn``. When ``should_abort`` flips, return without waiting for ``fn``.
+
+    The worker is a daemon thread. A blocking ``urlopen`` may finish later; the
+    caller is free to close the screensaver so Kodi can restart it.
+    """
+    if should_abort is None:
+        return fn()
+    if should_abort():
+        raise AbortFetch()
+    box: dict[str, Any] = {}
+
+    def _run() -> None:
+        try:
+            box["value"] = fn()
+        except Exception as exc:
+            box["error"] = exc
+
+    worker = threading.Thread(target=_run, name="jf3-http", daemon=True)
+    worker.start()
+    while worker.is_alive():
+        if should_abort():
+            raise AbortFetch()
+        worker.join(max(0.05, float(poll_sec)))
+    if should_abort():
+        raise AbortFetch()
+    if "error" in box:
+        raise box["error"]
+    return box.get("value")
+
+
 def classify_fetch_error(exc: BaseException) -> str:
     """Map a fetch failure to ``auth`` or ``unreachable`` (not empty flock)."""
     if isinstance(exc, urllib.error.HTTPError) and int(getattr(exc, "code", 0) or 0) in (401, 403):
@@ -77,12 +120,17 @@ def classify_fetch_error(exc: BaseException) -> str:
     return "unreachable"
 
 
-def probe_jellyfin(base_url: str, timeout: float = 8.0) -> bool:
+def probe_jellyfin(
+    base_url: str,
+    timeout: float = 8.0,
+    should_abort: Callable[[], bool] | None = None,
+) -> bool:
     """True when Jellyfin ``/System/Info/Public`` answers (no API key)."""
     url = trim_slash(base_url) + "/System/Info/Public"
     if not trim_slash(base_url):
         return False
-    try:
+
+    def _once() -> bool:
         req = urllib.request.Request(
             url,
             headers={"Accept": "application/json"},
@@ -91,23 +139,36 @@ def probe_jellyfin(base_url: str, timeout: float = 8.0) -> bool:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             code = int(getattr(resp, "status", None) or resp.getcode() or 0)
             return 200 <= code < 300
+
+    try:
+        return bool(run_abortable(_once, should_abort))
+    except AbortFetch:
+        raise
     except Exception:
         return False
 
 
-def http_get_json(url: str, api_key: str, timeout: float = 20.0) -> dict[str, Any]:
-    req = urllib.request.Request(
-        url,
-        headers={
-            "Accept": "application/json",
-            "Authorization": auth_header(api_key),
-            "X-Emby-Authorization": auth_header(api_key),
-        },
-        method="GET",
-    )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        body = resp.read().decode("utf-8", errors="replace")
-    return json.loads(body) if body else {}
+def http_get_json(
+    url: str,
+    api_key: str,
+    timeout: float = 20.0,
+    should_abort: Callable[[], bool] | None = None,
+) -> dict[str, Any]:
+    def _once() -> dict[str, Any]:
+        req = urllib.request.Request(
+            url,
+            headers={
+                "Accept": "application/json",
+                "Authorization": auth_header(api_key),
+                "X-Emby-Authorization": auth_header(api_key),
+            },
+            method="GET",
+        )
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            body = resp.read().decode("utf-8", errors="replace")
+        return json.loads(body) if body else {}
+
+    return run_abortable(_once, should_abort)
 
 
 def overview_keyed_value(overview: str, key: str) -> str:
@@ -248,6 +309,7 @@ def fetch_flock(
     limit: int = FLOCK_INDEX_CAP,
     fetch_limit: int | None = None,
     timeout: float = 20.0,
+    should_abort: Callable[[], bool] | None = None,
 ) -> list[dict[str, str]]:
     """Return playable sheep dicts: id, title, url (Static MP4).
 
@@ -260,6 +322,8 @@ def fetch_flock(
     http_limit = int(fetch_limit if fetch_limit is not None else FLOCK_FETCH_LIMIT)
     if http_limit < 1:
         http_limit = FLOCK_FETCH_LIMIT
+    if should_abort and should_abort():
+        raise AbortFetch()
 
     q: dict[str, str] = {
         "IncludeItemTypes": "Movie,Video",
@@ -275,7 +339,9 @@ def fetch_flock(
 
     url = "%s/Users/%s/Items?%s" % (base, user_id, urllib.parse.urlencode(q))
     try:
-        data = http_get_json(url, api_key, timeout=timeout)
+        data = http_get_json(url, api_key, timeout=timeout, should_abort=should_abort)
+    except AbortFetch:
+        raise
     except urllib.error.HTTPError as exc:
         raise RuntimeError("Items HTTP %s" % exc.code) from exc
     except Exception as exc:
@@ -294,7 +360,11 @@ def fetch_flock(
         }
         folders_url = "%s/Users/%s/Items?%s" % (base, user_id, urllib.parse.urlencode(fq))
         try:
-            folders_data = http_get_json(folders_url, api_key, timeout=timeout)
+            folders_data = http_get_json(
+                folders_url, api_key, timeout=timeout, should_abort=should_abort
+            )
+        except AbortFetch:
+            raise
         except RuntimeError:
             folders_data = {}
         merged: list[dict[str, Any]] = []
@@ -309,7 +379,11 @@ def fetch_flock(
             cq["Limit"] = str(remain)
             child_url = "%s/Users/%s/Items?%s" % (base, user_id, urllib.parse.urlencode(cq))
             try:
-                child_data = http_get_json(child_url, api_key, timeout=timeout)
+                child_data = http_get_json(
+                    child_url, api_key, timeout=timeout, should_abort=should_abort
+                )
+            except AbortFetch:
+                raise
             except RuntimeError:
                 child_data = {}
             for it in child_data.get("Items") or []:

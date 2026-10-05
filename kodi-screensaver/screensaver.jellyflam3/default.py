@@ -9,6 +9,11 @@ Critical Kodi Omega behavior (ApplicationPowerHandling::WakeUpScreenSaver):
 Player.play() wakes the screensaver and arms alarm ``sssssscreensaver`` which
 runs StopScript() after **15 seconds** (SCRIPT_TIMEOUT). We CancelAlarm that
 name after play (and on a keepalive thread) so idle video is not killed.
+
+StopScript itself kills the interpreter if the script is still inside doModal
+after **5 seconds**. Furnace reconnect must notice ``abortRequested`` and
+``close()`` the window. A Jellyfin read in that path polls the same flag and
+returns without waiting out the socket timeout.
 """
 
 from __future__ import annotations
@@ -129,11 +134,11 @@ HINT_AUTH = "JellyFlam3 — Jellyfin login failed; check settings"
 RECONNECT_TICKS = 60
 
 
-def _load_flock():
+def _load_flock(should_abort=None):
     """Fetch + shuffle Jellyfin items.
 
     Returns ``(items, status)`` where status is ``ok``, ``settings``,
-    ``unreachable``, ``auth``, or ``empty``.
+    ``unreachable``, ``auth``, ``empty``, or ``abort``.
     """
     base = (ADDON.getSetting("server_url") or "").strip()
     key = (ADDON.getSetting("api_key") or "").strip()
@@ -167,7 +172,10 @@ def _load_flock():
             library_id=library,
             commercial_mode=commercial,
             limit=limit,
+            should_abort=should_abort,
         )
+    except jellyfin_flock.AbortFetch:
+        return [], "abort"
     except Exception as exc:
         kind = jellyfin_flock.classify_fetch_error(exc)
         xbmc.log("%s: flock fetch failed (%s): %s" % (ADDON_ID, kind, exc), xbmc.LOGERROR)
@@ -241,7 +249,12 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         _dismiss_busy()
         _cancel_stop_script_alarm()
 
-        items, status = _load_flock()
+        items, status = _load_flock(self._kodi_abort)
+        if status == "abort":
+            self._shutdown("kodi_abort")
+            return
+        if self._stop_if_kodi_aborted():
+            return
         self._flock = items
         self._flock_mode = bool(items)
         self._index = 0
@@ -410,6 +423,27 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
                 xbmc.LOGWARNING,
             )
 
+    def _kodi_abort(self) -> bool:
+        """True when this screensaver should leave so Kodi can start a new one."""
+        if self._exiting:
+            return True
+        try:
+            return bool(self._monitor.abortRequested())
+        except Exception:
+            return False
+
+    def _stop_if_kodi_aborted(self) -> bool:
+        if self._exiting:
+            return True
+        try:
+            aborted = bool(self._monitor.abortRequested())
+        except Exception:
+            aborted = False
+        if not aborted:
+            return False
+        self._shutdown("kodi_abort")
+        return True
+
     def _enter_wait(self):
         self._waiting = True
         self._reconnect_ticks = 0
@@ -422,7 +456,11 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         xbmc.log("%s: furnace unreachable; waiting to reconnect" % ADDON_ID, xbmc.LOGWARNING)
 
     def _try_reconnect(self) -> bool:
-        items, status = _load_flock()
+        if self._kodi_abort():
+            return False
+        items, status = _load_flock(self._kodi_abort)
+        if status == "abort" or self._kodi_abort():
+            return False
         if status == "ok" and items:
             self._waiting = False
             self._flock = items
@@ -494,7 +532,13 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         if self._waiting:
             return
         base = (ADDON.getSetting("server_url") or "").strip()
-        if not jellyfin_flock.probe_jellyfin(base):
+        try:
+            reachable = jellyfin_flock.probe_jellyfin(base, should_abort=self._kodi_abort)
+        except jellyfin_flock.AbortFetch:
+            return
+        if self._kodi_abort():
+            return
+        if not reachable:
             self._enter_wait()
             return
         if not self._flock_mode or not self._flock:
@@ -510,7 +554,9 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         now = time.monotonic()
         if jellyfin_flock.should_repoll_flock(self._last_repoll, now):
             self._last_repoll = now
-            fresh, status = _load_flock()
+            fresh, status = _load_flock(self._kodi_abort)
+            if status == "abort":
+                return
             if status == "ok" and fresh:
                 self._flock = jellyfin_flock.drop_item(fresh, dead_id)
             elif status == "unreachable":
@@ -532,7 +578,9 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
         if self._index >= len(self._flock):
             last_id = self._flock[-1].get("id") or ""
             if len(self._flock) > 1:
-                fresh, status = _load_flock()
+                fresh, status = _load_flock(self._kodi_abort)
+                if status == "abort":
+                    return
                 if status == "ok" and fresh:
                     self._flock = fresh
                     xbmc.log("%s: flock wrap refetch (%s item(s))" % (ADDON_ID, len(fresh)), xbmc.LOGINFO)
@@ -552,13 +600,18 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
     def _watch_loop(self):
         idle_ticks = 0
         while not self._exiting:
+            if self._stop_if_kodi_aborted():
+                break
             _cancel_stop_script_alarm()
             if self._waiting:
                 self._reconnect_ticks += 1
                 if self._reconnect_ticks >= RECONNECT_TICKS:
                     self._reconnect_ticks = 0
                     self._try_reconnect()
+                # close() unblocks doModal. Breaking the thread alone leaves
+                # Kodi's screensaver flag set until it kills the script.
                 if self._monitor.waitForAbort(0.5):
+                    self._shutdown("kodi_abort")
                     break
                 continue
             if self._dead:
@@ -590,6 +643,7 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
                     idle_ticks = 0
             self._tick_vote_overlay()
             if self._monitor.waitForAbort(0.5):
+                self._shutdown("kodi_abort")
                 break
 
     def onAction(self, action):

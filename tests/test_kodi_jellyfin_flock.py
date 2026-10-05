@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import random
+import threading
+import time
 import urllib.error
 from pathlib import Path
 from unittest.mock import patch
@@ -51,7 +53,7 @@ def test_fetch_flock_maps_mp4(monkeypatch):
     }
     seen = {"urls": []}
 
-    def fake_get(url, api_key, timeout=20.0):
+    def fake_get(url, api_key, timeout=20.0, should_abort=None):
         seen["urls"].append(url)
         seen["url"] = url
         assert "Users/u1/Items" in url
@@ -84,7 +86,7 @@ def test_fetch_flock_maps_mp4(monkeypatch):
 def test_fetch_flock_expands_child_folders(monkeypatch):
     calls: list[str] = []
 
-    def fake_get(url, api_key, timeout=20.0):
+    def fake_get(url, api_key, timeout=20.0, should_abort=None):
         calls.append(url)
         if "IncludeItemTypes=Folder" in url:
             return {"Items": [{"Id": "gen247", "Name": "247"}]}
@@ -119,7 +121,7 @@ def test_fetch_flock_partial_flat_still_walks_folders(monkeypatch):
     """Regression: non-empty flat result must not skip nested by-generation/ sheep."""
     calls: list[str] = []
 
-    def fake_get(url, api_key, timeout=20.0):
+    def fake_get(url, api_key, timeout=20.0, should_abort=None):
         calls.append(url)
         if "IncludeItemTypes=Folder" in url:
             return {
@@ -162,7 +164,7 @@ def test_drop_item_and_repoll_rate_limit():
     assert jf.should_repoll_flock(90.0, 100.0, min_sec=30.0) is False
     assert jf.should_repoll_flock(60.0, 100.0, min_sec=30.0) is True
     assert jf.FLOCK_REPOLL_MIN_SEC == 30.0
-    assert jf.CLIENT_VERSION == "0.2.13"
+    assert jf.CLIENT_VERSION == "0.2.14"
     assert jf.FLOCK_INDEX_CAP == 313
     assert jf.FLOCK_FETCH_LIMIT == 5000
     h = jf.auth_header("secret")
@@ -245,7 +247,7 @@ def test_fetch_flock_prunes_after_merge(monkeypatch):
         ]
     }
 
-    def fake_get(url, api_key, timeout=20.0):
+    def fake_get(url, api_key, timeout=20.0, should_abort=None):
         if "IncludeItemTypes=Folder" in url:
             return {"Items": []}
         return payload
@@ -334,4 +336,64 @@ def test_post_sheep_vote_requires_sink_and_token():
     assert out["ok"] is True
     assert seen["url"].endswith("/v1/sheep-votes")
     assert seen["token"] == "secret"
+
+
+def test_run_abortable_returns_without_waiting_for_blocked_read():
+    started = threading.Event()
+
+    def slow():
+        started.set()
+        time.sleep(30)
+        return "late"
+
+    flag = {"stop": False}
+
+    def should_abort():
+        return flag["stop"]
+
+    def abort_once_started():
+        assert started.wait(2)
+        flag["stop"] = True
+
+    threading.Thread(target=abort_once_started, daemon=True).start()
+    t0 = time.monotonic()
+    with pytest.raises(jf.AbortFetch):
+        jf.run_abortable(slow, should_abort, poll_sec=0.05)
+    assert time.monotonic() - t0 < 2.0
+
+
+def test_fetch_flock_abort_skips_http(monkeypatch):
+    def fail_get(*_a, **_k):
+        raise AssertionError("http should not run")
+
+    monkeypatch.setattr(jf, "http_get_json", fail_get)
+    with pytest.raises(jf.AbortFetch):
+        jf.fetch_flock(
+            base_url="http://jf:8096",
+            api_key="k",
+            user_id="u",
+            should_abort=lambda: True,
+        )
+
+
+def test_http_get_json_abort_during_urlopen(monkeypatch):
+    started = threading.Event()
+
+    def blocking_open(*_a, **_k):
+        started.set()
+        time.sleep(30)
+        raise AssertionError("urlopen should have been abandoned")
+
+    monkeypatch.setattr(jf.urllib.request, "urlopen", blocking_open)
+    flag = {"stop": False}
+
+    def abort_once_started():
+        assert started.wait(2)
+        flag["stop"] = True
+
+    threading.Thread(target=abort_once_started, daemon=True).start()
+    t0 = time.monotonic()
+    with pytest.raises(jf.AbortFetch):
+        jf.http_get_json("http://jf:8096/Users/u/Items", "k", should_abort=lambda: flag["stop"])
+    assert time.monotonic() - t0 < 2.0
 
