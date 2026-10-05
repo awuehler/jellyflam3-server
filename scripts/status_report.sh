@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Purpose: Snapshot current JellyFlam3 Pi conditions: load, flock/inbox, thermals, top procs.
+# Purpose: Snapshot current JellyFlam3 Pi conditions: load, flock/inbox, share-out stage, thermals, top procs.
 # Requirements: bash, python3, PyYAML; systemctl/vcgencmd/ip optional depending on host.
 #
 # Usage:
@@ -51,6 +51,7 @@ AS_JSON = os.environ.get("JF_JSON") == "1"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from pipeline.library_disk import assess_config, format_check
+from pipeline.peering import peers_share_out
 
 
 def sh(cmd: list[str] | str, *, timeout: float = 15) -> str:
@@ -195,6 +196,27 @@ def services() -> dict:
     for u in units:
         st = sh(f"systemctl is-active {u} 2>/dev/null || echo missing")
         out[u] = st or "missing"
+    return out
+
+
+def share_staged(cfg: dict) -> dict:
+    """Count .flam3 sitting in peers/share-out (local stage, outside the Syncthing folder)."""
+    loaded = dict(cfg)
+    loaded.setdefault("_repo_root", str(ROOT))
+    folder = peers_share_out(loaded)
+    files = sorted(p.name for p in folder.glob("*.flam3")) if folder.is_dir() else []
+    out = {
+        "share_out_path": str(folder),
+        "share_out_flam3": len(files),
+        "share_out_files": files,
+    }
+    if files:
+        out["share_out_follow_up"] = (
+            "Copy each staged .flam3 plus its .sha256, .jellyflam3.sig, and "
+            "*-poster.jpg into this furnace's peers/inbox, and leave the share-out "
+            "copies in place. Syncthing replicates peers/inbox. On each receiver: "
+            "python3 -m pipeline.peering promote --apply"
+        )
     return out
 
 
@@ -414,7 +436,7 @@ def build_report() -> dict:
         "services": services(),
         "idle_gate": idle_gate(cfg),
         "worker_drain": worker_drain_block(cfg),
-        "peering": peering_status(),
+        "peering": {**(peering_status() or {}), **share_staged(cfg)},
         "sheep": sheep_stats(cfg),
         "top_cpu": top_procs(12),
         "network": sh("ip -br addr show 2>/dev/null || true").splitlines(),
@@ -512,6 +534,22 @@ def print_human(r: dict) -> None:
     if units:
         print(f"syncthing:         {units.get('jellyflam3-syncthing')}")
     print(f"inbox_flam3:       {peer.get('inbox_flam3_count')}")
+    staged_n = peer.get("share_out_flam3")
+    print(f"share_out_flam3:   {staged_n} (local stage)")
+    if staged_n:
+        print(f"share_out_path:    {peer.get('share_out_path')}")
+        print(
+            "pending share:     copy each .flam3 plus .sha256, .jellyflam3.sig, "
+            "and *-poster.jpg into peers/inbox"
+        )
+        print("                   leave the share-out copies in place")
+        print(
+            "                   then on each receiver: "
+            "python3 -m pipeline.peering promote --apply"
+        )
+        print("share-out files:")
+        for name in peer.get("share_out_files") or []:
+            print(f"  {name}")
     sheep = r.get("sheep") or {}
     print()
     print("== sheep / queue ==")

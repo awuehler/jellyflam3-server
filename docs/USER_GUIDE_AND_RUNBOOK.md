@@ -249,16 +249,35 @@ python3 -m pipeline.worker_drain cancel
    ```
 
    Expect `share_candidate: true` and `votes` ≥ 1. Rank the flock with [example 8](#8--list-top-voted-sheep).
-3. Share-out is a **local copy** into `genomes/peers/share-out` (tax + integrity). It is **not** a Syncthing folder and does **not** appear on other furnaces until an operator copies it into `peers/inbox` (Phase 5 hop: [phase5/04_PEER_SHARE_MESH.md](phase5/04_PEER_SHARE_MESH.md)). It does **not** drop a genome into this furnace’s worker inbox. Lab cron **06:41** (`scripts/cron_share_votes.sh`). Dry-run:
+3. Share-out is a **local copy** into `genomes/peers/share-out` (tax + integrity). That directory is outside the Syncthing folder, so the file stays on this furnace until the follow-up in step 4. It does not enter this furnace’s worker inbox. Lab cron **06:41** (`scripts/cron_share_votes.sh`). Dry-run:
 
    ```bash
    python3 -m pipeline.share_votes --json
    python3 -m pipeline.share_votes --apply --json   # or wait for cron
    ```
 
-4. On a **receiver** Pi (after Syncthing): still **`promote --apply`**. Loved NC sheep are not shared when this furnace’s `license.commercial_mode` is on. Opt Out skips the cron (`action=skip`, `reason=opt_out`).
+4. **Follow-up chore before another furnace can receive the sheep.** `./scripts/status_report.sh` prints `share_out_flam3` under `== peering ==`. A count above zero lists the staged filenames and the pending-share lines. Copy each listed genome into this furnace’s `genomes/peers/inbox` and leave the share-out originals in place (a stem already in share-out is `already_shared` on the next cron). Take the `.flam3`, its `.sha256` and `.jellyflam3.sig`, and `*-poster.jpg` when the stage wrote one. `stem` is the filename from the report, without `.flam3`:
 
-**Pass:** file in publisher `share-out` after the first qualifying vote. A later `share_votes` run on that same stem reports `already_shared` and leaves the copy untouched. Receiver `peers/inbox` only after a **manual inbox copy** (or a future Phase 5 hop) **and** `promote --apply`. **Fail:** expecting votes or `share_votes` to land on another Pi by themselves; expecting extra votes to publish a second copy; cancel drain if you paused the worker.
+   ```bash
+   stem=electricsheep.242.03322
+   src=genomes/peers/share-out
+   dst=genomes/peers/inbox
+   cp -n "$src/$stem.flam3" \
+         "$src/$stem.flam3.sha256" \
+         "$src/$stem.flam3.jellyflam3.sig" \
+         "$dst/"
+   if [ -f "$src/$stem-poster.jpg" ]; then cp -n "$src/$stem-poster.jpg" "$dst/"; fi
+   ```
+
+   Syncthing replicates `peers/inbox`. Phase 5 hop (still parked): [phase5/04_PEER_SHARE_MESH.md](phase5/04_PEER_SHARE_MESH.md).
+
+5. On a **receiver** Pi, after the file shows up in `peers/inbox`: still **`promote --apply`**. Loved NC sheep are not shared when this furnace’s `license.commercial_mode` is on. Opt Out skips the cron (`action=skip`, `reason=opt_out`).
+
+   ```bash
+   python3 -m pipeline.peering promote --apply
+   ```
+
+**Pass:** file in publisher `share-out` after the first qualifying vote, and `status_report.sh` shows `share_out_flam3` above zero until the step 4 copy. A later `share_votes` run on that same stem reports `already_shared` and leaves the copy untouched. Receiver `peers/inbox` only after that inbox copy **and** `promote --apply`. **Fail:** expecting votes or `share_votes` to land on another Pi by themselves; moving the file out of share-out (the next cron will stage it again); expecting extra votes to publish a second copy; cancel drain if you paused the worker.
 
 ### 7 — Sweep votes (fresh start on this furnace)
 
@@ -355,7 +374,7 @@ git log -1 --oneline                    # know what rev is live
 ./scripts/healthcheck.sh                # exit 0 = healthy; library-disk WARN allowed, BAD fails
 python3 -m pipeline.library_disk check  # sheep/scratch used % + free GiB
 python3 -m pipeline.library_disk rotate # plan oldest catalog retire (Shears)
-./scripts/status_report.sh              # flock/inbox/thermals snapshot
+./scripts/status_report.sh              # flock/inbox/thermals; share_out_flam3 > 0 needs the inbox copy
 cat /var/lib/jellyflam3/idle_gate_status.json | python3 -m json.tool
 ```
 
@@ -479,7 +498,7 @@ python3 -m pipeline.worker --config configs/jellyflam3.yaml --once path/to/new.f
 |---|---|---|
 | `11 5 * * *` | `scripts/cron_breed_idle.sh` | Daily idle breed when inbox empty (parents weighted by votes) |
 | _optional_ | `scripts/cron_library_rotate.sh` | Oldest-catalog Shears rotate — **not** on lab crontab; [Activate library rotate](#activate-library-rotate) (`23 5 * * *`) |
-| `41 6 * * *` | `scripts/cron_share_votes.sh` | Daily liked sheep → `peers/share-out` (local stage; not inbox / not Syncthing) |
+| `41 6 * * *` | `scripts/cron_share_votes.sh` | Daily liked sheep → `peers/share-out` (local stage). `status_report.sh` `share_out_flam3` > 0 is the cue to copy into `peers/inbox` ([example 6](#6--vote-then-share) step 4) |
 | Staggered DOM | `scripts/cron_archive_seed.sh` | ~10-day archive seed per host (skips fetch if sheep still BAD) |
 
 Both prepend `/usr/local/bin` for `flam3-*`. Missing real config → **exit 1** (no silent `.yaml.example` fallback).
@@ -720,7 +739,7 @@ python3 -m pipeline.peering promote --apply          # peers/inbox → worker in
 python3 -m pipeline.peering opt-out --config configs/jellyflam3.yaml
 ```
 
-**Receive path:** Syncthing → `peers/inbox` → **`promote --apply`** → `genomes/inbox` or quarantine → worker. Auto-promote is **not** a product ([phase4/01](phase4/01_PEER_SHARE_PATH.md)). `share-out` is local staging until [phase5/04](phase5/04_PEER_SHARE_MESH.md). Promote **moves** inbox files — on sendreceive that can delete the copy on other hosts.
+**Receive path:** Syncthing → `peers/inbox` → **`promote --apply`** → `genomes/inbox` or quarantine → worker. Auto-promote is **not** a product ([phase4/01](phase4/01_PEER_SHARE_PATH.md)). `share-out` is local staging until [phase5/04](phase5/04_PEER_SHARE_MESH.md). After `publish` or the 06:41 share cron, `./scripts/status_report.sh` counts those genomes as `share_out_flam3`. A count above zero still needs the operator copy into this furnace’s `peers/inbox` (`.flam3`, `.sha256`, `.jellyflam3.sig`, and `*-poster.jpg` when present; leave the share-out originals) before Syncthing can carry them. Each receiver then runs `promote --apply`. Commands: [example 6](#6--vote-then-share) step 4. Promote **moves** inbox files — on sendreceive that can delete the copy on other hosts.
 
 #### Opt In vs share live (do not confuse them)
 
@@ -1172,6 +1191,7 @@ Kodi screensaver messages go to **Kodi’s** log on the pasture box (`/storage/.
 | Kodi zip push fails | SMB `\\<Kodi_IP>\Downloads` vs SSH key | Use LibreELEC SMB; or install SSH key for `root@<Kodi_IP_Address>` |
 | Offline peering (Opt In, no sync) | `healthcheck`: `BAD share not live`; `peering status` → `share_live: false` | `opt-in` with `TS_AUTHKEY` + Syncthing up, or `opt-out` |
 | Peering stuck (live mesh) | `peering status`; inbox under `peers/inbox` | `promote --apply`; trust keys; share-security verify |
+| Sheep staged, other furnaces empty | `status_report.sh` peering `share_out_flam3` above zero | Copy the listed share-out set into this host’s `peers/inbox` ([example 6](#6--vote-then-share) step 4); each receiver `promote --apply` |
 | Bad palette / encode / frozen still on TV | `python3 -m pipeline.refactor report --id …`; `job.json` `quality_gate` | New jobs: worker isolates before catalog. Existing: `refactor quarantine --confirm QUARANTINE`. See [isolate or remove](#when-a-sheep-is-isolated-or-removed) |
 | Worker `quality gate … rejected` | `/var/lib/jellyflam3/jobs/<id>/job.json` | Expected fail-closed. Genome is in `genomes/quarantine`. Copying it back into the inbox repeats the reject |
 | Black / error after quarantine | Item gone from disk/Jellyfin; client still has old flock list | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id and re-poll (30s rate limit). Kodi SS **0.2.10** also closes the native playback-failed dialog. Overnight new-sheep pickup is wrap-once (VoD 1.0.31 / Roku SS 1.0.9 / Kodi SS 0.2.9+) — [Flock mix](#flock-mix-shuffle-wrap) |
@@ -1316,6 +1336,7 @@ Recorded 2026-10-03 from the vote-path review. Not scheduled. The first-vote wei
 | `genomes/inbox` | Worker input queue (oldest arrival renders next) |
 | `genomes/quarantine` | Isolated genomes (tax, quality gate, peer integrity, render failure, refactor). Not rendered. See [isolate or remove](#when-a-sheep-is-isolated-or-removed) |
 | `genomes/done` | Rendered parent pool (breeding) |
+| `genomes/peers/share-out` | Local stage after `publish` or the share cron. Counted by `status_report.sh` as `share_out_flam3`. Copy into `peers/inbox` to sync ([example 6](#6--vote-then-share) step 4) |
 | `genomes/peers/inbox` | Syncthing land (promote required; no auto-furnace) |
 | `/var/lib/jellyflam3/peering_status.json` | Opt In / **share_live** / Tailscale / Syncthing (live snapshot) |
 | `/var/log/journal` | Persistent systemd journal (worker, gate, Jellyfin, Tailscale) |

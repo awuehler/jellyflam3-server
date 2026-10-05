@@ -10,6 +10,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- `status_report.sh` counts genomes staged in `peers/share-out` (`share_out_flam3`). A count above zero lists the filenames and the follow-up: copy each `.flam3` plus its integrity sidecars into this furnace’s `peers/inbox`, then `peering promote --apply` on each receiver. Runbook example 6 step 4 is that chore.
+
 - Kodi screensaver **0.2.14**: furnace reconnect polls Kodi’s stop flag and closes the screensaver window, so a dead furnace no longer holds the script past Kodi’s 5-second StopScript limit.
 
 - JellyFlam3 VoD is published on the Roku Channel Store. Household install is the store channel (empty Settings). Sideload remains the furnace-preset zip and the only path for the Roku screensaver.
