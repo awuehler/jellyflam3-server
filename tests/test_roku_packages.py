@@ -137,8 +137,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=52" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.52""' in text
+    assert "build_version=53" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.53""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
@@ -167,6 +167,20 @@ def test_roku_commercial_mode_does_not_query_tags():
     player = (VOD / "components" / "PlayerScreen.brs").read_text(encoding="utf-8")
     assert "sub signalPlaybackFailed()" in player
     assert "m.top.playbackFailed = true" in player
+    assert "function trySameUrlRetry() as boolean" in player
+    assert "sub handlePlaybackError()" in player
+    assert "if trySameUrlRetry()" in player
+    assert "if tryAltFallback()" in player
+    assert "showPlaybackFailureChrome()" in player
+    assert "function playbackFailureLine() as string" in player
+    assert 'name + " - " + msg' in player
+    assert "m.sameUrlRetried = false" in player
+    retry_at = player.index("if trySameUrlRetry()")
+    alt_at = player.index("if tryAltFallback()")
+    banner_at = player.index("signalPlaybackFailed()\n  showPlaybackFailureChrome()")
+    assert retry_at < alt_at < banner_at
+    assert "Skipped missing sheep" not in home
+    assert "Playback error - continuing flock" in home
     assert "postPlayback(\"playing\")" in player
     assert "sub submitSheepVote(kind as string)" in player
     assert 'submitSheepVote("like")' in player

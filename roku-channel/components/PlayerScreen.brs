@@ -27,6 +27,8 @@ sub init()
   m.filename = ""
   m.lengthSec = 0
   m.triedAltFallback = false
+  m.sameUrlRetried = false
+  m.errorDispatch = false
   m.reloopPending = false
   m.advancePending = false
   m.failureSignaled = false
@@ -105,6 +107,8 @@ sub playSheep(item as object)
   if item <> invalid and item.id <> invalid then m.itemId = item.id
   m.reportedPlaying = false
   m.triedAltFallback = false
+  m.sameUrlRetried = false
+  m.errorDispatch = false
   m.reloopPending = false
   m.advancePending = false
   m.failureSignaled = false
@@ -261,7 +265,48 @@ sub requestClipAdvance()
   m.top.clipFinished = true
 end sub
 
-' After HLS↔MP4 fallback fails (404 / stream open), tell HomeScene to drop this id.
+function playbackFailureLine() as string
+  name = displayNameForUi()
+  msg = "playback error"
+  code = invalid
+  if m.video <> invalid
+    if m.video.errorMsg <> invalid and m.video.errorMsg <> "" then msg = m.video.errorMsg
+    code = m.video.errorCode
+  end if
+  line = name + " - " + msg
+  if code <> invalid
+    if code <> 0 then line = line + " (" + code.toStr() + ")"
+  end if
+  return line
+end function
+
+' Alias (or filename) plus the Video error. Left up while HomeScene probes the furnace.
+sub showPlaybackFailureChrome()
+  showLoadChrome(playbackFailureLine())
+end sub
+
+' One same-URL retry, then the existing HLS→MP4 fallback. Both callers share this so a
+' paired onError/onState cannot drop the sheep before the retry starts.
+sub handlePlaybackError()
+  if m.failureSignaled = true then return
+  if m.advancePending = true then return
+  if m.errorDispatch = true then return
+  m.errorDispatch = true
+  if trySameUrlRetry()
+    m.errorDispatch = false
+    return
+  end if
+  if tryAltFallback()
+    m.errorDispatch = false
+    return
+  end if
+  ' Stop first so a state change from control=stop cannot overwrite the banner.
+  signalPlaybackFailed()
+  showPlaybackFailureChrome()
+  m.errorDispatch = false
+end sub
+
+' After the same-URL retry and HLS→MP4 fallback fail, tell HomeScene to drop this id.
 ' Do not POST Playing — stopPlaybackReport is a no-op when reportedPlaying is false.
 sub signalPlaybackFailed()
   if m.failureSignaled = true then return
@@ -295,7 +340,31 @@ sub onPosition()
   end if
 end sub
 
-sub tryAltFallback() as boolean
+function currentStreamUrl() as string
+  if m.streamFormat = "hls" and m.hlsUrl <> "" then return m.hlsUrl
+  if m.streamFormat = "mp4" and m.mp4Url <> "" then return m.mp4Url
+  if m.mp4Url <> "" then return m.mp4Url
+  if m.hlsUrl <> "" then return m.hlsUrl
+  return ""
+end function
+
+' One replay of the URL that just failed. A single short glitch must not drop the sheep.
+function trySameUrlRetry() as boolean
+  if m.sameUrlRetried = true then return false
+  url = currentStreamUrl()
+  if url = "" then return false
+  fmt = m.streamFormat
+  if fmt = invalid or fmt = "" then fmt = "mp4"
+  m.sameUrlRetried = true
+  m.reloopPending = false
+  stopPlaybackReport()
+  m.video.control = "stop"
+  startVideo(url, fmt)
+  showLoadChrome("Retrying " + displayNameForUi() + "...")
+  return true
+end function
+
+function tryAltFallback() as boolean
   if m.triedAltFallback = true then return false
   altUrl = ""
   altFmt = ""
@@ -317,7 +386,7 @@ sub tryAltFallback() as boolean
   m.video.control = "stop"
   startVideo(altUrl, altFmt)
   return true
-end sub
+end function
 
 sub onState()
   st = m.video.state
@@ -329,6 +398,8 @@ sub onState()
       if m.progressTimer <> invalid then m.progressTimer.control = "start"
     end if
   else if st = "finished"
+    ' control=stop during a retry can report finished. That is not the end of the clip.
+    if m.errorDispatch = true or m.failureSignaled = true then return
     if shouldShuffleAdvance()
       requestClipAdvance()
     else
@@ -340,8 +411,11 @@ sub onState()
   end if
   if m.status = invalid then return
   if st = "buffering" or st = "connecting"
+    ' Named failure stays up while HomeScene probes the furnace.
+    if m.failureSignaled = true
+      showPlaybackFailureChrome()
     ' Suppress status flash during ambient seek-reloop (gap still happens; less UI noise).
-    if m.reloopPending = true
+    else if m.reloopPending = true
       hideLoadChrome()
     else if voteOverlayVisible()
       ' Keep the vote bar; do not swap to loading in the last seconds.
@@ -354,24 +428,14 @@ sub onState()
       end if
     end if
   else if st = "playing"
-    hideLoadChrome()
+    if m.failureSignaled <> true then hideLoadChrome()
   else if st = "error"
-    if tryAltFallback() then return
-    signalPlaybackFailed()
-    msg = m.video.errorMsg
-    if msg = invalid or msg = "" then msg = "playback error"
-    showLoadChrome(msg)
+    handlePlaybackError()
   end if
 end sub
 
 sub onError()
-  if tryAltFallback() then return
-  signalPlaybackFailed()
-  msg = m.video.errorMsg
-  code = m.video.errorCode
-  if msg = invalid or msg = "" then msg = "playback error"
-  if code <> invalid then msg = msg + " (" + code.toStr() + ")"
-  showLoadChrome(msg)
+  handlePlaybackError()
 end sub
 
 function onKeyEvent(key as string, press as boolean) as boolean

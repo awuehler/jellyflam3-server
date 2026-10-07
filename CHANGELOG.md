@@ -10,6 +10,10 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Roku VoD **1.0.53**: a playback error replays the same URL once before that sheep is dropped. The banner names the sheep and keeps the Video error on screen while the furnace is probed.
+
+- Runbook: a `.ts` left in `/var/cache/jellyflam3/transcodes` after the remux job ends is refused (`no transcode is running`). The catalog MP4 is still there. Clear that directory when idle, then play again. Ambient clients stay on Static MP4.
+
 - `status_report.sh` counts genomes staged in `peers/share-out` (`share_out_flam3`). A count above zero lists the filenames and the follow-up: copy each `.flam3` plus its integrity sidecars into this furnace’s `peers/inbox`, then `peering promote --apply` on each receiver. Runbook example 6 step 4 is that chore.
 
 - Kodi screensaver **0.2.14**: furnace reconnect polls Kodi’s stop flag and closes the screensaver window, so a dead furnace no longer holds the script past Kodi’s 5-second StopScript limit.

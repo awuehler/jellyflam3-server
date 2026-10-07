@@ -1172,6 +1172,24 @@ Rotated copies are `*.log-YYYYMMDD-HHMMSS`, then `.gz` after **11 days**, delete
 
 Kodi screensaver messages go to **Kodi’s** log on the pasture box (`/storage/.kodi/temp/kodi.log` on LibreELEC), not to the furnace.
 
+### Leftover HLS segment
+
+An HLS remux writes `.ts` files under `/var/cache/jellyflam3/transcodes` only while that ffmpeg job is running. After the job ends, Jellyfin refuses a later request for the same segment, including a file left from a previous day. The Jellyfin log (and `journalctl -u jellyfin`) shows:
+
+```text
+cannot serve "/var/cache/jellyflam3/transcodes/<job><n>.ts" as it doesn't exist and no transcode is running
+```
+
+The catalog MP4 under `/media/sheep` is a different file and can still Direct Play. Jellyfin Web is the client that hits this. `streamMode=mp4` on the Roku channel, and the Kodi screensaver, use Static MP4 and never read that directory. No `encoding.xml` switch makes HLS open the MP4. Detail: [phase2/03 known limitation](phase2/03_HLS_CLIENT_STREAMING.md#known-limitation-long-running-hls-vod-sessions).
+
+When no `jellyfin-ffmpeg` process is running, delete the leftovers and start the item again so the client asks for a new playlist:
+
+```bash
+sudo -u jellyfin find /var/cache/jellyflam3/transcodes -mindepth 1 -delete
+```
+
+`python3 -m pipeline.hammer --transcode-cache` clears the same directory inside a Hammer run. Leave a live remux alone. A full re-encode does not make the old segment playable.
+
 ### Operator triage
 
 | Symptom | Check | Fix |
@@ -1196,6 +1214,7 @@ Kodi screensaver messages go to **Kodi’s** log on the pasture box (`/storage/.
 | Worker `quality gate … rejected` | `/var/lib/jellyflam3/jobs/<id>/job.json` | Expected fail-closed. Genome is in `genomes/quarantine`. Copying it back into the inbox repeats the reject |
 | Black / error after quarantine | Item gone from disk/Jellyfin; client still has old flock list | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id and re-poll (30s rate limit). Kodi SS **0.2.10** also closes the native playback-failed dialog. Overnight new-sheep pickup is wrap-once (VoD 1.0.31 / Roku SS 1.0.9 / Kodi SS 0.2.9+) — [Flock mix](#flock-mix-shuffle-wrap) |
 | Playback stutters / several TVs | `python3 -m pipeline.link_capacity estimate --profile wifi-pi`; this lab is WiFi STA (`eth0` DOWN) | Direct Play; fewer TVs — stay at/under `N_max`. Jellyfin will not refuse extras. Cable the Pi only if that host actually has Ethernet |
+| HLS dies in a few seconds; `no transcode is running` | Jellyfin log names a `.ts` under `transcodes/`; the MP4 is still under `/media/sheep` | Idle: delete leftover transcode files ([Leftover HLS segment](#leftover-hls-segment)), then play again. Ambient clients stay on `streamMode=mp4` |
 | Wipe everything local | — | `hammer --dry-run` then `--confirm HAMMER` (not Shears) |
 
 ### Owner-OK acceptance gates (RC)
@@ -1366,4 +1385,4 @@ Recorded 2026-10-03 from the vote-path review. Not scheduled. The first-vote wei
 
 ---
 
-*Document version: 2026-10-04 — JellyFlam3 VoD installs from the Roku Channel Store; sideload remains the furnace-preset and screensaver path. Phase 4 close-out (`v0.3.2`).*
+*Document version: 2026-10-06 — leftover HLS `.ts` files are refused after the remux job ends. JellyFlam3 VoD installs from the Roku Channel Store; sideload remains the furnace-preset and screensaver path. Phase 4 close-out (`v0.3.2`).*

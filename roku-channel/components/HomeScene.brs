@@ -954,7 +954,7 @@ sub onReachResult()
     return
   end if
   if m.status <> invalid
-    m.status.text = "Skipped missing sheep — continuing flock"
+    m.status.text = "Playback error - continuing flock"
   end if
   playItemFromData(nextIt)
 end sub
