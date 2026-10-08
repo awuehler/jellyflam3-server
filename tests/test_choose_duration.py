@@ -140,6 +140,21 @@ def test_snap_to_period_closes_loop():
     assert 7.0 - 1e-6 <= dur <= 37.0 + 1e-6
 
 
+def test_snap_rejects_double_length_lcm():
+    """247.31208: LCM 2016 frames is 84s; target ~43.5s must stay near one period."""
+    periods = [32 / 24, 2.0, 4.0, 126 / 24, 252 / 24, 21.0]
+    dur, meta = snap_duration_to_periods(
+        43.50625, periods, lo=7.0, hi=113.0, fps=24.0
+    )
+    n = nframes_for_duration(dur, 24)
+    assert meta["snap_fallback"] == "lcm_far_from_target"
+    assert meta["lcm_frames"] == 2016
+    assert n == 1056
+    assert dur == pytest.approx(44.0)
+    assert n % meta["fundamental_frames"] == 0
+    assert meta["fundamental_frames"] == 96
+
+
 def test_snap_respects_hard_band():
     dur, meta = snap_duration_to_periods(
         100.0, [5.0], lo=7.0, hi=120.0, fps=24.0

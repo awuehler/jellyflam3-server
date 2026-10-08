@@ -240,6 +240,38 @@ def ffprobe_video_ok(ffprobe: str, media: Path, cfg: dict[str, Any]) -> None:
         raise ValueError(f"expected pix_fmt {want_pix}, got {s.get('pix_fmt')}")
 
 
+def hls_keyint_frames(cfg: dict[str, Any], nframes: int | None = None) -> int:
+    """IDR spacing for HLS copy. Default 6 s at ``vod.fps``, never longer than the clip."""
+    enc = cfg.get("encode") or {}
+    vod = cfg.get("vod") or {}
+    fps = float(vod.get("fps", 24))
+    interval = float(enc.get("keyframe_interval_sec", 6))
+    frames = max(1, int(round(interval * fps)))
+    if nframes is not None and int(nframes) > 0:
+        frames = min(frames, int(nframes))
+    return max(1, frames)
+
+
+def hls_x264_args(cfg: dict[str, Any], *, nframes: int | None = None) -> list[str]:
+    """Closed GOP with an IDR on the HLS segment boundary (``-hls_time`` 6)."""
+    gop = str(hls_keyint_frames(cfg, nframes))
+    return [
+        "-g",
+        gop,
+        "-keyint_min",
+        gop,
+        "-sc_threshold",
+        "0",
+        "-x264-params",
+        "open-gop=0",
+    ]
+
+
+def hls_timestamp_args() -> list[str]:
+    """Start the MP4 at time 0 so the remux does not add the B-frame DTS lead."""
+    return ["-avoid_negative_ts", "make_zero"]
+
+
 def catalog_ffmpeg_cmd(
     cfg: dict[str, Any],
     *,
@@ -275,8 +307,7 @@ def catalog_ffmpeg_cmd(
         str(enc.get("maxrate", "6M")),
         "-bufsize",
         str(enc.get("bufsize", "8M")),
-        "-g",
-        str(nframes),
+        *hls_x264_args(cfg, nframes=nframes),
         "-c:a",
         "aac",
         "-shortest",
@@ -286,6 +317,7 @@ def catalog_ffmpeg_cmd(
         "1:a:0",
         "-movflags",
         "+faststart",
+        *hls_timestamp_args(),
         str(out_tmp),
     ]
 
@@ -344,10 +376,12 @@ def apply_edge_watermark(
                     str(enc.get("pix_fmt", "yuv420p")),
                     "-b:v",
                     str(enc.get("video_bitrate", "4M")),
+                    *hls_x264_args(cfg),
                     "-c:a",
                     "copy",
                     "-movflags",
                     "+faststart",
+                    *hls_timestamp_args(),
                     str(dest_mp4),
                 ],
                 cfg=cfg,
@@ -374,10 +408,12 @@ def apply_edge_watermark(
                     str(enc.get("pix_fmt", "yuv420p")),
                     "-b:v",
                     str(enc.get("video_bitrate", "4M")),
+                    *hls_x264_args(cfg),
                     "-c:a",
                     "copy",
                     "-movflags",
                     "+faststart",
+                    *hls_timestamp_args(),
                     str(dest_mp4),
                 ],
                 cfg=cfg,

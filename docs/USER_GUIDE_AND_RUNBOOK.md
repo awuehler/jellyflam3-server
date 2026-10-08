@@ -845,7 +845,7 @@ The Roku **Channel Store** zip ships with **empty Settings**: no `registry/jelly
 ./scripts/package_roku_channel.sh          # restore the LAN household zip
 ```
 
-`JELLYFIN_STREAM_MODE` presets the ambient stream mode (`mp4` default, `hls` opt-in). HLS only starts promptly on media with **regular keyframes**. Measured over the Funnel relay: a 720p clip encoded with `-g 48 -keyint_min 48` returns segment 0 in **1.4 MB / 0.7 s**, while a stock keyframe-sparse sheep returns the entire clip as segment 0 — **21.8 MB / 12.6 s**, far past Roku cert **3.6**.
+`JELLYFIN_STREAM_MODE` presets the ambient stream mode (`mp4` default, `hls` opt-in). HLS only starts promptly on media with **regular keyframes**. New catalog encodes place an IDR every 6 seconds. Measured over the Funnel relay: a 720p clip encoded with `-g 48 -keyint_min 48` returns segment 0 in **1.4 MB / 0.7 s**, while a stock keyframe-sparse sheep returns the entire clip as segment 0 — **21.8 MB / 12.6 s**, far past Roku cert **3.6**.
 
 Package presets only fill **empty** registry keys (`RegistryPresets.brs`), so sideloading either zip on a TV that already has credentials leaves its `baseUrl` alone.
 
@@ -1190,6 +1190,12 @@ sudo -u jellyfin find /var/cache/jellyflam3/transcodes -mindepth 1 -delete
 
 `python3 -m pipeline.hammer --transcode-cache` clears the same directory inside a Hammer run. Leave a live remux alone. A full re-encode does not make the old segment playable.
 
+A different failure is a catalog MP4 whose only keyframe is at time 0 and whose duration is the whole GOP. HLS copy then writes one segment, ffmpeg exits, and the client never asks for a later index. `electricsheep.247.31208` on 16a was that case (84 s, one IDR). Shorter one-keyframe sheep in the same flock still play because the client requests the next segment index, and each of those requests copies the whole file.
+
+New renders place an IDR every 6 seconds (`encode.keyframe_interval_sec`, 144 frames at 24 fps) and start the MP4 at time 0. The largest HLS gains are the first-segment size and those whole-file segment copies. Both come from that interval. The mux-timeline shift is the smaller leftover: the catalog file no longer contributes the 0.083 s B-frame lead, and the remux still adds about 10 s in the MPEG-TS muxer. Files already in the catalog keep one keyframe until they are rendered again. Ambient clients stay on `streamMode=mp4`. Detail: [phase2/03 scoped HLS encode](phase2/03_HLS_CLIENT_STREAMING.md#scoped-hls-encode-keyframe-interval).
+
+The duration chooser no longer rounds a runaway period LCM up to about twice the target. That genome’s next render, once the worker is running this code, is 44.0 s (1056 frames) rather than 84 s. The furnace process keeps the old snap until it is restarted onto this revision.
+
 ### Operator triage
 
 | Symptom | Check | Fix |
@@ -1215,6 +1221,7 @@ sudo -u jellyfin find /var/cache/jellyflam3/transcodes -mindepth 1 -delete
 | Black / error after quarantine | Item gone from disk/Jellyfin; client still has old flock list | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id and re-poll (30s rate limit). Kodi SS **0.2.10** also closes the native playback-failed dialog. Overnight new-sheep pickup is wrap-once (VoD 1.0.31 / Roku SS 1.0.9 / Kodi SS 0.2.9+) — [Flock mix](#flock-mix-shuffle-wrap) |
 | Playback stutters / several TVs | `python3 -m pipeline.link_capacity estimate --profile wifi-pi`; this lab is WiFi STA (`eth0` DOWN) | Direct Play; fewer TVs — stay at/under `N_max`. Jellyfin will not refuse extras. Cable the Pi only if that host actually has Ethernet |
 | HLS dies in a few seconds; `no transcode is running` | Jellyfin log names a `.ts` under `transcodes/`; the MP4 is still under `/media/sheep` | Idle: delete leftover transcode files ([Leftover HLS segment](#leftover-hls-segment)), then play again. Ambient clients stay on `streamMode=mp4` |
+| One HLS sheep fails immediately; playlist is a single `EXTINF` of the whole clip | `ffprobe` shows one keyframe at 0; duration is one GOP | Quarantine that catalog item and requeue the genome. New encodes place an IDR every 6 s ([scoped HLS encode](phase2/03_HLS_CLIENT_STREAMING.md#scoped-hls-encode-keyframe-interval)). Ambient clients stay on `streamMode=mp4` |
 | Wipe everything local | — | `hammer --dry-run` then `--confirm HAMMER` (not Shears) |
 
 ### Owner-OK acceptance gates (RC)
@@ -1385,4 +1392,4 @@ Recorded 2026-10-03 from the vote-path review. Not scheduled. The first-vote wei
 
 ---
 
-*Document version: 2026-10-06 — leftover HLS `.ts` files are refused after the remux job ends. JellyFlam3 VoD installs from the Roku Channel Store; sideload remains the furnace-preset and screensaver path. Phase 4 close-out (`v0.3.2`).*
+*Document version: 2026-10-07 — HLS copy of a one-keyframe clip is one segment; confirmed future IDR interval is 6 s. Duration snap no longer doubles a runaway period LCM. Leftover `.ts` files are still refused after the remux job ends. JellyFlam3 VoD installs from the Roku Channel Store; sideload remains the furnace-preset and screensaver path. Phase 4 close-out (`v0.3.2`).*

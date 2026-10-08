@@ -515,14 +515,14 @@ env in=anim.flam3 prefix=frames/f format=png flam3-animate
 ffmpeg -framerate 24 -i frames/f%05d.png \
   -f lavfi -i anullsrc=channel_layout=stereo:sample_rate=48000 \
   -c:v libx264 -profile:v high -level 4.2 -pix_fmt yuv420p \
-  -b:v 4M -maxrate 6M -bufsize 8M -g 48 \
+  -b:v 4M -maxrate 6M -bufsize 8M -g 144 -keyint_min 144 -sc_threshold 0 \
   -c:a aac -shortest \
   -map 0:v:0 -map 1:a:0 \
   -movflags +faststart \
   /media/sheep/by-generation/247/electricsheep.247.16021.mp4
 ```
 
-Optional: set `-g` / `-keyint_min` near the loop length (e.g. `-g 552` when `nframes=552`) so a seamless restart lands near a keyframe. Optional poster: mid-loop JPEG → `stills/{stem}/{stem}-poster.jpg`.
+`-g` / `-keyint_min` are 6 seconds at 24 fps (144 frames), with scene-cut keyframes off, so HLS copy can cut the clip. A single keyframe at the loop length makes segment 0 the entire file. Optional poster: mid-loop JPEG → `stills/{stem}/{stem}-poster.jpg`.
 
 ### 6. Refresh Jellyfin and serve Roku
 

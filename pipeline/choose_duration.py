@@ -148,15 +148,34 @@ def snap_duration_to_periods(
         candidates.add(k + 1)
     best_k = min(candidates, key=lambda kk: abs(kk * fund - target_frames))
     nframes = best_k * fund
+    chosen_fund = fund
+    # A runaway LCM (for example 2016 frames when the target is ~1044) rounds
+    # k from 0.5 up to 1 and doubles the clip. Prefer one detected period
+    # whose multiple sits near the target.
+    if target_frames > 0 and abs(nframes - target_frames) > 0.25 * target_frames:
+        alt = _nearest_period_multiple(
+            period_frames,
+            target_frames,
+            min_frames=min_frames,
+            max_frames=max_frames,
+        )
+        if alt is not None and abs(alt[0] - target_frames) < abs(nframes - target_frames):
+            nframes, best_k, chosen_fund = alt
+            meta["lcm_frames"] = fund
+            meta["snap_fallback"] = "lcm_far_from_target"
     dur = duration_for_nframes(nframes, fps)
     dur = clamp(dur, lo, hi)
     # Re-derive nframes after clamp (may break exact period if clamp hits edge)
     nframes = nframes_for_duration(dur, fps)
-    if nframes % fund != 0:
+    if chosen_fund > 0 and nframes % chosen_fund != 0:
         # Pull back to nearest valid multiple inside band
-        k2 = int(clamp(round(nframes / fund), k_min, k_max))
-        nframes = k2 * fund
+        k_lo = max(1, math.ceil(min_frames / chosen_fund))
+        k_hi = max(k_lo, math.floor(max_frames / chosen_fund))
+        k2 = int(clamp(round(nframes / chosen_fund), k_lo, k_hi))
+        nframes = k2 * chosen_fund
+        best_k = k2
         dur = duration_for_nframes(nframes, fps)
+    meta["fundamental_frames"] = chosen_fund
     meta.update(
         {
             "snapped": True,
@@ -166,6 +185,35 @@ def snap_duration_to_periods(
         }
     )
     return dur, meta
+
+
+def _nearest_period_multiple(
+    period_frames: list[int],
+    target_frames: int,
+    *,
+    min_frames: int,
+    max_frames: int,
+) -> tuple[int, int, int] | None:
+    """Closest in-band k*period. Ties keep the longer period."""
+    best: tuple[int, int, int, int] | None = None
+    for period in period_frames:
+        if period <= 0 or period > max_frames:
+            continue
+        k_min = max(1, math.ceil(min_frames / period))
+        k_max = math.floor(max_frames / period)
+        if k_max < k_min:
+            continue
+        k = int(clamp(round(target_frames / period), k_min, k_max))
+        nframes = k * period
+        dist = abs(nframes - target_frames)
+        # dist, then shorter period loses the tie (larger period wins)
+        rank = (dist, -period)
+        if best is None or rank < (best[0], best[1]):
+            best = (dist, -period, nframes, k)
+    if best is None:
+        return None
+    _dist, neg_period, nframes, k = best
+    return nframes, k, -neg_period
 
 
 def choose_duration_sec(cfg: dict[str, Any], job: dict[str, Any] | None = None) -> float:

@@ -13,7 +13,7 @@ from pipeline.genome_signals import (
 from pipeline.poster import poster_path_for_mp4
 from pipeline.refactor_scan import HARD_QUARANTINE_REASONS, score_sheep, verdict_for
 from pipeline.stills import sidecar_path_for_mp4
-from pipeline.worker import catalog_ffmpeg_cmd
+from pipeline.worker import catalog_ffmpeg_cmd, hls_keyint_frames
 
 # Shape of 04a electricsheep.245.09797 — deprecated xform symmetry>0 freezes orbit.
 FROZEN_09797_XML = """<flame name="electricsheep.245.09797" time="0" size="1920 1080"
@@ -183,3 +183,17 @@ def test_catalog_ffmpeg_still_loop_keeps_aac():
     assert "aac" in cmd
     assert "libx264" in cmd
     assert "3M" in cmd
+    g = cmd.index("-g")
+    assert cmd[g + 1] == "144"
+    assert cmd[cmd.index("-keyint_min") + 1] == "144"
+    assert cmd[cmd.index("-sc_threshold") + 1] == "0"
+    assert "open-gop=0" in cmd
+    assert cmd[cmd.index("-avoid_negative_ts") + 1] == "make_zero"
+    assert cmd[g + 1] != "456"
+
+
+def test_hls_keyint_matches_interval_and_clip():
+    cfg = {"encode": {"keyframe_interval_sec": 6}, "vod": {"fps": 24}}
+    assert hls_keyint_frames(cfg, 2016) == 144
+    assert hls_keyint_frames(cfg, 100) == 100
+    assert hls_keyint_frames({"vod": {"fps": 30}}, None) == 180

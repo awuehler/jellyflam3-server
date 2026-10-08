@@ -241,6 +241,47 @@ ls -lt /var/log/jellyfin/FFmpeg.Remux-* | head
 
 Covered by pieces **F** (lab observation) and **G** (ops policy above).
 
+## Scoped HLS encode: keyframe interval
+
+**Confirmed 2026-10-07** from the `electricsheep.247.31208` HLS-only failure on 16a. This is an encode-policy scope. It does not change `streamMode` and it does not turn on full HLS transcode.
+
+### What failed
+
+Catalog ffmpeg sets `-g` to the entire frame count (`catalog_ffmpeg_cmd` in `pipeline/worker.py`). The file has one IDR, at time 0. Jellyfin’s HLS path is a copy remux (`-codec:v copy`, `-hls_time 6`). Copy can cut only on a keyframe, so the playlist is one VOD segment whose `EXTINF` is the whole clip. ffmpeg exits in under a second, writes `ENDLIST`, and starts no follow-up `-ss` job. A later GET of that `.ts` is refused with `no transcode is running` even while the file is still in `/var/cache/jellyflam3/transcodes`.
+
+`247.31208` is 84.0 seconds, 2016 frames, one keyframe, about 43 MB. The rest of that 16a flock is about 23–50 seconds and also one keyframe. Those stay in the HLS session because the client asks for a later segment index and Jellyfin starts another remux. The 84-second playlist has no later index, and the client leaves in about a second.
+
+The 84-second length is the duration snap, not a bad timestamp and not a corrupt MP4. Detected periods include 96 and 126 frames. Their LCM is 2016. The chooser target was about 43.5 seconds (1044 frames). `k = round(1044/2016)` became 1, so the render was 84 seconds. The same negative DTS lead (−0.083 s) and the same remux shift (+10.083 s) appear on sheep that play.
+
+### Applied change
+
+Catalog encodes set the keyframe interval to **144 frames** (6 seconds at 24 fps) so it matches `-hls_time 6`. `encode.keyframe_interval_sec` (default 6) times `vod.fps`. A clip shorter than that interval uses one GOP the length of the clip.
+
+| | |
+|---|---|
+| Where | `catalog_ffmpeg_cmd` and the edge-watermark re-encode (`apply_edge_watermark`): `-g`, `-keyint_min`, `-sc_threshold 0`, `open-gop=0`. |
+| New encodes | Closed GOP, IDR every 6 seconds. |
+| Already in the catalog | Unchanged until that sheep is rendered again. |
+| Ambient clients | Stay on `streamMode=mp4`. |
+| Out of scope | Full HLS transcode. Longer-lived Jellyfin remux sessions. |
+
+The largest HLS gains from this interval are the first-segment size and the whole-file segment copies. Both are fixed by the 6-second keyframe interval.
+
+- **First segment.** One keyframe at time 0 makes segment 0 the entire clip. An 84-second, 43 MB segment misses the Roku picture-start budget of about 8 seconds, and the client leaves in about a second. Sheep that already play (about 23–50 seconds) still have to pull the whole file before the first picture. A 6-second first segment starts inside that budget.
+- **Whole-file copies.** On a one-keyframe file, each later segment index restarts ffmpeg at `-ss` and copies the entire GOP. Several `.ts` files then have the same size as the source, and a seek lands at time 0. A 6-second IDR lets those requests become real segments.
+
+### Mux timeline (smaller, included)
+
+Remux uses `-copyts -avoid_negative_ts disabled` and shifts video and audio by +10.083 s. That is 10 s from the MPEG-TS muxer plus the 2-frame negative DTS lead (−0.083 s) in the catalog MP4. Playlist time stays at 0. The same shift is on sheep that play.
+
+New encodes pass `-avoid_negative_ts make_zero`, so the MP4 starts at time 0 and the remux no longer adds that 0.083 s lead. The remaining +10 s is the MPEG-TS muxer during the remux. It is the smaller leftover.
+
+Jellyfin still refuses a finished `.ts` after the remux process exits. That handler is in Jellyfin. Ambient clients stay on `streamMode=mp4`.
+
+### Duration snap (applied with the 31208 rework)
+
+When the LCM multiple is more than 25% away from the chooser target, `snap_duration_to_periods` uses the single detected period whose multiple is nearest the target. For this genome the LCM remains 2016 frames, and the fallback is **1056 frames / 44.0 s**, which closes the 96-frame period. 48.0 s (1152 frames) does not close the 126-frame candidate, so it is not the snap. The running furnace worker keeps the old snap and the one-keyframe GOP until this code is deployed and that process restarts. A requeue before that restart renders 84 seconds with one IDR again.
+
 ## Commands
 
 ```bash
