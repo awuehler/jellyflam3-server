@@ -364,6 +364,13 @@ def save_history_entry(
     path.write_text(json.dumps({"entries": entries}, indent=2) + "\n", encoding="utf-8")
 
 
+def _freeze_fingerprint(value: Any) -> Any:
+    """JSON lists become tuples so a stored fingerprint can sit in a set."""
+    if isinstance(value, list):
+        return tuple(_freeze_fingerprint(item) for item in value)
+    return value
+
+
 def recent_fingerprints(cfg: dict[str, Any], pool_size: int) -> set[tuple[Any, ...]]:
     ib = idle_breed_cfg(cfg)
     threshold = int(ib.get("small_flock_threshold", 6))
@@ -373,8 +380,15 @@ def recent_fingerprints(cfg: dict[str, Any], pool_size: int) -> set[tuple[Any, .
     fps: set[tuple[Any, ...]] = set()
     for entry in load_history(cfg)[-depth:]:
         fp = entry.get("fingerprint")
-        if isinstance(fp, list):
-            fps.add(tuple(fp))
+        if not isinstance(fp, list):
+            continue
+        frozen = _freeze_fingerprint(fp)
+        if not isinstance(frozen, tuple):
+            continue
+        try:
+            fps.add(frozen)
+        except TypeError:
+            log.warning("idle breed skipping unhashable fingerprint: %s", fp)
     return fps
 
 

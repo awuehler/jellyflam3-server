@@ -252,6 +252,38 @@ def test_dedup_avoids_recent_fingerprint(tmp_path: Path):
     assert picked.fingerprint() != plan.fingerprint()
 
 
+def test_blend_fingerprint_survives_history_round_trip(tmp_path: Path):
+    """A blend fingerprint stores parent paths as a nested list after JSON."""
+    cfg = _cfg(tmp_path)
+    a = tmp_path / "genomes" / "done" / "a.flam3"
+    b = tmp_path / "genomes" / "done" / "b.flam3"
+    a.write_text("<flame/>", encoding="utf-8")
+    b.write_text("<flame/>", encoding="utf-8")
+    pool = collect_parent_pool(cfg)
+    plan = BreedPlan("blend", (a, b), "alternate")
+    save_history_entry(cfg, plan, [tmp_path / "genomes" / "inbox" / "child.flam3"])
+
+    history = Path(cfg["breed"]["idle_breed"]["history_file"])
+    stored = json.loads(history.read_text(encoding="utf-8"))["entries"][-1]["fingerprint"]
+    assert isinstance(stored[1], list)
+    assert plan.fingerprint() in recent_fingerprints(cfg, len(pool))
+
+
+def test_unhashable_fingerprint_does_not_abort_breed(tmp_path: Path):
+    cfg = _cfg(tmp_path)
+    history = Path(cfg["breed"]["idle_breed"]["history_file"])
+    history.write_text(
+        json.dumps(
+            {"entries": [{"fingerprint": ["blend", {"not": "a path"}, "alternate"]}]}
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "genomes" / "done" / "parent.flam3").write_text("<flame/>", encoding="utf-8")
+    assert recent_fingerprints(cfg, 1) == set()
+    plan = pick_unique_plan(cfg, collect_parent_pool(cfg))
+    assert plan is not None
+
+
 def test_execute_plan_interpolate(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     cfg = _cfg(tmp_path)
     a = tmp_path / "genomes" / "done" / "a.flam3"
