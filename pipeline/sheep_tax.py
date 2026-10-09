@@ -317,7 +317,9 @@ def tax_xml(xml_text: str, cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                 "xml": None,
                 "flame_count": len(flames),
             }
-        if multi_policy in ("strip_to_first", "strip", "first") and do_repair:
+        if multi_policy in ("keep", "preserve"):
+            pass
+        elif multi_policy in ("strip_to_first", "strip", "first") and do_repair:
             keep = flames[0]
             root = keep
             multi_root = False

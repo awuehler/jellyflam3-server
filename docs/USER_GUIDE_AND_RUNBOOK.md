@@ -574,7 +574,7 @@ Two holding areas:
 
 | When | Why | Where it goes |
 |---|---|---|
-| Worker, sheep tax | XML will not parse (`xml_invalid`), no `<flame>` (`no_flame`), or the file cannot be read or written (`read_error`, `write_error`). Extra flames are stripped to the first flame. They quarantine only when `sheep_tax.multi_flame` is `reject` or `quarantine`. | Copy into `genomes/quarantine`. The claimed inbox file is removed. No MP4 is published. |
+| Worker, sheep tax | XML will not parse (`xml_invalid`), no `<flame>` (`no_flame`), or the file cannot be read or written (`read_error`, `write_error`). Extra flames are stripped to the first flame. A tuple stem (`electricsheep.tuple.*`) keeps both flames so the three stages render. Flames quarantine only when `sheep_tax.multi_flame` is `reject` or `quarantine`. A tuple whose file is not the three-stage length quarantines with no MP4 published. | Copy into `genomes/quarantine`. The claimed inbox file is removed. No MP4 is published. |
 | Worker, `pre_render_genome` | `genome_linear_only`, `genome_singularity_cloned`, `genome_orbit_frozen` (single flame; a tuple is not frozen-orbit rejected), or `palette_washed_out` (both harmony poles under chroma **0.40**). | Same. Full animation does not start. |
 | Worker, `pre_render_preview` | One Lite still has mean saturation under **0.12** (`catalog_desaturated`), or the still cannot be read (`quality_image_unreadable`). | Same. |
 | Worker, `pre_publish_output` | Encoded midpoint fails the same saturation check. | Same. The MP4 never enters `by-generation/`. |

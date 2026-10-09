@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from pipeline.sheep_tuple import (
+    assert_tuple_duration,
     catalog_tuple_mp4,
     combine_parent_genomes,
     effective_watermark_style,
@@ -113,6 +114,14 @@ def test_stage_nframes_clamped_to_hard_max(tmp_path: Path):
     segs = segment_times(cfg)
     assert segs["edge"]["start_sec"] < segs["edge"]["end_sec"]
     assert segs["loop_b"]["end_sec"] == pytest.approx(total)
+
+
+def test_tuple_duration_rejects_single_stage(tmp_path: Path):
+    cfg = _cfg(tmp_path)
+    target = tuple_duration_sec(cfg)
+    assert_tuple_duration(target, cfg)
+    with pytest.raises(ValueError, match="three stages"):
+        assert_tuple_duration(13.0, cfg)
 
 
 def test_watermark_filter_enabled_on_edge_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):

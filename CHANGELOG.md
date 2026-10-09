@@ -10,6 +10,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Tuple genomes keep both flames through sheep tax (`multi_flame: keep` on `electricsheep.tuple.*` only). A tuple file that is not the three-stage length is quarantined and not published. Other genomes still strip to the first flame.
+
 - Duration snap no longer doubles a clip when the period LCM is far from the chooser target. `electricsheep.247.31208` (LCM 2016 frames, 84 s) falls back to 1056 frames / 44.0 s. The furnace worker uses this only after it restarts onto this revision.
 
 - Catalog encodes place a closed-GOP IDR every 6 seconds (`encode.keyframe_interval_sec`, 144 frames at 24 fps) instead of one keyframe for the whole clip. That is the first-segment size and the whole-file HLS segment copies. New files also start at time 0 (`-avoid_negative_ts make_zero`); the remux still adds about 10 seconds in the MPEG-TS muxer. Ambient clients stay on Static MP4. Files already in the catalog change when they are rendered again.

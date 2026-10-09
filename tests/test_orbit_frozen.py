@@ -13,7 +13,7 @@ from pipeline.genome_signals import (
 from pipeline.poster import poster_path_for_mp4
 from pipeline.refactor_scan import HARD_QUARANTINE_REASONS, score_sheep, verdict_for
 from pipeline.stills import sidecar_path_for_mp4
-from pipeline.worker import catalog_ffmpeg_cmd, hls_keyint_frames
+from pipeline.worker import catalog_ffmpeg_cmd, hls_keyint_frames, tax_config_for_genome
 
 # Shape of 04a electricsheep.245.09797 — deprecated xform symmetry>0 freezes orbit.
 FROZEN_09797_XML = """<flame name="electricsheep.245.09797" time="0" size="1920 1080"
@@ -190,6 +190,17 @@ def test_catalog_ffmpeg_still_loop_keeps_aac():
     assert "open-gop=0" in cmd
     assert cmd[cmd.index("-avoid_negative_ts") + 1] == "make_zero"
     assert cmd[g + 1] != "456"
+
+
+def test_tuple_stem_keeps_both_flames():
+    cfg = {"sheep_tax": {"multi_flame": "strip_to_first", "repair": True}}
+    plain = tax_config_for_genome(cfg, Path("electricsheep.247.31208.flam3"))
+    assert plain["sheep_tax"]["multi_flame"] == "strip_to_first"
+    tup = tax_config_for_genome(
+        cfg, Path("electricsheep.tuple.244.76755_to_243.16930.flam3")
+    )
+    assert tup["sheep_tax"]["multi_flame"] == "keep"
+    assert cfg["sheep_tax"]["multi_flame"] == "strip_to_first"
 
 
 def test_hls_keyint_matches_interval_and_clip():

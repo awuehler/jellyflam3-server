@@ -6,8 +6,10 @@ Usage: ``python3 -m pipeline.worker [--once GENOME]`` (polls genomes_inbox by de
 
 Assumptions: Single-threaded; sheep tax then TV-port then active artistic-quality admission.
   Linear-only, singularity-cloned, frozen single-flame, washed-palette, and visually
-  desaturated jobs quarantine before publication. Tuple genomes render three sequence
-  stages then watermark the middle edge; successful genomes archive to genomes_done.
+  desaturated jobs quarantine before publication. Tuple genomes keep both flames
+  through sheep tax, render three sequence stages, watermark the middle edge, and
+  quarantine when the file is not that three-stage length. Successful genomes
+  archive to genomes_done.
   Drain flag (pipeline.worker_drain) skips the next inbox claim after the current job.
   Inbox claim order is FIFO (pipeline.inbox_queue), not filename / ASCII order.
 """
@@ -37,6 +39,7 @@ from pipeline.genome_signals import (
     should_still_loop,
 )
 from pipeline.sheep_tuple import (
+    assert_tuple_duration,
     effective_watermark_style,
     effective_watermark_text,
     is_tuple_stem,
@@ -474,6 +477,17 @@ def archive_rendered_genome(cfg: dict[str, Any], src: Path) -> Path:
     return dest
 
 
+def tax_config_for_genome(cfg: dict[str, Any], src: Path) -> dict[str, Any]:
+    """Tuple stems keep both flames. Every other genome uses the configured policy."""
+    if not is_tuple_stem(sheep_basename(src)):
+        return cfg
+    cloned = dict(cfg)
+    tax = dict(cloned.get("sheep_tax") or {})
+    tax["multi_flame"] = "keep"
+    cloned["sheep_tax"] = tax
+    return cloned
+
+
 def process_genome(cfg: dict[str, Any], src: Path) -> Path:
     """Render one genome through tax → TV-port → quality gate → encode → catalog.
 
@@ -533,7 +547,7 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
 
             taxed = work / "taxed.flam3"
             shutil.copy2(src, taxed)
-            tax = scan_file(taxed, cfg)
+            tax = scan_file(taxed, tax_config_for_genome(cfg, src))
             state["sheep_tax"] = {
                 "status": tax.get("status"),
                 "issues": tax.get("issues"),
@@ -785,6 +799,8 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
         ffprobe = _tool(cfg, "ffprobe")
         dur = ffprobe_duration(ffprobe, out_tmp)
         assert_duration_in_band(dur, cfg)
+        if is_tuple:
+            assert_tuple_duration(dur, cfg)
         ffprobe_video_ok(ffprobe, out_tmp, cfg)
 
         if quality_policy["enabled"] and quality_policy["check_output_saturation"]:

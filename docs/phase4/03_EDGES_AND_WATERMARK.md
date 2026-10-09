@@ -28,7 +28,7 @@ This guide is the **single home** for tuple encode, edge-stage watermark, and ca
 | Topic | Approach |
 |---|---|
 | **Parents** | Two single-flame, orbitable, non-linear-only genomes; reject parents that are themselves tuples; skip if dest MP4 already exists |
-| **Generation** | `flam3-genome sequence=` of both flames; worker passes **stage** `nframes` (not full-loop nframes). Catalog duration is **3× stage** |
+| **Generation** | `flam3-genome sequence=` of both flames; worker passes **stage** `nframes` (not full-loop nframes). Sheep tax **keeps** both flames on a tuple stem (`multi_flame: keep`). Every other genome still uses `strip_to_first`. Catalog duration is **3× stage**. A file that is not that length is quarantined and not published |
 | **Duration** | `tuple.stage_duration_sec` default **13**; clamp so `3 × stage` stays at or under the host **hard** max (04a 60 s; never above 120 s) |
 | **Catalog layout** | `/media/sheep/by-generation/tuple/electricsheep.tuple.{from}_to_{to}.mp4` |
 | **Sidecar** | `type: tuple`, `from_id`, `to_id`, `watermark`, `segments` (loop_a / edge / loop_b times) |

@@ -171,6 +171,17 @@ def tuple_duration_sec(cfg: dict[str, Any]) -> float:
     return duration_for_nframes(stage_nframes(cfg) * 3, fps)
 
 
+def assert_tuple_duration(
+    duration_sec: float, cfg: dict[str, Any], *, tol: float = 0.51
+) -> None:
+    """Raise when a tuple file is not the three-stage length."""
+    target = tuple_duration_sec(cfg)
+    if abs(float(duration_sec) - target) > tol:
+        raise ValueError(
+            f"tuple duration {float(duration_sec):.3f}s is not {target:.3f}s (three stages)"
+        )
+
+
 def segment_times(cfg: dict[str, Any]) -> dict[str, dict[str, float]]:
     """Start/end seconds for loop A, edge, loop B (equal stages)."""
     vod = cfg.get("vod") or {}

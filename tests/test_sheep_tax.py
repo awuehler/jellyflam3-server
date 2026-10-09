@@ -64,6 +64,23 @@ def test_multi_flame_strip():
     assert result["xml"].count("<flame") == 1
 
 
+def test_multi_flame_keep():
+    xml = (
+        '<flame name="a" size="800 600" scale="600" time="0">'
+        '<xform weight="1" coefs="1 0 0 1 0 0"/>'
+        "</flame>"
+        '<flame name="b" size="800 600" scale="600" time="1">'
+        '<xform weight="1" coefs="1 0 0 1 0 0"/>'
+        "</flame>"
+    )
+    result = tax_xml(xml, _cfg(multi_flame="keep"))
+    assert result["ok"] is True
+    assert result["flame_count"] == 2
+    assert result["xml"].count("<flame") == 2
+    assert 'time="1"' in (result["xml"] or "")
+    assert not any(i["code"] == "stripped_extra_flames" for i in result["issues"])
+
+
 def test_multi_flame_reject():
     xml = (
         '<flame name="a" size="800 600" scale="600">'
