@@ -10,6 +10,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Archive genome downloads are stored as LF. A CRLF file already in the archive cache is rewritten in place, and Git checks out `*.flam3` with LF.
+
 - Replaced the rejected generation-245 sample `245.08610` and the removed generation-247 sample `247.34067` with archive genomes `245.00061` and `247.02253`. Both infer `cc-by-nc` (flame nick `brood`), so each generation still has one CC BY and one CC BY-NC sample.
 
 - Tuple genomes keep both flames through sheep tax (`multi_flame: keep` on `electricsheep.tuple.*` only). A tuple file that is not the three-stage length is quarantined and not published. Other genomes still strip to the first flame.

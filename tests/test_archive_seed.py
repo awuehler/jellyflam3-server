@@ -66,3 +66,55 @@ def test_archive_sheep_from_dict_requires_keys():
 
     with pytest.raises(KeyError):
         ArchiveSheep.from_dict({"generation": 247})
+
+
+def test_fetch_flam3_normalizes_crlf(monkeypatch):
+    from pipeline.archive_seed import fetch_flam3
+
+    payload = b'<flame name="electricsheep.247.00001" time="0" size="800 592"></flame>\r\n'
+
+    def fake_get(url, timeout=60.0):
+        return payload
+
+    monkeypatch.setattr("pipeline.archive_seed.http_get", fake_get)
+    text = fetch_flam3(ArchiveSheep(247, 1))
+    assert "\r" not in text
+    assert text == payload.decode().replace("\r\n", "\n")
+
+
+def test_materialize_crlf_download_is_lf_in_cache_and_inbox(tmp_path, monkeypatch):
+    from pipeline.archive_seed import materialize_sheep
+    from pipeline.seed_inbox import stage_file
+
+    crlf = '<flame name="electricsheep.247.00001" time="0" size="800 592"></flame>\r\n'
+    monkeypatch.setattr(
+        "pipeline.archive_seed.fetch_flam3",
+        lambda sheep, timeout=60.0: crlf,
+    )
+    cfg = {"_repo_root": str(tmp_path), "sheep_tax": {"enabled": False}}
+    out = materialize_sheep(ArchiveSheep(247, 1), cfg, tv_port=False, use_cache=False)
+    data = out.read_bytes()
+    assert b"\r" not in data
+    assert data == crlf.replace("\r\n", "\n").encode()
+
+    staged = stage_file(out, tmp_path / "inbox")
+    assert staged is not None
+    assert staged.read_bytes() == data
+
+
+def test_cached_crlf_genome_is_rewritten_lf(tmp_path, monkeypatch):
+    from pipeline.archive_seed import materialize_sheep
+
+    sheep = ArchiveSheep(247, 1)
+    raw = tmp_path / "genomes" / "archive_cache" / "raw" / "247" / sheep.filename
+    raw.parent.mkdir(parents=True)
+    raw.write_bytes(b'<flame name="electricsheep.247.00001" time="0" size="800 592"></flame>\r\n')
+
+    def boom(*_args, **_kwargs):
+        raise AssertionError("cache hit must not download")
+
+    monkeypatch.setattr("pipeline.archive_seed.fetch_flam3", boom)
+    cfg = {"_repo_root": str(tmp_path), "sheep_tax": {"enabled": False}}
+    out = materialize_sheep(sheep, cfg, tv_port=False, use_cache=True)
+    assert out == raw
+    assert b"\r" not in out.read_bytes()

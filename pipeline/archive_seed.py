@@ -203,6 +203,29 @@ def pick_random(pool: list[ArchiveSheep], count: int) -> list[ArchiveSheep]:
     return random.sample(pool, count)
 
 
+def normalize_flam3_text(xml: str) -> str:
+    """Return genome XML with LF newlines.
+
+    Archive mirrors and a Windows ``Path.write_text`` both emit CRLF. Flam3
+    accepts either, but the furnace files stay deterministic when every copy is LF.
+    """
+    return xml.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def write_flam3(path: Path, xml: str) -> None:
+    """Write genome XML as UTF-8 LF bytes (no platform newline translation)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(normalize_flam3_text(xml).encode("utf-8"))
+
+
+def ensure_flam3_lf(path: Path) -> Path:
+    """Rewrite ``path`` in place when it still contains CR."""
+    data = path.read_bytes()
+    if b"\r" in data:
+        write_flam3(path, data.decode("utf-8", "replace"))
+    return path
+
+
 def fetch_flam3(sheep: ArchiveSheep, *, timeout: float = 60.0) -> str:
     """Download genome XML from the first mirror that returns a ``<flame>`` body."""
     errors: list[str] = []
@@ -212,7 +235,7 @@ def fetch_flam3(sheep: ArchiveSheep, *, timeout: float = 60.0) -> str:
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             errors.append(f"{url}: {exc}")
             continue
-        text = raw.decode("utf-8", "replace")
+        text = normalize_flam3_text(raw.decode("utf-8", "replace"))
         if not _FLAME_OK.search(text):
             errors.append(f"{url}: no <flame>")
             continue
@@ -253,14 +276,14 @@ def materialize_sheep(
     out_path = cache / edition / str(sheep.generation) / sheep.filename
 
     if use_cache and out_path.is_file() and out_path.stat().st_size > 32:
-        return out_path
+        return ensure_flam3_lf(out_path)
 
     if use_cache and raw_path.is_file() and raw_path.stat().st_size > 32:
+        ensure_flam3_lf(raw_path)
         xml = raw_path.read_text(encoding="utf-8", errors="replace")
     else:
         xml = fetch_flam3(sheep)
-        raw_path.parent.mkdir(parents=True, exist_ok=True)
-        raw_path.write_text(xml, encoding="utf-8")
+        write_flam3(raw_path, xml)
 
     # Guide 06: sheep tax before TV-port (structural hygiene first).
     tax_cfg = cfg.get("sheep_tax") or {}
@@ -277,6 +300,5 @@ def materialize_sheep(
 
     if tv_port:
         xml = tv_port_xml(xml, cfg)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(xml, encoding="utf-8")
+    write_flam3(out_path, xml)
     return out_path

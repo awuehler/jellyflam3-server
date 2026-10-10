@@ -1369,7 +1369,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 ### Conventions
 
 - **Exec bits:** `scripts/*.{sh,py,ps1}` and `pipeline/*.py` are `100755` in git — `./scripts/ensure_exec_bits.sh`
-- **Line endings:** `.gitattributes` enforces LF for `*.sh`, `*.py`, `*.ps1`
+- **Line endings:** `.gitattributes` enforces LF for `*.sh`, `*.py`, `*.ps1`, `*.flam3`
 - **Tool lookup:** `pipeline.tool_lookup.tool(cfg, name)` — hyphen fallback for `flam3_animate` etc.
 - **Confirm tokens:** Shears `DELETE`, Hammer `HAMMER`, refactor `APPLY` / `QUARANTINE` / `BATCH`
 - **Secrets:** `${ENV}` in YAML; missing secrets fail closed outside smoke profiles (`tests/test_config.py`)

@@ -2,5 +2,7 @@
 *.sh text eol=lf
 *.py text eol=lf
 *.ps1 text eol=lf
+# Genome XML: LF so a Windows checkout matches the furnace byte-for-byte.
+*.flam3 text eol=lf
 # Kodi TinyXML fails install-from-zip on CRLF addon.xml ("Error reading end tag").
 kodi-screensaver/**/*.xml text eol=lf
