@@ -2,12 +2,16 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
+
+import pytest
 
 from pipeline.shears import (
     CONFIRM_TOKEN,
     apply_delete,
+    cmd_delete,
     discover_cascade,
     find_pedigree_orphan_warnings,
     resolve_sheep_base,
@@ -211,3 +215,33 @@ def test_audit_and_sweep_orphans(tmp_path: Path):
     assert not mp4.exists()
     assert not junk.exists()
     assert (kdir / f"{keep}.mp4").is_file()
+
+
+def test_delete_alias_matches_stem_and_unknown_lists_nothing(tmp_path: Path, capsys):
+    cfg = _cfg(tmp_path)
+    base = "electricsheep.247.00505"
+    media = Path(cfg["paths"]["media_library"])
+    cat = media / "by-generation" / "247"
+    cat.mkdir(parents=True)
+    mp4 = cat / f"{base}.mp4"
+    mp4.write_bytes(b"mp4")
+    (cat / f"{base}.jellyflam3.json").write_text(
+        json.dumps({"id": base, "alias": "frosty_swirles", "alias_source": "human"}),
+        encoding="utf-8",
+    )
+    by_alias = discover_cascade(cfg, "frosty_swirles")
+    by_stem = discover_cascade(cfg, base)
+    assert by_alias.base == base == by_stem.base
+    assert by_alias.catalog == by_stem.catalog
+    assert mp4 in by_alias.catalog
+
+    with pytest.raises(ValueError, match="alias not found: missing_name"):
+        discover_cascade(cfg, "missing_name")
+    rc = cmd_delete(
+        cfg,
+        argparse.Namespace(target="missing_name", confirm="", json=False),
+    )
+    assert rc == 2
+    captured = capsys.readouterr()
+    assert "alias not found: missing_name" in captured.err
+    assert captured.out == ""

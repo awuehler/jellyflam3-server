@@ -6,6 +6,7 @@ optional Jellyfin for item lookup/delete.
 
 Usage:
   python -m pipeline.shears delete electricsheep.247.00505
+  python -m pipeline.shears delete frosty_swirles
   python -m pipeline.shears delete electricsheep.247.00505 --confirm DELETE
   python -m pipeline.shears add path/to/sheep.flam3 [--force] [--move]
   # add copies by default (leaves source); --move relocates instead
@@ -26,12 +27,14 @@ import argparse
 import json
 import logging
 import shutil
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from pipeline.config import load_config, resolve_path
 from pipeline.sheep_names import catalog_generation, normalize_stem, stem_of
+from pipeline.sheep_naming import resolve_sheep_token
 
 log = logging.getLogger("jellyflam3.shears")
 
@@ -465,8 +468,14 @@ def _jellyfin_lookup(
 
 
 def discover_cascade(cfg: dict[str, Any], target: str | Path) -> CascadeReport:
-    """Build a cascade report for ``target`` (dry-run friendly; no deletes)."""
-    base = resolve_sheep_base(target)
+    """Build a cascade report for ``target`` (dry-run friendly; no deletes).
+
+    ``target`` may be a filename stem, a catalog alias, or a path the filename
+    rules already understand. An unknown ``adjective_surname`` raises
+    ``ValueError`` before any path is listed.
+    """
+    token = resolve_sheep_token(resolve_path(cfg, "media_library"), str(target))
+    base = resolve_sheep_base(token)
     report = CascadeReport(base=base)
 
     for d in _runtime_genome_dirs(cfg):
@@ -884,7 +893,11 @@ def sweep_orphans(
 
 
 def cmd_delete(cfg: dict[str, Any], args: argparse.Namespace) -> int:
-    report = discover_cascade(cfg, args.target)
+    try:
+        report = discover_cascade(cfg, args.target)
+    except ValueError as exc:
+        print("ERROR: %s" % exc, file=sys.stderr)
+        return 2
     dry_run = args.confirm != CONFIRM_TOKEN
     if args.json:
         payload = report.to_dict()
@@ -1012,7 +1025,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="cmd", required=True)
 
     d = sub.add_parser("delete", help="List or remove cascade artifacts for one sheep")
-    d.add_argument("target", help="Stem, .flam3 path, or catalog .mp4 path")
+    d.add_argument("target", help="Stem, alias, .flam3 path, or catalog .mp4 path")
     d.add_argument(
         "--confirm",
         default="",

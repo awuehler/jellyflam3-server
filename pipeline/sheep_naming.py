@@ -14,6 +14,9 @@ Usage:
 
 Assumptions: Filename stays canonical. Hash-seed from stem so re-ingest of the
 same sheep keeps the alias. ``alias_source=human`` is sticky until clear-alias.
+``set-alias``, ``clear-alias``, and ``show`` accept a filename stem or a catalog
+alias. ``backfill --push-jellyfin`` refreshes Overview for sheep that already
+have an alias.
 Jellyfin ``Name`` stays the stem; Overview gets an ``Alias:`` line so Roku VoD
 ``titleMode=alias`` (and Kodi / Roku screensaver captions) can show it.
 Optional OriginalTitle / SortName-as-alias stays parked.
@@ -375,6 +378,50 @@ def resolve_alias(media_root: Path, alias: str) -> str | None:
     return hits[0]
 
 
+_FILENAME_SUFFIXES = (
+    ".jellyflam3.json",
+    "-poster.jpeg",
+    "-poster.jpg",
+    ".flam3",
+    ".flame",
+    ".mp4",
+)
+
+
+def _keeps_filename_rules(token: str) -> bool:
+    """True for a path or a filename suffix the caller already knows how to strip."""
+    name = Path(token).name
+    if name != token:
+        return True
+    lower = name.lower()
+    return any(lower.endswith(suffix) for suffix in _FILENAME_SUFFIXES)
+
+
+def resolve_sheep_token(media_root: Path, token: str) -> str:
+    """Map an operator token to a catalog stem when it is a unique alias.
+
+    A path, or a name ending in ``.flam3`` / ``.flame`` / ``.mp4`` /
+    ``-poster.jpg`` / ``.jellyflam3.json``, is returned unchanged so the caller
+    keeps its filename rules. A bare token that is already a live sidecar stem
+    is that stem. Otherwise a unique catalog alias returns its stem. An
+    ``adjective_surname`` that is not in the catalog raises ``ValueError``.
+    Any other bare token is returned unchanged.
+    """
+    raw = str(token).strip()
+    if not raw or _keeps_filename_rules(raw):
+        return raw
+    matches = [p for p in iter_sidecars(media_root) if sidecar_stem(p) == raw]
+    if matches:
+        return sidecar_stem(matches[0])
+    hit = resolve_alias(media_root, raw)
+    if hit:
+        return hit
+    normalized = normalize_alias(raw)
+    if ALIAS_RE.match(normalized):
+        raise ValueError("alias not found: %s" % normalized)
+    return raw
+
+
 def backfill_catalog(
     media_root: Path,
     *,
@@ -420,6 +467,60 @@ def backfill_catalog(
     return rows
 
 
+def push_existing_overviews(
+    media_root: Path,
+    cfg: dict[str, Any],
+    *,
+    dry_run: bool = False,
+    limit: int = 0,
+    already_pushed: Iterable[str] | None = None,
+) -> list[dict[str, Any]]:
+    """Refresh Jellyfin Overview for sidecars that already have an alias.
+
+    Does not change alias text. ``--dry-run`` records ``would_push`` and does
+    not call Jellyfin. One missing item does not stop the rest. ``limit`` caps
+    this walk the same way it caps assignment (``0`` means no cap). Stems in
+    ``already_pushed`` were refreshed earlier in this run and are skipped
+    without consuming ``limit``.
+    """
+    skip = {s for s in (already_pushed or ()) if s}
+    rows: list[dict[str, Any]] = []
+    n = 0
+    for path in iter_sidecars(media_root):
+        if limit and n >= limit:
+            break
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if not isinstance(data, dict):
+            continue
+        alias = alias_of(data)
+        if not alias:
+            continue
+        stem = sidecar_stem(path)
+        if stem in skip:
+            continue
+        n += 1
+        if dry_run:
+            rows.append({"stem": stem, "alias": alias, "action": "would_push"})
+            continue
+        mp4 = path.with_name(stem + ".mp4")
+        try:
+            jellyfin = _push_jellyfin(cfg, mp4, data)
+        except Exception as exc:  # noqa: BLE001 — one item must not stop the walk
+            jellyfin = {"ok": False, "status": "error", "error": str(exc)}
+        rows.append(
+            {
+                "stem": stem,
+                "alias": alias,
+                "action": "pushed",
+                "jellyfin": jellyfin,
+            }
+        )
+    return rows
+
+
 def _media_root(config: Path) -> Path:
     cfg = load_config(str(config))
     return resolve_path(cfg, "media_library")
@@ -442,21 +543,25 @@ def main(argv: list[str] | None = None) -> int:
     p_bf.add_argument(
         "--push-jellyfin",
         action="store_true",
-        help="After write, refresh Jellyfin Overview Alias: lines (not with --dry-run)",
+        help=(
+            "After assignment, refresh Jellyfin Overview Alias: lines for every "
+            "catalog sheep that already has an alias. With --dry-run, list "
+            "would_push and do not call Jellyfin."
+        ),
     )
 
     p_set = sub.add_parser("set-alias", help="Sticky human override")
-    p_set.add_argument("--stem", required=True)
+    p_set.add_argument("--stem", required=True, help="Filename stem or catalog alias")
     p_set.add_argument("--alias", required=True)
 
     p_clear = sub.add_parser("clear-alias", help="Reset to auto and regenerate")
-    p_clear.add_argument("--stem", required=True)
+    p_clear.add_argument("--stem", required=True, help="Filename stem or catalog alias")
 
     p_res = sub.add_parser("resolve", help="Print stem for an alias")
     p_res.add_argument("alias")
 
-    p_show = sub.add_parser("show", help="Print alias fields for a stem")
-    p_show.add_argument("--stem", required=True)
+    p_show = sub.add_parser("show", help="Print alias fields for a stem or alias")
+    p_show.add_argument("--stem", required=True, help="Filename stem or catalog alias")
 
     args = ap.parse_args(argv)
     media = _media_root(Path(args.config))
@@ -467,17 +572,34 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "backfill":
         rows = backfill_catalog(media, dry_run=args.dry_run, limit=args.limit)
-        if args.push_jellyfin and not args.dry_run:
-            for row in rows:
-                stem = row.get("stem") or ""
-                try:
-                    path, data = load_sidecar_for_stem(media, stem)
-                except (OSError, ValueError, json.JSONDecodeError) as exc:
-                    row["jellyfin"] = {"ok": False, "status": "sidecar_missing", "error": str(exc)}
-                    continue
-                mp4 = path.with_name(stem + ".mp4")
-                row["jellyfin"] = _push_jellyfin(cfg, mp4, data)
-        print(json.dumps({"count": len(rows), "rows": rows}, indent=2))
+        payload: dict[str, Any] = {"count": len(rows), "rows": rows}
+        if args.push_jellyfin:
+            pushed: set[str] = set()
+            if not args.dry_run:
+                for row in rows:
+                    stem = row.get("stem") or ""
+                    try:
+                        path, data = load_sidecar_for_stem(media, stem)
+                    except (OSError, ValueError, json.JSONDecodeError) as exc:
+                        row["jellyfin"] = {
+                            "ok": False,
+                            "status": "sidecar_missing",
+                            "error": str(exc),
+                        }
+                        continue
+                    mp4 = path.with_name(stem + ".mp4")
+                    row["jellyfin"] = _push_jellyfin(cfg, mp4, data)
+                    pushed.add(stem)
+            overview = push_existing_overviews(
+                media,
+                cfg,
+                dry_run=args.dry_run,
+                limit=args.limit,
+                already_pushed=pushed,
+            )
+            payload["overview_count"] = len(overview)
+            payload["overview"] = overview
+        print(json.dumps(payload, indent=2))
         return 0
 
     if args.cmd == "resolve":
@@ -487,6 +609,13 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         print(stem)
         return 0
+
+    if args.cmd in {"show", "set-alias", "clear-alias"}:
+        try:
+            args.stem = resolve_sheep_token(media, args.stem)
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
 
     if args.cmd == "show":
         _path, data = load_sidecar_for_stem(media, args.stem)

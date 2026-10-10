@@ -30,7 +30,8 @@ import logging
 import sys
 from typing import Any
 
-from pipeline.config import load_config
+from pipeline.config import load_config, resolve_path
+from pipeline.sheep_naming import resolve_sheep_token
 from pipeline.refactor_actions import (
     APPLY_CONFIRM_TOKEN,
     BATCH_CONFIRM_TOKEN,
@@ -139,7 +140,11 @@ def _add_shared_args(p: argparse.ArgumentParser) -> None:
         help="Config path (default: configs/jellyflam3.yaml)",
     )
     p.add_argument("--json", action="store_true", help="Emit JSON instead of a table")
-    p.add_argument("--id", dest="sheep_id", help="Score/preview a single sheep id/stem")
+    p.add_argument(
+        "--id",
+        dest="sheep_id",
+        help="Score/preview a single sheep id, filename stem, or catalog alias",
+    )
     p.add_argument("--limit", type=int, default=None, help="Max catalog rows to score")
     p.add_argument(
         "--failing",
@@ -304,7 +309,26 @@ def build_parser() -> argparse.ArgumentParser:
     return ap
 
 
+def _bind_sheep_id(cfg: dict[str, Any], args: argparse.Namespace) -> int | None:
+    """Resolve ``--id`` once, before catalog scan. ``None`` means keep going."""
+    sheep_id = getattr(args, "sheep_id", None)
+    if not sheep_id:
+        return None
+    try:
+        args.sheep_id = resolve_sheep_token(
+            resolve_path(cfg, "media_library"),
+            sheep_id,
+        )
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    return None
+
+
 def _cmd_report(cfg: dict[str, Any], args: argparse.Namespace) -> int:
+    bound = _bind_sheep_id(cfg, args)
+    if bound is not None:
+        return bound
     rows = scan_catalog(cfg, sheep_id=args.sheep_id, limit=args.limit)
     rows = filter_report(rows, failing_only=bool(args.failing))
     if args.json:
@@ -319,6 +343,9 @@ def _cmd_report(cfg: dict[str, Any], args: argparse.Namespace) -> int:
 
 
 def _cmd_preview(cfg: dict[str, Any], args: argparse.Namespace) -> int:
+    bound = _bind_sheep_id(cfg, args)
+    if bound is not None:
+        return bound
     if not args.sheep_id:
         print("preview requires --id", file=sys.stderr)
         return 2
@@ -348,6 +375,9 @@ def _cmd_preview(cfg: dict[str, Any], args: argparse.Namespace) -> int:
 
 
 def _cmd_quarantine(cfg: dict[str, Any], args: argparse.Namespace) -> int:
+    bound = _bind_sheep_id(cfg, args)
+    if bound is not None:
+        return bound
     if not args.sheep_id:
         print("quarantine requires --id", file=sys.stderr)
         return 2
@@ -382,6 +412,9 @@ def _cmd_quarantine(cfg: dict[str, Any], args: argparse.Namespace) -> int:
 
 
 def _cmd_apply(cfg: dict[str, Any], args: argparse.Namespace) -> int:
+    bound = _bind_sheep_id(cfg, args)
+    if bound is not None:
+        return bound
     if not args.sheep_id:
         print("apply requires --id", file=sys.stderr)
         return 2

@@ -57,7 +57,7 @@ Keys **`alias`** and **`alias_source`** (`auto` \| `human` \| `llm`) are in [pha
 ### B — Sidecar + Jellyfin
 
 1. ~~**Reserved + writer**~~ — keys documented; ingest/backfill write them. Generator uniqueness is in-process (catalog scan).
-2. Best-effort Jellyfin Overview `Alias:` line (ingest + `set-alias` / `backfill --push-jellyfin`). `Name` / `SortName` stay the filename. Optional OriginalTitle / SortName-as-alias remains parked.
+2. Best-effort Jellyfin Overview `Alias:` line (ingest + `set-alias` / `backfill --push-jellyfin`). `backfill --push-jellyfin` refreshes Overview for every catalog sheep that already has an alias, including when the assignment pass writes nothing. `--dry-run --push-jellyfin` lists `would_push` and does not call Jellyfin. `Name` / `SortName` stay the filename. Optional OriginalTitle / SortName-as-alias remains parked.
 3. Shears delete already removes the sidecar (no parallel alias index).
 
 ### C — Peer clients
@@ -65,7 +65,7 @@ Keys **`alias`** and **`alias_source`** (`auto` \| `human` \| `llm`) are in [pha
 1. ~~**Roku VoD**~~ — Settings `titleMode` `filename` (default) vs `alias` on flock rows / player chrome. In **1.0.42+**, OK toggles `titleMode` (and `commercialMode` / `streamMode` / `shuffleFlock`) and flushes immediately; **Save & Reload** re-fetches the flock. Reads Overview `Alias:`; missing alias falls back to filename.
 2. ~~**Kodi screensaver**~~ — **0.2.12** add-on setting `title_mode`; chrome-light caption (control 101) + JSON-RPC ListItem label. Idle video stays fullscreen. **0.2.13** last-7s vote overlay ([../phase5/05_KODI_SCREENSAVER_VOTES.md](../phase5/05_KODI_SCREENSAVER_VOTES.md)); keys while the overlay is hidden still exit.
 3. ~~**Roku screensaver**~~ — **1.0.11** Settings OK-toggle `titleMode`; stills caption from Overview `Alias:` (same fallback). Image-only path; no Sessions/Playing.
-4. ~~**Pipeline UX**~~ — `python3 -m pipeline.sheep_naming resolve` maps alias → stem; stem always valid. Shears/breed still take stems.
+4. ~~**Pipeline UX**~~ — `python3 -m pipeline.sheep_naming resolve` maps alias → stem. `set-alias`, `clear-alias`, and `show` take `--stem` as a filename stem or an alias. Shears `delete`, refactor `report` / `preview` / `apply` / `quarantine` `--id`, and votes `apply` / `show` / `sweep` (and `POST /v1/sheep-votes`) accept an alias or a stem. Shears add/modify and breed still take filenames.
 
 ### D — LLM poster naming (Phase 5)
 

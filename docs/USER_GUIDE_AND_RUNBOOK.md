@@ -694,6 +694,8 @@ python3 -m pipeline.sheep_naming clear-alias --stem electricsheep.247.00505
 python3 -m pipeline.sheep_naming resolve frosty_swirles
 ```
 
+`--stem` on `set-alias`, `clear-alias`, and `show` accepts the filename stem or the catalog alias. Shears `delete`, refactor `--id` on `report`, `preview`, `apply`, and `quarantine`, and `sheep_votes` `apply` / `show` / `sweep` do the same (`POST /v1/sheep-votes` too). A name shaped like `adjective_surname` that is not in the catalog stops with `alias not found` and lists no files. `backfill --push-jellyfin` refreshes the Jellyfin Overview `Alias:` line for every catalog sheep that already has an alias, after it assigns any that are missing. `--dry-run --push-jellyfin` lists those sheep as `would_push` and does not call Jellyfin.
+
 Roku VoD **1.0.33+**: Settings → `titleMode` → `filename` (default) or `alias`. In **1.0.42+**, highlight the row and press OK to toggle and save immediately (same for `commercialMode`, `streamMode`, and `shuffleFlock`), then choose **Save & Reload**. Alias comes from the Jellyfin Overview `Alias:` line (ingest writes it; `set-alias` / `backfill --push-jellyfin` refresh existing items). Missing alias shows the filename. The home status reports alias and filename-fallback counts. Screensaver and Kodi idle chrome can show a light filename or alias caption (`titleMode` / `title_mode`, default **filename**). Missing alias falls back to the stem. Optional Jellyfin OriginalTitle / SortName-as-alias is not used.
 
 Cascade removes catalog MP4/sidecar/poster, jobs, edges (best-effort), Jellyfin item (soft-fail), peer copies when Opt In. Does **not** touch secrets or Syncthing device config.

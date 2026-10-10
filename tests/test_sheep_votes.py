@@ -129,6 +129,19 @@ def test_unknown_stem_404(tmp_path: Path):
         apply_vote(media, {"stem": "electricsheep.247.99999", "kind": "like"})
 
 
+def test_apply_vote_by_alias(tmp_path: Path):
+    media = _catalog(tmp_path)
+    result = apply_vote(media, {"stem": "frosty_swirles", "kind": "like"})
+    assert result["stem"] == STEM
+    assert _load(media)["viewer_feedback"]["likes"] == 1
+
+
+def test_unknown_alias_is_not_a_stem(tmp_path: Path):
+    media = _catalog(tmp_path)
+    with pytest.raises(StemNotFound, match="alias not found: missing_name"):
+        resolve_vote_sidecar(media, stem="missing_name")
+
+
 def test_missing_identity_is_invalid(tmp_path: Path):
     media = _catalog(tmp_path)
     with pytest.raises(InvalidVote, match="stem or mediaPath"):

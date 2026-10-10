@@ -37,7 +37,13 @@ from typing import Any, Iterator
 
 from pipeline.config import load_config, resolve_path
 from pipeline.media_layout import is_unpublished_media_path
-from pipeline.sheep_naming import alias_of, iter_sidecars, load_sidecar_for_stem, sidecar_stem
+from pipeline.sheep_naming import (
+    alias_of,
+    iter_sidecars,
+    load_sidecar_for_stem,
+    resolve_sheep_token,
+    sidecar_stem,
+)
 from pipeline.stills import sidecar_path_for_mp4
 
 VOTE_KINDS = frozenset({"like", "love", "vote"})
@@ -184,6 +190,17 @@ def resolve_vote_sidecar(
             return path
         except FileNotFoundError as exc:
             errors.append(str(exc))
+            resolved = ""
+            try:
+                resolved = resolve_sheep_token(media_root, want)
+            except ValueError as alias_exc:
+                errors.append(str(alias_exc))
+            if resolved and resolved != want:
+                try:
+                    path, _data = load_sidecar_for_stem(media_root, resolved)
+                    return path
+                except FileNotFoundError as alias_exc:
+                    errors.append(str(alias_exc))
     constructed = ""
     if generation.strip() and sheep_id.strip():
         constructed = f"electricsheep.{generation.strip()}.{sheep_id.strip()}"
@@ -442,12 +459,12 @@ def main(argv: list[str] | None = None) -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p_apply = sub.add_parser("apply", help="Increment sidecar viewer_feedback")
-    p_apply.add_argument("--stem", required=True)
+    p_apply.add_argument("--stem", required=True, help="Filename stem or catalog alias")
     p_apply.add_argument("--kind", default="vote", help="like | love | vote")
     p_apply.add_argument("--media-path", default="", dest="media_path")
 
     p_show = sub.add_parser("show", help="Print viewer_feedback for a stem")
-    p_show.add_argument("--stem", required=True)
+    p_show.add_argument("--stem", required=True, help="Filename stem or catalog alias")
 
     p_top = sub.add_parser(
         "top",
@@ -473,7 +490,11 @@ def main(argv: list[str] | None = None) -> int:
         "sweep",
         help=f"Zero live-catalog viewer_feedback (dry-run unless --confirm {SWEEP_CONFIRM_TOKEN})",
     )
-    p_sweep.add_argument("--stem", default="", help="Limit to one stem (default: whole live catalog)")
+    p_sweep.add_argument(
+        "--stem",
+        default="",
+        help="Limit to one filename stem or catalog alias (default: whole live catalog)",
+    )
     p_sweep.add_argument(
         "--confirm",
         default="",

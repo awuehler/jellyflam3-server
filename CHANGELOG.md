@@ -10,6 +10,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Operator commands accept a catalog alias or a filename stem: `sheep_naming` `set-alias`, `clear-alias`, and `show`; Shears `delete`; refactor `report`, `preview`, `apply`, and `quarantine`; sheep votes `apply`, `show`, and `sweep` (and `POST /v1/sheep-votes`). `backfill --push-jellyfin` refreshes the Jellyfin Overview `Alias:` line for every catalog sheep that already has an alias, including when no new alias was written.
+
 - Archive genome downloads are stored as LF. A CRLF file already in the archive cache is rewritten in place, and Git checks out `*.flam3` with LF.
 
 - Replaced the rejected generation-245 sample `245.08610` and the removed generation-247 sample `247.34067` with archive genomes `245.00061` and `247.02253`. Both infer `cc-by-nc` (flame nick `brood`), so each generation still has one CC BY and one CC BY-NC sample.
