@@ -218,8 +218,8 @@ Use the balanced archive feedstock under `genomes/samples/` (commit `6898720+`):
 
 | Gen | CC (expect visible when commercial on) | NC (expect hidden when commercial on) |
 |---|---|---|
-| 247 | `electricsheep.247.16653` | `electricsheep.247.34067` |
-| 245 | `electricsheep.245.05215` | `electricsheep.245.08610` |
+| 247 | `electricsheep.247.16653` | `electricsheep.247.02253` |
+| 245 | `electricsheep.245.05215` | `electricsheep.245.00061` |
 | 244 | `electricsheep.244.75688` | `electricsheep.244.01221` |
 | 243 | `electricsheep.243.13770` | `electricsheep.243.16930` |
 | 242 | `electricsheep.242.00483` | `electricsheep.242.02652` |
