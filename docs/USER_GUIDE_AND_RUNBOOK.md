@@ -2,18 +2,24 @@
 
 One document, **three layers**. Pick your layer and stay there — you should not need to read the whole file.
 
-| Layer | Audience | You want to… |
-|---|---|---|
-| **[Layer 1 — End user](#layer-1--end-user)** | Household / viewer | Watch ambient loops, use Roku or Kodi screensaver, fix “nothing plays” without SSH |
-| **[Worked examples](#worked-examples)** | Viewer + operator | First-evening stories (VoD gate, screensaver, two Rokus, peer receive, drain, vote/share, **vote sweep**, **vote top**) |
-| **[Layer 2 — Operator](#layer-2--operator-runbook)** | Pi owner / homelab operator | Keep the flock healthy, seed/breed/delete sheep, peering, health gates, fleet updates, **private ↔ public** |
-| **[Layer 3 — Contributor](#layer-3--contributor)** | Developer / maintainer | Run tests, change pipeline code, CI, deploy conventions |
+
+| Layer                                                | Audience                    | You want to…                                                                                                            |
+| ---------------------------------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| **[Layer 1 — End user](#layer-1--end-user)**         | Household / viewer          | Watch ambient loops, use Roku or Kodi screensaver, fix “nothing plays” without SSH                                      |
+| **[Worked examples](#worked-examples)**              | Viewer + operator           | First-evening stories (VoD gate, screensaver, two Rokus, peer receive, drain, vote/share, **vote sweep**, **vote top**) |
+| **[Layer 2 — Operator](#layer-2--operator-runbook)** | Pi owner / homelab operator | Keep the flock healthy, seed/breed/delete sheep, peering, health gates, fleet updates, **private ↔ public**             |
+| **[Layer 3 — Contributor](#layer-3--contributor)**   | Developer / maintainer      | Run tests, change pipeline code, CI, deploy conventions                                                                 |
+
 
 **Terms:** [glossary.md](glossary.md) · **Architecture (SoT):** [Pi5_Flam3_VoD_Pipeline.md](Pi5_Flam3_VoD_Pipeline.md) · **Install from zero:** [phase2/09_PI_FROM_SCRATCH.md](phase2/09_PI_FROM_SCRATCH.md)
 
 ---
 
+
+
 ## Layer 1 — End user
+
+
 
 ### What you have
 
@@ -27,7 +33,7 @@ You do **not** need the Pi terminal for normal viewing. Printable one-pager: [FR
 
 1. Install **JellyFlam3** from the Roku Channel Store. Developer mode stays off. The store package does not occupy the sideload slot and ships with **empty Settings** (no furnace URL and no API key).
 2. Open the channel → **Settings** → enter Jellyfin connection values. An operator runs `python3 scripts/jellyfin_id_dump.py` on the Pi and gives you `baseUrl`, `apiKey`, `userId`, `libraryId` (never share the API key in chat/email — paste on the TV only). VoD **1.0.37+** persists each valid keyboard **OK** immediately. In **1.0.42**, highlight `commercialMode`, `streamMode`, `shuffleFlock`, or `titleMode` and press OK to toggle and save immediately; **Save & Reload** refreshes the flock.
-3. **Lab sideload** (`dist/jellyflam3-roku.zip` from `scripts/package_roku_channel.*` on a furnace Pi) is the preset path: a zip built on a Pi with `secrets.env` fills an empty registry with that furnace’s Jellyfin URL, API key, user id, and library id. That zip uses the one developer slot. The store channel does not.
+3. **Lab sideload** (`dist/jellyflam3-roku.zip` from `scripts/package_roku_channel.`* on a furnace Pi) is the preset path: a zip built on a Pi with `secrets.env` fills an empty registry with that furnace’s Jellyfin URL, API key, user id, and library id. That zip uses the one developer slot. The store channel does not.
 
 **Everyday use:** launch JellyFlam3 → pick a sheep → ambient loop plays. If the furnace is temporarily unreachable, VoD **1.0.43+** waits without declaring the flock empty and retries every 30 seconds; **Retry** checks immediately. Shuffle is always on (channel **1.0.30+**): archive gens plus **pedigree** and **tuple**. After a full mix, **1.0.31** asks Jellyfin again so overnight ingest can appear without leaving the player ([Flock mix](#flock-mix-shuffle-wrap)). Near the end of each clip (**1.0.41**, last **7 s**), a one-line 55% banner invites a vote without pausing in the same place as loading-next: filename/alias on the left, **OK** love, **Right** like, **Down** dismiss, **Up / Back** exit on the right. **Tuples skip the vote overlay.** Votes stay on the Pi (LAN only). A **tuple** is one longer clip: sheep A, then a morph into sheep B. During that middle morph only, a quiet mark sits in the lower-right corner (the Electric Sheep logo PNG on the default private furnace; your own PNG if the operator set one; or the credit “artwork by Scott Draves and the Electric Sheep” on a commercial-safe furnace that still uses the Cesari file). Loops A and B have no mark. That mark is **not** a license to post the clip as official Electric Sheep — operators, see [Private vs public furnace](#private-vs-public-furnace) and [Use your own PNG](#use-your-own-png-private-and-public). When you press **Play**, the Pi **stops rendering** new sheep until the TV has been idle for several minutes (see [idle gate](#idle-gate-behavior) below).
 
@@ -54,7 +60,7 @@ Video screensaver add-on **JellyFlam3 Dreams** (`screensaver.jellyflam3`) — pl
 1. Operator packages and copies `dist/screensaver.jellyflam3.zip` to the Kodi Pi (see [Kodi screensaver upgrade](#kodi-screensaver-upgrade-operator)).
 2. Kodi → **Add-ons → Install from zip file** → pick the zip from **Downloads** (LibreELEC) or wherever it was copied.
 3. **Settings → Interface → Screensaver** → **JellyFlam3 Dreams**.
-4. **Configure Jellyfin** — if the zip was built on a furnace Pi (`package_kodi_screensaver.*`), defaults are already in the add-on settings. Otherwise open **Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → Configure** and paste Jellyfin URL, API key, user id, library id (operator runs `jellyfin_id_dump.py` on the furnace Pi).
+4. **Configure Jellyfin** — if the zip was built on a furnace Pi (`package_kodi_screensaver.`*), defaults are already in the add-on settings. Otherwise open **Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → Configure** and paste Jellyfin URL, API key, user id, library id (operator runs `jellyfin_id_dump.py` on the furnace Pi).
 5. Set screensaver wait time (e.g. **1 minute** for testing), then wait or use **Activate screensaver**.
 
 **Everyday use:** leave Kodi idle. Keys while idle **exit**, except in the last **7 seconds** of a non-tuple sheep (**0.2.13+**): **Enter** love, **Right** like, **Down** dismiss overlay, **Up/Back** exit — same map as Roku VoD. Configure **Titles** (`title_mode`, **0.2.12+**) as filename (default) or alias for a chrome-light caption. Vote sink URL/token live in add-on Configure (furnace zip can pre-fill). If Jellyfin is unreachable, **0.2.11+** shows **waiting for the furnace** on black and retries every 30 seconds (not a settings lecture). **0.2.14** leaves that wait when Kodi stops the screensaver, so the next idle cycle can start clean. Missing credentials still ask you to configure the add-on. Package **0.2.9+** re-fetches after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). If a sheep is **quarantined** while idle is running, 0.2.7+ drops that id, re-polls Jellyfin (rate-limited), and continues; **0.2.10** also dismisses Kodi's playback-failed dialog automatically.
@@ -74,11 +80,13 @@ VoD **1.0.31**, Roku screensaver **1.0.9**, and Kodi **0.2.9** all play a **rand
 
 VoD plays each mixed sheep **once** per pass, then wraps. Using live catalog `duration_sec` on 2026-09-10 (sidecars next to `/media/sheep/by-generation/` MP4s; not quarantine/preview):
 
+
 | Furnace | Sheep in catalog | Average loop | One 313-sheep mix |
-|---|---:|---:|---|
-| **16a** | 10 | 36 s | **3 h 9 min** |
-| **08a** | 15 | 33 s | **2 h 51 min** |
-| **04a** | 16 | 22 s | **1 h 55 min** |
+| ------- | ---------------- | ------------ | ----------------- |
+| **16a** | 10               | 36 s         | **3 h 9 min**     |
+| **08a** | 15               | 33 s         | **2 h 51 min**    |
+| **04a** | 16               | 22 s         | **1 h 55 min**    |
+
 
 Until a furnace has 313 eligible sheep, a wrap happens after the whole catalog (~6–8 min on these counts). Shorter 04a loops follow that host’s compact duration band. Roku screensaver is stills (default dwell 12 s), not this table.
 
@@ -86,14 +94,18 @@ If a sheep disappears mid-session (quarantine / Shears), the client **drops that
 
 ### What to expect
 
-| Expectation | Reality |
-|---|---|
-| New sheep appear quickly | **No** — each MP4 can take hours to days on a Pi |
-| Overnight sheep while idle | **Yes** after a full mix (VoD 1.0.31 / Roku SS 1.0.9 / Kodi 0.2.9). Older packages wait for a new session |
-| Gate closes while you watch | **Yes** — by design; furnace waits for idle |
-| Pause new renders on purpose | **Yes** — drain finishes the sheep already rendering, then waits until you cancel |
-| Screensaver shows video | **No** on Roku SS — images only |
-| Gold Sheep / paid ES masters | **Never** ingested — personal viewing only |
+
+| Expectation                  | Reality                                                                                                   |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------- |
+| New sheep appear quickly     | **No** — each MP4 can take hours to days on a Pi                                                          |
+| Overnight sheep while idle   | **Yes** after a full mix (VoD 1.0.31 / Roku SS 1.0.9 / Kodi 0.2.9). Older packages wait for a new session |
+| Gate closes while you watch  | **Yes** — by design; furnace waits for idle                                                               |
+| Pause new renders on purpose | **Yes** — drain finishes the sheep already rendering, then waits until you cancel                         |
+| Screensaver shows video      | **No** on Roku SS — images only                                                                           |
+| Gold Sheep / paid ES masters | **Never** ingested — personal viewing only                                                                |
+
+
+
 
 ### Channel splash and icon (optional)
 
@@ -101,22 +113,26 @@ Sideload packages already ship a splash and Home/add-on icon. To make **your** h
 
 ### End-user triage (no SSH)
 
-| Symptom | What to try | Escalate to operator when… |
-|---|---|---|
-| VoD Settings blank / flock empty | Re-open VoD Settings; confirm Wi‑Fi; re-enter IDs from a fresh dump | IDs correct but list still empty |
-| “Cannot connect” / waiting for the furnace on Roku | Confirm `baseUrl` is the Pi’s **LAN IP** (`http://192.168.x.x:8096`), not `127.0.0.1`. VoD **1.0.43+** retries every 30s; press Retry anytime | Jellyfin still down on Pi after the furnace is back |
-| Playback stutters / buffers | Prefer Direct Play (H.264 MP4); avoid forcing transcode in client | Persistent transcode hammering Pi, or several TVs on a WiFi Pi (`link_capacity`) |
-| Screensaver blank | VoD was never configured on **this** Roku | After VoD Settings saved, still blank |
-| VoD tiles say **No poster** | Jellyfin item has no `ImageTags.Primary` | Operator: Images API Primary upload (disk JPEG under `stills/` is hidden). Relaunch VoD after tags exist |
-| Screensaver posters only / no extra stills | No `BackdropImageTags` on items | Operator: backfill Backdrops (`jellyfin_stills`); SS cycles Primaries until then |
-| Screensaver replaced a **sideloaded** VoD | Re-sideload the VoD zip, or install **JellyFlam3** from the Channel Store (store VoD is not removed by a screensaver sideload) | — |
-| Kodi screensaver “waiting for the furnace” | Furnace or Jellyfin is down; **0.2.11+** reconnects every 30s | Hint lasts after the Pi is healthy |
-| Kodi screensaver asks for settings | Add-on **Configure** → furnace **LAN IP**, not `127.0.0.1` | Settings correct but no sheep play |
-| Nothing new for days | Normal if gate was closed or inbox empty | Gate open + inbox empty for a week; or client package older than wrap-once ([Flock mix](#flock-mix-shuffle-wrap)) |
+
+| Symptom                                            | What to try                                                                                                                                   | Escalate to operator when…                                                                                        |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| VoD Settings blank / flock empty                   | Re-open VoD Settings; confirm Wi‑Fi; re-enter IDs from a fresh dump                                                                           | IDs correct but list still empty                                                                                  |
+| “Cannot connect” / waiting for the furnace on Roku | Confirm `baseUrl` is the Pi’s **LAN IP** (`http://192.168.x.x:8096`), not `127.0.0.1`. VoD **1.0.43+** retries every 30s; press Retry anytime | Jellyfin still down on Pi after the furnace is back                                                               |
+| Playback stutters / buffers                        | Prefer Direct Play (H.264 MP4); avoid forcing transcode in client                                                                             | Persistent transcode hammering Pi, or several TVs on a WiFi Pi (`link_capacity`)                                  |
+| Screensaver blank                                  | VoD was never configured on **this** Roku                                                                                                     | After VoD Settings saved, still blank                                                                             |
+| VoD tiles say **No poster**                        | Jellyfin item has no `ImageTags.Primary`                                                                                                      | Operator: Images API Primary upload (disk JPEG under `stills/` is hidden). Relaunch VoD after tags exist          |
+| Screensaver posters only / no extra stills         | No `BackdropImageTags` on items                                                                                                               | Operator: backfill Backdrops (`jellyfin_stills`); SS cycles Primaries until then                                  |
+| Screensaver replaced a **sideloaded** VoD          | Re-sideload the VoD zip, or install **JellyFlam3** from the Channel Store (store VoD is not removed by a screensaver sideload)                | —                                                                                                                 |
+| Kodi screensaver “waiting for the furnace”         | Furnace or Jellyfin is down; **0.2.11+** reconnects every 30s                                                                                 | Hint lasts after the Pi is healthy                                                                                |
+| Kodi screensaver asks for settings                 | Add-on **Configure** → furnace **LAN IP**, not `127.0.0.1`                                                                                    | Settings correct but no sheep play                                                                                |
+| Nothing new for days                               | Normal if gate was closed or inbox empty                                                                                                      | Gate open + inbox empty for a week; or client package older than wrap-once ([Flock mix](#flock-mix-shuffle-wrap)) |
+
 
 Copy-paste evenings (VoD + gate, screensaver, two Rokus, peer receive): [Worked examples](#worked-examples).
 
 ---
+
+
 
 ## Worked examples
 
@@ -129,21 +145,17 @@ Run Pi commands from `/opt/jellyflam3-server` unless noted.
 **Host:** furnace Pi + one Roku on the same LAN.
 
 1. On the Pi, dump Jellyfin IDs (operator keeps the API key off shared notes):
-
-   ```bash
+  ```bash
    cd /opt/jellyflam3-server
    python3 scripts/jellyfin_id_dump.py
-   ```
-
+  ```
 2. Install **JellyFlam3** from the Roku Channel Store and open **Settings**. Enter `baseUrl` / `apiKey` / `userId` / `libraryId`, save. A furnace sideload of `dist/jellyflam3-roku.zip` is the lab shortcut that pre-fills those fields.
 3. Launch JellyFlam3 → pick one sheep → **Play**. Confirm the loop is running.
 4. On the Pi, confirm the furnace paused:
-
-   ```bash
+  ```bash
    python3 -m json.tool /var/lib/jellyflam3/idle_gate_status.json
    # Expect: "gate": "closed" (Playing / transcode)
-   ```
-
+  ```
 5. Stop playback on the Roku (Home / Back out of the player). Wait `idle_delay_sec` (default **600** s). Re-check the JSON — `"gate": "open"`.
 
 **Pass:** flock listed, one sheep played, gate closed then opened. **Fail:** empty flock or `"Cannot connect"` → Layer 1 triage (`baseUrl` is LAN IP).
@@ -156,11 +168,10 @@ Run Pi commands from `/opt/jellyflam3-server` unless noted.
 2. Roku **Settings → Theme → Screensavers → JellyFlam3**. Optional: screensaver Settings for fade/dwell only (no credential editors).
 3. Idle the TV (or use the Theme screensaver preview). You should see **posters and stills** (Jellyfin Primary + Backdrop), never tuple frames, always rotating. Not video. A full stills mix then wrap-refetches (package **1.0.9**).
 4. On the Pi, while the screensaver is up:
-
-   ```bash
+  ```bash
    python3 -m json.tool /var/lib/jellyflam3/idle_gate_status.json
    # Expect: "gate": "open"  (Client JellyFlam3-Screensaver is ignored)
-   ```
+  ```
 
 **Pass:** images on the TV and gate still open (rendering may continue). **Fail:** blank SS → this screensaver package has no Jellyfin credentials yet (example 1 step 2 fills the store channel, not the screensaver). Store VoD remains on Home. Re-sideload VoD only when the channel itself was the sideloaded zip.
 
@@ -169,43 +180,34 @@ Run Pi commands from `/opt/jellyflam3-server` unless noted.
 **Host:** one furnace Pi (`jellyflam3-display-sink` active) + two Roku devices. Same Jellyfin URL on both.
 
 1. **Capture a sink token on this Pi** (once per furnace) — [Display sink token](#display-sink-token-how--where--when). Print `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'`, paste into this furnace’s `secrets.env` as `DISPLAY_SINK_TOKEN=`, put the **same** string in each Roku’s registry `displaySinkToken`, then confirm the unit:
-
-   ```bash
+  ```bash
    systemctl is-active jellyflam3-display-sink   # expect: active (not activating)
-   ```
-
+  ```
    Without that token the unit binds LAN `0.0.0.0:8791`, exits 2, and crash-loops. Do not copy another Pi’s token.
-
 2. On **Roku A**: VoD Settings (same `baseUrl` as the Pi LAN) → **Fetch TV display**. Channel should report **Pi OK** and a `*.json` name.
 3. Repeat **Fetch TV display** on **Roku B**.
 4. On the Pi:
-
-   ```bash
+  ```bash
    python3 -m pipeline.display_profiles list
-   ```
-
+  ```
    Expect **two** files under `/var/lib/jellyflam3/display_profiles/` (`JellyFlam3-<deviceId>.json`). Prefs (streamMode, shuffle, fade) stay **per Roku** in that device’s registry.
 
 **Pass:** `list` shows two screens; concurrent **screensaver** on both must not close the gate; **VoD Playing** on either closes it. Profiles are hints only — the furnace does not retarget 4K.
 
 ### 4 — Peer receive (second Pi)
 
-**Hosts:** publisher Pi and receiver Pi, both **Opt In** with **share live** (Syncthing + Tailscale). See [`deploy/peering/README.md`](../deploy/peering/README.md). Trust keys exchanged (`peering gen-keys`, `trust-key`).
+**Hosts:** publisher Pi and receiver Pi, both **Opt In** with **share live** (Syncthing + Tailscale). See `[deploy/peering/README.md](../deploy/peering/README.md)`. Trust keys exchanged (`peering gen-keys`, `trust-key`).
 
 1. On both Pis: `python3 -m pipeline.peering status` → `share_opt_in: true`, `share_live: true`. First mesh: [Phase 4 / 02](phase4/02_MESH_INTRODUCE_SCRIPTING.md) `ensure-mesh-local` + `mesh-join --peers-file` (gitignored `configs/peering-peers.json`; 16a introducer). Re-run `mesh-join` when Tailscale IPs move.
 2. Publisher (already-taxed genome in `genomes/done` or similar):
-
-   ```bash
+  ```bash
    python3 -m pipeline.peering publish path/to/sheep.flam3 --apply
-   ```
-
+  ```
 3. Wait for Syncthing. On the **receiver**:
-
-   ```bash
+  ```bash
    ls genomes/peers/inbox/*.flam3
    python3 -m pipeline.peering promote --apply
-   ```
-
+  ```
    Integrity runs **before** sheep tax; mismatch → quarantine, not inbox.
 4. Receiver worker picks up `genomes/inbox`. Confirm with `./scripts/status_report.sh` (inbox count) or a later catalog MP4 on that host.
 
@@ -237,28 +239,23 @@ python3 -m pipeline.worker_drain cancel
 **Host:** furnace Pi **Opt In** (`share_live: true`) + Roku VoD **1.0.38** (overlay) and/or Kodi screensaver **0.2.13** with display-sink token set. Votes never pause the clip. They stay on this Pi’s catalog sidecar (LAN only). **Roku screensaver** packages do not vote.
 
 1. Play a sheep (not a tuple). In the last **7 seconds**, the banner appears.
-   - **OK** / keyboard **Enter** = love (`loves++`, `votes++`)
-   - **Right** = like (`likes++`, `votes++`)
-   - **Down** = dismiss overlay; keep playing
-   - **Up** / **Back** / keyboard **Esc** = exit playback
+  - **OK** / keyboard **Enter** = love (`loves++`, `votes++`)
+  - **Right** = like (`likes++`, `votes++`)
+  - **Down** = dismiss overlay; keep playing
+  - **Up** / **Back** / keyboard **Esc** = exit playback
    There is no plain-vote key; both love and like already increment `votes`. The first vote is enough for both outcomes: idle-breed weight becomes `1 + votes` (one vote weighs 2 against unvoted parents at 1), and the 06:41 share cron may copy the genome once. Later votes on that sheep keep raising the breed weight and do not copy it into `share-out` again. Tuples play in shuffle but never show the overlay.
 2. On the Pi, confirm the sidecar (stem = MP4 basename):
-
-   ```bash
+  ```bash
    python3 -m pipeline.sheep_votes show --stem electricsheep.247.00505
-   ```
-
+  ```
    Expect `share_candidate: true` and `votes` ≥ 1. Rank the flock with [example 8](#8--list-top-voted-sheep).
 3. Share-out is a **local copy** into `genomes/peers/share-out` (tax + integrity). That directory is outside the Syncthing folder, so the file stays on this furnace until the follow-up in step 4. It does not enter this furnace’s worker inbox. Lab cron **06:41** (`scripts/cron_share_votes.sh`). Dry-run:
-
-   ```bash
+  ```bash
    python3 -m pipeline.share_votes --json
    python3 -m pipeline.share_votes --apply --json   # or wait for cron
-   ```
-
+  ```
 4. **Follow-up chore before another furnace can receive the sheep.** `./scripts/status_report.sh` prints `share_out_flam3` under `== peering ==`. A count above zero lists the staged filenames and the pending-share lines. Copy each listed genome into this furnace’s `genomes/peers/inbox` and leave the share-out originals in place (a stem already in share-out is `already_shared` on the next cron). Take the `.flam3`, its `.sha256` and `.jellyflam3.sig`, and `*-poster.jpg` when the stage wrote one. `stem` is the filename from the report, without `.flam3`:
-
-   ```bash
+  ```bash
    stem=electricsheep.242.03322
    src=genomes/peers/share-out
    dst=genomes/peers/inbox
@@ -267,15 +264,12 @@ python3 -m pipeline.worker_drain cancel
          "$src/$stem.flam3.jellyflam3.sig" \
          "$dst/"
    if [ -f "$src/$stem-poster.jpg" ]; then cp -n "$src/$stem-poster.jpg" "$dst/"; fi
-   ```
-
+  ```
    Syncthing replicates `peers/inbox`. Phase 5 hop (still parked): [phase5/04_PEER_SHARE_MESH.md](phase5/04_PEER_SHARE_MESH.md).
-
-5. On a **receiver** Pi, after the file shows up in `peers/inbox`: still **`promote --apply`**. Loved NC sheep are not shared when this furnace’s `license.commercial_mode` is on. Opt Out skips the cron (`action=skip`, `reason=opt_out`).
-
-   ```bash
+5. On a **receiver** Pi, after the file shows up in `peers/inbox`: still `promote --apply`. Loved NC sheep are not shared when this furnace’s `license.commercial_mode` is on. Opt Out skips the cron (`action=skip`, `reason=opt_out`).
+  ```bash
    python3 -m pipeline.peering promote --apply
-   ```
+  ```
 
 **Pass:** file in publisher `share-out` after the first qualifying vote, and `status_report.sh` shows `share_out_flam3` above zero until the step 4 copy. A later `share_votes` run on that same stem reports `already_shared` and leaves the copy untouched. Receiver `peers/inbox` only after that inbox copy **and** `promote --apply`. **Fail:** expecting votes or `share_votes` to land on another Pi by themselves; moving the file out of share-out (the next cron will stage it again); expecting extra votes to publish a second copy; cancel drain if you paused the worker.
 
@@ -284,83 +278,81 @@ python3 -m pipeline.worker_drain cancel
 **Host:** furnace Pi with catalog sidecars. Use this when household likes should no longer bias idle breed or daily `share_votes`. Votes live only on `{stem}.jellyflam3.json` `viewer_feedback`. This does **not** delete MP4s, genomes, aliases, or files already copied to `peers/share-out`.
 
 1. Dry-run (default). Confirm `dirty` is the sheep you expect; `reset` stays `0`:
-
-   ```bash
+  ```bash
    cd /opt/jellyflam3-server
    python3 -m pipeline.sheep_votes sweep
    python3 -m pipeline.sheep_votes show --stem electricsheep.247.00505
-   ```
-
+  ```
 2. Apply the flock-wide reset (must be exactly `SWEEP`):
-
-   ```bash
+  ```bash
    python3 -m pipeline.sheep_votes sweep --confirm SWEEP
    python3 -m pipeline.sheep_votes show --stem electricsheep.247.00505
-   ```
-
+  ```
    Expect `likes` / `loves` / `votes` = `0`, `share_candidate: false`, `last_voted_at: null`. Optional one-sheep reset: add `--stem electricsheep.247.00505`.
 3. Confirm share cron no longer selects those stems, and that a prior share-out copy is still on disk:
-
-   ```bash
+  ```bash
    python3 -m pipeline.share_votes --json
    ls genomes/peers/share-out
-   ```
+  ```
 
 **Pass:** `sweep --confirm SWEEP` reports `action: apply` and `reset` matching the dry-run `dirty` count; `show` is zeros; `share_votes` plan has `candidates: 0` (unless new votes arrived). **Fail:** `--confirm DELETE` (Shears token) is rejected; omit `--confirm` if you only wanted the plan. Next Roku votes increment from zero again. Idle-breed parent weights return to uniform until new votes land.
 
 ### 8 — List top voted sheep
 
-**Host:** furnace Pi with live catalog sidecars. Use this to see which loops the household actually liked (VoD overlay and/or Kodi screensaver **0.2.13**). Rankings read `{stem}.jellyflam3.json` `viewer_feedback` only — not Jellyfin, not `peers/share-out`. Unpublished `_refactor-*` trees are skipped.
+**Host:** furnace Pi with live catalog sidecars. Use this to see which loops the household actually liked (VoD overlay and/or Kodi screensaver **0.2.13**). Rankings read `{stem}.jellyflam3.json` `viewer_feedback` only — not Jellyfin, not `peers/share-out`. Unpublished `_refactor-`* trees are skipped.
 
 1. Default is the top **10** sheep with at least one vote (`votes`, then loves, then likes):
-
-   ```bash
+  ```bash
    cd /opt/jellyflam3-server
    python3 -m pipeline.sheep_votes top
    python3 -m pipeline.sheep_votes top -n 5
-   ```
-
+  ```
    `list` is the same command (`python3 -m pipeline.sheep_votes list --limit 20`).
 2. Include zeros (everyone, including never-voted):
-
-   ```bash
+  ```bash
    python3 -m pipeline.sheep_votes top --min-votes 0 -n 20
-   ```
-
+  ```
    Each row has `stem`, `alias`, `likes`, `loves`, `votes`, `last_voted_at`, `share_candidate`. `matched` is how many sheep passed `--min-votes`; `count` is how many rows were printed (`-n`).
 3. Optional: confirm one stem from the list:
-
-   ```bash
+  ```bash
    python3 -m pipeline.sheep_votes show --stem electricsheep.247.00505
-   ```
+  ```
 
 **Pass:** JSON `ok: true`; first row has the highest `votes` (ties break by loves, then likes, then stem). After example 7, `top` (default `--min-votes 1`) is `count: 0` until new votes land. **Fail:** expecting Jellyfin Overview or share-out copies to appear here — they do not.
 
 ---
 
+
+
 ## Layer 2 — Operator runbook
+
+
 
 ### Install path and hosts
 
-| Item | Value |
-|---|---|
-| Canonical install | `/opt/jellyflam3-server` (symlink from clone) |
-| Config | `configs/jellyflam3.yaml` + `secrets.env` (**never commit**) |
-| Example fleet hosts | `rpi-jellyflam3-16a`, `-08a`, `-04a` — assign each a LAN IP (e.g. `192.168.X.Y`) |
-| Kodi pasture host | e.g. `rpi-kodi-08a` at `<Kodi_IP_Address>` (LibreELEC; no furnace worker) |
-| Hostname class | `rpi-jellyflam3-{16,08,04}a` — run `python3 -m pipeline.hw_profile apply {16a\|08a\|04a}` |
+
+| Item                | Value                                                                                   |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| Canonical install   | `/opt/jellyflam3-server` (symlink from clone)                                           |
+| Config              | `configs/jellyflam3.yaml` + `secrets.env` (**never commit**)                            |
+| Example fleet hosts | `rpi-jellyflam3-16a`, `-08a`, `-04a` — assign each a LAN IP (e.g. `192.168.X.Y`)        |
+| Kodi pasture host   | e.g. `rpi-kodi-08a` at `<Kodi_IP_Address>` (LibreELEC; no furnace worker)               |
+| Hostname class      | `rpi-jellyflam3-{16,08,04}a` — run `python3 -m pipeline.hw_profile apply {16a|08a|04a}` |
+
 
 Full bring-up: [phase2/09_PI_FROM_SCRATCH.md](phase2/09_PI_FROM_SCRATCH.md) · staged checklist: `./scripts/bringup_check.sh` (FAIL → exit 1; `--strict` also fails on WARN).
 
 ### Display sink token (how / where / when)
 
-Households that use **Fetch TV display** or the vote overlay need `jellyflam3-display-sink` on the furnace. That unit binds LAN `0.0.0.0:8791`, so **`DISPLAY_SINK_TOKEN` must already be in this Pi’s `secrets.env`**. Generate it on the Pi; do not invent a short password and do not copy another furnace’s `secrets.env`.
+Households that use **Fetch TV display** or the vote overlay need `jellyflam3-display-sink` on the furnace. That unit binds LAN `0.0.0.0:8791`, so `DISPLAY_SINK_TOKEN` **must already be in this Pi’s** `secrets.env`. Generate it on the Pi; do not invent a short password and do not copy another furnace’s `secrets.env`.
 
-| | |
-|---|---|
-| **When** | First bring-up, after `cp secrets.env.example secrets.env` and **before** `systemctl enable --now jellyflam3-display-sink`. Also if the unit is `activating` / crash-looping. |
-| **Where** | `/opt/jellyflam3-server/secrets.env` on **this** Pi, line `DISPLAY_SINK_TOKEN=…`. Same string on each Roku that talks to this Pi: registry section `JellyFlam3`, key `displaySinkToken` (VoD Settings has no token row). |
-| **How** | On the furnace: `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'` — print once, paste that line into `secrets.env`, then into the Roku registry. Then `sudo systemctl reset-failed jellyflam3-display-sink` (if it was looping) and `sudo systemctl restart jellyflam3-display-sink`. Expect `active` and `curl -sS http://127.0.0.1:8791/healthz`. |
+
+|           |                                                                                                                                                                                                                                                                                                                                                                   |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **When**  | First bring-up, after `cp secrets.env.example secrets.env` and **before** `systemctl enable --now jellyflam3-display-sink`. Also if the unit is `activating` / crash-looping.                                                                                                                                                                                     |
+| **Where** | `/opt/jellyflam3-server/secrets.env` on **this** Pi, line `DISPLAY_SINK_TOKEN=…`. Same string on each Roku that talks to this Pi: registry section `JellyFlam3`, key `displaySinkToken` (VoD Settings has no token row).                                                                                                                                          |
+| **How**   | On the furnace: `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'` — print once, paste that line into `secrets.env`, then into the Roku registry. Then `sudo systemctl reset-failed jellyflam3-display-sink` (if it was looping) and `sudo systemctl restart jellyflam3-display-sink`. Expect `active` and `curl -sS http://127.0.0.1:8791/healthz`. |
+
 
 Never commit `secrets.env`. Never paste the token into chat or issues. Detail: [phase2/04](phase2/04_ROKU_CHANNEL_POLISH.md) · crash-loop row in [Operator triage](#operator-triage).
 
@@ -387,6 +379,8 @@ Optional deeper checks:
 ./scripts/perf_healthcheck.sh --quick
 python3 -m pytest tests/ -q             # ~3s unit suite on Pi
 ```
+
+
 
 ### Systemd services
 
@@ -422,11 +416,13 @@ INFO idle-gate closed; waiting 15s before backfill continues
 
 The **15 s** is only the sleep cap between retries (`wait_for_gate` uses `seconds_until_resume`, max 15). It is **not** the remaining hold. Read `reason` and `seconds_until_resume` in the JSON:
 
-| `reason` | Meaning |
-|---|---|
+
+| `reason`           | Meaning                                                                         |
+| ------------------ | ------------------------------------------------------------------------------- |
 | `active_tv_client` | Roku / `JellyFlam3` session still looks active (Playing **or** recent check-in) |
-| `active_transcode` | Some Jellyfin session is transcoding |
-| `idle_delay` | Playback already quiet; waiting out `idle_delay_sec` (**600**) |
+| `active_transcode` | Some Jellyfin session is transcoding                                            |
+| `idle_delay`       | Playback already quiet; waiting out `idle_delay_sec` (**600**)                  |
+
 
 Ctrl+C and rerun after `gate` is `open`, or leave the command running — it continues when the hold expires.
 
@@ -494,12 +490,14 @@ python3 -m pipeline.worker --config configs/jellyflam3.yaml --once path/to/new.f
 
 **Scheduled feedstock (cron on Pi):**
 
-| Cron | Script | Role |
-|---|---|---|
-| `11 5 * * *` | `scripts/cron_breed_idle.sh` | Daily idle breed when inbox empty (parents weighted by votes) |
-| _optional_ | `scripts/cron_library_rotate.sh` | Oldest-catalog Shears rotate — **not** on lab crontab; [Activate library rotate](#activate-library-rotate) (`23 5 * * *`) |
-| `41 6 * * *` | `scripts/cron_share_votes.sh` | Daily liked sheep → `peers/share-out` (local stage). `status_report.sh` `share_out_flam3` > 0 is the cue to copy into `peers/inbox` ([example 6](#6--vote-then-share) step 4) |
-| Staggered DOM | `scripts/cron_archive_seed.sh` | ~10-day archive seed per host (skips fetch if sheep still BAD) |
+
+| Cron          | Script                           | Role                                                                                                                                                                          |
+| ------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `11 5 * * *`  | `scripts/cron_breed_idle.sh`     | Daily idle breed when inbox empty (parents weighted by votes)                                                                                                                 |
+| *optional*    | `scripts/cron_library_rotate.sh` | Oldest-catalog Shears rotate — **not** on lab crontab; [Activate library rotate](#activate-library-rotate) (`23 5 * * `*)                                                     |
+| `41 6 * * *`  | `scripts/cron_share_votes.sh`    | Daily liked sheep → `peers/share-out` (local stage). `status_report.sh` `share_out_flam3` > 0 is the cue to copy into `peers/inbox` ([example 6](#6--vote-then-share) step 4) |
+| Staggered DOM | `scripts/cron_archive_seed.sh`   | ~10-day archive seed per host (skips fetch if sheep still BAD)                                                                                                                |
+
 
 Both prepend `/usr/local/bin` for `flam3-*`. Missing real config → **exit 1** (no silent `.yaml.example` fallback).
 
@@ -533,18 +531,20 @@ export JELLYFLAM3_SMOKE=1
 # Success token: SMOKE_RENDER_OK
 ```
 
+
+
 #### Active quality intervention
 
 New worker jobs are fail-closed before they can appear in `by-generation/` or
 Jellyfin:
 
 1. After Sheep Tax + TV optimization, reject `genome_linear_only`,
-   `genome_singularity_cloned`, frozen single-flame (`genome_orbit_frozen`),
+  `genome_singularity_cloned`, frozen single-flame (`genome_orbit_frozen`),
    and low-chroma harmony poles (`palette_washed_out`).
 2. Render one Lite preview still and reject mean saturation below **0.12**
-   before committing CPU to the full animation.
+  before committing CPU to the full animation.
 3. After encode, extract the midpoint and repeat the saturation check before
-   catalog installation.
+  catalog installation.
 
 Rejected claimed genomes move to `paths.genomes_quarantine`; no MP4 is
 published. The job file records `quality_gate.status=rejected`, stage, reasons,
@@ -565,41 +565,53 @@ and remove list is [When a sheep is isolated or removed](#when-a-sheep-is-isolat
 
 Two holding areas:
 
-| Path | What lands there |
-|---|---|
-| `genomes/quarantine` (`paths.genomes_quarantine`) | The `.flam3` and any integrity companions. The worker does not claim this directory. |
-| `/media/sheep/_refactor-quarantine/<stem>/` | Parked MP4, sidecar, poster, and stills after `refactor quarantine` unpublish. The Jellyfin item is deleted. The files stay on disk. |
+
+| Path                                              | What lands there                                                                                                                     |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `genomes/quarantine` (`paths.genomes_quarantine`) | The `.flam3` and any integrity companions. The worker does not claim this directory.                                                 |
+| `/media/sheep/_refactor-quarantine/<stem>/`       | Parked MP4, sidecar, poster, and stills after `refactor quarantine` unpublish. The Jellyfin item is deleted. The files stay on disk. |
+
+
+
 
 #### Isolated
 
-| When | Why | Where it goes |
-|---|---|---|
-| Worker, sheep tax | XML will not parse (`xml_invalid`), no `<flame>` (`no_flame`), or the file cannot be read or written (`read_error`, `write_error`). Extra flames are stripped to the first flame. A tuple stem (`electricsheep.tuple.*`) keeps both flames so the three stages render. Flames quarantine only when `sheep_tax.multi_flame` is `reject` or `quarantine`. A tuple whose file is not the three-stage length quarantines with no MP4 published. | Copy into `genomes/quarantine`. The claimed inbox file is removed. No MP4 is published. |
-| Worker, `pre_render_genome` | `genome_linear_only`, `genome_singularity_cloned`, `genome_orbit_frozen` (single flame; a tuple is not frozen-orbit rejected), or `palette_washed_out` (both harmony poles under chroma **0.40**). | Same. Full animation does not start. |
-| Worker, `pre_render_preview` | One Lite still has mean saturation under **0.12** (`catalog_desaturated`), or the still cannot be read (`quality_image_unreadable`). | Same. |
-| Worker, `pre_publish_output` | Encoded midpoint fails the same saturation check. | Same. The MP4 never enters `by-generation/`. |
-| Worker, any other failure after claim | Scratch free space under `render.free_space_gb_min`, sheep mount **BAD**, or `flam3-animate` / `ffmpeg` / `ffprobe` failure. | Same. `job.json` `state` is `failed` and `error` names the cause. Artistic rejects also store `quality_gate`. |
-| `peering promote --apply` | Share security fails (missing or empty sha256 sidecar, sha256 mismatch, missing or bad signature, untrusted key) or sheep tax is not ok. | Move from `genomes/peers/inbox` to `genomes/quarantine`. Without `--apply` the file stays in the peers inbox and is only listed. |
-| `refactor quarantine --confirm QUARANTINE` | Pathway A verdict is `quarantine`: score **≥ 80**, or a hard reason (`missing_genome`, `sheep_tax_fail`, `genome_linear_only`, `genome_singularity_cloned`, `genome_orbit_frozen`). Any other verdict needs `--force`. | Genetics move to `genomes/quarantine`. Default also parks the live catalog under `_refactor-quarantine/<stem>/` and deletes the Jellyfin item. `--no-unpublish` leaves the catalog in `by-generation/`. |
+
+| When                                       | Why                                                                                                                                                                                                                                                                                                                                                                                                                                         | Where it goes                                                                                                                                                                                           |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Worker, sheep tax                          | XML will not parse (`xml_invalid`), no `<flame>` (`no_flame`), or the file cannot be read or written (`read_error`, `write_error`). Extra flames are stripped to the first flame. A tuple stem (`electricsheep.tuple.*`) keeps both flames so the three stages render. Flames quarantine only when `sheep_tax.multi_flame` is `reject` or `quarantine`. A tuple whose file is not the three-stage length quarantines with no MP4 published. | Copy into `genomes/quarantine`. The claimed inbox file is removed. No MP4 is published.                                                                                                                 |
+| Worker, `pre_render_genome`                | `genome_linear_only`, `genome_singularity_cloned`, `genome_orbit_frozen` (single flame; a tuple is not frozen-orbit rejected), or `palette_washed_out` (both harmony poles under chroma **0.40**).                                                                                                                                                                                                                                          | Same. Full animation does not start.                                                                                                                                                                    |
+| Worker, `pre_render_preview`               | One Lite still has mean saturation under **0.12** (`catalog_desaturated`), or the still cannot be read (`quality_image_unreadable`).                                                                                                                                                                                                                                                                                                        | Same.                                                                                                                                                                                                   |
+| Worker, `pre_publish_output`               | Encoded midpoint fails the same saturation check.                                                                                                                                                                                                                                                                                                                                                                                           | Same. The MP4 never enters `by-generation/`.                                                                                                                                                            |
+| Worker, any other failure after claim      | Scratch free space under `render.free_space_gb_min`, sheep mount **BAD**, or `flam3-animate` / `ffmpeg` / `ffprobe` failure.                                                                                                                                                                                                                                                                                                                | Same. `job.json` `state` is `failed` and `error` names the cause. Artistic rejects also store `quality_gate`.                                                                                           |
+| `peering promote --apply`                  | Share security fails (missing or empty sha256 sidecar, sha256 mismatch, missing or bad signature, untrusted key) or sheep tax is not ok.                                                                                                                                                                                                                                                                                                    | Move from `genomes/peers/inbox` to `genomes/quarantine`. Without `--apply` the file stays in the peers inbox and is only listed.                                                                        |
+| `refactor quarantine --confirm QUARANTINE` | Pathway A verdict is `quarantine`: score **≥ 80**, or a hard reason (`missing_genome`, `sheep_tax_fail`, `genome_linear_only`, `genome_singularity_cloned`, `genome_orbit_frozen`). Any other verdict needs `--force`.                                                                                                                                                                                                                      | Genetics move to `genomes/quarantine`. Default also parks the live catalog under `_refactor-quarantine/<stem>/` and deletes the Jellyfin item. `--no-unpublish` leaves the catalog in `by-generation/`. |
+
 
 `job.json` for a worker reject is `paths.jobs_dir/<id>/job.json` (lab default `/var/lib/jellyflam3/jobs/<id>/job.json`). Copying the same `.flam3` back into the inbox sends it through the same gate again.
 
 #### Removed
 
-| When | Why | What is deleted |
-|---|---|---|
-| `shears delete --confirm DELETE` | Operator removes one sheep. Dry-run first; the token is exactly `DELETE`. | Catalog MP4, sidecar, poster, stills, jobs, edges, the Jellyfin item, and peer copies when Opt In. |
-| `library_disk rotate --apply` | Sheep disk is **WARN** or **BAD**. Oldest catalog MP4s go first. At least one playable catalog MP4 stays. | The same Shears cascade. `_refactor-quarantine/` and `_refactor-preview/` are skipped. Git `genomes/samples` and `genomes/pedigree` stay. This cron is off until [Activate library rotate](#activate-library-rotate). |
-| `hammer --all --confirm HAMMER` | Factory wipe of local render I/O and the catalog. Token is `HAMMER` or the hostname. | Inbox, quarantine, done, jobs, frames, and `by-generation/`. Secrets, git pedigree, and samples stay. |
+
+| When                             | Why                                                                                                       | What is deleted                                                                                                                                                                                                       |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shears delete --confirm DELETE` | Operator removes one sheep. Dry-run first; the token is exactly `DELETE`.                                 | Catalog MP4, sidecar, poster, stills, jobs, edges, the Jellyfin item, and peer copies when Opt In.                                                                                                                    |
+| `library_disk rotate --apply`    | Sheep disk is **WARN** or **BAD**. Oldest catalog MP4s go first. At least one playable catalog MP4 stays. | The same Shears cascade. `_refactor-quarantine/` and `_refactor-preview/` are skipped. Git `genomes/samples` and `genomes/pedigree` stay. This cron is off until [Activate library rotate](#activate-library-rotate). |
+| `hammer --all --confirm HAMMER`  | Factory wipe of local render I/O and the catalog. Token is `HAMMER` or the hostname.                      | Inbox, quarantine, done, jobs, frames, and `by-generation/`. Secrets, git pedigree, and samples stay.                                                                                                                 |
+
+
+
 
 ### Catalog posters (after render)
 
 Default is `jellyfin.attach_posters: auto` in the example yaml. Live `configs/jellyflam3.yaml` is gitignored — `git pull` does **not** change it. Older yaml with `attach_posters: true` always creates posters until you edit it.
 
-| Setup | Default after encode | Why |
-|---|---|---|
-| **Standalone** furnace (Opt Out, or Opt In with no other furnace online) | **No** poster | Mesh size 1 |
+
+| Setup                                                                                  | Default after encode                                                                                       | Why           |
+| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------- |
+| **Standalone** furnace (Opt Out, or Opt In with no other furnace online)               | **No** poster                                                                                              | Mesh size 1   |
 | **2+ furnaces** Opt In, Syncthing active, Tailscale online, ≥1 other `jellyflam3` peer | **Yes** — `stills/{stem}/{stem}-poster.jpg` + Jellyfin Primary, plus stills frames + Backdrops (non-tuple) | Mesh size ≥ 2 |
+
 
 Screensaver stills (JPEG frames + Jellyfin Backdrops) ride the **same ingest switch**. When posters extract, they land with the frames under `by-generation/{gen}/stills/{stem}/` (`{stem}-poster.jpg` plus `frame_XX.jpg`). Tuples get a poster in that stills folder but never generate frames (watermarked edge mid-file is not screensaver-safe). `stills/.ignore` keeps those JPEGs out of the Jellyfin library scan — VoD tiles and the Roku screensaver only see **Images API** Primary / Backdrop tags, not the files. Peering still shares only `*.flam3` + optional `*-poster.jpg` beside genomes — not catalog stills JPEGs.
 
@@ -612,22 +624,24 @@ python3 -m pipeline.peering status
 # posters.mode / posters.ingest_enabled / posters.mesh_size
 ```
 
+
+
 #### Standalone — turn posters **on**
 
 1. Edit live yaml (`nano /opt/jellyflam3-server/configs/jellyflam3.yaml`):
-   ```yaml
+  ```yaml
    jellyfin:
      attach_posters: true
-   ```
+  ```
 2. Restart the worker:
-   ```bash
+  ```bash
    sudo systemctl restart jellyflam3-worker
    systemctl is-active jellyflam3-worker
-   ```
+  ```
 3. New renders get a poster **and** stills (non-tuple). Existing catalog MP4s do not — backfill them:
-   ```bash
+  ```bash
    python3 -m pipeline.backfill_posters --config configs/jellyflam3.yaml
-   ```
+  ```
 
 To return to the default: `attach_posters: auto`, restart the worker.
 
@@ -642,10 +656,10 @@ Leave `attach_posters: auto`. After Opt In + another furnace online, `mesh_size`
 #### Mesh — turn posters **off**
 
 1. Edit live yaml:
-   ```yaml
+  ```yaml
    jellyfin:
      attach_posters: false
-   ```
+  ```
 2. Restart the worker. New renders skip extract/upload. Existing `stills/{stem}/{stem}-poster.jpg` files stay on disk (Shears delete still removes them with the sheep).
 
 Do **not** run `hw_profile apply` just to flip this flag (it rewrites the whole yaml).
@@ -664,6 +678,8 @@ python3 -m pipeline.shears modify genomes/done/sheep.flam3  # re-furnace
 python3 -m pipeline.shears audit
 python3 -m pipeline.shears sweep --orphans-only --confirm DELETE
 ```
+
+
 
 ### Curator: sheep aliases (memorable names)
 
@@ -688,13 +704,15 @@ Refactor repairs sheep **already in the catalog**. New inbox jobs are stopped by
 
 `scan` and `report` are the same read-only command (Pathway A). A row is `ok` below score **1**, `candidate` from **1** up to **80**, and `quarantine` at **80** or above or on a hard reason (`missing_genome`, `sheep_tax_fail`, `genome_linear_only`, `genome_singularity_cloned`, `genome_orbit_frozen`).
 
-| Pathway | Command | What it does |
-|---|---|---|
-| **A** Scan | `report` or `scan` | Scores the live catalog. Writes nothing. Prints `ok` / `candidate` / `quarantine`, the score, reasons, and the current palette (`mode`, `seed_hex`, `complement_hex`). |
-| **P** Preview | `preview --id … --preview-poster` | Optional look before apply. Writes a retinted genome, a still, a short loop, and a palette-pole clip under `/media/sheep/_refactor-preview/<stem>/`, then refreshes Jellyfin. The live `by-generation/` MP4 stays. Point a separate library at that folder if you want it in the console. Flock clients stay on the Sheep library. `--discard` removes that preview folder. |
-| **B** Apply | `apply --id … --confirm APPLY` | Keeps the genetics and the same id. TV-optimizes the source `.flam3` (optional `--palette-mode` / `--palette-seed`), stages it into `genomes/inbox`, writes `{stem}.refactor.json` beside it, and appends `refactor[]` on the live sidecar. Discards the Pathway P folder unless `--keep-preview`. The worker encodes and replaces the catalog MP4 later. Omit `--confirm` to print the plan only. |
-| **C** Quarantine | `quarantine --id … --confirm QUARANTINE` | For verdict `quarantine` only, unless `--force`. Moves the `.flam3` to `genomes/quarantine`. Default `--unpublish` parks the MP4, sidecar, poster, and stills under `/media/sheep/_refactor-quarantine/<stem>/` and deletes the Jellyfin item. `--no-unpublish` leaves the catalog on the live library. Omit `--confirm` to print the plan only. |
-| **D** Batch | `batch --limit 10 --confirm BATCH` | Runs A, then sends each `quarantine` row through C and each `candidate` row through B. `ok` rows are skipped. Default scope is failing rows; `--all` includes `ok` and still skips them. Does not run Pathway P. Jellyfin refresh is off unless `--jellyfin-refresh`. Omit `--confirm` to print the plan only. |
+
+| Pathway          | Command                                  | What it does                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A** Scan       | `report` or `scan`                       | Scores the live catalog. Writes nothing. Prints `ok` / `candidate` / `quarantine`, the score, reasons, and the current palette (`mode`, `seed_hex`, `complement_hex`).                                                                                                                                                                                                                             |
+| **P** Preview    | `preview --id … --preview-poster`        | Optional look before apply. Writes a retinted genome, a still, a short loop, and a palette-pole clip under `/media/sheep/_refactor-preview/<stem>/`, then refreshes Jellyfin. The live `by-generation/` MP4 stays. Point a separate library at that folder if you want it in the console. Flock clients stay on the Sheep library. `--discard` removes that preview folder.                        |
+| **B** Apply      | `apply --id … --confirm APPLY`           | Keeps the genetics and the same id. TV-optimizes the source `.flam3` (optional `--palette-mode` / `--palette-seed`), stages it into `genomes/inbox`, writes `{stem}.refactor.json` beside it, and appends `refactor[]` on the live sidecar. Discards the Pathway P folder unless `--keep-preview`. The worker encodes and replaces the catalog MP4 later. Omit `--confirm` to print the plan only. |
+| **C** Quarantine | `quarantine --id … --confirm QUARANTINE` | For verdict `quarantine` only, unless `--force`. Moves the `.flam3` to `genomes/quarantine`. Default `--unpublish` parks the MP4, sidecar, poster, and stills under `/media/sheep/_refactor-quarantine/<stem>/` and deletes the Jellyfin item. `--no-unpublish` leaves the catalog on the live library. Omit `--confirm` to print the plan only.                                                   |
+| **D** Batch      | `batch --limit 10 --confirm BATCH`       | Runs A, then sends each `quarantine` row through C and each `candidate` row through B. `ok` rows are skipped. Default scope is failing rows; `--all` includes `ok` and still skips them. Does not run Pathway P. Jellyfin refresh is off unless `--jellyfin-refresh`. Omit `--confirm` to print the plan only.                                                                                     |
+
 
 Confirm tokens are exactly `APPLY`, `QUARANTINE`, and `BATCH`. These subcommands have no `--dry-run` flag. Leaving `--confirm` off is the dry run.
 
@@ -729,7 +747,7 @@ Confirm token: `HAMMER` or hostname. Wrong token → exit 2, no deletes.
 
 ### Peering (optional multi-Pi)
 
-Default: **Opt Out** (Syncthing off, Tailscale logged out). See [`deploy/peering/README.md`](../deploy/peering/README.md) and [phase2/05_SYNCTHING_GENOME_PEERING.md](phase2/05_SYNCTHING_GENOME_PEERING.md).
+Default: **Opt Out** (Syncthing off, Tailscale logged out). See `[deploy/peering/README.md](../deploy/peering/README.md)` and [phase2/05_SYNCTHING_GENOME_PEERING.md](phase2/05_SYNCTHING_GENOME_PEERING.md).
 
 ```bash
 python3 -m pipeline.peering status --config configs/jellyflam3.yaml
@@ -739,15 +757,17 @@ python3 -m pipeline.peering promote --apply          # peers/inbox → worker in
 python3 -m pipeline.peering opt-out --config configs/jellyflam3.yaml
 ```
 
-**Receive path:** Syncthing → `peers/inbox` → **`promote --apply`** → `genomes/inbox` or quarantine → worker. Auto-promote is **not** a product ([phase4/01](phase4/01_PEER_SHARE_PATH.md)). `share-out` is local staging until [phase5/04](phase5/04_PEER_SHARE_MESH.md). After `publish` or the 06:41 share cron, `./scripts/status_report.sh` counts those genomes as `share_out_flam3`. A count above zero still needs the operator copy into this furnace’s `peers/inbox` (`.flam3`, `.sha256`, `.jellyflam3.sig`, and `*-poster.jpg` when present; leave the share-out originals) before Syncthing can carry them. Each receiver then runs `promote --apply`. Commands: [example 6](#6--vote-then-share) step 4. Promote **moves** inbox files — on sendreceive that can delete the copy on other hosts.
+**Receive path:** Syncthing → `peers/inbox` → `promote --apply` → `genomes/inbox` or quarantine → worker. Auto-promote is **not** a product ([phase4/01](phase4/01_PEER_SHARE_PATH.md)). `share-out` is local staging until [phase5/04](phase5/04_PEER_SHARE_MESH.md). After `publish` or the 06:41 share cron, `./scripts/status_report.sh` counts those genomes as `share_out_flam3`. A count above zero still needs the operator copy into this furnace’s `peers/inbox` (`.flam3`, `.sha256`, `.jellyflam3.sig`, and `*-poster.jpg` when present; leave the share-out originals) before Syncthing can carry them. Each receiver then runs `promote --apply`. Commands: [example 6](#6--vote-then-share) step 4. Promote **moves** inbox files — on sendreceive that can delete the copy on other hosts.
 
 #### Opt In vs share live (do not confuse them)
 
-| State | Meaning |
-|---|---|
-| **Opt Out** (default) | No `genomes/peers/OPT_IN`. Syncthing unit should be **inactive**. No mesh sync. |
-| **Opt In (`share_opt_in`)** | Operator ran `opt-in` (or left `OPT_IN` on disk). **Intent** to share genomes on the mesh. |
-| **Share live (`share_live`)** | Opt In **and** **`jellyflam3-syncthing` active** **and** Tailscale **`Running` + `online`**. Genomes can actually move between Pis. |
+
+| State                             | Meaning                                                                                                                             |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Opt Out** (default)             | No `genomes/peers/OPT_IN`. Syncthing unit should be **inactive**. No mesh sync.                                                     |
+| **Opt In (**`share_opt_in`**)**   | Operator ran `opt-in` (or left `OPT_IN` on disk). **Intent** to share genomes on the mesh.                                          |
+| **Share live (**`share_live`**)** | Opt In **and** `jellyflam3-syncthing` **active** **and** Tailscale `Running` **+** `online`. Genomes can actually move between Pis. |
+
 
 **When Opt In is true, background sharing is assumed to work** — both Syncthing and Tailscale must be up. If either is down, you have **offline peering**: the marker says “share,” but nothing syncs.
 
@@ -791,13 +811,13 @@ FIX: python3 -m pipeline.peering opt-in ... or opt-out to disable sharing
 
 → **exit 1** (fail closed). This is intentional: exit 0 must not imply mesh sync works.
 
-**Status file:** `/var/lib/jellyflam3/peering_status.json` is refreshed during healthcheck. Use **`share_live`** and **`share_issues`** — do not trust an old `units.jellyflam3-syncthing: "active"` line if healthcheck says otherwise.
+**Status file:** `/var/lib/jellyflam3/peering_status.json` is refreshed during healthcheck. Use `share_live` and `share_issues` — do not trust an old `units.jellyflam3-syncthing: "active"` line if healthcheck says otherwise.
 
 #### Fix offline peering
 
 **A — Bring sharing online (keep Opt In):**
 
-1. Set **`TS_AUTHKEY`** in `secrets.env` (pre-auth key from Tailscale admin), or log in interactively: `sudo tailscale up`.
+1. Set `TS_AUTHKEY` in `secrets.env` (pre-auth key from Tailscale admin), or log in interactively: `sudo tailscale up`.
 2. Re-run opt-in (rolls back `OPT_IN` automatically if services still cannot start):
 
 ```bash
@@ -809,7 +829,7 @@ systemctl is-active jellyflam3-syncthing jellyflam3-worker
 ./scripts/healthcheck.sh    # exit 0, line: OK share live (Syncthing + Tailscale)
 ```
 
-3. Exchange trust keys between Pis (`peering gen-keys`, `trust-key`) before publish/promote shared genomes — see guide 05.
+1. Exchange trust keys between Pis (`peering gen-keys`, `trust-key`) before publish/promote shared genomes — see guide 05.
 
 **B — Stop claiming Opt In (single-Pi / no mesh):**
 
@@ -827,14 +847,18 @@ powershell -NoProfile -File scripts/lab_smoke05_fleet.ps1
 # Exit 1 if any pathway FAIL; unit coverage in tests/test_peering.py
 ```
 
+
+
 ### Roku / Kodi packaging
 
-**Prefer building on a furnace Pi** (`/opt/jellyflam3-server` with `secrets.env`). Each `package_*` script runs `client_pack_presets.py` first:
+**Prefer building on a furnace Pi** (`/opt/jellyflam3-server` with `secrets.env`). Each `package_`* script runs `client_pack_presets.py` first:
 
-| Package | Pre-fill on furnace host |
-|---|---|
+
+| Package                | Pre-fill on furnace host                                                                            |
+| ---------------------- | --------------------------------------------------------------------------------------------------- |
 | Roku VoD / Screensaver | `registry/jellyflam3-presets.json` in the zip; first launch writes empty `JellyFlam3` registry keys |
-| Kodi screensaver | `resources/settings.xml` default values in the staged zip |
+| Kodi screensaver       | `resources/settings.xml` default values in the staged zip                                           |
+
 
 Household Rokus install **JellyFlam3** from the Channel Store and type Settings. Each furnace Pi can still produce a sideload zip pointed at **its own** Jellyfin (`http://<that-pi-lan-ip>:8096`). Do not commit preset JSON or distribute those zips outside the household — they contain the API key. Current VoD sideload is **1.0.52** (same channel as 1.0.51: launch beacon at an operable home screen; one-way MP4 stream fallback; HD-only splash/icon; cert **5.2** `roInput`; `rsg_version=1.3`).
 
@@ -870,9 +894,11 @@ Windows (operator workstation — **no** furnace presets; manual Settings paste 
 python scripts\build_kodi_screensaver_assets.py
 ```
 
+
+
 ### Kodi screensaver upgrade (operator)
 
-Kodi pasture box (e.g. **`rpi-kodi-08a`** at `<Kodi_IP_Address>`, LibreELEC). Jellyfin stays on a furnace Pi (e.g. `http://<RPi_IP_Address>:8096`).
+Kodi pasture box (e.g. `rpi-kodi-08a` at `<Kodi_IP_Address>`, LibreELEC). Jellyfin stays on a furnace Pi (e.g. `http://<RPi_IP_Address>:8096`).
 
 **1 — Build the zip** on a **furnace Pi** (pre-fills Jellyfin settings for that host):
 
@@ -887,10 +913,12 @@ The packaging script runs `build_kodi_screensaver_assets.py` automatically. Opti
 
 **2 — Copy zip to the Kodi Pi**
 
-| Method | Command / path |
-|---|---|
+
+| Method                      | Command / path                                                                                                                                                                                      |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **SMB (LibreELEC default)** | Copy to `\\<Kodi_IP_Address>\Downloads\screensaver.jellyflam3.zip` (LibreELEC credentials: `libreelec` / `libreelec` unless changed). On-box path: `/storage/downloads/screensaver.jellyflam3.zip`. |
-| **SCP (if key installed)** | `scp dist/screensaver.jellyflam3.zip root@<Kodi_IP_Address>:/storage/downloads/` |
+| **SCP (if key installed)**  | `scp dist/screensaver.jellyflam3.zip root@<Kodi_IP_Address>:/storage/downloads/`                                                                                                                    |
+
 
 PowerShell SMB example:
 
@@ -916,23 +944,27 @@ Folder name must stay `screensaver.jellyflam3`.
 
 **4 — Smoke after upgrade**
 
-| Check | How |
-|---|---|
-| Version | Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → **Information** (version in `addon.xml`, currently **0.2.14**). |
-| Playback | Set short wait time → **Activate screensaver** or wait; sheep MP4s should shuffle. |
-| Idle gate | On furnace Pi: `cat /var/lib/jellyflam3/idle_gate_status.json` → `"gate": "open"` while Kodi SS runs. |
-| Jellyfin IDs | On furnace: `python3 scripts/jellyfin_id_dump.py --items --limit 5` — item count should be > 0 when flock is seeded. |
+
+| Check        | How                                                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Version      | Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → **Information** (version in `addon.xml`, currently **0.2.14**). |
+| Playback     | Set short wait time → **Activate screensaver** or wait; sheep MP4s should shuffle.                                       |
+| Idle gate    | On furnace Pi: `cat /var/lib/jellyflam3/idle_gate_status.json` → `"gate": "open"` while Kodi SS runs.                    |
+| Jellyfin IDs | On furnace: `python3 scripts/jellyfin_id_dump.py --items --limit 5` — item count should be > 0 when flock is seeded.     |
+
 
 **5 — Configure / refresh Jellyfin settings** (first install or after credential rotation)
 
 Map [jellyfin_id_dump.py](../scripts/jellyfin_id_dump.py) output → add-on **Configure**:
 
-| Dump field | Add-on setting |
-|---|---|
-| `baseUrl` | Jellyfin URL (`server_url`) — **LAN IP** reachable from Kodi, not `127.0.0.1` |
-| `apiKey` | API key |
-| `userId` | User id |
-| `libraryId` | Library (Parent) id |
+
+| Dump field  | Add-on setting                                                                |
+| ----------- | ----------------------------------------------------------------------------- |
+| `baseUrl`   | Jellyfin URL (`server_url`) — **LAN IP** reachable from Kodi, not `127.0.0.1` |
+| `apiKey`    | API key                                                                       |
+| `userId`    | User id                                                                       |
+| `libraryId` | Library (Parent) id                                                           |
+
 
 See [kodi-screensaver/README.md](../kodi-screensaver/README.md) for setting ids and commercial-safe filter notes.
 
@@ -942,49 +974,51 @@ Default install is a **private mixed** flock (BY + BY-NC, household). **Public**
 
 These knobs are **independent**. `git pull` does **not** flip them (`configs/jellyflam3.yaml` is gitignored).
 
-| Surface | Private mixed (default) | Public / commercial-safe |
-|---|---|---|
-| Furnace `license.commercial_mode` | `false` | `true` |
-| New **tuple** edge mark | Cesari PNG, **or** your PNG if `watermark.image` points at it | **Never** the Cesari logo. **Your PNG still overlays.** Else `artwork by Scott Draves and the Electric Sheep` |
-| Already-catalogued tuples | Keep whatever was burned in | Keep the Cesari PNG until you **re-furnace** those stems |
-| Worker render of NC genomes | Renders | **Still renders** — yaml does not cull NC |
-| On-disk NC MP4s | In `/media/sheep/by-generation/` | **Stay on disk** |
-| Roku VoD `commercialMode` | `false` | `true` (hides NC **in this channel only**) |
-| Kodi SS `commercial_mode` | off | on (hides NC **in this add-on only**) |
-| Jellyfin web / jellyfin-roku | Shows the whole library | **Still shows NC** unless you lock the library down yourself |
+
+| Surface                           | Private mixed (default)                                       | Public / commercial-safe                                                                                      |
+| --------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Furnace `license.commercial_mode` | `false`                                                       | `true`                                                                                                        |
+| New **tuple** edge mark           | Cesari PNG, **or** your PNG if `watermark.image` points at it | **Never** the Cesari logo. **Your PNG still overlays.** Else `artwork by Scott Draves and the Electric Sheep` |
+| Already-catalogued tuples         | Keep whatever was burned in                                   | Keep the Cesari PNG until you **re-furnace** those stems                                                      |
+| Worker render of NC genomes       | Renders                                                       | **Still renders** — yaml does not cull NC                                                                     |
+| On-disk NC MP4s                   | In `/media/sheep/by-generation/`                              | **Stay on disk**                                                                                              |
+| Roku VoD `commercialMode`         | `false`                                                       | `true` (hides NC **in this channel only**)                                                                    |
+| Kodi SS `commercial_mode`         | off                                                           | on (hides NC **in this add-on only**)                                                                         |
+| Jellyfin web / jellyfin-roku      | Shows the whole library                                       | **Still shows NC** unless you lock the library down yourself                                                  |
+
 
 Cesari PNG files are **not** MIT and **not** Free Sheep CC ([NOTICE](../NOTICE), [watermark README](media/watermark/README.md)). Do not republish Cesari-marked MP4s as official Electric Sheep, and do not use those PNGs as a channel icon. Peering shares `.flam3` only; copying `by-generation/tuple/*.mp4` **does** export the mark.
 
 #### Use your own PNG (private and public)
 
-This replaces the Cesari default on **both** flock modes. The public Cesari skip still applies if `watermark.image` points at `Electric-Sheep-Icon*` / `Electric-Sheep-Logo*`.
+This replaces the Cesari default on **both** flock modes. The public Cesari skip still applies if `watermark.image` points at `Electric-Sheep-Icon`* / `Electric-Sheep-Logo*`.
 
 1. Make an RGBA PNG you have rights to (~**180×180**, transparent padding). ffmpeg burns it at **native size** — do not use a 1024-px file.
 2. Copy it onto the furnace, outside git. Suggested: `/var/lib/jellyflam3/watermark.png` (survives `git pull`). `configs/*.png` is also gitignored.
-   ```bash
+  ```bash
    sudo install -m 644 /path/to/your-sheepcloud.png /var/lib/jellyflam3/watermark.png
-   ```
+  ```
 3. Edit live yaml (`configs/jellyflam3.yaml`, not the example):
-   ```yaml
+  ```yaml
    watermark:
      enabled: true
      style: image
      image: /var/lib/jellyflam3/watermark.png
-   ```
+  ```
    Leave `license.commercial_mode` as you already run it (private `false` or public `true`).
 4. Restart the worker:
-   ```bash
+  ```bash
    sudo systemctl restart jellyflam3-worker
    systemctl is-active jellyflam3-worker
-   ```
+  ```
 5. **Re-furnace tuples** so catalog files pick up the new sheepcloud. Confirm the sidecar `"style": "image"` and `"image"` is your path.
-   ```bash
+  ```bash
    ls genomes/done/electricsheep.tuple.*.flam3
    for f in genomes/done/electricsheep.tuple.*.flam3; do
      [ -f "$f" ] || continue
      python3 -m pipeline.shears modify "$f"
    done
-   ```
+  ```
    Each restage is a full 3-stage encode. Gate must be **open**. Worker rotates the old MP4 to `*.mp4.prev`.
 
 Disable the overlay entirely with `watermark.enabled: false` or `tuple.watermark_on_edge: false`.
@@ -995,37 +1029,34 @@ Do this **in order**. Skipping tags or the client toggles is how you get an empt
 
 1. **Decide you are actually going public.** Venue, guest TVs, or packing files for others. Household-only → stay on the private defaults.
 2. **Confirm Jellyfin Items Tags exist** (commercial-safe clients hide untagged items, which looks like an empty flock):
-   ```bash
+  ```bash
    python3 scripts/jellyfin_id_dump.py --items --limit 50
-   ```
+  ```
    Spot-check `cc-by` vs `cc-by-nc` on Tags. If Tags are empty, enrich then re-check:
-   ```bash
-   python3 -m pipeline.backfill_posters --config configs/jellyflam3.yaml
-   ```
    Lab CC/NC sample ids: [phase1/07](phase1/07_LICENSE_AND_METADATA.md#lab-check--commercial-mode-toggle).
 3. **Edit live yaml** (not the example; not a git commit):
-   ```bash
+  ```bash
    nano /opt/jellyflam3-server/configs/jellyflam3.yaml
-   ```
+  ```
    Set `license.commercial_mode: true`. If `watermark.image` is still the Cesari file, the worker skips it and burns the attribution sentence. If you already pointed `image` at **your** PNG, that overlay **stays**. Do **not** run `hw_profile apply` unless you intend to rewrite the whole yaml.
 4. **Restart the worker** so it reloads yaml (idle-gate can stay up):
-   ```bash
+  ```bash
    sudo systemctl restart jellyflam3-worker
    systemctl is-active jellyflam3-worker
-   ```
+  ```
 5. **Re-furnace existing tuples** if any Cesari-marked MP4 must not appear on the public path. New tuples after step 4 use the attribution sentence **or** your operator PNG; old files do not change.
-   ```bash
+  ```bash
    ls genomes/done/electricsheep.tuple.*.flam3
    for f in genomes/done/electricsheep.tuple.*.flam3; do
      [ -f "$f" ] || continue
      python3 -m pipeline.shears modify "$f"
    done
-   ```
+  ```
    Each restage is a full 3-stage encode (hours). Gate must be **open**. Worker rotates the old MP4 to `*.mp4.prev`. Confirm the sidecar: Cesari path → `"style": "text"` and the Scott Draves sentence; operator PNG → `"style": "image"` and your path.
 6. **Turn commercial-safe on at every pasture client** (furnace yaml does not do this). Existing Roku registry survives sideload; furnace-built zips still preset `commercialMode=false`.
-   - **Roku VoD:** Settings → highlight `commercialMode` → **OK** until **true** (saved immediately in 1.0.42+) → **Save & Reload**. Repeat on each stick. Home status reports how many items were filtered and how many NC tags were found.
-   - **Kodi:** Add-ons → JellyFlam3 Dreams → Configure → **Commercial-safe (skip NC)** on.
-   - **Roku screensaver:** same registry `commercialMode` as VoD — NC stills are skipped; tuple folders are never shown.
+  - **Roku VoD:** Settings → highlight `commercialMode` → **OK** until **true** (saved immediately in 1.0.42+) → **Save & Reload**. Repeat on each stick. Home status reports how many items were filtered and how many NC tags were found.
+  - **Kodi:** Add-ons → JellyFlam3 Dreams → Configure → **Commercial-safe (skip NC)** on.
+  - **Roku screensaver:** same registry `commercialMode` as VoD — NC stills are skipped; tuple folders are never shown.
 7. **Do not expose Jellyfin as the public player.** Guests on `:8096` or jellyfin-roku still see NC. Restrict the library (LAN-only, auth, or do not share the URL).
 8. **Verify on the TV:** CC samples remain; NC samples gone; a **new** tuple (or a restamped one) shows the attribution sentence **or** your PNG, not the Cesari sheep. Toggle Roku `commercialMode` back to false in a test if you need to prove NC files are still on disk — then set it true again.
 
@@ -1037,25 +1068,29 @@ Playback of NC returns as soon as **clients** turn commercial-safe off. The Cesa
 
 1. **Edit live yaml:** `license.commercial_mode: false`.
 2. **Restart the worker:**
-   ```bash
+  ```bash
    sudo systemctl restart jellyflam3-worker
    systemctl is-active jellyflam3-worker
-   ```
+  ```
 3. **Turn commercial-safe off on every client:**
-   - Roku VoD Settings → highlight `commercialMode` → **OK** until **false** → **Save & Reload** (each stick).
-   - Kodi Configure → **Commercial-safe (skip NC)** off.
+  - Roku VoD Settings → highlight `commercialMode` → **OK** until **false** → **Save & Reload** (each stick).
+  - Kodi Configure → **Commercial-safe (skip NC)** off.
 4. **Verify:** NC titles reappear in VoD / Kodi shuffle (they were never deleted). A **new** tuple may show the Cesari PNG again (unless you still have an operator PNG).
 5. **Optional — restamp tuples encoded while public:** same `shears modify` loop as step 5 above. Until you do, those files keep the attribution sentence (fine for household). Skip this if `watermark.image` is already your PNG — those new encodes already carry it.
+
+
 
 #### Lab check (CC vs NC playback only)
 
 After Tags exist, confirm the **client** filter — this does not flip furnace yaml:
 
-| Client | Toggle off | Toggle on |
-|---|---|---|
-| Roku VoD `commercialMode` | CC + NC in flock | NC gone; CC remain |
+
+| Client                            | Toggle off                 | Toggle on          |
+| --------------------------------- | -------------------------- | ------------------ |
+| Roku VoD `commercialMode`         | CC + NC in flock           | NC gone; CC remain |
 | Roku screensaver `commercialMode` | CC + NC stills (no tuples) | NC gone; CC remain |
-| Kodi SS `commercial_mode` | May play NC | Only CC-safe Tags |
+| Kodi SS `commercial_mode`         | May play NC                | Only CC-safe Tags  |
+
 
 Expected sample ids: [phase1/07](phase1/07_LICENSE_AND_METADATA.md#lab-check--commercial-mode-toggle). Empty flock with commercial-on → fix enrich (step 2), not the channel.
 
@@ -1077,7 +1112,7 @@ python3 -m pipeline.worker_drain cancel   # resume claiming (omit to stay paused
 ./scripts/healthcheck.sh
 ```
 
-Deploy via **`git pull` on the Pi** — not scp of a Windows working tree (LF + exec bits break).
+Deploy via `git pull` **on the Pi** — not scp of a Windows working tree (LF + exec bits break).
 
 ### Pull catalog MP4s to a Windows workstation
 
@@ -1111,9 +1146,11 @@ To measure **your** hop: `bench-serve` on the furnace, `bench-recv` on another h
 ./scripts/backup.sh --config-only
 ```
 
+
+
 ### Furnace logs (triage, activity, history)
 
-Systemd units log to **journald**, not to a file under the repo. Cron wrappers append to **`/var/log/jellyflam3/`** only when the `jellyflam3` crontab redirects them (the lab lines in each `scripts/cron_*.sh` header do). Python CLIs started by systemd (`worker`, `idle_gate`, `display_profile_sink`) use stdout, so their history is the unit journal. `paths.log_dir` (`/var/lib/jellyflam3/logs`) is the older drop-in; logrotate still covers `*.log` there if anything writes it. Hammer can wipe that directory.
+Systemd units log to **journald**, not to a file under the repo. Cron wrappers append to `/var/log/jellyflam3/` only when the `jellyflam3` crontab redirects them (the lab lines in each `scripts/cron_*.sh` header do). Python CLIs started by systemd (`worker`, `idle_gate`, `display_profile_sink`) use stdout, so their history is the unit journal. `paths.log_dir` (`/var/lib/jellyflam3/logs`) is the older drop-in; logrotate still covers `*.log` there if anything writes it. Hammer can wipe that directory.
 
 ```bash
 # Last boot of one unit, or the previous boot after a power cycle:
@@ -1125,50 +1162,58 @@ sudo ./scripts/enable_log_hygiene.sh --check
 
 **Journal (activity — start here)**
 
-| Unit | What it records |
-|---|---|
-| `jellyflam3-worker` | Claim, quality gate, `flam3-animate`, encode, ingest, quarantine |
-| `jellyflam3-idlegate` | Gate open/closed, `reason`, idle-delay hold |
+
+| Unit                      | What it records                                                                                         |
+| ------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `jellyflam3-worker`       | Claim, quality gate, `flam3-animate`, encode, ingest, quarantine                                        |
+| `jellyflam3-idlegate`     | Gate open/closed, `reason`, idle-delay hold                                                             |
 | `jellyflam3-display-sink` | Profile upserts and `POST /v1/sheep-votes` (token failures, crash-loop on missing `DISPLAY_SINK_TOKEN`) |
-| `jellyfin` | Sessions, Direct Play / transcode, Images API |
-| `jellyflam3-syncthing` | Genome mesh serve (also Syncthing’s own log under `HOME=/var/lib/jellyflam3/syncthing`) |
-| `jellyflam3-peering` | Oneshot layout / Opt In marker (not the live sync stream) |
-| `tailscaled` | Tailnet, Funnel, ACL drops |
-| `jellyflam3-logrotate` | 72h rotate + age gzip/purge |
-| kernel (`journalctl -k`) | Wi‑Fi wedge (`brcmfmac`, `SCAN-FAILED -110`); watchdog reads this |
+| `jellyfin`                | Sessions, Direct Play / transcode, Images API                                                           |
+| `jellyflam3-syncthing`    | Genome mesh serve (also Syncthing’s own log under `HOME=/var/lib/jellyflam3/syncthing`)                 |
+| `jellyflam3-peering`      | Oneshot layout / Opt In marker (not the live sync stream)                                               |
+| `tailscaled`              | Tailnet, Funnel, ACL drops                                                                              |
+| `jellyflam3-logrotate`    | 72h rotate + age gzip/purge                                                                             |
+| kernel (`journalctl -k`)  | Wi‑Fi wedge (`brcmfmac`, `SCAN-FAILED -110`); watchdog reads this                                       |
+
 
 Persistent journal lives in `/var/log/journal` (`Storage=persistent`; **512M** on `-16`/`-08`, **200M** on `-04`; retain **23 days**).
 
 **Cron files (history of scheduled work)** — `/var/log/jellyflam3/`
 
-| File | Cadence (lab crontab) | Look for |
-|---|---|---|
-| `archive_seed.log` | ~10-day DOM (16a 07:27 days 7/17/27; 08a 05:19 days 1/11/21; 04a 03:17 days 3/13/23) | `DONE archive seed` or `SKIP` (backlog, sheep still BAD) |
-| `breed_idle.log` | Daily 05:11 | `action=breed`, `action=tuple`, or skip (`inbox_above_low_water`, `archive_cron_imminent`, `parent_pool_empty`) |
-| `share_votes.log` | Daily 06:41 | `action=share` / `plan` / `skip` |
-| `tailscale_watch.log` | Every 5 min on Opt-In hosts | `action=ok` / `heal`; exit 1 if still not live |
-| `library_rotate.log` | **Not** on the lab crontab until [Activate library rotate](#activate-library-rotate) | `action=rotate` / `skip` |
+
+| File                  | Cadence (lab crontab)                                                                | Look for                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `archive_seed.log`    | ~10-day DOM (16a 07:27 days 7/17/27; 08a 05:19 days 1/11/21; 04a 03:17 days 3/13/23) | `DONE archive seed` or `SKIP` (backlog, sheep still BAD)                                                        |
+| `breed_idle.log`      | Daily 05:11                                                                          | `action=breed`, `action=tuple`, or skip (`inbox_above_low_water`, `archive_cron_imminent`, `parent_pool_empty`) |
+| `share_votes.log`     | Daily 06:41                                                                          | `action=share` / `plan` / `skip`                                                                                |
+| `tailscale_watch.log` | Every 5 min on Opt-In hosts                                                          | `action=ok` / `heal`; exit 1 if still not live                                                                  |
+| `library_rotate.log`  | **Not** on the lab crontab until [Activate library rotate](#activate-library-rotate) | `action=rotate` / `skip`                                                                                        |
+
 
 Rotated copies are `*.log-YYYYMMDD-HHMMSS`, then `.gz` after **11 days**, deleted after **23 days**. A missing file means that crontab line is not installed, not that the job never ran in the journal.
 
 **Other hosts’ file logs**
 
-| Path | Role |
-|---|---|
-| `/var/log/jellyfin/jellyfinYYYYMMDD.log` | Jellyfin’s dated log (playback, library scan). Same 11/23-day compress/purge; we do not rename the live file mid-day |
+
+| Path                                       | Role                                                                                                                   |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `/var/log/jellyfin/jellyfinYYYYMMDD.log`   | Jellyfin’s dated log (playback, library scan). Same 11/23-day compress/purge; we do not rename the live file mid-day   |
 | `/var/lib/tailscale/tailscaled.log*.txt.*` | Tailscale’s own ring, if present; age script only deletes copies older than 23 days. Prefer `journalctl -u tailscaled` |
-| `/var/lib/jellyflam3/logs/*.log` | Legacy `paths.log_dir`. Empty on current units |
+| `/var/lib/jellyflam3/logs/*.log`           | Legacy `paths.log_dir`. Empty on current units                                                                         |
+
 
 **State files (current fact, not a scrollback)**
 
-| Path | Use in triage |
-|---|---|
-| `/var/lib/jellyflam3/idle_gate_status.json` | `gate`, `reason`, `seconds_until_resume` |
-| `/var/lib/jellyflam3/worker_drain.json` | `drain`, `phase`, in-flight job |
-| `/var/lib/jellyflam3/inbox_fifo.json` | Inbox claim order (oldest sequence first) |
-| `/var/lib/jellyflam3/peering_status.json` | `share_opt_in` vs `share_live` (refreshed by healthcheck) |
-| `/var/lib/jellyflam3/jobs/<id>/job.json` | One render: state, `quality_gate`, src genome |
-| `/var/cache/jellyflam3/frames` | Scratch frames for the live job (not a log) |
+
+| Path                                        | Use in triage                                             |
+| ------------------------------------------- | --------------------------------------------------------- |
+| `/var/lib/jellyflam3/idle_gate_status.json` | `gate`, `reason`, `seconds_until_resume`                  |
+| `/var/lib/jellyflam3/worker_drain.json`     | `drain`, `phase`, in-flight job                           |
+| `/var/lib/jellyflam3/inbox_fifo.json`       | Inbox claim order (oldest sequence first)                 |
+| `/var/lib/jellyflam3/peering_status.json`   | `share_opt_in` vs `share_live` (refreshed by healthcheck) |
+| `/var/lib/jellyflam3/jobs/<id>/job.json`    | One render: state, `quality_gate`, src genome             |
+| `/var/cache/jellyflam3/frames`              | Scratch frames for the live job (not a log)               |
+
 
 Kodi screensaver messages go to **Kodi’s** log on the pasture box (`/storage/.kodi/temp/kodi.log` on LibreELEC), not to the furnace.
 
@@ -1198,61 +1243,75 @@ The duration chooser no longer rounds a runaway period LCM up to about twice the
 
 ### Operator triage
 
-| Symptom | Check | Fix |
-|---|---|---|
-| No new sheep | `healthcheck.sh`; `gate` in status JSON; inbox count | Open gate / fix worker / seed or breed. If Jellyfin already has the item, wait for a client **wrap** ([Flock mix](#flock-mix-shuffle-wrap)) |
-| Gate stuck closed | Status JSON `reason`; VoD open even on Home? | Stop VoD / wait `idle_delay_sec` (**600**). Screensaver does not close the gate |
-| `idle-gate closed; waiting 15s before backfill continues` | `cat /var/lib/jellyflam3/idle_gate_status.json` | 15s is the retry cap. `idle_delay` = 10 min hold after last TV-class activity; no `--skip-gate` |
-| Worker quiet, gate open | `ls genomes/inbox/*.flam3`; `journalctl -u jellyflam3-worker`; [Furnace logs](#furnace-logs-triage-activity-history); `python3 -m pipeline.worker_drain status` | Seed inbox; inspect [quarantine](#when-a-sheep-is-isolated-or-removed); **cancel** drain if `drain: true` |
-| `jellyflam3-display-sink` crash-loop (`activating` / `NRestarts` climbing) | journal: `DISPLAY_SINK_TOKEN required when binding a non-loopback host` | On **this** Pi: `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'` → `DISPLAY_SINK_TOKEN=` in `secrets.env`; `systemctl reset-failed` + restart. Same string → Roku `displaySinkToken`. Do not copy another furnace. See [Display sink token](#display-sink-token-how--where--when). |
-| healthcheck exit 1 | Read script sections (units, tools, status file, **peering share_live**, **library disk BAD**) | See [offline peering](#opt-in-vs-share-live-do-not-confuse-them); `opt-in` or `opt-out`; free space on `/media/sheep` |
-| Sheep disk WARN / BAD | `python3 -m pipeline.library_disk check`; `df -h /media/sheep` | `python3 -m pipeline.library_disk rotate --apply`; arm daily cron with [Activate library rotate](#activate-library-rotate); Shears for one sheep; do not Hammer unless wiping the factory |
-| Empty flock with commercial-safe on | Items Tags missing | `jellyfin_id_dump.py --items`; [private vs public](#private-vs-public-furnace) step 2 |
-| Blank Roku SS | Screensaver Settings filled on this package? Store VoD credentials do not copy over | Screensaver Settings, or a furnace SS zip |
-| VoD **No poster** tiles | Items lack `ImageTags.Primary` (stills JPEGs are ignored) | `backfill_posters` (base64 Images POST); relaunch VoD |
-| Roku SS posters only | Items lack `BackdropImageTags` | `backfill_posters` until sidecar `jellyfin_stills.status=uploaded` |
-| Kodi SS hint / no video | `server_url` uses LAN IP? flock empty on Jellyfin? | `jellyfin_id_dump.py --items`; re-install zip after client fix |
-| Kodi zip push fails | SMB `\\<Kodi_IP>\Downloads` vs SSH key | Use LibreELEC SMB; or install SSH key for `root@<Kodi_IP_Address>` |
-| Offline peering (Opt In, no sync) | `healthcheck`: `BAD share not live`; `peering status` → `share_live: false` | `opt-in` with `TS_AUTHKEY` + Syncthing up, or `opt-out` |
-| Peering stuck (live mesh) | `peering status`; inbox under `peers/inbox` | `promote --apply`; trust keys; share-security verify |
-| Sheep staged, other furnaces empty | `status_report.sh` peering `share_out_flam3` above zero | Copy the listed share-out set into this host’s `peers/inbox` ([example 6](#6--vote-then-share) step 4); each receiver `promote --apply` |
-| Bad palette / encode / frozen still on TV | `python3 -m pipeline.refactor report --id …`; `job.json` `quality_gate` | New jobs: worker isolates before catalog. Existing: `refactor quarantine --confirm QUARANTINE`. See [isolate or remove](#when-a-sheep-is-isolated-or-removed) |
-| Worker `quality gate … rejected` | `/var/lib/jellyflam3/jobs/<id>/job.json` | Expected fail-closed. Genome is in `genomes/quarantine`. Copying it back into the inbox repeats the reject |
-| Black / error after quarantine | Item gone from disk/Jellyfin; client still has old flock list | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id and re-poll (30s rate limit). Kodi SS **0.2.10** also closes the native playback-failed dialog. Overnight new-sheep pickup is wrap-once (VoD 1.0.31 / Roku SS 1.0.9 / Kodi SS 0.2.9+) — [Flock mix](#flock-mix-shuffle-wrap) |
-| Playback stutters / several TVs | `python3 -m pipeline.link_capacity estimate --profile wifi-pi`; this lab is WiFi STA (`eth0` DOWN) | Direct Play; fewer TVs — stay at/under `N_max`. Jellyfin will not refuse extras. Cable the Pi only if that host actually has Ethernet |
-| HLS dies in a few seconds; `no transcode is running` | Jellyfin log names a `.ts` under `transcodes/`; the MP4 is still under `/media/sheep` | Idle: delete leftover transcode files ([Leftover HLS segment](#leftover-hls-segment)), then play again. Ambient clients stay on `streamMode=mp4` |
-| One HLS sheep fails immediately; playlist is a single `EXTINF` of the whole clip | `ffprobe` shows one keyframe at 0; duration is one GOP | Quarantine that catalog item and requeue the genome. New encodes place an IDR every 6 s ([scoped HLS encode](phase2/03_HLS_CLIENT_STREAMING.md#scoped-hls-encode-keyframe-interval)). Ambient clients stay on `streamMode=mp4` |
-| Wipe everything local | — | `hammer --dry-run` then `--confirm HAMMER` (not Shears) |
+
+| Symptom                                                                          | Check                                                                                                                                                           | Fix                                                                                                                                                                                                                                                                                               |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No new sheep                                                                     | `healthcheck.sh`; `gate` in status JSON; inbox count                                                                                                            | Open gate / fix worker / seed or breed. If Jellyfin already has the item, wait for a client **wrap** ([Flock mix](#flock-mix-shuffle-wrap))                                                                                                                                                       |
+| Gate stuck closed                                                                | Status JSON `reason`; VoD open even on Home?                                                                                                                    | Stop VoD / wait `idle_delay_sec` (**600**). Screensaver does not close the gate                                                                                                                                                                                                                   |
+| `idle-gate closed; waiting 15s before backfill continues`                        | `cat /var/lib/jellyflam3/idle_gate_status.json`                                                                                                                 | 15s is the retry cap. `idle_delay` = 10 min hold after last TV-class activity; no `--skip-gate`                                                                                                                                                                                                   |
+| Worker quiet, gate open                                                          | `ls genomes/inbox/*.flam3`; `journalctl -u jellyflam3-worker`; [Furnace logs](#furnace-logs-triage-activity-history); `python3 -m pipeline.worker_drain status` | Seed inbox; inspect [quarantine](#when-a-sheep-is-isolated-or-removed); **cancel** drain if `drain: true`                                                                                                                                                                                         |
+| `jellyflam3-display-sink` crash-loop (`activating` / `NRestarts` climbing)       | journal: `DISPLAY_SINK_TOKEN required when binding a non-loopback host`                                                                                         | On **this** Pi: `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'` → `DISPLAY_SINK_TOKEN=` in `secrets.env`; `systemctl reset-failed` + restart. Same string → Roku `displaySinkToken`. Do not copy another furnace. See [Display sink token](#display-sink-token-how--where--when). |
+| healthcheck exit 1                                                               | Read script sections (units, tools, status file, **peering share_live**, **library disk BAD**)                                                                  | See [offline peering](#opt-in-vs-share-live-do-not-confuse-them); `opt-in` or `opt-out`; free space on `/media/sheep`                                                                                                                                                                             |
+| Sheep disk WARN / BAD                                                            | `python3 -m pipeline.library_disk check`; `df -h /media/sheep`                                                                                                  | `python3 -m pipeline.library_disk rotate --apply`; arm daily cron with [Activate library rotate](#activate-library-rotate); Shears for one sheep; do not Hammer unless wiping the factory                                                                                                         |
+| Empty flock with commercial-safe on                                              | Items Tags missing                                                                                                                                              | `jellyfin_id_dump.py --items`; [private vs public](#private-vs-public-furnace) step 2                                                                                                                                                                                                             |
+| Blank Roku SS                                                                    | Screensaver Settings filled on this package? Store VoD credentials do not copy over                                                                             | Screensaver Settings, or a furnace SS zip                                                                                                                                                                                                                                                         |
+| VoD **No poster** tiles                                                          | Items lack `ImageTags.Primary` (stills JPEGs are ignored)                                                                                                       | `backfill_posters` (base64 Images POST); relaunch VoD                                                                                                                                                                                                                                             |
+| Roku SS posters only                                                             | Items lack `BackdropImageTags`                                                                                                                                  | `backfill_posters` until sidecar `jellyfin_stills.status=uploaded`                                                                                                                                                                                                                                |
+| Kodi SS hint / no video                                                          | `server_url` uses LAN IP? flock empty on Jellyfin?                                                                                                              | `jellyfin_id_dump.py --items`; re-install zip after client fix                                                                                                                                                                                                                                    |
+| Kodi zip push fails                                                              | SMB `\\<Kodi_IP>\Downloads` vs SSH key                                                                                                                          | Use LibreELEC SMB; or install SSH key for `root@<Kodi_IP_Address>`                                                                                                                                                                                                                                |
+| Offline peering (Opt In, no sync)                                                | `healthcheck`: `BAD share not live`; `peering status` → `share_live: false`                                                                                     | `opt-in` with `TS_AUTHKEY` + Syncthing up, or `opt-out`                                                                                                                                                                                                                                           |
+| Peering stuck (live mesh)                                                        | `peering status`; inbox under `peers/inbox`                                                                                                                     | `promote --apply`; trust keys; share-security verify                                                                                                                                                                                                                                              |
+| Sheep staged, other furnaces empty                                               | `status_report.sh` peering `share_out_flam3` above zero                                                                                                         | Copy the listed share-out set into this host’s `peers/inbox` ([example 6](#6--vote-then-share) step 4); each receiver `promote --apply`                                                                                                                                                           |
+| Bad palette / encode / frozen still on TV                                        | `python3 -m pipeline.refactor report --id …`; `job.json` `quality_gate`                                                                                         | New jobs: worker isolates before catalog. Existing: `refactor quarantine --confirm QUARANTINE`. See [isolate or remove](#when-a-sheep-is-isolated-or-removed)                                                                                                                                     |
+| Worker `quality gate … rejected`                                                 | `/var/lib/jellyflam3/jobs/<id>/job.json`                                                                                                                        | Expected fail-closed. Genome is in `genomes/quarantine`. Copying it back into the inbox repeats the reject                                                                                                                                                                                        |
+| Black / error after quarantine                                                   | Item gone from disk/Jellyfin; client still has old flock list                                                                                                   | VoD 1.0.29 / Roku SS 1.0.8 / Kodi SS 0.2.7 drop the dead id and re-poll (30s rate limit). Kodi SS **0.2.10** also closes the native playback-failed dialog. Overnight new-sheep pickup is wrap-once (VoD 1.0.31 / Roku SS 1.0.9 / Kodi SS 0.2.9+) — [Flock mix](#flock-mix-shuffle-wrap)          |
+| Playback stutters / several TVs                                                  | `python3 -m pipeline.link_capacity estimate --profile wifi-pi`; this lab is WiFi STA (`eth0` DOWN)                                                              | Direct Play; fewer TVs — stay at/under `N_max`. Jellyfin will not refuse extras. Cable the Pi only if that host actually has Ethernet                                                                                                                                                             |
+| HLS dies in a few seconds; `no transcode is running`                             | Jellyfin log names a `.ts` under `transcodes/`; the MP4 is still under `/media/sheep`                                                                           | Idle: delete leftover transcode files ([Leftover HLS segment](#leftover-hls-segment)), then play again. Ambient clients stay on `streamMode=mp4`                                                                                                                                                  |
+| One HLS sheep fails immediately; playlist is a single `EXTINF` of the whole clip | `ffprobe` shows one keyframe at 0; duration is one GOP                                                                                                          | Quarantine that catalog item and requeue the genome. New encodes place an IDR every 6 s ([scoped HLS encode](phase2/03_HLS_CLIENT_STREAMING.md#scoped-hls-encode-keyframe-interval)). Ambient clients stay on `streamMode=mp4`                                                                    |
+| Wipe everything local                                                            | —                                                                                                                                                               | `hammer --dry-run` then `--confirm HAMMER` (not Shears)                                                                                                                                                                                                                                           |
+
+
+
 
 ### Owner-OK acceptance gates (RC)
 
-| Gate | Command |
-|---|---|
-| Unit tests | `python3 -m pytest tests/ -q` |
-| CI | `.github/workflows/tests.yml` on push/PR |
-| Health | `./scripts/healthcheck.sh` exit 0 |
+
+| Gate          | Command                                         |
+| ------------- | ----------------------------------------------- |
+| Unit tests    | `python3 -m pytest tests/ -q`                   |
+| CI            | `.github/workflows/tests.yml` on push/PR        |
+| Health        | `./scripts/healthcheck.sh` exit 0               |
 | Furnace smoke | `./scripts/smoke_render.sh` → `SMOKE_RENDER_OK` |
-| HLS | `./scripts/hls_smoke.sh` |
-| Share fleet | `scripts/lab_smoke05_fleet.ps1` |
+| HLS           | `./scripts/hls_smoke.sh`                        |
+| Share fleet   | `scripts/lab_smoke05_fleet.ps1`                 |
+
 
 Checklist: [phase3/10_TESTING_AND_ACCEPTANCE.md](phase3/10_TESTING_AND_ACCEPTANCE.md).
 
 ---
 
+
+
 ## Layer 3 — Contributor
+
+
 
 ### Repository layout
 
-| Path | Role |
-|---|---|
-| `pipeline/` | Furnace, curator, peering, refactor — Python CLIs (`python3 -m pipeline.*`) |
-| `scripts/` | Ops shell/Python/PowerShell — health, cron, packaging, lab smoke |
-| `tests/` | Fast pytest suite (~372 tests collected; ~3s local) |
-| `configs/` | Example YAML; live config is gitignored |
-| `docs/phaseN/` | Feature guides (implementer SoT per topic) |
-| `deploy/systemd/` | Unit files |
-| `.github/workflows/tests.yml` | CI: pytest + exec bits on push/PR |
-| `.github/workflows/release.yml` | Tag push: pytest → generic client zips → GitHub Release |
+
+| Path                            | Role                                                                        |
+| ------------------------------- | --------------------------------------------------------------------------- |
+| `pipeline/`                     | Furnace, curator, peering, refactor — Python CLIs (`python3 -m pipeline.*`) |
+| `scripts/`                      | Ops shell/Python/PowerShell — health, cron, packaging, lab smoke            |
+| `tests/`                        | Fast pytest suite (~372 tests collected; ~3s local)                         |
+| `configs/`                      | Example YAML; live config is gitignored                                     |
+| `docs/phaseN/`                  | Feature guides (implementer SoT per topic)                                  |
+| `deploy/systemd/`               | Unit files                                                                  |
+| `.github/workflows/tests.yml`   | CI: pytest + exec bits on push/PR                                           |
+| `.github/workflows/release.yml` | Tag push: pytest → generic client zips → GitHub Release                     |
+
+
+
 
 ### Development setup
 
@@ -1269,39 +1328,41 @@ On Windows: use Git Bash for gate script tests; `media_layout` tests skip on `nt
 ### Pipeline CLI index
 
 ```text
-python3 -m pipeline.worker          # furnace (quality gate → encode → ingest)
-python3 -m pipeline.worker_drain    # request sets the flag; --wait blocks until idle (not draining)
-python3 -m pipeline.idle_gate       # gate supervisor
-python3 -m pipeline.seed_inbox      # archive / random / mutate feedstock
-python3 -m pipeline.breed           # pedigree mutate/cross/blend/interpolate
-python3 -m pipeline.breed_idle      # daily idle breed (incl. tuple mode)
-python3 -m pipeline.sheep_tuple     # stage loop A + edge + loop B genome
-python3 -m pipeline.shears          # add/modify/delete/audit/sweep
-python3 -m pipeline.hammer         # nuclear local reset
-python3 -m pipeline.refactor        # catalog quality scan/preview/apply/quarantine/batch
-python3 -m pipeline.peering         # opt-in/out, mesh-join, publish, promote, keys
-python3 -m pipeline.stills          # operator re-extract of screensaver frames
+python3 -m pipeline.worker            # furnace (quality gate → encode → ingest)
+python3 -m pipeline.worker_drain      # request sets the flag; --wait blocks until idle (not draining)
+python3 -m pipeline.idle_gate         # gate supervisor
+python3 -m pipeline.seed_inbox        # archive / random / mutate feedstock
+python3 -m pipeline.breed             # pedigree mutate/cross/blend/interpolate
+python3 -m pipeline.breed_idle        # daily idle breed (incl. tuple mode)
+python3 -m pipeline.sheep_tuple       # stage loop A + edge + loop B genome
+python3 -m pipeline.shears            # add/modify/delete/audit/sweep
+python3 -m pipeline.hammer            # nuclear local reset
+python3 -m pipeline.refactor          # catalog quality scan/preview/apply/quarantine/batch
+python3 -m pipeline.peering           # opt-in/out, mesh-join, publish, promote, keys
+python3 -m pipeline.stills            # operator re-extract of screensaver frames
 python3 -m pipeline.backfill_posters  # posters + stills + Jellyfin images
-python3 -m pipeline.media_layout    # catalog dir modes 2775/664
-python3 -m pipeline.job_recovery    # orphan job reclaim
-python3 -m pipeline.hw_profile      # apply 16a/08a/04a profile
-python3 -m pipeline.link_capacity   # concurrent-client N_max estimate
-python3 -m pipeline.library_disk    # sheep-mount WARN/BAD + rotate
-python3 -m pipeline.sheep_naming    # alias backfill / set / clear / resolve
-python3 -m pipeline.sheep_votes     # sidecar like/love/vote (show / top / apply / sweep)
-python3 -m pipeline.share_votes     # liked sheep → peers/share-out (plan / --apply)
-python3 -m pipeline.display_profiles
+python3 -m pipeline.media_layout      # catalog dir modes 2775/664
+python3 -m pipeline.job_recovery      # orphan job reclaim
+python3 -m pipeline.hw_profile        # apply 16a/08a/04a profile
+python3 -m pipeline.link_capacity     # concurrent-client N_max estimate
+python3 -m pipeline.library_disk      # sheep-mount WARN/BAD + rotate
+python3 -m pipeline.sheep_naming      # alias backfill / set / clear / resolve
+python3 -m pipeline.sheep_votes       # sidecar like/love/vote (show / top / apply / sweep)
+python3 -m pipeline.share_votes       # liked sheep → peers/share-out (plan / --apply)
+python3 -m pipeline.display_profiles  # per-screen display profile store
 ```
 
 Bare `python3 -m pipeline` prints this list and exits 2.
 
 ### Testing pyramid
 
-| Layer | Command | Notes |
-|---|---|---|
-| Unit / fast | `python3 -m pytest tests/ -q` | Default pre-push |
-| Integration | same suite | HTTP sink, gate exits, package zips |
-| Smoke / e2e | Pi scripts | `smoke_render`, `hls_smoke`, `lab_smoke05_fleet` |
+
+| Layer       | Command                       | Notes                                            |
+| ----------- | ----------------------------- | ------------------------------------------------ |
+| Unit / fast | `python3 -m pytest tests/ -q` | Default pre-push                                 |
+| Integration | same suite                    | HTTP sink, gate exits, package zips              |
+| Smoke / e2e | Pi scripts                    | `smoke_render`, `hls_smoke`, `lab_smoke05_fleet` |
+
 
 Key test modules added for review hardening: `test_gate_script_exits.py`, `test_tool_lookup.py`, `test_refactor_modules.py`, `test_shears_id_match.py`, `test_worker_claim.py`, `test_inbox_queue.py`.
 
@@ -1313,26 +1374,32 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 - **Confirm tokens:** Shears `DELETE`, Hammer `HAMMER`, refactor `APPLY` / `QUARANTINE` / `BATCH`
 - **Secrets:** `${ENV}` in YAML; missing secrets fail closed outside smoke profiles (`tests/test_config.py`)
 
+
+
 ### Where to change what
 
-| Change | Read first |
-|---|---|
-| Worker quality admission | `pipeline/quality_gate.py`, [Active quality intervention](#active-quality-intervention), [When a sheep is isolated or removed](#when-a-sheep-is-isolated-or-removed), [phase1/05](phase1/05_RENDER_PIPELINE.md) |
-| Catalog refactor (A / P / B / C / D) | `pipeline/refactor.py`, [Quality repair](#quality-repair-sheep-refactor), [phase3/09](phase3/09_SHEEP_REFACTOR.md) |
-| Render duration bands | `pipeline/choose_duration.py`, `docs/phase2/08_DYNAMIC_DURATION.md` |
-| Worker drain / pause | `pipeline/worker_drain.py`, [Worker drain](#worker-drain-pause-before-next-sheep), [phase1/05](phase1/05_RENDER_PIPELINE.md) |
-| Inbox claim order (FIFO) | `pipeline/inbox_queue.py`, [Feed the furnace](#feed-the-furnace), [phase1/05](phase1/05_RENDER_PIPELINE.md) |
-| TV-port / palette | `pipeline/tv_optimize.py`, `pipeline/palette_harmony.py` |
-| Share security | `pipeline/share_security.py`, `docs/phase3/05_SHARED_SHEEP_SECURITY.md` |
-| Link capacity / N_max | `pipeline/link_capacity.py`, `docs/phase4/07_CONCURRENT_CLIENTS.md` |
-| Library disk check / rotate | `pipeline/library_disk.py`, `pipeline/library_rotate.py`, `docs/phase4/06_LIBRARY_DISK_ROTATE.md` |
-| Sheep aliases | `pipeline/sheep_naming.py`, `docs/phase4/09_SHEEP_NAMING.md` (LLM: [phase5/02](phase5/02_LLM_INTEGRATION.md) on agent platform) |
-| License / Cesari watermark | [NOTICE](../NOTICE), [phase1/07](phase1/07_LICENSE_AND_METADATA.md), [watermark README](media/watermark/README.md), [Private vs public](#private-vs-public-furnace), [Use your own PNG](#use-your-own-png-private-and-public) |
-| Catalog posters / stills | [Catalog posters](#catalog-posters-after-render) — `jellyfin.attach_posters` + `stills.enabled`; Roku SS Primary + Backdrop |
-| Roku screensaver | `roku-screensaver/`, [phase3/01](phase3/01_SCREENSAVERS_AND_STILLS.md) |
-| Roku client | `roku-channel/`, `docs/phase1/08_ROKU_BRIGHTSCRIPT.md`, [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md) |
-| Kodi screensaver | `kodi-screensaver/`, [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md), [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md) |
-| Architecture | `docs/Pi5_Flam3_VoD_Pipeline.md` |
+
+| Change                               | Read first                                                                                                                                                                                                                    |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Worker quality admission             | `pipeline/quality_gate.py`, [Active quality intervention](#active-quality-intervention), [When a sheep is isolated or removed](#when-a-sheep-is-isolated-or-removed), [phase1/05](phase1/05_RENDER_PIPELINE.md)               |
+| Catalog refactor (A / P / B / C / D) | `pipeline/refactor.py`, [Quality repair](#quality-repair-sheep-refactor), [phase3/09](phase3/09_SHEEP_REFACTOR.md)                                                                                                            |
+| Render duration bands                | `pipeline/choose_duration.py`, `docs/phase2/08_DYNAMIC_DURATION.md`                                                                                                                                                           |
+| Worker drain / pause                 | `pipeline/worker_drain.py`, [Worker drain](#worker-drain-pause-before-next-sheep), [phase1/05](phase1/05_RENDER_PIPELINE.md)                                                                                                  |
+| Inbox claim order (FIFO)             | `pipeline/inbox_queue.py`, [Feed the furnace](#feed-the-furnace), [phase1/05](phase1/05_RENDER_PIPELINE.md)                                                                                                                   |
+| TV-port / palette                    | `pipeline/tv_optimize.py`, `pipeline/palette_harmony.py`                                                                                                                                                                      |
+| Share security                       | `pipeline/share_security.py`, `docs/phase3/05_SHARED_SHEEP_SECURITY.md`                                                                                                                                                       |
+| Link capacity / N_max                | `pipeline/link_capacity.py`, `docs/phase4/07_CONCURRENT_CLIENTS.md`                                                                                                                                                           |
+| Library disk check / rotate          | `pipeline/library_disk.py`, `pipeline/library_rotate.py`, `docs/phase4/06_LIBRARY_DISK_ROTATE.md`                                                                                                                             |
+| Sheep aliases                        | `pipeline/sheep_naming.py`, `docs/phase4/09_SHEEP_NAMING.md` (LLM: [phase5/02](phase5/02_LLM_INTEGRATION.md) on agent platform)                                                                                               |
+| License / Cesari watermark           | [NOTICE](../NOTICE), [phase1/07](phase1/07_LICENSE_AND_METADATA.md), [watermark README](media/watermark/README.md), [Private vs public](#private-vs-public-furnace), [Use your own PNG](#use-your-own-png-private-and-public) |
+| Catalog posters / stills             | [Catalog posters](#catalog-posters-after-render) — `jellyfin.attach_posters` + `stills.enabled`; Roku SS Primary + Backdrop                                                                                                   |
+| Roku screensaver                     | `roku-screensaver/`, [phase3/01](phase3/01_SCREENSAVERS_AND_STILLS.md)                                                                                                                                                        |
+| Roku client                          | `roku-channel/`, `docs/phase1/08_ROKU_BRIGHTSCRIPT.md`, [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md)                                                                                                                        |
+| Kodi screensaver                     | `kodi-screensaver/`, [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md), [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md)                                                             |
+| Architecture                         | `docs/Pi5_Flam3_VoD_Pipeline.md`                                                                                                                                                                                              |
+
+
+
 
 ### Future consideration — vote outcomes
 
@@ -1347,49 +1414,57 @@ Recorded 2026-10-03 from the vote-path review. Not scheduled. The first-vote wei
 
 ---
 
+
+
 ## Appendix A — Key paths (lab defaults)
 
-| Path | Purpose |
-|---|---|
-| `/media/sheep/by-generation/` | Catalog MP4 + sidecar; posters + frames under `stills/{stem}/` (`.ignore`) |
-| `/media/sheep/_refactor-preview/` | Refactor Jellyfin-visible previews |
-| `/media/sheep/_refactor-quarantine/<stem>/` | Parked catalog after refactor unpublish (MP4, sidecar, poster, stills). Genetics are in `genomes/quarantine` |
-| `/var/cache/jellyflam3/frames` | Render scratch |
-| `/var/lib/jellyflam3/jobs` | In-flight job state |
-| `/var/lib/jellyflam3/idle_gate_status.json` | Gate SoT |
-| `/var/lib/jellyflam3/worker_drain.json` | Drain flag (pause before next inbox claim) |
-| `/var/lib/jellyflam3/inbox_fifo.json` | FIFO claim order for `genomes/inbox` (oldest sequence first) |
-| `genomes/inbox` | Worker input queue (oldest arrival renders next) |
-| `genomes/quarantine` | Isolated genomes (tax, quality gate, peer integrity, render failure, refactor). Not rendered. See [isolate or remove](#when-a-sheep-is-isolated-or-removed) |
-| `genomes/done` | Rendered parent pool (breeding) |
-| `genomes/peers/share-out` | Local stage after `publish` or the share cron. Counted by `status_report.sh` as `share_out_flam3`. Copy into `peers/inbox` to sync ([example 6](#6--vote-then-share) step 4) |
-| `genomes/peers/inbox` | Syncthing land (promote required; no auto-furnace) |
-| `/var/lib/jellyflam3/peering_status.json` | Opt In / **share_live** / Tailscale / Syncthing (live snapshot) |
-| `/var/log/journal` | Persistent systemd journal (worker, gate, Jellyfin, Tailscale) |
-| `/var/log/jellyflam3/*.log` | Cron history (seed, breed, share, Tailscale watch, optional rotate) |
-| `/var/log/jellyfin/jellyfinYYYYMMDD.log` | Jellyfin dated log |
-| `/storage/downloads/` on Kodi Pi | Zip drop for **Install from zip** (LibreELEC SMB share **Downloads**) |
-| `/storage/.kodi/addons/screensaver.jellyflam3` | Installed add-on files |
-| `/storage/.kodi/userdata/addon_data/screensaver.jellyflam3/settings.xml` | Jellyfin URL / API key / user / library (persists across zip upgrades) |
+
+| Path                                                                     | Purpose                                                                                                                                                                      |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/media/sheep/by-generation/`                                            | Catalog MP4 + sidecar; posters + frames under `stills/{stem}/` (`.ignore`)                                                                                                   |
+| `/media/sheep/_refactor-preview/`                                        | Refactor Jellyfin-visible previews                                                                                                                                           |
+| `/media/sheep/_refactor-quarantine/<stem>/`                              | Parked catalog after refactor unpublish (MP4, sidecar, poster, stills). Genetics are in `genomes/quarantine`                                                                 |
+| `/var/cache/jellyflam3/frames`                                           | Render scratch                                                                                                                                                               |
+| `/var/lib/jellyflam3/jobs`                                               | In-flight job state                                                                                                                                                          |
+| `/var/lib/jellyflam3/idle_gate_status.json`                              | Gate SoT                                                                                                                                                                     |
+| `/var/lib/jellyflam3/worker_drain.json`                                  | Drain flag (pause before next inbox claim)                                                                                                                                   |
+| `/var/lib/jellyflam3/inbox_fifo.json`                                    | FIFO claim order for `genomes/inbox` (oldest sequence first)                                                                                                                 |
+| `genomes/inbox`                                                          | Worker input queue (oldest arrival renders next)                                                                                                                             |
+| `genomes/quarantine`                                                     | Isolated genomes (tax, quality gate, peer integrity, render failure, refactor). Not rendered. See [isolate or remove](#when-a-sheep-is-isolated-or-removed)                  |
+| `genomes/done`                                                           | Rendered parent pool (breeding)                                                                                                                                              |
+| `genomes/peers/share-out`                                                | Local stage after `publish` or the share cron. Counted by `status_report.sh` as `share_out_flam3`. Copy into `peers/inbox` to sync ([example 6](#6--vote-then-share) step 4) |
+| `genomes/peers/inbox`                                                    | Syncthing land (promote required; no auto-furnace)                                                                                                                           |
+| `/var/lib/jellyflam3/peering_status.json`                                | Opt In / **share_live** / Tailscale / Syncthing (live snapshot)                                                                                                              |
+| `/var/log/journal`                                                       | Persistent systemd journal (worker, gate, Jellyfin, Tailscale)                                                                                                               |
+| `/var/log/jellyflam3/*.log`                                              | Cron history (seed, breed, share, Tailscale watch, optional rotate)                                                                                                          |
+| `/var/log/jellyfin/jellyfinYYYYMMDD.log`                                 | Jellyfin dated log                                                                                                                                                           |
+| `/storage/downloads/` on Kodi Pi                                         | Zip drop for **Install from zip** (LibreELEC SMB share **Downloads**)                                                                                                        |
+| `/storage/.kodi/addons/screensaver.jellyflam3`                           | Installed add-on files                                                                                                                                                       |
+| `/storage/.kodi/userdata/addon_data/screensaver.jellyflam3/settings.xml` | Jellyfin URL / API key / user / library (persists across zip upgrades)                                                                                                       |
+
+
+
 
 ## Appendix B — Further reading
 
-| Topic | Doc |
-|---|---|
-| Full Pi install | [phase2/09_PI_FROM_SCRATCH.md](phase2/09_PI_FROM_SCRATCH.md) |
-| Runtime / systemd | [phase1/09_RUNTIME_AND_OPS.md](phase1/09_RUNTIME_AND_OPS.md) |
-| Worker pipeline | [phase1/05_RENDER_PIPELINE.md](phase1/05_RENDER_PIPELINE.md) |
-| HLS streaming | [phase2/03_HLS_CLIENT_STREAMING.md](phase2/03_HLS_CLIENT_STREAMING.md) |
-| Concurrent clients / N_max | [phase4/07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md) |
-| Library disk check | [phase4/06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md) |
-| Sheep aliases | [phase4/09_SHEEP_NAMING.md](phase4/09_SHEEP_NAMING.md) |
-| LLM Agent Platform / Phase 5 | [phase5/00_OVERVIEW.md](phase5/00_OVERVIEW.md) (parked; not a furnace) |
-| Peering | [phase2/05_SYNCTHING_GENOME_PEERING.md](phase2/05_SYNCTHING_GENOME_PEERING.md) |
-| Phase 3 feature guides | [phase3/00_OVERVIEW.md](phase3/00_OVERVIEW.md) |
-| Kodi screensaver (detail) | [kodi-screensaver/README.md](../kodi-screensaver/README.md) · [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) |
-| Channel splash / icon prompts | [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md) |
-| RC / acceptance | [phase3/10_TESTING_AND_ACCEPTANCE.md](phase3/10_TESTING_AND_ACCEPTANCE.md) |
+
+| Topic                         | Doc                                                                                                                                                        |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Full Pi install               | [phase2/09_PI_FROM_SCRATCH.md](phase2/09_PI_FROM_SCRATCH.md)                                                                                               |
+| Runtime / systemd             | [phase1/09_RUNTIME_AND_OPS.md](phase1/09_RUNTIME_AND_OPS.md)                                                                                               |
+| Worker pipeline               | [phase1/05_RENDER_PIPELINE.md](phase1/05_RENDER_PIPELINE.md)                                                                                               |
+| HLS streaming                 | [phase2/03_HLS_CLIENT_STREAMING.md](phase2/03_HLS_CLIENT_STREAMING.md)                                                                                     |
+| Concurrent clients / N_max    | [phase4/07_CONCURRENT_CLIENTS.md](phase4/07_CONCURRENT_CLIENTS.md)                                                                                         |
+| Library disk check            | [phase4/06_LIBRARY_DISK_ROTATE.md](phase4/06_LIBRARY_DISK_ROTATE.md)                                                                                       |
+| Sheep aliases                 | [phase4/09_SHEEP_NAMING.md](phase4/09_SHEEP_NAMING.md)                                                                                                     |
+| LLM Agent Platform / Phase 5  | [phase5/00_OVERVIEW.md](phase5/00_OVERVIEW.md) (parked; not a furnace)                                                                                     |
+| Peering                       | [phase2/05_SYNCTHING_GENOME_PEERING.md](phase2/05_SYNCTHING_GENOME_PEERING.md)                                                                             |
+| Phase 3 feature guides        | [phase3/00_OVERVIEW.md](phase3/00_OVERVIEW.md)                                                                                                             |
+| Kodi screensaver (detail)     | [kodi-screensaver/README.md](../kodi-screensaver/README.md) · [phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md](phase3/02_KODI_ELECTRIC_SHEEP_SCREENSAVER.md) |
+| Channel splash / icon prompts | [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md)                                                                                                             |
+| RC / acceptance               | [phase3/10_TESTING_AND_ACCEPTANCE.md](phase3/10_TESTING_AND_ACCEPTANCE.md)                                                                                 |
+
 
 ---
 
-*Document version: 2026-10-07 — HLS copy of a one-keyframe clip is one segment; confirmed future IDR interval is 6 s. Duration snap no longer doubles a runaway period LCM. Leftover `.ts` files are still refused after the remux job ends. JellyFlam3 VoD installs from the Roku Channel Store; sideload remains the furnace-preset and screensaver path. Phase 4 close-out (`v0.3.2`).*
+*Document version: 2026-10-07 — HLS copy of a one-keyframe clip is one segment; confirmed future IDR interval is 6 s. Duration snap no longer doubles a runaway period LCM. Leftover* `.ts` *files are still refused after the remux job ends. JellyFlam3 VoD installs from the Roku Channel Store; sideload remains the furnace-preset and screensaver path. Phase 4 close-out (*`v0.3.2`*).*
