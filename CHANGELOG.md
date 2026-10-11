@@ -6,6 +6,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Read-only flock report: `python3 -m pipeline.flock_report` prints live-flock size, Shears condition, gate/drain/worker/share status, vote totals and the top list, and the newest breed, job, refactor, park, and vote timestamps. `--stem` accepts a filename or a catalog alias. `--score` adds refactor verdict counts. Parked `_refactor-preview` and `_refactor-quarantine` trees are counted apart from the live flock.
+
 - Roku VoD **1.0.52** Channel Store zip: revision bump for resubmission. `--no-presets` builds `dist/jellyflam3-roku-store.zip` with empty Settings (no `registry/jellyflam3-presets.json`, no Funnel host, no Jellyfin key). Behavior matches **1.0.51**.
 
 ### Changed

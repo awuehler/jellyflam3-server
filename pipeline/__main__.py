@@ -16,7 +16,7 @@ if __name__ == "__main__":
         "python -m pipeline.breed_idle | python -m pipeline.refactor | "
         "python -m pipeline.link_capacity | python -m pipeline.library_disk | "
         "python -m pipeline.sheep_naming | python -m pipeline.sheep_votes | "
-        "python -m pipeline.share_votes",
+        "python -m pipeline.share_votes | python -m pipeline.flock_report",
         file=sys.stderr,
     )
     sys.exit(2)

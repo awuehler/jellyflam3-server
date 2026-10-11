@@ -681,6 +681,19 @@ python3 -m pipeline.shears sweep --orphans-only --confirm DELETE
 
 
 
+### Curator: flock report
+
+Read-only picture of this furnace's live flock. It does not write sidecars, cast votes, scan Jellyfin, or restart the worker. Thermals and service health stay on `./scripts/status_report.sh`.
+
+```bash
+python3 -m pipeline.flock_report
+python3 -m pipeline.flock_report --json
+python3 -m pipeline.flock_report --stem frosty_swirles
+python3 -m pipeline.flock_report --stem electricsheep.247.00505 --score
+```
+
+Sections: size (live `by-generation`; parked `_refactor-quarantine` and `_refactor-preview` counted separately), condition (Shears hygiene counts; `--score` adds refactor ok / candidate / quarantine), status (idle gate, drain phase `off` / `draining` / `idle`, active job or idle, share-out genomes), voting (totals plus the top list, same order as `sheep_votes top`; unvoted sheep stay in the totals and off the list), history (newest breed, job, refactor, park, and last vote timestamp; default 20). `--top` and `--history` change those caps. An unknown `adjective_surname` exits with `alias not found`.
+
 ### Curator: sheep aliases (memorable names)
 
 Filename stays `electricsheep.{gen}.{id}`. Sidecar `alias` is `adjective_surname` (hash-stable on re-ingest). Human override is sticky.
@@ -1350,6 +1363,7 @@ python3 -m pipeline.link_capacity     # concurrent-client N_max estimate
 python3 -m pipeline.library_disk      # sheep-mount WARN/BAD + rotate
 python3 -m pipeline.sheep_naming      # alias backfill / set / clear / resolve
 python3 -m pipeline.sheep_votes       # sidecar like/love/vote (show / top / apply / sweep)
+python3 -m pipeline.flock_report      # read-only flock size, condition, status, votes, history
 python3 -m pipeline.share_votes       # liked sheep → peers/share-out (plan / --apply)
 python3 -m pipeline.display_profiles  # per-screen display profile store
 ```
