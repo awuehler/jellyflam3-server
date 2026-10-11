@@ -24,7 +24,7 @@ function applyJellyFlam3PackPresets(reg as object) as boolean
   data = ParseJson(raw)
   if data = invalid then return false
 
-  keys = ["baseUrl", "apiKey", "userId", "libraryId", "commercialMode", "streamMode"]
+  keys = ["baseUrl", "apiKey", "userId", "libraryId", "commercialMode", "streamMode", "displaySinkToken"]
   wrote = false
   for each k in keys
     v = jsonPresetStr(data.lookup(k))
@@ -38,4 +38,15 @@ function applyJellyFlam3PackPresets(reg as object) as boolean
   end for
   if wrote then reg.flush()
   return wrote
+end function
+
+' Power-user sideload token when the registry has one; otherwise the Jellyfin API key.
+function sinkAuthToken(reg as object) as string
+  if reg = invalid then return ""
+  token = reg.read("displaySinkToken")
+  if token <> invalid then token = token.Trim()
+  if token <> invalid and token <> "" then return token
+  key = reg.read("apiKey")
+  if key = invalid then return ""
+  return key.Trim()
 end function

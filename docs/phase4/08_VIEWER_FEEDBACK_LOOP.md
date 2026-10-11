@@ -70,7 +70,7 @@ Overlay is visual-only (playback does not pause). Shown when remaining duration 
 
 ### B — Furnace vote capture (shipped)
 
-1. **API / sink** — `POST /v1/sheep-votes` on the existing display-profile sink (`pipeline.display_profile_sink`, port 8791); same **required** `DISPLAY_SINK_TOKEN` / `X-JellyFlam3-Token`. The systemd unit binds `0.0.0.0`; empty token crash-loops the unit.
+1. **API / sink** — `POST /v1/sheep-votes` on the existing display-profile sink (`pipeline.display_profile_sink`, port 8791). Header `X-JellyFlam3-Token` matches `DISPLAY_SINK_TOKEN` or `JELLYFIN_API_KEY`. The systemd unit binds `0.0.0.0`; both secrets empty crash-loops the unit. Store clients use the API key.
 2. **Store** — atomic rewrite of that sheep’s `{stem}.jellyflam3.json` `viewer_feedback` (`pipeline.sheep_votes`). No `/var/lib` vote JSON. Operator `sweep --confirm SWEEP` restores the default block on live catalog sidecars (aliases, tags, genomes, and existing `peers/share-out` copies stay).
 3. **Unlimited re-vote** — each event increments sidecar counts.
 4. **Resolve genome** — stem via catalog sidecar scan; else mediaPath basename under `paths.media_library`; 404 if no sidecar (never invent JSON).

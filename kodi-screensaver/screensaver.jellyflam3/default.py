@@ -403,7 +403,10 @@ class JellyFlam3Screensaver(xbmcgui.WindowXMLDialog):
             "deviceId": jellyfin_flock.CLIENT_DEVICE_ID,
         }
         sink = self._resolve_sink_url()
-        token = (ADDON.getSetting("display_sink_token") or "").strip()
+        token = jellyfin_flock.vote_credential(
+            ADDON.getSetting("display_sink_token"),
+            ADDON.getSetting("api_key"),
+        )
         self._dismiss_vote_overlay()
         threading.Thread(
             target=self._post_vote_bg,

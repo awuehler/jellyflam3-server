@@ -12,6 +12,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Display-sink votes and Fetch TV display accept `X-JellyFlam3-Token` as `DISPLAY_SINK_TOKEN` or the furnace `JELLYFIN_API_KEY`. Store Roku **1.0.54** and Kodi screensaver **0.2.15** send the sink token when a furnace sideload provisioned one, otherwise the Jellyfin API key. A failed vote still dismisses immediately. Channel Store zips stay `--no-presets`. The API key can authorize those writes as well as Jellyfin access.
+
 - A pedigree breed sidecar no longer stays in `genomes/inbox` after the genome leaves. Success copies `origin`, `method`, `parents`, `generation`, `bred_at`, and `cross_method` onto the catalog sidecar and removes the inbox file. Worker quarantine, sheep tax, and refactor quarantine move the file with the genome. Job recovery puts it back on a requeued genome. Worker startup reaps inbox leftovers whose genome is already gone. Re-furnace keeps the lineage keys.
 
 - Operator commands accept a catalog alias or a filename stem: `sheep_naming` `set-alias`, `clear-alias`, and `show`; Shears `delete`; refactor `report`, `preview`, `apply`, and `quarantine`; sheep votes `apply`, `show`, and `sweep` (and `POST /v1/sheep-votes`). `backfill --push-jellyfin` refreshes the Jellyfin Overview `Alias:` line for every catalog sheep that already has an alias, including when no new alias was written.

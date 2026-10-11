@@ -16,7 +16,7 @@ def test_addon_xml_screensaver_entry():
     tree = ET.parse(ADDON_XML)
     root = tree.getroot()
     assert root.attrib["id"] == "screensaver.jellyflam3"
-    assert root.attrib["version"] == "0.2.14"
+    assert root.attrib["version"] == "0.2.15"
     req = root.find("requires/import")
     assert req is not None
     assert req.attrib["addon"] == "xbmc.python"
@@ -66,6 +66,9 @@ def test_screensaver_entry_files_exist():
     assert "videowindow" in skin
     assert 'id="90"' in skin  # focus sink (videowindow cannot focus)
     assert "_submit_vote" in text
+    assert "vote_credential" in text
+    submit = text[text.index("def _submit_vote") : text.index("def _post_vote_bg")]
+    assert submit.rindex("self._dismiss_vote_overlay()") < submit.index("threading.Thread(")
     assert "ACTION_SELECT_ITEM" in text
     assert "post_sheep_vote" in text or "_post_vote_bg" in text
     assert 'id="101"' in skin

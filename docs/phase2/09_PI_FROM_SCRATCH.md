@@ -232,13 +232,13 @@ Appendix: [../phase1/04_JELLYFIN_LIBRARY.md](../phase1/04_JELLYFIN_LIBRARY.md).
 
 ### 6. Systemd worker + idle-gate (+ display sink)
 
-Set **`DISPLAY_SINK_TOKEN`** in this Pi’s `secrets.env` **before** enabling `jellyflam3-display-sink`. The unit binds `0.0.0.0:8791`; a missing token exits 2 and **crash-loops** (`Restart=on-failure`). Unique per furnace — do not copy another Pi’s `secrets.env`.
+Set **`JELLYFIN_API_KEY`** in this Pi’s `secrets.env` before enabling `jellyflam3-display-sink` (that key is enough). **`DISPLAY_SINK_TOKEN`** is optional for a power-user sideload and unique per furnace — do not copy another Pi’s `secrets.env`. The unit binds `0.0.0.0:8791`; both secrets empty exits 2 and **crash-loops** (`Restart=on-failure`).
 
 ```bash
-# How / where / when: on THIS Pi, after secrets.env exists, before enable --now
+# Optional power-user token. JELLYFIN_API_KEY alone is enough for the unit.
 python3 -c 'import secrets; print(secrets.token_urlsafe(32))'
 # Paste as DISPLAY_SINK_TOKEN=... in /opt/jellyflam3-server/secrets.env
-# Same string → Roku registry JellyFlam3 / displaySinkToken (Settings has no token row)
+# Furnace sideload packaging copies it. Settings has no token row.
 ```
 
 ```bash
@@ -248,7 +248,7 @@ sudo mkdir -p /var/lib/jellyflam3/display_profiles
 sudo chown jellyflam3:jellyflam3 /var/lib/jellyflam3/display_profiles   # or "$USER"
 sudo systemctl enable --now jellyflam3-idlegate jellyflam3-worker jellyflam3-display-sink
 systemctl is-active jellyflam3-worker jellyflam3-idlegate jellyflam3-display-sink jellyfin
-# sink must be "active". "activating" + journal "DISPLAY_SINK_TOKEN required" = token missing.
+# sink must be "active". "activating" + journal "DISPLAY_SINK_TOKEN or JELLYFIN_API_KEY required" = both secrets empty.
 ```
 
 Units assume **`WorkingDirectory=/opt/jellyflam3-server`** and user/group **`jellyflam3`**. If your login user differs, edit the unit `User=`/`Group=` or create that account.

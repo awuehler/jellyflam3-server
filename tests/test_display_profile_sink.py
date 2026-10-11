@@ -9,7 +9,7 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-from pipeline.display_profile_sink import STATE, Handler
+from pipeline.display_profile_sink import STATE, Handler, lan_bind_allowed
 
 
 def _serve(
@@ -18,9 +18,11 @@ def _serve(
     *,
     allow_unauthenticated: bool = False,
     media_root: Path | None = None,
+    jellyfin_api_key: str = "",
 ) -> ThreadingHTTPServer:
     STATE.profiles_dir = tmp_path
     STATE.token = token
+    STATE.jellyfin_api_key = jellyfin_api_key
     STATE.allow_unauthenticated = allow_unauthenticated
     if media_root is not None:
         STATE.media_root = media_root
@@ -36,6 +38,7 @@ def _url(httpd: ThreadingHTTPServer, path: str) -> str:
 
 def _reset_state() -> None:
     STATE.token = ""
+    STATE.jellyfin_api_key = ""
     STATE.allow_unauthenticated = False
     STATE.media_root = Path("/media/sheep")
 
@@ -112,7 +115,9 @@ def test_list_requires_token_then_upsert(tmp_path: Path):
 def test_main_refuses_non_loopback_without_token(tmp_path: Path, monkeypatch):
     from pipeline.display_profile_sink import main
 
+    monkeypatch.setattr("pipeline.display_profile_sink.load_dotenv", lambda *_a, **_k: None)
     monkeypatch.delenv("DISPLAY_SINK_TOKEN", raising=False)
+    monkeypatch.delenv("JELLYFIN_API_KEY", raising=False)
     cfg = tmp_path / "cfg.yaml"
     cfg.write_text("paths: {}\n", encoding="utf-8")
     rc = main(
@@ -127,6 +132,33 @@ def test_main_refuses_non_loopback_without_token(tmp_path: Path, monkeypatch):
     )
     assert rc == 2
     _reset_state()
+
+
+def test_lan_bind_allows_either_credential():
+    assert lan_bind_allowed(
+        token="",
+        jellyfin_api_key="",
+        allow_unauthenticated=False,
+        host_local=False,
+    ) is False
+    assert lan_bind_allowed(
+        token="sink",
+        jellyfin_api_key="",
+        allow_unauthenticated=False,
+        host_local=False,
+    ) is True
+    assert lan_bind_allowed(
+        token="",
+        jellyfin_api_key="jf-key",
+        allow_unauthenticated=False,
+        host_local=False,
+    ) is True
+    assert lan_bind_allowed(
+        token="",
+        jellyfin_api_key="",
+        allow_unauthenticated=False,
+        host_local=True,
+    ) is True
 
 
 def _catalog(tmp_path: Path) -> Path:
@@ -212,6 +244,76 @@ def test_sheep_votes_unknown_stem_404(tmp_path: Path):
             assert err.code == 404
             body = json.loads(err.read().decode("utf-8"))
             assert body["ok"] is False
+    finally:
+        httpd.shutdown()
+        _reset_state()
+
+
+def test_sheep_votes_accept_jellyfin_api_key(tmp_path: Path):
+    media = _catalog(tmp_path)
+    httpd = _serve(
+        tmp_path / "profiles",
+        token="sink-secret",
+        jellyfin_api_key="jf-key",
+        media_root=media,
+    )
+    try:
+        wrong = Request(
+            _url(httpd, "/v1/sheep-votes"),
+            data=json.dumps({"stem": "electricsheep.247.00505", "kind": "vote"}).encode("utf-8"),
+            method="POST",
+            headers={
+                "Content-Type": "application/json",
+                "X-JellyFlam3-Token": "not-a-credential",
+            },
+        )
+        try:
+            urlopen(wrong, timeout=5)
+            raise AssertionError("expected 401 for a credential that matches neither secret")
+        except HTTPError as err:
+            assert err.code == 401
+
+        for header in ("sink-secret", "jf-key"):
+            req = Request(
+                _url(httpd, "/v1/sheep-votes"),
+                data=json.dumps(
+                    {"stem": "electricsheep.247.00505", "kind": "vote"}
+                ).encode("utf-8"),
+                method="POST",
+                headers={
+                    "Content-Type": "application/json",
+                    "X-JellyFlam3-Token": header,
+                },
+            )
+            with urlopen(req, timeout=5) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+            assert body["ok"] is True
+    finally:
+        httpd.shutdown()
+        _reset_state()
+
+
+def test_display_profile_accepts_jellyfin_api_key_only(tmp_path: Path):
+    httpd = _serve(tmp_path, token="", jellyfin_api_key="jf-key")
+    try:
+        req = Request(
+            _url(httpd, "/v1/display-profiles"),
+            data=json.dumps(
+                {
+                    "client": "JellyFlam3",
+                    "deviceId": "store-roku",
+                    "streamMode": "mp4",
+                }
+            ).encode("utf-8"),
+            method="POST",
+            headers={
+                "Content-Type": "application/json",
+                "X-JellyFlam3-Token": "jf-key",
+            },
+        )
+        with urlopen(req, timeout=5) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+        assert body["ok"] is True
     finally:
         httpd.shutdown()
         _reset_state()

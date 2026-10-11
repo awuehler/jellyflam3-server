@@ -63,7 +63,7 @@ Video screensaver add-on **JellyFlam3 Dreams** (`screensaver.jellyflam3`) — pl
 4. **Configure Jellyfin** — if the zip was built on a furnace Pi (`package_kodi_screensaver.`*), defaults are already in the add-on settings. Otherwise open **Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → Configure** and paste Jellyfin URL, API key, user id, library id (operator runs `jellyfin_id_dump.py` on the furnace Pi).
 5. Set screensaver wait time (e.g. **1 minute** for testing), then wait or use **Activate screensaver**.
 
-**Everyday use:** leave Kodi idle. Keys while idle **exit**, except in the last **7 seconds** of a non-tuple sheep (**0.2.13+**): **Enter** love, **Right** like, **Down** dismiss overlay, **Up/Back** exit — same map as Roku VoD. Configure **Titles** (`title_mode`, **0.2.12+**) as filename (default) or alias for a chrome-light caption. Vote sink URL/token live in add-on Configure (furnace zip can pre-fill). If Jellyfin is unreachable, **0.2.11+** shows **waiting for the furnace** on black and retries every 30 seconds (not a settings lecture). **0.2.14** leaves that wait when Kodi stops the screensaver, so the next idle cycle can start clean. Missing credentials still ask you to configure the add-on. Package **0.2.9+** re-fetches after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). If a sheep is **quarantined** while idle is running, 0.2.7+ drops that id, re-polls Jellyfin (rate-limited), and continues; **0.2.10** also dismisses Kodi's playback-failed dialog automatically.
+**Everyday use:** leave Kodi idle. Keys while idle **exit**, except in the last **7 seconds** of a non-tuple sheep (**0.2.13+**): **Enter** love, **Right** like, **Down** dismiss overlay, **Up/Back** exit — same map as Roku VoD. Configure **Titles** (`title_mode`, **0.2.12+**) as filename (default) or alias for a chrome-light caption. **0.2.15** posts that vote with `display_sink_token` when the add-on has one, otherwise the Jellyfin API key; the overlay still dismisses immediately. If Jellyfin is unreachable, **0.2.11+** shows **waiting for the furnace** on black and retries every 30 seconds (not a settings lecture). **0.2.14** leaves that wait when Kodi stops the screensaver, so the next idle cycle can start clean. Missing credentials still ask you to configure the add-on. Package **0.2.9+** re-fetches after a full mix ([Flock mix](#flock-mix-shuffle-wrap)). If a sheep is **quarantined** while idle is running, 0.2.7+ drops that id, re-polls Jellyfin (rate-limited), and continues; **0.2.10** also dismisses Kodi's playback-failed dialog automatically.
 
 **Upgrade (on the TV, no PC):** if the operator already dropped a new zip into Downloads, Kodi → **Add-ons → Install from zip file** → select the new `screensaver.jellyflam3.zip`. Jellyfin settings in add-on **Configure** are kept (`addon_data`).
 
@@ -179,11 +179,11 @@ Run Pi commands from `/opt/jellyflam3-server` unless noted.
 
 **Host:** one furnace Pi (`jellyflam3-display-sink` active) + two Roku devices. Same Jellyfin URL on both.
 
-1. **Capture a sink token on this Pi** (once per furnace) — [Display sink token](#display-sink-token-how--where--when). Print `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'`, paste into this furnace’s `secrets.env` as `DISPLAY_SINK_TOKEN=`, put the **same** string in each Roku’s registry `displaySinkToken`, then confirm the unit:
+1. Confirm `jellyflam3-display-sink` is active on this Pi — [Display sink token](#display-sink-token-how--where--when). A Channel Store Roku and an ordinary Kodi install send the Jellyfin API key they already use for playback. A furnace-built sideload may also carry `displaySinkToken` for operators. Then:
   ```bash
    systemctl is-active jellyflam3-display-sink   # expect: active (not activating)
   ```
-   Without that token the unit binds LAN `0.0.0.0:8791`, exits 2, and crash-loops. Do not copy another Pi’s token.
+   The unit crash-loops only when **both** `DISPLAY_SINK_TOKEN` and `JELLYFIN_API_KEY` are missing. Do not copy another Pi’s token.
 2. On **Roku A**: VoD Settings (same `baseUrl` as the Pi LAN) → **Fetch TV display**. Channel should report **Pi OK** and a `*.json` name.
 3. Repeat **Fetch TV display** on **Roku B**.
 4. On the Pi:
@@ -344,17 +344,23 @@ Full bring-up: [phase2/09_PI_FROM_SCRATCH.md](phase2/09_PI_FROM_SCRATCH.md) · s
 
 ### Display sink token (how / where / when)
 
-Households that use **Fetch TV display** or the vote overlay need `jellyflam3-display-sink` on the furnace. That unit binds LAN `0.0.0.0:8791`, so `DISPLAY_SINK_TOKEN` **must already be in this Pi’s** `secrets.env`. Generate it on the Pi; do not invent a short password and do not copy another furnace’s `secrets.env`.
+Households that use **Fetch TV display** or the vote overlay need `jellyflam3-display-sink` on the furnace (`0.0.0.0:8791`).
+
+**Store Roku and ordinary Kodi** authenticate those writes with the Jellyfin API key already configured for playback. That is the streamlined default. There is no token field on the Roku Settings screen, and a failed vote does not stay on screen.
+
+**`DISPLAY_SINK_TOKEN` is optional**, for power users on a furnace-built sideload. When that client has the token, it is sent instead of the API key. Generate it on this Pi; do not invent a short password and do not copy another furnace’s `secrets.env`. Channel Store zips are built with `--no-presets` and do not contain the token.
+
+**Limitation, for later reconsideration:** the Jellyfin API key can authorize vote and display-profile writes in addition to Jellyfin access. A dedicated sink token is the split if those should be separate again.
 
 
 |           |                                                                                                                                                                                                                                                                                                                                                                   |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **When**  | First bring-up, after `cp secrets.env.example secrets.env` and **before** `systemctl enable --now jellyflam3-display-sink`. Also if the unit is `activating` / crash-looping.                                                                                                                                                                                     |
-| **Where** | `/opt/jellyflam3-server/secrets.env` on **this** Pi, line `DISPLAY_SINK_TOKEN=…`. Same string on each Roku that talks to this Pi: registry section `JellyFlam3`, key `displaySinkToken` (VoD Settings has no token row).                                                                                                                                          |
-| **How**   | On the furnace: `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'` — print once, paste that line into `secrets.env`, then into the Roku registry. Then `sudo systemctl reset-failed jellyflam3-display-sink` (if it was looping) and `sudo systemctl restart jellyflam3-display-sink`. Expect `active` and `curl -sS http://127.0.0.1:8791/healthz`. |
+| **When**  | Optional, at first bring-up or when a power-user sideload should carry its own credential. Also if the unit is `activating` / crash-looping because **both** `DISPLAY_SINK_TOKEN` and `JELLYFIN_API_KEY` are empty.                                                                                                                                            |
+| **Where** | `/opt/jellyflam3-server/secrets.env` on **this** Pi. Furnace packaging copies a non-empty token into the private Roku preset `displaySinkToken` and the Kodi setting `display_sink_token`. VoD Settings has no token row.                                                                                                                                       |
+| **How**   | On the furnace: `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'` — print once, paste into `secrets.env` as `DISPLAY_SINK_TOKEN=`. Rebuild the sideload on that Pi so the preset picks it up. `sudo systemctl reset-failed jellyflam3-display-sink` if it was looping, then restart. Expect `active` and `curl -sS http://127.0.0.1:8791/healthz`. |
 
 
-Never commit `secrets.env`. Never paste the token into chat or issues. Detail: [phase2/04](phase2/04_ROKU_CHANNEL_POLISH.md) · crash-loop row in [Operator triage](#operator-triage).
+Never commit `secrets.env`. Never paste the token or the Jellyfin API key into chat or issues. Detail: [phase2/04](phase2/04_ROKU_CHANNEL_POLISH.md) · crash-loop row in [Operator triage](#operator-triage).
 
 ### Daily health (5 minutes)
 
@@ -386,8 +392,8 @@ python3 -m pytest tests/ -q             # ~3s unit suite on Pi
 
 ```bash
 systemctl is-active jellyflam3-worker jellyflam3-idlegate jellyfin
-# Guide 04 F: jellyflam3-display-sink — requires DISPLAY_SINK_TOKEN in secrets.env
-# (unique per furnace). Missing token crash-loops the unit (exit 2 / Restart=on-failure).
+# Guide 04 F: jellyflam3-display-sink — JELLYFIN_API_KEY is enough to bind 0.0.0.0.
+# DISPLAY_SINK_TOKEN is optional (power-user sideload). Both empty → exit 2 / crash-loop.
 sudo systemctl enable --now jellyflam3-idlegate jellyflam3-worker
 ```
 
@@ -964,7 +970,7 @@ Folder name must stay `screensaver.jellyflam3`.
 
 | Check        | How                                                                                                                      |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| Version      | Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → **Information** (version in `addon.xml`, currently **0.2.14**). |
+| Version      | Add-ons → My add-ons → Screensaver → JellyFlam3 Dreams → **Information** (version in `addon.xml`, currently **0.2.15**). |
 | Playback     | Set short wait time → **Activate screensaver** or wait; sheep MP4s should shuffle.                                       |
 | Idle gate    | On furnace Pi: `cat /var/lib/jellyflam3/idle_gate_status.json` → `"gate": "open"` while Kodi SS runs.                    |
 | Jellyfin IDs | On furnace: `python3 scripts/jellyfin_id_dump.py --items --limit 5` — item count should be > 0 when flock is seeded.     |
@@ -1184,7 +1190,7 @@ sudo ./scripts/enable_log_hygiene.sh --check
 | ------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `jellyflam3-worker`       | Claim, quality gate, `flam3-animate`, encode, ingest, quarantine                                        |
 | `jellyflam3-idlegate`     | Gate open/closed, `reason`, idle-delay hold                                                             |
-| `jellyflam3-display-sink` | Profile upserts and `POST /v1/sheep-votes` (token failures, crash-loop on missing `DISPLAY_SINK_TOKEN`) |
+| `jellyflam3-display-sink` | Profile upserts and `POST /v1/sheep-votes` (401 on a bad credential; crash-loop only when both `DISPLAY_SINK_TOKEN` and `JELLYFIN_API_KEY` are empty) |
 | `jellyfin`                | Sessions, Direct Play / transcode, Images API                                                           |
 | `jellyflam3-syncthing`    | Genome mesh serve (also Syncthing’s own log under `HOME=/var/lib/jellyflam3/syncthing`)                 |
 | `jellyflam3-peering`      | Oneshot layout / Opt In marker (not the live sync stream)                                               |
@@ -1267,7 +1273,7 @@ The duration chooser no longer rounds a runaway period LCM up to about twice the
 | Gate stuck closed                                                                | Status JSON `reason`; VoD open even on Home?                                                                                                                    | Stop VoD / wait `idle_delay_sec` (**600**). Screensaver does not close the gate                                                                                                                                                                                                                   |
 | `idle-gate closed; waiting 15s before backfill continues`                        | `cat /var/lib/jellyflam3/idle_gate_status.json`                                                                                                                 | 15s is the retry cap. `idle_delay` = 10 min hold after last TV-class activity; no `--skip-gate`                                                                                                                                                                                                   |
 | Worker quiet, gate open                                                          | `ls genomes/inbox/*.flam3`; `journalctl -u jellyflam3-worker`; [Furnace logs](#furnace-logs-triage-activity-history); `python3 -m pipeline.worker_drain status` | Seed inbox; inspect [quarantine](#when-a-sheep-is-isolated-or-removed); **cancel** drain if `drain: true`                                                                                                                                                                                         |
-| `jellyflam3-display-sink` crash-loop (`activating` / `NRestarts` climbing)       | journal: `DISPLAY_SINK_TOKEN required when binding a non-loopback host`                                                                                         | On **this** Pi: `python3 -c 'import secrets; print(secrets.token_urlsafe(32))'` → `DISPLAY_SINK_TOKEN=` in `secrets.env`; `systemctl reset-failed` + restart. Same string → Roku `displaySinkToken`. Do not copy another furnace. See [Display sink token](#display-sink-token-how--where--when). |
+| `jellyflam3-display-sink` crash-loop (`activating` / `NRestarts` climbing)       | journal: `DISPLAY_SINK_TOKEN or JELLYFIN_API_KEY required when binding a non-loopback host`                                                                                         | On **this** Pi, `secrets.env` needs `JELLYFIN_API_KEY` (the usual case) or an optional `DISPLAY_SINK_TOKEN`. `systemctl reset-failed` + restart. Do not copy another furnace. See [Display sink token](#display-sink-token-how--where--when). |
 | healthcheck exit 1                                                               | Read script sections (units, tools, status file, **peering share_live**, **library disk BAD**)                                                                  | See [offline peering](#opt-in-vs-share-live-do-not-confuse-them); `opt-in` or `opt-out`; free space on `/media/sheep`                                                                                                                                                                             |
 | Sheep disk WARN / BAD                                                            | `python3 -m pipeline.library_disk check`; `df -h /media/sheep`                                                                                                  | `python3 -m pipeline.library_disk rotate --apply`; arm daily cron with [Activate library rotate](#activate-library-rotate); Shears for one sheep; do not Hammer unless wiping the factory                                                                                                         |
 | Empty flock with commercial-safe on                                              | Items Tags missing                                                                                                                                              | `jellyfin_id_dump.py --items`; [private vs public](#private-vs-public-furnace) step 2                                                                                                                                                                                                             |

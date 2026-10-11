@@ -21,7 +21,7 @@ from typing import Any, Callable
 CLIENT_NAME = "JellyFlam3-Screensaver"
 CLIENT_DEVICE = "Kodi"
 CLIENT_DEVICE_ID = "jellyflam3-kodi-ss"
-CLIENT_VERSION = "0.2.14"
+CLIENT_VERSION = "0.2.15"
 # Poll interval while a Jellyfin read is in flight. Kodi kills a screensaver
 # script that has not returned within 5 seconds of StopScript.
 ABORT_POLL_SEC = 0.4
@@ -243,6 +243,14 @@ def vote_overlay_due(
     return 0.0 < remain <= float(threshold)
 
 
+def vote_credential(sink_token: str, api_key: str) -> str:
+    """Prefer an explicit sink token; otherwise the Jellyfin API key already configured."""
+    token = (sink_token or "").strip()
+    if token:
+        return token
+    return (api_key or "").strip()
+
+
 def post_sheep_vote(
     sink_url: str,
     token: str,
@@ -255,7 +263,7 @@ def post_sheep_vote(
         return {"ok": False, "error": "display_sink_url not set"}
     tok = (token or "").strip()
     if not tok:
-        return {"ok": False, "error": "display_sink_token not set"}
+        return {"ok": False, "error": "vote credential not set"}
     url = base + "/v1/sheep-votes"
     body = json.dumps(payload).encode("utf-8")
     headers = {

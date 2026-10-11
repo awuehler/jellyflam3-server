@@ -41,7 +41,7 @@ Keys **while the overlay is hidden** still **exit** the screensaver (Kodi wake).
 1. **Overlay timing** — watch loop shows hint when remaining ≤ 7 s, not dismissed this clip, not a tuple.
 2. **Key map** — as table; unmapped overlay keys still wake/exit.
 3. **POST** — background thread, same JSON as VoD (`stem`, `kind`, `itemId`, `mediaPath`, `deviceId`). Missing token logs and skips.
-4. **Settings** — `display_sink_url` (blank = derive), `display_sink_token`. Furnace pack fills token from `DISPLAY_SINK_TOKEN`.
+4. **Settings** — `display_sink_url` (blank = derive). `display_sink_token` when a furnace pack filled it; otherwise the vote uses the configured Jellyfin API key. The overlay still dismisses before the HTTP result.
 5. **Idle-gate** — still Client=`JellyFlam3-Screensaver`; vote HTTP is not a Playing session.
 
 ## Non-goals

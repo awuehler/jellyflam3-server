@@ -576,8 +576,7 @@ sub postDisplayProfileToPi(profile as object)
     updateFooter()
     return
   end if
-  token = m.registry.read("displaySinkToken")
-  if token = invalid then token = ""
+  token = sinkAuthToken(m.registry)
   m.sinkTask = createObject("roSGNode", "JellyfinTask")
   m.sinkTask.observeField("resultJson", "onDisplaySinkResult")
   m.sinkTask.command = "displayProfile"

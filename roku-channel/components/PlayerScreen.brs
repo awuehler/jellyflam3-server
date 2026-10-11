@@ -603,8 +603,7 @@ sub submitSheepVote(kind as string)
     deviceId: channelDeviceId()
   }
   sink = resolveDisplaySinkUrl()
-  token = m.registry.read("displaySinkToken")
-  if token = invalid then token = ""
+  token = sinkAuthToken(m.registry)
   task = createObject("roSGNode", "JellyfinTask")
   task.command = "sheepVote"
   task.displaySinkUrl = sink

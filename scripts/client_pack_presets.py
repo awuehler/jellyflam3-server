@@ -92,9 +92,19 @@ def _preset_str(value: Any) -> str:
 
 
 def normalize_roku_settings(settings: dict[str, Any]) -> dict[str, str]:
-    """Copy ROKU_KEYS; always persist shuffleFlock=true (household rotate policy)."""
+    """Copy ROKU_KEYS; always persist shuffleFlock=true (household rotate policy).
+
+    ``displaySinkToken`` is added only for a furnace sideload when
+    ``DISPLAY_SINK_TOKEN`` is set (or the settings dict already has one).
+    Channel Store packages use ``--no-presets`` and never write this file.
+    """
     out = {k: _preset_str(settings.get(k)) for k in ROKU_KEYS}
     out["shuffleFlock"] = "true"
+    token = (os.environ.get("DISPLAY_SINK_TOKEN") or "").strip()
+    if not token:
+        token = _preset_str(settings.get("displaySinkToken"))
+    if token:
+        out["displaySinkToken"] = token
     return out
 
 
@@ -198,6 +208,8 @@ def prepare_packaging(
         apply_kodi_settings(kodi_settings, settings)
         print(f"client_pack_presets: kodi settings -> {kodi_settings}")
     masked = {**settings, "apiKey": _mask_api_key(settings.get("apiKey", ""))}
+    if masked.get("displaySinkToken"):
+        masked["displaySinkToken"] = "***"
     print(f"client_pack_presets: baseUrl={masked.get('baseUrl')} userId={masked.get('userId')} libraryId={masked.get('libraryId')}")
     return True
 

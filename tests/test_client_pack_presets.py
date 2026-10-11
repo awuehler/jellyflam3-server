@@ -104,8 +104,9 @@ def test_apply_kodi_settings_sets_defaults(tmp_path: Path, monkeypatch: pytest.M
     assert 'default="sink-secret"' in text
 
 
-def test_write_roku_registry_dir(tmp_path: Path):
+def test_write_roku_registry_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     cpp = _import_presets()
+    monkeypatch.delenv("DISPLAY_SINK_TOKEN", raising=False)
     out = cpp.write_roku_registry_dir(
         tmp_path / "registry",
         {
@@ -122,6 +123,26 @@ def test_write_roku_registry_dir(tmp_path: Path):
     assert data["baseUrl"] == "http://example:8096"
     assert data["apiKey"] == "k"
     assert data["shuffleFlock"] == "true"
+    assert "displaySinkToken" not in data
+
+
+def test_roku_sideload_preset_includes_sink_token_when_set(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    cpp = _import_presets()
+    monkeypatch.setenv("DISPLAY_SINK_TOKEN", "sideload-only-token")
+    out = cpp.write_roku_registry_dir(
+        tmp_path / "registry",
+        {
+            "baseUrl": "http://example:8096",
+            "apiKey": "k",
+            "userId": "u",
+            "libraryId": "l",
+        },
+    )
+    data = json.loads(out.read_text(encoding="utf-8"))
+    assert data["displaySinkToken"] == "sideload-only-token"
+    assert data["apiKey"] == "k"
 
 
 def test_normalize_roku_settings_forces_shuffle_true():

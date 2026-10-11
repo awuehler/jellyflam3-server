@@ -117,8 +117,10 @@ def test_roku_packagers_exclude_all_numbered_source_art():
     sh = (ROOT / "scripts" / "package_roku_channel.sh").read_text(encoding="utf-8")
     assert r"-\d{2}\.png$" in ps1
     assert "NoPresets" in ps1
+    assert "(-not $NoPresets)" in ps1
     assert "images/*-[0-9][0-9].png" in sh
     assert "--no-presets" in sh
+    assert 'if [[ "$NO_PRESETS" -eq 0' in sh
     assert "p.stem[-2:].isdigit()" in sh
 
 
@@ -137,8 +139,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=53" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.53""' in text
+    assert "build_version=54" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.54""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
@@ -192,6 +194,22 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "m.top.setFocus(true)" in player
     assert "m.video.setFocus(true)" not in player
     assert 'command = "sheepVote"' in player
+    assert "token = sinkAuthToken(m.registry)" in player
+    assert "m.voteTask.observeField" not in player
+    assert "m.voteDismissed = true" in player
+    vote_at = player.index("sub submitSheepVote(kind as string)")
+    dismiss_at = player.index("m.voteDismissed = true", vote_at)
+    hide_at = player.index("hideVoteOverlay()", dismiss_at)
+    assert vote_at < dismiss_at < hide_at
+    presets = (VOD / "components" / "RegistryPresets.brs").read_text(encoding="utf-8")
+    assert "function sinkAuthToken(reg as object) as string" in presets
+    assert 'reg.read("displaySinkToken")' in presets
+    assert 'reg.read("apiKey")' in presets
+    assert '"displaySinkToken"' in presets
+    settings_xml = (VOD / "components" / "SettingsScreen.xml").read_text(encoding="utf-8")
+    player_xml = (VOD / "components" / "PlayerScreen.xml").read_text(encoding="utf-8")
+    assert "RegistryPresets.brs" in settings_xml
+    assert "RegistryPresets.brs" in player_xml
     assert "/v1/sheep-votes" in text
     assert "function postSheepVote() as object" in text
     assert "function probeReach() as object" in text
@@ -199,6 +217,9 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "m.sessionXfer = xfer" in text
     assert "/System/Info/Public" in text
     settings = (VOD / "components" / "SettingsScreen.brs").read_text(encoding="utf-8")
+    fields_line = next(line for line in settings.splitlines() if line.strip().startswith("m.fields"))
+    assert "displaySinkToken" not in fields_line
+    assert "token = sinkAuthToken(m.registry)" in settings
     assert "function shuffleFlockDefault() as boolean" in settings
     assert "return true" in settings
     assert 'if val = "" then shown = "true"' in settings

@@ -164,7 +164,7 @@ def test_drop_item_and_repoll_rate_limit():
     assert jf.should_repoll_flock(90.0, 100.0, min_sec=30.0) is False
     assert jf.should_repoll_flock(60.0, 100.0, min_sec=30.0) is True
     assert jf.FLOCK_REPOLL_MIN_SEC == 30.0
-    assert jf.CLIENT_VERSION == "0.2.14"
+    assert jf.CLIENT_VERSION == "0.2.15"
     assert jf.FLOCK_INDEX_CAP == 313
     assert jf.FLOCK_FETCH_LIMIT == 5000
     h = jf.auth_header("secret")
@@ -304,6 +304,12 @@ def test_stem_tuple_sink_and_vote_due():
     assert jf.vote_overlay_due(3.0, dismissed=False, is_tuple=True) is False
     assert jf.vote_overlay_due(0.0, dismissed=False, is_tuple=False) is False
     assert jf.VOTE_REMAIN_SEC == 7.0
+
+
+def test_vote_credential_prefers_sink_token_then_api_key():
+    assert jf.vote_credential("sink-secret", "jf-key") == "sink-secret"
+    assert jf.vote_credential("  ", "jf-key") == "jf-key"
+    assert jf.vote_credential("", "") == ""
 
 
 def test_post_sheep_vote_requires_sink_and_token():

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <component name="PlayerScreen" extends="Group">
+  <script type="text/brightscript" uri="RegistryPresets.brs" />
   <script type="text/brightscript" uri="PlayerScreen.brs" />
   <interface>
     <function name="playSheep" />

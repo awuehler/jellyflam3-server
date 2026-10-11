@@ -1,19 +1,22 @@
 """Purpose: LAN HTTP sink for display profiles and sidecar sheep votes.
 
-Requirements: Writable display_profiles dir; catalog media_library for votes;
-  DISPLAY_SINK_TOKEN in secrets.env when binding a non-loopback host (the systemd
-  unit uses 0.0.0.0). Missing token → exit 2; with Restart=on-failure that is a
-  crash loop. --allow-unauthenticated is lab-only and is not in the unit file.
+Requirements: Writable display_profiles dir; catalog media_library for votes.
+  A non-loopback bind (the systemd unit uses 0.0.0.0) needs DISPLAY_SINK_TOKEN
+  or JELLYFIN_API_KEY in secrets.env. Both missing → exit 2; with
+  Restart=on-failure that is a crash loop. --allow-unauthenticated is lab-only
+  and is not in the unit file.
 
 Usage:
   python3 -m pipeline.display_profile_sink --config configs/jellyflam3.yaml
   GET /healthz | GET/POST/PUT /v1/display-profiles | POST /v1/sheep-votes
-  (header X-JellyFlam3-Token when auth on)
+  (header X-JellyFlam3-Token: DISPLAY_SINK_TOKEN or the furnace Jellyfin API key)
 
 Assumptions: Profile POSTs upsert one file per client+deviceId. Vote POSTs rewrite
   that sheep's catalog sidecar ``viewer_feedback`` only (no /var/lib store).
-  Auth is fail-closed: empty token denies API writes unless --allow-unauthenticated.
-  Vote traffic is not a Jellyfin Sessions client (idle-gate safe).
+  Auth is fail-closed: a protected route needs a matching sink token or Jellyfin
+  API key unless --allow-unauthenticated. The Jellyfin key therefore also
+  authorizes these writes. Vote traffic is not a Jellyfin Sessions client
+  (idle-gate safe).
 """
 
 from __future__ import annotations
@@ -42,10 +45,34 @@ class _State:
     profiles_dir: Path = Path("/var/lib/jellyflam3/display_profiles")
     media_root: Path = Path("/media/sheep")
     token: str = ""
+    jellyfin_api_key: str = ""
     allow_unauthenticated: bool = False
 
 
 STATE = _State()
+
+
+def _secret_values() -> list[str]:
+    """Non-empty sink token and Jellyfin API key configured for this process."""
+    found: list[str] = []
+    for raw in (STATE.token, STATE.jellyfin_api_key):
+        text = (raw or "").strip()
+        if text and text not in found:
+            found.append(text)
+    return found
+
+
+def lan_bind_allowed(
+    *,
+    token: str,
+    jellyfin_api_key: str,
+    allow_unauthenticated: bool,
+    host_local: bool,
+) -> bool:
+    """True when a non-loopback bind has at least one credential, or lab flags apply."""
+    if host_local or allow_unauthenticated:
+        return True
+    return bool((token or "").strip() or (jellyfin_api_key or "").strip())
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -55,14 +82,31 @@ class Handler(BaseHTTPRequestHandler):
         sys.stderr.write("%s - %s\n" % (self.address_string(), fmt % args))
 
     def _check_token(self) -> bool:
-        """True when token matches, or lab ``allow_unauthenticated`` with no token set.
+        """True when the header matches the sink token or the Jellyfin API key.
 
-        Empty token without the lab flag denies protected routes (fail closed).
+        No credential is configured: lab ``allow_unauthenticated`` is the only
+        open path. An empty header never matches.
         """
-        if not STATE.token:
+        secrets = _secret_values()
+        if not secrets:
             return bool(STATE.allow_unauthenticated)
-        got = self.headers.get("X-JellyFlam3-Token") or ""
-        return got == STATE.token
+        got = (self.headers.get("X-JellyFlam3-Token") or "").strip()
+        if not got:
+            return False
+        return any(got == secret for secret in secrets)
+
+    def _discard_body(self) -> None:
+        """Read a rejected POST so the client can receive the status line."""
+        try:
+            length = int(self.headers.get("Content-Length") or "0")
+        except ValueError:
+            return
+        remaining = max(0, min(length, 256_000))
+        while remaining > 0:
+            chunk = self.rfile.read(min(remaining, 65536))
+            if not chunk:
+                break
+            remaining -= len(chunk)
 
     def _send(self, code: int, body: dict[str, Any] | list[Any]) -> None:
         raw = json.dumps(body, indent=2).encode("utf-8")
@@ -120,6 +164,7 @@ class Handler(BaseHTTPRequestHandler):
     def _sheep_vote(self) -> None:
         """POST handler: increment sidecar viewer_feedback (unlimited re-vote)."""
         if not self._check_token():
+            self._discard_body()
             self._send(401, {"ok": False, "error": "unauthorized"})
             return
         try:
@@ -149,6 +194,7 @@ class Handler(BaseHTTPRequestHandler):
             self._send(404, {"ok": False, "error": "not found"})
             return
         if not self._check_token():
+            self._discard_body()
             self._send(401, {"ok": False, "error": "unauthorized"})
             return
         try:
@@ -191,13 +237,20 @@ def main(argv: list[str] | None = None) -> int:
     root = Path(__file__).resolve().parents[1]
     load_dotenv(root / "secrets.env")
     STATE.token = os.environ.get("DISPLAY_SINK_TOKEN") or ""
+    STATE.jellyfin_api_key = os.environ.get("JELLYFIN_API_KEY") or ""
     STATE.allow_unauthenticated = bool(args.allow_unauthenticated)
 
     host_local = args.host in ("127.0.0.1", "localhost", "::1")
-    if not STATE.token and not STATE.allow_unauthenticated and not host_local:
+    if not lan_bind_allowed(
+        token=STATE.token,
+        jellyfin_api_key=STATE.jellyfin_api_key,
+        allow_unauthenticated=STATE.allow_unauthenticated,
+        host_local=host_local,
+    ):
         print(
-            "ERROR: DISPLAY_SINK_TOKEN required when binding a non-loopback host "
-            "(set secrets.env or pass --allow-unauthenticated for lab-only open access)",
+            "ERROR: DISPLAY_SINK_TOKEN or JELLYFIN_API_KEY required when binding "
+            "a non-loopback host (set secrets.env or pass --allow-unauthenticated "
+            "for lab-only open access)",
             file=sys.stderr,
             flush=True,
         )
@@ -218,12 +271,12 @@ def main(argv: list[str] | None = None) -> int:
     except (KeyError, TypeError, ValueError):
         STATE.media_root = Path("/media/sheep")
 
-    if STATE.token:
+    if _secret_values():
         auth = "on"
     elif STATE.allow_unauthenticated:
         auth = "off(allow-unauthenticated)"
     else:
-        auth = "fail-closed(no token)"
+        auth = "fail-closed(no credential)"
 
     httpd = ThreadingHTTPServer((args.host, args.port), Handler)
     print(
