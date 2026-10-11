@@ -9,7 +9,9 @@ Assumptions: Single-threaded; sheep tax then TV-port then active artistic-qualit
   desaturated jobs quarantine before publication. Tuple genomes keep both flames
   through sheep tax, render three sequence stages, watermark the middle edge, and
   quarantine when the file is not that three-stage length. Successful genomes
-  archive to genomes_done.
+  archive to genomes_done. A pedigree breed sidecar travels with that genome:
+  success copies lineage onto the catalog sidecar and removes the inbox file;
+  quarantine keeps the file beside the genome. Startup reaps inbox leftovers.
   Drain flag (pipeline.worker_drain) skips the next inbox claim after the current job.
   Inbox claim order is FIFO (pipeline.inbox_queue), not filename / ASCII order.
 """
@@ -117,8 +119,19 @@ def install_catalog_mp4(out_tmp: Path, dest: Path) -> None:
     shutil.move(str(out_tmp), str(dest))
 
 
-def quarantine_genome(src: Path, quarantine: Path, *, remove_src: bool = False) -> Path:
-    """Copy ``src`` into quarantine; raise if the copy cannot be written."""
+def quarantine_genome(
+    src: Path,
+    quarantine: Path,
+    *,
+    remove_src: bool = False,
+    sidecar_dirs: tuple[Path, ...] = (),
+) -> Path:
+    """Copy ``src`` into quarantine; raise if the copy cannot be written.
+
+    When ``remove_src`` is set, a pedigree breed sidecar beside ``src`` (or under
+    ``sidecar_dirs``) moves next to the quarantined genome. A copy that leaves
+    the source genome in place leaves the sidecar with it.
+    """
     quarantine.mkdir(parents=True, exist_ok=True)
     dest = quarantine / src.name
     if dest.exists():
@@ -132,6 +145,12 @@ def quarantine_genome(src: Path, quarantine: Path, *, remove_src: bool = False) 
             src.unlink(missing_ok=True)
         except OSError as exc:
             raise RuntimeError(f"quarantine remove failed for {src}: {exc}") from exc
+        try:
+            from pipeline.breed import park_pedigree_sidecar
+
+            park_pedigree_sidecar(src, dest, *sidecar_dirs)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("pedigree sidecar quarantine failed for %s: %s", src.name, exc)
     return dest
 
 
@@ -161,6 +180,12 @@ def claim_inbox_genome(src: Path, work: Path, inbox: Path) -> Path:
             shutil.move(str(src_res), str(claimed))
         except OSError as move_exc:
             raise RuntimeError(f"inbox claim failed for {src.name}: {move_exc}") from move_exc
+    try:
+        from pipeline.breed import take_pedigree_sidecar
+
+        take_pedigree_sidecar(src_res, claimed)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("pedigree sidecar claim failed for %s: %s", src_res.name, exc)
     return claimed
 
 
@@ -530,8 +555,10 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
     }
     _write_job_state(work, state)
 
+    sidecar_search: tuple[Path, ...] = ()
     try:
         inbox = resolve_path(cfg, "genomes_inbox")
+        sidecar_search = (inbox,)
         claimed = claim_inbox_genome(src, work, inbox)
         state["claimed"] = claimed != src
         src = claimed
@@ -554,7 +581,12 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
                 "ok": tax.get("ok"),
             }
             if not tax.get("ok"):
-                quarantine_genome(src, quarantine, remove_src=bool(state.get("claimed")))
+                quarantine_genome(
+                    src,
+                    quarantine,
+                    remove_src=bool(state.get("claimed")),
+                    sidecar_dirs=sidecar_search,
+                )
                 raise RuntimeError(
                     f"sheep tax quarantine: {[i.get('code') for i in (tax.get('issues') or [])]}"
                 )
@@ -905,12 +937,25 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
         except Exception as exc:  # noqa: BLE001
             log.warning("refactor history merge failed for %s: %s", dest, exc)
 
+        pedigree_side = None
+        try:
+            from pipeline.breed import adopt_pedigree_lineage
+
+            pedigree_side = adopt_pedigree_lineage(sidecar, src, inbox)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("pedigree lineage merge failed for %s: %s", dest, exc)
+            pedigree_side = None
+
         (dest_dir / f"{base}.jellyflam3.json").write_text(
             json.dumps(sidecar, indent=2), encoding="utf-8"
         )
         ensure_catalog_file_mode(dest)
         ensure_catalog_file_mode(poster_path_for_mp4(dest))
         ensure_catalog_file_mode(dest_dir / f"{base}.jellyflam3.json")
+        if pedigree_side is not None:
+            from pipeline.breed import release_pedigree_sidecar
+
+            release_pedigree_sidecar(pedigree_side, inbox, work)
 
         state.update({"state": "ingested", "dest": str(dest), "duration_sec": dur, "tags": tags})
         _write_job_state(work, state)
@@ -926,7 +971,12 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
         _write_job_state(work, state)
         if src.is_file():
             try:
-                quarantine_genome(src, quarantine, remove_src=bool(state.get("claimed")))
+                quarantine_genome(
+                    src,
+                    quarantine,
+                    remove_src=bool(state.get("claimed")),
+                    sidecar_dirs=sidecar_search,
+                )
             except RuntimeError as qexc:
                 log.error("%s", qexc)
                 state["quarantine_error"] = str(qexc)
@@ -946,6 +996,13 @@ def poll_inbox(cfg: dict[str, Any]) -> None:
         actions = reclaim_orphans(cfg, startup=False, requeue=wr.get("requeue_orphans", True))
         n = sum(1 for a in actions if a.outcome in ("orphaned", "superseded"))
         log.info("startup orphan reclaim: %s job(s)", n)
+    try:
+        from pipeline.breed import reap_orphaned_pedigree_sidecars
+
+        n_side = reap_orphaned_pedigree_sidecars(cfg)
+        log.info("startup pedigree sidecar reap: %s", n_side)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("pedigree sidecar reap failed: %s", exc)
     log.info("watching inbox %s (fifo %s)", inbox, ledger)
     last_drain_log = 0.0
     while True:

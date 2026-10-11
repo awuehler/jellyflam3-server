@@ -12,6 +12,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- A pedigree breed sidecar no longer stays in `genomes/inbox` after the genome leaves. Success copies `origin`, `method`, `parents`, `generation`, `bred_at`, and `cross_method` onto the catalog sidecar and removes the inbox file. Worker quarantine, sheep tax, and refactor quarantine move the file with the genome. Job recovery puts it back on a requeued genome. Worker startup reaps inbox leftovers whose genome is already gone. Re-furnace keeps the lineage keys.
+
 - Operator commands accept a catalog alias or a filename stem: `sheep_naming` `set-alias`, `clear-alias`, and `show`; Shears `delete`; refactor `report`, `preview`, `apply`, and `quarantine`; sheep votes `apply`, `show`, and `sweep` (and `POST /v1/sheep-votes`). `backfill --push-jellyfin` refreshes the Jellyfin Overview `Alias:` line for every catalog sheep that already has an alias, including when no new alias was written.
 
 - Archive genome downloads are stored as LF. A CRLF file already in the archive cache is rewritten in place, and Git checks out `*.flam3` with LF.

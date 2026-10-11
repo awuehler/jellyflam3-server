@@ -86,12 +86,23 @@ def _move_tree(src: Path, dest: Path, *, dry_run: bool) -> str:
 
 
 def _genome_companions(genome: Path) -> list[Path]:
+    """Integrity files plus a pedigree breed sidecar sitting beside ``genome``."""
+    found: list[Path] = []
     try:
         from pipeline.share_security import companion_integrity_paths
 
-        return [p for p in companion_integrity_paths(genome) if p.is_file()]
+        found.extend(p for p in companion_integrity_paths(genome) if p.is_file())
     except Exception:  # noqa: BLE001
-        return []
+        pass
+    try:
+        from pipeline.breed import locate_pedigree_sidecar
+
+        side = locate_pedigree_sidecar(genome)
+        if side is not None and side not in found:
+            found.append(side)
+    except Exception:  # noqa: BLE001
+        pass
+    return found
 
 
 @dataclass

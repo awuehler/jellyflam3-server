@@ -415,6 +415,12 @@ def tax_path(
         try:
             shutil.move(str(path), str(dest))
             result["quarantine_path"] = str(dest)
+            try:
+                from pipeline.breed import park_pedigree_sidecar
+
+                park_pedigree_sidecar(path, dest)
+            except Exception as exc:  # noqa: BLE001
+                log.warning("pedigree sidecar quarantine failed for %s: %s", path.name, exc)
         except OSError as exc:
             result["issues"] = list(result.get("issues") or []) + [
                 _issue("quarantine_move_failed", str(exc), severity="error")

@@ -113,11 +113,16 @@ def merge_reserved_sidecar_keys(
 
     Tuple ingest writes ``type`` / ``from_id`` / ``to_id`` / ``watermark`` first so
     those stay from this encode. Loops (and tuples) keep ``alias`` /
-    ``viewer_feedback`` across Shears-modify / re-furnace.
+    ``viewer_feedback`` across Shears-modify / re-furnace. Pedigree lineage
+    (``origin``, ``method``, ``parents``, ``generation``, ``bred_at``,
+    ``cross_method``) is kept the same way once ingest has copied it off the
+    breed sidecar.
     """
     if not prior:
         return sidecar
-    for key in SIDECAR_RESERVED_KEYS:
+    from pipeline.breed import PEDIGREE_LINEAGE_KEYS
+
+    for key in tuple(SIDECAR_RESERVED_KEYS) + PEDIGREE_LINEAGE_KEYS:
         if key in sidecar:
             continue
         if key in prior:

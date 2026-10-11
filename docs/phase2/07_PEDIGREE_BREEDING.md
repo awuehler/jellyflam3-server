@@ -27,6 +27,7 @@ Cross `method` values from flam3: `alternate` | `interpolate` | `union`.
 - **Multi-flame / edge parents:** default **strip_to_first**; optional **reject** via `breed.multi_flame` — catalog stays single-sheep closed loops.
 - Stage into worker inbox; smoke `--once` before bulk.
 - **After successful render:** worker **archives** the inbox `.flam3` to `paths.genomes_done` (default `genomes/done`) — pedigree parent pool. Failures still go to `genomes_quarantine`. Do not delete rendered parents.
+- **Breed sidecar:** `write_pedigree_sidecar` writes `{stem}.jellyflam3.json` beside the inbox genome (`origin: local_pedigree`, `method`, `parents`, `generation`, `bred_at`, optional `cross_method`). Claim moves that file into the job directory with the genome. On success the worker copies those lineage keys onto the catalog sidecar, then deletes the breed file. Re-furnace keeps them. Quarantine (worker, sheep tax, refactor) moves the file with the genome. Job recovery puts it back on a requeued genome, or onto the catalog when that job is superseded. Worker startup reaps an inbox file whose genome is already gone: publish onto the catalog when the MP4 exists, otherwise park it beside the genome in quarantine or done. A genome still waiting in the inbox keeps its file. Git `genomes/pedigree` sidecars are not deleted.
 
 ## Implementation
 

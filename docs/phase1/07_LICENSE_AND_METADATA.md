@@ -162,7 +162,7 @@ File: `{stem}.jellyflam3.json` next to the catalog MP4. Code list: `pipeline.sti
 
 **Readers keep extra keys.** `load_sidecar` / `write_sidecar` (stills, stills-style backfill, refactor history) load–mutate–write and do not strip unknown JSON.
 
-**Worker ingest rebuilds known fields** (`id`, license/tags, duration, …) and merges `refactor[]`. Reserved Phase 4 keys on the **previous** sidecar are copied unless this encode already wrote them: **tuples** write `type`, `from_id`, `to_id`, `watermark`, and `segments` from this ingest (those reserved keys are not copied). Loops keep `viewer_feedback`, `alias`, and `alias_source` across Shears-modify / re-furnace. Do not treat a loop re-ingest as a full JSON merge — non-reserved extras are still dropped.
+**Worker ingest rebuilds known fields** (`id`, license/tags, duration, …) and merges `refactor[]`. Reserved Phase 4 keys on the **previous** sidecar are copied unless this encode already wrote them: **tuples** write `type`, `from_id`, `to_id`, `watermark`, and `segments` from this ingest (those reserved keys are not copied). Loops keep `viewer_feedback`, `alias`, and `alias_source` across Shears-modify / re-furnace. Pedigree lineage (`origin`, `method`, `parents`, `generation`, `bred_at`, `cross_method`) is copied the same way once the breed inbox sidecar has been absorbed. Do not treat a loop re-ingest as a full JSON merge — other extras are still dropped.
 
 ### Shipped fields (worker / poster pipeline write today)
 
@@ -180,6 +180,7 @@ File: `{stem}.jellyflam3.json` next to the catalog MP4. Code list: `pipeline.sti
 | `jellyfin_stills` | flock artwork | Backdrop upload status (non-tuple). Disk frames are not Backdrops until `uploaded` |
 | `refactor` | worker merge / refactor | Pathway history array |
 | `stills` / `screensaver_safe` | poster pipeline / stills | Screensaver frame index; never written for tuples |
+| `origin`, `method`, `parents`, `generation`, `bred_at`, `cross_method` | worker, from the breed inbox sidecar | Lineage for a local pedigree child. Copied onto this catalog sidecar when the render succeeds; the inbox file is then removed. Kept on re-ingest. A quarantine moves that inbox file with the genome instead |
 
 ### Reserved Phase 4 keys (names locked; vote sink shipped)
 

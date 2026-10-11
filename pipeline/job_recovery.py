@@ -239,6 +239,32 @@ def _ensure_inbox(cfg: dict[str, Any], job: JobRecord, *, dry_run: bool) -> str 
     return dest_name
 
 
+def _settle_job_pedigree(
+    cfg: dict[str, Any],
+    job: JobRecord,
+    *,
+    catalog: Path | None,
+    requeued: str | None,
+) -> None:
+    """Move a claimed breed sidecar back to the inbox, or onto the catalog."""
+    from pipeline.breed import settle_pedigree_after_recovery
+
+    inbox = resolve_path(cfg, "genomes_inbox")
+    try:
+        quarantine = resolve_path(cfg, "genomes_quarantine")
+    except Exception:  # noqa: BLE001
+        quarantine = None
+    dest = (inbox / requeued) if requeued else None
+    settle_pedigree_after_recovery(
+        catalog_mp4=catalog,
+        job_src=job.src,
+        job_dir=job.path.parent,
+        inbox=inbox,
+        requeued_flam3=dest,
+        quarantine=quarantine,
+    )
+
+
 def reclaim_job(
     cfg: dict[str, Any],
     job: JobRecord,
@@ -263,6 +289,8 @@ def reclaim_job(
         data["state"] = "superseded"
         data["orphan_reason"] = f"catalog already has {catalog.name}; dropped stale in-flight job"
         _write_job(job, data, dry_run=dry_run)
+        if not dry_run:
+            _settle_job_pedigree(cfg, job, catalog=catalog, requeued=None)
         return ReclaimAction(
             job_id=job.job_id,
             previous_state=previous,
@@ -286,6 +314,9 @@ def reclaim_job(
 
     if should_requeue:
         requeued = _ensure_inbox(cfg, job, dry_run=dry_run)
+
+    if not dry_run:
+        _settle_job_pedigree(cfg, job, catalog=None, requeued=requeued)
 
     data["state"] = "orphaned"
     data["orphan_reason"] = "in-flight job with no live worker/process; frames discarded (no resume)"

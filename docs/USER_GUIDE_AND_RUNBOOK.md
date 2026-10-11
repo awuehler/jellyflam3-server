@@ -488,6 +488,8 @@ python3 -m pipeline.breed cross --parent0 ... --parent1 ... --method alternate
 python3 -m pipeline.worker --config configs/jellyflam3.yaml --once path/to/new.flam3
 ```
 
+Breed writes `{stem}.jellyflam3.json` next to the inbox genome (`origin`, `method`, `parents`, `bred_at`). A successful render copies that lineage onto the catalog sidecar and removes the inbox file. Worker quarantine, sheep tax, and refactor quarantine move the file with the genome. On startup the worker also clears an inbox pedigree JSON whose genome is already gone. A sheep still waiting in the inbox keeps its file.
+
 **Scheduled feedstock (cron on Pi):**
 
 
