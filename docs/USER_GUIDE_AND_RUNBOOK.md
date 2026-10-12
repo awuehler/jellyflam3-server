@@ -5,7 +5,7 @@ One document, **three layers**. Pick your layer and stay there — you should no
 
 | Layer                                                | Audience                    | You want to…                                                                                                            |
 | ---------------------------------------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **[Layer 1 — End user](#layer-1--end-user)**         | Household / viewer          | Watch ambient loops, use Roku or Kodi screensaver, fix “nothing plays” without SSH                                      |
+| **[Layer 1 — End user](#layer-1--end-user)**         | Household / viewer          | Watch ambient loops, use Roku or Kodi screensaver, request an archive sheep, fix “nothing plays” without SSH             |
 | **[Worked examples](#worked-examples)**              | Viewer + operator           | First-evening stories (VoD gate, screensaver, two Rokus, peer receive, drain, vote/share, **vote sweep**, **vote top**) |
 | **[Layer 2 — Operator](#layer-2--operator-runbook)** | Pi owner / homelab operator | Keep the flock healthy, seed/breed/delete sheep, peering, health gates, fleet updates, **private ↔ public**             |
 | **[Layer 3 — Contributor](#layer-3--contributor)**   | Developer / maintainer      | Run tests, change pipeline code, CI, deploy conventions                                                                 |
@@ -105,7 +105,43 @@ If a sheep disappears mid-session (quarantine / Shears), the client **drops that
 | Gold Sheep / paid ES masters | **Never** ingested — personal viewing only                                                                |
 
 
+### Request an archive sheep
 
+Browse the public [Electric Sheep archives](https://electricsheep.com/archives/) and pick a flock you want on the TV. The furnace fetches genomes from generations **247, 245, 244, 243, 242, 198, 191, 169, and 165**. Each flock’s best pages are `1.html`, `2.html`, and `3.html`. [Generation 247, page 1](https://electricsheep.com/archives/generation-247/best/page/1.html) is a typical gallery of thumbnails.
+
+Click a thumbnail. The page title is the flock number (`flock 247`), and the address bar ends in `sheep/<id>/view.html`. That pair is the id you request. The first thumbnail on the generation-247 page is sheep **18817**, so the id is `247.18817`. `247.505` and `electricsheep.247.00505` are the same sheep; leading zeros do not change it.
+
+On the furnace, from `/opt/jellyflam3-server`:
+
+**One sheep:**
+
+```bash
+cd /opt/jellyflam3-server
+python3 -m pipeline.seed_inbox --sheep 247.18817
+```
+
+**Several sheep:** write a text file, one sheep per line. Blank lines and lines that start with `#` are ignored. A line may list several ids separated by commas.
+
+```text
+# evening picks
+247.18817
+245.00061
+243.16930, 242.100
+```
+
+```bash
+python3 -m pipeline.seed_inbox --from-file sheep.txt
+```
+
+Use both when you have a short list and a file. The `--sheep` ids are queued first, then the file from top to bottom. `--dry-run` prints that queue and does not download.
+
+```bash
+python3 -m pipeline.seed_inbox --sheep 247.18817 --from-file sheep.txt --dry-run
+```
+
+**What to expect.** The command downloads each genome and places it at the end of the waiting line. Sheep already in the inbox stay ahead of it, in the order they arrived. Inside this request, the order you wrote is the order they wait. The worker renders one genome at a time, oldest first. Your sheep starts when everything ahead of it has been claimed, the TV is idle ([idle gate](#idle-gate-behavior) open), and the furnace is not paused ([drain](#worker-drain-pause-before-next-sheep) off). The render still takes hours. The loop appears in Jellyfin when that job finishes, and on the TV after the current mix wraps ([Flock mix](#flock-mix-shuffle-wrap)).
+
+The command prints `staged`, `skip`, or `fail` for each id. A sheep already in the library, or already waiting in the inbox, is skipped and named, and the command still succeeds. A bad id or a failed download is named, the rest of the list still runs, and the command exits with an error.
 
 ### Channel splash and icon (optional)
 
@@ -478,7 +514,7 @@ The first time that ledger is created, genomes already in the inbox are ordered 
 
 The enqueue stamp is the arrival time used for a batch, including when a copy would otherwise keep an older source mtime. The running `jellyflam3-worker` process loads this order at start, so a unit restart (after drain reaches `phase=idle`) is what picks it up.
 
-**Manual seed (archive Free Sheep):**
+**Manual seed (archive Free Sheep):** how to pick ids from the galleries is in [Request an archive sheep](#request-an-archive-sheep).
 
 ```bash
 python3 -m pipeline.seed_inbox --config configs/jellyflam3.yaml \
