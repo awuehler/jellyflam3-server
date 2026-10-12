@@ -1,10 +1,10 @@
 """Purpose: Stage .flam3 genomes into the worker inbox for ingest.
 
-Requirements: configs/jellyflam3.yaml; optional flam3-genome; archive_seed for --archive.
+Requirements: configs/jellyflam3.yaml; optional flam3-genome; archive_seed for --archive and --sheep.
 
-Usage: ``python3 -m pipeline.seed_inbox`` with PATH(s), --samples, --archive, --generate, and/or --mutate.
+Usage: ``python3 -m pipeline.seed_inbox`` with PATH(s), --samples, --archive, --sheep, --from-file, --generate, and/or --mutate.
 
-Assumptions: Feedstock = local samples/paths, flam3-genome random|mutate, or Electric Sheep archive pick + TV-port; inbox names via sheep_names.
+Assumptions: Feedstock = local samples/paths, flam3-genome random|mutate, Electric Sheep archive pick, or a named archive id list + TV-port; inbox names via sheep_names. Named sheep are stamped in request order and append to the FIFO ledger.
 """
 
 from __future__ import annotations
@@ -14,10 +14,21 @@ import logging
 import random
 import shutil
 import subprocess
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
 
-from pipeline.archive_seed import default_fetch_count, ensure_manifest, materialize_sheep, pick_random
+from pipeline.archive_seed import (
+    ArchiveSheep,
+    ArchiveSheepTokenError,
+    default_fetch_count,
+    ensure_manifest,
+    materialize_sheep,
+    parse_archive_sheep_token,
+    pick_random,
+    sheep_tokens_from_text,
+    split_sheep_tokens,
+)
 from pipeline.config import load_config, resolve_path
 from pipeline.inbox_queue import stamp_inbox_arrival
 from pipeline.tool_lookup import tool as _tool
@@ -212,6 +223,110 @@ def stage_archive(
     return staged
 
 
+@dataclass
+class NamedArchiveReport:
+    """Outcome of one specific-sheep request. Skips are not failures."""
+
+    staged: list[Path] = field(default_factory=list)
+    skipped: list[tuple[str, str]] = field(default_factory=list)
+    failed: list[tuple[str, str]] = field(default_factory=list)
+
+
+def collect_sheep_tokens(
+    sheep_args: Iterable[str] | None = None,
+    from_file: Path | None = None,
+) -> list[str]:
+    """``--sheep`` tokens first, then ``--from-file`` lines, both in given order."""
+    tokens: list[str] = []
+    for chunk in sheep_args or ():
+        tokens.extend(split_sheep_tokens(chunk))
+    if from_file is not None:
+        tokens.extend(sheep_tokens_from_text(from_file.read_text(encoding="utf-8")))
+    return tokens
+
+
+def stage_named_archive(
+    cfg: dict[str, Any],
+    tokens: Iterable[str],
+    *,
+    tv_port: bool = True,
+    dry_run: bool = False,
+    force: bool = False,
+    skip_catalog: bool = True,
+) -> NamedArchiveReport:
+    """Fetch named archive sheep and append them to the inbox FIFO, in list order.
+
+    A sheep already in the catalog or already in the inbox is skipped. ``--force``
+    replaces an inbox file. A bad id or a failed download is recorded and the
+    rest of the list still runs. Dry-run does not fetch.
+    """
+    report = NamedArchiveReport()
+    inbox = resolve_path(cfg, "genomes_inbox")
+    seen: set[tuple[int, int]] = set()
+    for token in tokens:
+        try:
+            sheep = parse_archive_sheep_token(token)
+        except ArchiveSheepTokenError as exc:
+            report.failed.append((token, str(exc)))
+            log.warning("archive id rejected: %s", exc)
+            continue
+        key = (sheep.generation, sheep.sheep_id)
+        if key in seen:
+            report.skipped.append((sheep.filename, "duplicate in this request"))
+            log.info("skip (duplicate in this request): %s", sheep.filename)
+            continue
+        seen.add(key)
+        _stage_one_named(
+            cfg,
+            sheep,
+            inbox,
+            report,
+            tv_port=tv_port,
+            dry_run=dry_run,
+            force=force,
+            skip_catalog=skip_catalog,
+        )
+    return report
+
+
+def _stage_one_named(
+    cfg: dict[str, Any],
+    sheep: ArchiveSheep,
+    inbox: Path,
+    report: NamedArchiveReport,
+    *,
+    tv_port: bool,
+    dry_run: bool,
+    force: bool,
+    skip_catalog: bool,
+) -> None:
+    name = sheep.filename
+    if skip_catalog and catalog_mp4_exists(cfg, name):
+        report.skipped.append((name, "catalog exists"))
+        log.info("skip (catalog exists): %s", name)
+        return
+    dest = inbox / name
+    if dest.exists() and not force:
+        report.skipped.append((name, "already in inbox"))
+        log.info("skip (already in inbox): %s", name)
+        return
+    if dry_run:
+        log.info("dry-run would fetch+stage %s (tv_port=%s)", sheep.name, tv_port)
+        report.staged.append(dest)
+        return
+    try:
+        local = materialize_sheep(sheep, cfg, tv_port=tv_port)
+    except Exception as exc:  # noqa: BLE001
+        report.failed.append((name, str(exc)))
+        log.warning("archive fetch failed for %s: %s", sheep.name, exc)
+        return
+    out = stage_file(local, inbox, dry_run=False, force=force, move=False)
+    if out is None:
+        report.failed.append((name, "inbox stage returned no file"))
+        return
+    report.staged.append(out)
+
+
 def run(
     cfg: dict[str, Any],
     *,
@@ -326,6 +441,25 @@ def main(argv: list[str] | None = None) -> int:
         help="Alias for --count when using --archive (limit random downloads)",
     )
     p.add_argument(
+        "--sheep",
+        action="append",
+        default=None,
+        help=(
+            "Comma-separated archive ids to fetch and append to the inbox FIFO. "
+            "Example: 247.00505,245.61 or electricsheep.247.505"
+        ),
+    )
+    p.add_argument(
+        "--from-file",
+        type=Path,
+        default=None,
+        metavar="FILE",
+        help=(
+            "Text file of archive ids, one sheep per line. Blank lines and # comments "
+            "are ignored. A line may contain commas. Queued after --sheep."
+        ),
+    )
+    p.add_argument(
         "--generate",
         type=int,
         default=0,
@@ -354,6 +488,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--dry-run", action="store_true", help="Print actions only")
     args = p.parse_args(argv)
 
+    asked_named = bool(args.sheep) or args.from_file is not None
     if not any(
         [
             args.paths,
@@ -363,11 +498,21 @@ def main(argv: list[str] | None = None) -> int:
             args.mutate,
             args.archive,
             args.refresh_manifest,
+            asked_named,
         ]
     ):
         p.error(
-            "provide PATH(s), --samples / --all-samples, --archive, --generate N, and/or --mutate SEED"
+            "provide PATH(s), --samples / --all-samples, --archive, --sheep, "
+            "--from-file, --generate N, and/or --mutate SEED"
         )
+
+    if args.from_file is not None and not args.from_file.is_file():
+        raise SystemExit(f"sheep list not found: {args.from_file}")
+    sheep_tokens: list[str] = []
+    if asked_named:
+        sheep_tokens = collect_sheep_tokens(args.sheep, args.from_file)
+        if not sheep_tokens:
+            p.error("no sheep ids in --sheep or --from-file")
 
     cfg_path = Path(args.config)
     if not cfg_path.is_file():
@@ -389,9 +534,23 @@ def main(argv: list[str] | None = None) -> int:
 
         pool = ensure_manifest(cfg, refresh=True)
         print(f"manifest {default_manifest_path(cfg)} count={len(pool)}")
-        return 0
+        if not sheep_tokens and not any(
+            [args.paths, args.samples, args.all_samples, args.generate, args.mutate]
+        ):
+            return 0
 
-    staged = run(
+    named = NamedArchiveReport()
+    if sheep_tokens:
+        named = stage_named_archive(
+            cfg,
+            sheep_tokens,
+            tv_port=not args.no_tv_port,
+            dry_run=args.dry_run,
+            force=args.force,
+            skip_catalog=args.skip_catalog,
+        )
+
+    staged = named.staged + run(
         cfg,
         paths=args.paths,
         use_samples=args.samples or args.all_samples,
@@ -408,9 +567,13 @@ def main(argv: list[str] | None = None) -> int:
         skip_catalog=args.skip_catalog,
     )
     print(f"staged {len(staged)} genome(s) into {resolve_path(cfg, 'genomes_inbox')}")
-    for d in staged:
-        print(d)
-    return 0
+    for dest in staged:
+        print(f"staged {dest}")
+    for name, reason in named.skipped:
+        print(f"skip {name}: {reason}")
+    for token, reason in named.failed:
+        print(f"fail {token}: {reason}")
+    return 1 if named.failed else 0
 
 
 if __name__ == "__main__":

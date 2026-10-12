@@ -27,7 +27,7 @@ Architecture SoT: [Pi5_Flam3_VoD_Pipeline.md](../Pi5_Flam3_VoD_Pipeline.md) (re-
 
 Treat as prerequisites; polish only where guides say so:
 
-- Archive seed picker (`python -m pipeline.seed_inbox --archive`)
+- Archive seed picker (`python -m pipeline.seed_inbox --archive`), plus named requests (`--sheep`, `--from-file`)
 - TV-port 16:9 + Gold Sheep Lite + OkLCh complementary tint
 - `scripts/status_report.sh`
 

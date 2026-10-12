@@ -51,6 +51,31 @@ def test_archive_sheep_filename():
     assert ArchiveSheep(244, 128).filename == "electricsheep.244.00128.flam3"
 
 
+def test_parse_archive_sheep_token_accepts_prefix_and_padding():
+    import pytest
+
+    from pipeline.archive_seed import ArchiveSheepTokenError, parse_archive_sheep_token
+
+    bare = parse_archive_sheep_token("247.505")
+    padded = parse_archive_sheep_token("electricsheep.247.00505.flam3")
+    legacy = parse_archive_sheep_token("jellyflam3.247.00505")
+    assert bare == padded == legacy
+    assert bare.filename == "electricsheep.247.00505.flam3"
+    for bad in ("", "tuple", "electricsheep.tuple.247.00505_to_245.00061", "247", "0.5", "247.0"):
+        with pytest.raises(ArchiveSheepTokenError):
+            parse_archive_sheep_token(bad)
+    flame = parse_archive_sheep_token("  electricsheep.245.00061.flame  ")
+    assert flame == parse_archive_sheep_token("245.61")
+
+
+def test_sheep_list_text_keeps_file_order():
+    from pipeline.archive_seed import sheep_tokens_from_text, split_sheep_tokens
+
+    assert split_sheep_tokens(" 247.00505, 245.61 , ,") == ["247.00505", "245.61"]
+    text = "# night batch\n\n245.00061\n243.16930, 242.100\n"
+    assert sheep_tokens_from_text(text) == ["245.00061", "243.16930", "242.100"]
+
+
 def test_parse_sheep_ids_empty_html():
     assert parse_sheep_ids("") == []
     assert parse_sheep_ids("<html><body>no sheep here</body></html>") == []

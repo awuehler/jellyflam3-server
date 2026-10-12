@@ -3,6 +3,7 @@
 Requirements: Network access to electricsheep.com / sheepserver mirrors; optional sheep_tax and tv_optimize.
 
 Usage: Import helpers from the worker/seed path, or call scrape_manifest / ensure_manifest / materialize_sheep.
+  ``parse_archive_sheep_token`` accepts ``247.00505``, ``247.505``, and ``electricsheep.247.00505``.
 
 Assumptions: Curated pool is gens 247/245/244/243/242/198/191/169/165 best pages 1–3 unless config overrides.
 """
@@ -31,6 +32,10 @@ USER_AGENT = "jellyflam3-seed/0.1 (+https://github.com/awuehler/jellyflam3-serve
 
 _SHEEP_VIEW = re.compile(r"/sheep/(\d+)/view\.html", re.I)
 _FLAME_OK = re.compile(r"<flame\b", re.I)
+_ARCHIVE_TOKEN_RE = re.compile(
+    rf"^(?:(?:{re.escape('electricsheep')}|jellyflam3)\.)?(\d+)\.(\d+)(?:\.flam3|\.flame)?$",
+    re.I,
+)
 
 
 @dataclass(frozen=True)
@@ -56,6 +61,46 @@ class ArchiveSheep:
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> "ArchiveSheep":
         return cls(int(d["generation"]), int(d["sheep_id"]))
+
+
+class ArchiveSheepTokenError(ValueError):
+    """A requested archive id is not ``generation.sheep``."""
+
+    def __init__(self, token: str) -> None:
+        self.token = token
+        super().__init__(
+            f"{token!r} is not an archive sheep id "
+            "(expected generation.sheep, optional electricsheep. prefix)"
+        )
+
+
+def parse_archive_sheep_token(token: str) -> ArchiveSheep:
+    """Parse one archive id. Leading zeros do not change the sheep."""
+    raw = (token or "").strip()
+    match = _ARCHIVE_TOKEN_RE.match(raw)
+    if match is None:
+        raise ArchiveSheepTokenError(raw or token)
+    generation = int(match.group(1))
+    sheep_id = int(match.group(2))
+    if generation <= 0 or sheep_id <= 0:
+        raise ArchiveSheepTokenError(raw)
+    return ArchiveSheep(generation, sheep_id)
+
+
+def split_sheep_tokens(text: str) -> list[str]:
+    """Comma-separated ids, with surrounding whitespace removed."""
+    return [part.strip() for part in (text or "").split(",") if part.strip()]
+
+
+def sheep_tokens_from_text(text: str) -> list[str]:
+    """Ids from a list file: one sheep per line, commas allowed, ``#`` lines skipped."""
+    found: list[str] = []
+    for line in (text or "").splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        found.extend(split_sheep_tokens(stripped))
+    return found
 
 
 def archive_cfg(cfg: dict[str, Any]) -> dict[str, Any]:

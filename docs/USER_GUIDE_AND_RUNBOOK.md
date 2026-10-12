@@ -470,7 +470,7 @@ The order lives in `/var/lib/jellyflam3/inbox_fifo.json` (`paths.inbox_fifo_file
 
 The first time that ledger is created, genomes already in the inbox are ordered by inode change time (when a copy or a cross-device move landed). After the ledger exists, a file the worker has not seen goes to the **tail**. That includes a manual copy and a replaced file (same name, new inode). Several files that show up during one render are ordered by the enqueue stamp these landing paths write:
 
-- archive seed, Shears add/modify, and other `pipeline.seed_inbox` staging
+- archive seed (`--archive`, `--sheep`, `--from-file`), Shears add/modify, and other `pipeline.seed_inbox` staging
 - pedigree breed (mutate / cross / interpolate)
 - tuple staging (`pipeline.sheep_tuple`)
 - `peering promote --apply`
@@ -484,6 +484,12 @@ The enqueue stamp is the arrival time used for a batch, including when a copy wo
 python3 -m pipeline.seed_inbox --config configs/jellyflam3.yaml \
   --archive --fetch-count 1
 # Default skips sheep already in catalog (--skip-catalog); override with --no-skip-catalog
+
+# Specific sheep, appended behind whatever is already waiting.
+python3 -m pipeline.seed_inbox --sheep 247.00505,245.61
+python3 -m pipeline.seed_inbox --from-file sheep.txt
+# sheep.txt: one id per line, # comments and blank lines ignored, commas allowed.
+# --sheep is queued first when both are set. --dry-run prints the queue and does not fetch.
 ```
 
 **Pedigree breed (local genetics):**

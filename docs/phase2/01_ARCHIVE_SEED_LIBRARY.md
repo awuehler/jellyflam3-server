@@ -12,7 +12,35 @@ python3 -m pipeline.seed_inbox --config configs/jellyflam3.yaml --archive
 python3 -m pipeline.seed_inbox --config configs/jellyflam3.yaml --archive --fetch-count 3
 python3 -m pipeline.seed_inbox --config configs/jellyflam3.yaml --refresh-manifest
 ./scripts/status_report.sh
+```
 
+### Request specific sheep
+
+`--sheep` and `--from-file` fetch the ids you name and append them to the inbox FIFO, behind genomes already waiting. The random `--archive` cron is unchanged. The worker claims the new files when drain is off.
+
+A token is `generation.sheep`. The `electricsheep.` prefix and leading zeros are optional: `247.505` and `electricsheep.247.00505` are the same sheep. `--sheep` is a comma-separated list. `--from-file` is one sheep per line; blank lines and `#` comments are ignored, and a line may contain commas. When both are set, the `--sheep` list is queued first.
+
+A sheep already in the catalog or already in the inbox is skipped and named. `--force` replaces an inbox file. A bad id or a failed download is reported, the rest of the list still runs, and the command exits non-zero. `--dry-run` prints the queue and does not fetch.
+
+```bash
+cd /opt/jellyflam3-server
+python3 -m pipeline.seed_inbox --sheep 247.00505,245.61
+python3 -m pipeline.seed_inbox --sheep electricsheep.247.505.flam3 --dry-run
+python3 -m pipeline.seed_inbox --from-file sheep.txt
+python3 -m pipeline.seed_inbox --sheep 247.00505 --from-file more.txt
+```
+
+`sheep.txt`:
+
+```text
+# night batch
+245.00061
+243.16930, 242.100
+```
+
+That file alone queues `electricsheep.245.00061.flam3`, then `electricsheep.243.16930.flam3`, then `electricsheep.242.00100.flam3`. Combined with `--sheep 247.00505`, the 247 sheep is first among the new files. None of them pass a genome that was already in the ledger.
+
+```bash
 # Cron-friendly wrapper (backlog gate + flock); see script header for crontab
 ./scripts/cron_archive_seed.sh
 ./scripts/cron_archive_seed.sh --dry-run
@@ -76,7 +104,7 @@ Lab fleet crontab (user `jellyflam3`, staggered so hosts do not all fetch at onc
 
 | Artifact | Kind | Role |
 |---|---|---|
-| `pipeline/seed_inbox.py` (`--archive`) | pipeline | Manifest pick → fetch → TV-port → inbox |
+| `pipeline/seed_inbox.py` (`--archive`, `--sheep`, `--from-file`) | pipeline | Manifest pick or named ids → fetch → TV-port → inbox FIFO |
 | `pipeline/archive_seed.py` | pipeline | Manifest scrape, fetch, materialize helpers |
 | `scripts/cron_archive_seed.sh` | script | Cron wrapper with backlog gate |
 | `configs/archive_seed_manifest.json` | config | Generation / page sheep ID pool |
