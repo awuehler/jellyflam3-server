@@ -87,7 +87,7 @@ Lab fleet crontab (user `jellyflam3`, staggered so hosts do not all fetch at onc
 
 1. Discover IDs → manifest (`--refresh-manifest`)
 2. Random pick N (default **3–7**)
-3. Fetch `.flam3` (sheepserver + archives URL candidates; skip 404s)
+3. Fetch `.flam3`. The named archive file is first. When it is missing, the `spex` link on `generation-{N}/sheep/{id}/genome.html` is the genome (generation 165 uses `old/{id}/spex`). Sheepserver mirrors are last.
 4. TV-port: **1920×1080**, Gold Sheep Lite, OkLCh complementary palette
 5. Stage `paths.genomes_inbox`; worker sequences / encodes / ingests
 6. License via heuristics → sidecar (see [../phase1/07_LICENSE_AND_METADATA.md](../phase1/07_LICENSE_AND_METADATA.md))

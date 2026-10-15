@@ -683,7 +683,7 @@ Use sheep listed on **`1.html`, `2.html`, and `3.html`** under these generations
 ### Pipeline intent (implemented)
 
 1. **Discover** sheep IDs from the `1.html` / `2.html` / `3.html` pages → `configs/archive_seed_manifest.json` (`--refresh-manifest`).
-2. **Fetch** corresponding `electricsheep.{gen}.{id}.flam3` genomes (sheepserver + electricsheep.com/archives URL candidates; skip persistent 404s).
+2. **Fetch** corresponding `electricsheep.{gen}.{id}.flam3` genomes. The named archive file is tried first. When that 404s, follow the `spex` link on `generation-{N}/sheep/{id}/genome.html` (the body is the raw genome; generation 165 links `old/{id}/spex`). Sheepserver mirrors are the last resort. Skip responses with no `<flame>`.
 3. **Validate** older flock `.flam3` with installed flam3 tools; quarantine failures.
 4. **Random seed selection** — default fetch count random **3–7** (`--fetch-count` to override).
 5. **Port / optimize for TV:** resize **1920×1080**, **Gold Sheep Lite** quality (3-core), ambient **OkLCh** complementary palette, sequence with VoD duration band, encode Direct Play H.264, sidecar + ingest.

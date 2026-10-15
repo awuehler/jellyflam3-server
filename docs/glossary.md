@@ -179,7 +179,7 @@ Benign stderr from **flam3-genome** (not JellyFlam3): `warning: reached maximum 
 
 ### Archive seed
 
-`pipeline/seed_inbox --archive` — random pick from `archive_seed_manifest.json`, fetch `.flam3`, **TV-port**, stage inbox. Default **`--skip-catalog`** skips sheep that already have catalog MP4. `--sheep 247.00505,245.61` and `--from-file sheep.txt` fetch those ids and append them to the inbox FIFO behind genomes already waiting.
+`pipeline/seed_inbox --archive` — random pick from `archive_seed_manifest.json`, fetch `.flam3`, **TV-port**, stage inbox. The named archive file is first; a miss follows the `spex` link on that sheep's `genome.html`. Default **`--skip-catalog`** skips sheep that already have catalog MP4. `--sheep 247.00505,245.61` and `--from-file sheep.txt` fetch those ids and append them to the inbox FIFO behind genomes already waiting.
 
 ### `--skip-catalog`
 

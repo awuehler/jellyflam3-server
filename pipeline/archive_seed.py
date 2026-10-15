@@ -4,6 +4,7 @@ Requirements: Network access to electricsheep.com / sheepserver mirrors; optiona
 
 Usage: Import helpers from the worker/seed path, or call scrape_manifest / ensure_manifest / materialize_sheep.
   ``parse_archive_sheep_token`` accepts ``247.00505``, ``247.505``, and ``electricsheep.247.00505``.
+  ``fetch_flam3`` reads the named archive ``.flam3``, then the ``spex`` link on ``genome.html``.
 
 Assumptions: Curated pool is gens 247/245/244/243/242/198/191/169/165 best pages 1–3 unless config overrides.
 """
@@ -16,6 +17,7 @@ import random
 import re
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
@@ -32,6 +34,7 @@ USER_AGENT = "jellyflam3-seed/0.1 (+https://github.com/awuehler/jellyflam3-serve
 
 _SHEEP_VIEW = re.compile(r"/sheep/(\d+)/view\.html", re.I)
 _FLAME_OK = re.compile(r"<flame\b", re.I)
+_HREF_RE = re.compile(r"""href=["']([^"']+)["']""", re.I)
 _ARCHIVE_TOKEN_RE = re.compile(
     rf"^(?:(?:{re.escape('electricsheep')}|jellyflam3)\.)?(\d+)\.(\d+)(?:\.flam3|\.flame)?$",
     re.I,
@@ -152,16 +155,53 @@ def listing_url(generation: int, page: int) -> str:
     return f"{ARCHIVE_INDEX}generation-{generation}/best/page/{page}.html"
 
 
-def flam3_url_candidates(sheep: ArchiveSheep) -> list[str]:
-    """Ordered mirror URLs to try when downloading a sheep ``.flam3``."""
-    gen, sid = sheep.generation, sheep.sheep_id
+def archive_flam3_url(sheep: ArchiveSheep) -> str:
+    """Named genome on the Electric Sheep archive."""
+    return (
+        f"{ARCHIVE_INDEX}generation-{sheep.generation}/"
+        f"{sheep.sheep_id}/{sheep.filename}"
+    )
+
+
+def genome_page_url(sheep: ArchiveSheep) -> str:
+    """Archive page that links to this sheep's ``spex`` genome."""
+    return (
+        f"{ARCHIVE_INDEX}generation-{sheep.generation}/"
+        f"sheep/{sheep.sheep_id}/genome.html"
+    )
+
+
+def sheepserver_flam3_urls(sheep: ArchiveSheep) -> list[str]:
+    """Legacy sheepserver mirrors of the named ``.flam3``."""
     name = sheep.filename
+    gen, sid = sheep.generation, sheep.sheep_id
     return [
         f"http://v3d0.sheepserver.net/gen/{gen}/{sid}/{name}",
         f"http://v2d7c.sheepserver.net/gen/{gen}/{sid}/{name}",
-        f"https://electricsheep.com/archives/generation-{gen}/{sid}/{name}",
-        f"https://electricsheep.com/archives/generation-{gen}/sheep/{sid}/{name}",
     ]
+
+
+def flam3_url_candidates(sheep: ArchiveSheep) -> list[str]:
+    """Named ``.flam3`` URLs: archive file, then sheepserver mirrors.
+
+    ``fetch_flam3`` tries the archive file first, then the ``spex`` link on
+    ``genome.html``, and only then these sheepserver URLs.
+    """
+    return [archive_flam3_url(sheep), *sheepserver_flam3_urls(sheep)]
+
+
+def spex_url_from_genome_html(page_url: str, html: str) -> str | None:
+    """Resolve the first ``href`` whose path ends in ``/spex``.
+
+    Generation 247 links ``../../18817/spex``. Generation 165 links
+    ``../../old/6790/spex``. The response body is the raw genome.
+    """
+    for href in _HREF_RE.findall(html or ""):
+        resolved = urllib.parse.urljoin(page_url, href.strip())
+        path = urllib.parse.urlparse(resolved).path.rstrip("/")
+        if path.endswith("/spex"):
+            return resolved
+    return None
 
 
 def http_get(url: str, *, timeout: float = 60.0) -> bytes:
@@ -271,22 +311,56 @@ def ensure_flam3_lf(path: Path) -> Path:
     return path
 
 
+def _flame_text(raw: bytes) -> str | None:
+    """Return LF genome text when ``raw`` contains a ``<flame>`` element."""
+    text = normalize_flam3_text(raw.decode("utf-8", "replace"))
+    if not _FLAME_OK.search(text):
+        return None
+    return text
+
+
 def fetch_flam3(sheep: ArchiveSheep, *, timeout: float = 60.0) -> str:
-    """Download genome XML from the first mirror that returns a ``<flame>`` body."""
+    """Download genome XML, using the archive ``spex`` link when the named file is missing.
+
+    Order: the named archive ``.flam3``, then the ``/spex`` href on
+    ``genome.html``, then the sheepserver mirrors. A hit must contain ``<flame>``.
+    """
     errors: list[str] = []
-    for url in flam3_url_candidates(sheep):
+
+    def attempt(url: str) -> str | None:
         try:
             raw = http_get(url, timeout=timeout)
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             errors.append(f"{url}: {exc}")
-            continue
-        text = normalize_flam3_text(raw.decode("utf-8", "replace"))
-        if not _FLAME_OK.search(text):
+            return None
+        text = _flame_text(raw)
+        if text is None:
             errors.append(f"{url}: no <flame>")
-            continue
+            return None
         log.info("fetched %s from %s", sheep.name, url)
         return text
-    raise RuntimeError(f"failed to fetch {sheep.name}: " + "; ".join(errors[:4]))
+
+    text = attempt(archive_flam3_url(sheep))
+    if text is None:
+        page = genome_page_url(sheep)
+        try:
+            raw = http_get(page, timeout=timeout)
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            errors.append(f"{page}: {exc}")
+        else:
+            spex = spex_url_from_genome_html(page, raw.decode("utf-8", "replace"))
+            if spex is None:
+                errors.append(f"{page}: no spex link")
+            else:
+                text = attempt(spex)
+    if text is None:
+        for url in sheepserver_flam3_urls(sheep):
+            text = attempt(url)
+            if text is not None:
+                break
+    if text is None:
+        raise RuntimeError(f"failed to fetch {sheep.name}: " + "; ".join(errors[:6]))
+    return text
 
 
 def default_fetch_count(cfg: dict[str, Any] | None = None) -> int:

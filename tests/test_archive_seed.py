@@ -18,10 +18,31 @@ def test_parse_sheep_ids_from_listing_html():
 
 
 def test_flam3_url_candidates_include_sheepserver_and_archives():
+    from pipeline.archive_seed import archive_flam3_url, sheepserver_flam3_urls
+
     sheep = ArchiveSheep(247, 505)
     urls = flam3_url_candidates(sheep)
-    assert any("v3d0.sheepserver.net/gen/247/505/electricsheep.247.00505.flam3" in u for u in urls)
-    assert any("generation-247/505/electricsheep.247.00505.flam3" in u for u in urls)
+    assert urls[0] == archive_flam3_url(sheep)
+    assert urls[1:] == sheepserver_flam3_urls(sheep)
+    assert "generation-247/505/electricsheep.247.00505.flam3" in urls[0]
+    assert all("/sheep/505/" not in url for url in urls)
+
+
+def test_spex_url_from_genome_html_resolves_relative_links():
+    from pipeline.archive_seed import spex_url_from_genome_html
+
+    page = "https://electricsheep.com/archives/generation-247/sheep/18817/genome.html"
+    assert (
+        spex_url_from_genome_html(page, '<a href="../../18817/spex">genome</a>')
+        == "https://electricsheep.com/archives/generation-247/18817/spex"
+    )
+    old = "https://electricsheep.com/archives/generation-165/sheep/6790/genome.html"
+    assert (
+        spex_url_from_genome_html(old, '<a href="../../old/6790/spex">genome</a>')
+        == "https://electricsheep.com/archives/generation-165/old/6790/spex"
+    )
+    assert spex_url_from_genome_html(page, '<a href="../../18817/spex.html">x</a>') is None
+    assert spex_url_from_genome_html(page, "<html>no link</html>") is None
 
 
 def test_pick_random_count():
@@ -94,17 +115,104 @@ def test_archive_sheep_from_dict_requires_keys():
 
 
 def test_fetch_flam3_normalizes_crlf(monkeypatch):
-    from pipeline.archive_seed import fetch_flam3
+    from pipeline.archive_seed import archive_flam3_url, fetch_flam3
 
     payload = b'<flame name="electricsheep.247.00001" time="0" size="800 592"></flame>\r\n'
+    calls: list[str] = []
 
     def fake_get(url, timeout=60.0):
+        calls.append(url)
         return payload
 
     monkeypatch.setattr("pipeline.archive_seed.http_get", fake_get)
-    text = fetch_flam3(ArchiveSheep(247, 1))
+    sheep = ArchiveSheep(247, 1)
+    text = fetch_flam3(sheep)
+    assert calls == [archive_flam3_url(sheep)]
     assert "\r" not in text
     assert text == payload.decode().replace("\r\n", "\n")
+
+
+def _http_404(url: str):
+    import urllib.error
+
+    return urllib.error.HTTPError(url, 404, "Not Found", hdrs=None, fp=None)
+
+
+def test_fetch_flam3_uses_spex_when_named_file_is_missing(monkeypatch):
+    from pipeline.archive_seed import archive_flam3_url, fetch_flam3, genome_page_url
+
+    sheep = ArchiveSheep(165, 6790)
+    calls: list[str] = []
+    spex = "https://electricsheep.com/archives/generation-165/old/6790/spex"
+
+    def fake_get(url, timeout=60.0):
+        calls.append(url)
+        if url == archive_flam3_url(sheep):
+            raise _http_404(url)
+        if url == genome_page_url(sheep):
+            return b'<a href="../../old/6790/spex">genome</a>'
+        if url == spex:
+            return b'<flame time="0" size="640 480" palette="76"></flame>\r\n'
+        raise AssertionError(url)
+
+    monkeypatch.setattr("pipeline.archive_seed.http_get", fake_get)
+    text = fetch_flam3(sheep)
+    assert calls == [archive_flam3_url(sheep), genome_page_url(sheep), spex]
+    assert text == '<flame time="0" size="640 480" palette="76"></flame>\n'
+
+
+def test_fetch_flam3_continues_when_spex_link_or_body_is_unusable(monkeypatch):
+    from pipeline.archive_seed import archive_flam3_url, fetch_flam3, genome_page_url, sheepserver_flam3_urls
+
+    sheep = ArchiveSheep(198, 1288)
+    servers = sheepserver_flam3_urls(sheep)
+    calls: list[str] = []
+
+    def fake_get(url, timeout=60.0):
+        calls.append(url)
+        if url == archive_flam3_url(sheep):
+            raise _http_404(url)
+        if url == genome_page_url(sheep):
+            return b"<html>no spex here</html>"
+        if url == servers[0]:
+            return b'<flame time="0" size="1280 960"></flame>'
+        raise AssertionError(url)
+
+    monkeypatch.setattr("pipeline.archive_seed.http_get", fake_get)
+    assert "<flame" in fetch_flam3(sheep)
+    assert calls == [archive_flam3_url(sheep), genome_page_url(sheep), servers[0]]
+
+    calls.clear()
+
+    def spex_html(url, timeout=60.0):
+        calls.append(url)
+        if url == archive_flam3_url(sheep):
+            raise _http_404(url)
+        if url == genome_page_url(sheep):
+            return b'<a href="../../1288/spex">genome</a>'
+        if url.endswith("/spex"):
+            return b"<html>not a genome</html>"
+        if url == servers[0]:
+            return b'<flame time="0"></flame>'
+        raise AssertionError(url)
+
+    monkeypatch.setattr("pipeline.archive_seed.http_get", spex_html)
+    assert fetch_flam3(sheep).startswith("<flame")
+    assert calls[-1] == servers[0]
+    assert any(url.endswith("/1288/spex") for url in calls)
+
+
+def test_fetch_flam3_raises_after_named_spex_and_mirrors_miss(monkeypatch):
+    import pytest
+
+    from pipeline.archive_seed import fetch_flam3
+
+    def fake_get(url, timeout=60.0):
+        raise _http_404(url)
+
+    monkeypatch.setattr("pipeline.archive_seed.http_get", fake_get)
+    with pytest.raises(RuntimeError, match="electricsheep.169.00050"):
+        fetch_flam3(ArchiveSheep(169, 50))
 
 
 def test_materialize_crlf_download_is_lf_in_cache_and_inbox(tmp_path, monkeypatch):
