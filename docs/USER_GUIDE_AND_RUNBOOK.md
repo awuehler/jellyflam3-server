@@ -538,6 +538,24 @@ python3 -m pipeline.worker --config configs/jellyflam3.yaml --once path/to/new.f
 
 Breed writes `{stem}.jellyflam3.json` next to the inbox genome (`origin`, `method`, `parents`, `bred_at`). A successful render copies that lineage onto the catalog sidecar and removes the inbox file. Worker quarantine, sheep tax, and refactor quarantine move the file with the genome. On startup the worker also clears an inbox pedigree JSON whose genome is already gone. A sheep still waiting in the inbox keeps its file.
 
+**Tuple on demand:**
+
+`--from` is loop A and `--to` is loop B. The command writes `electricsheep.tuple.{from}_to_{to}.flam3` at the end of the inbox FIFO. The worker renders it when that file reaches the head of the queue, the [idle gate](#idle-gate-behavior) is open, and [drain](#worker-drain-pause-before-next-sheep) is off: loop A, the morph, then loop B. At the default 13 s stage that is one 39 s clip. Detail: [phase4/03](phase4/03_EDGES_AND_WATERMARK.md).
+
+```bash
+cd /opt/jellyflam3-server
+python3 -m pipeline.sheep_tuple \
+  --from genomes/done/electricsheep.247.02253.flam3 \
+  --to genomes/done/electricsheep.245.00061.flam3
+
+# Print the inbox path and do not write the file.
+python3 -m pipeline.sheep_tuple --dry-run \
+  --from genomes/done/electricsheep.247.02253.flam3 \
+  --to genomes/done/electricsheep.245.00061.flam3
+```
+
+The parents must be different single-flame genomes that can orbit. A parent that is already a tuple is refused. If that A→B catalog MP4 already exists, the command refuses. Swap `--from` and `--to` to stage the opposite morph. That is a different tuple.
+
 **Scheduled feedstock (cron on Pi):**
 
 
