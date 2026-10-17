@@ -16,19 +16,20 @@
 # Default: --skip-catalog on (do not re-render catalog MP4s). --no-skip-catalog to overwrite.
 # Docs: docs/phase2/01_ARCHIVE_SEED_LIBRARY.md
 #
-# Assumptions: Interval ≈ ARCHIVE_CRON_INTERVAL_DAYS (default 11) for the backlog math;
-# lab hosts use ~10-day DOM lists (see crontab below). Config resolves inbox.
+# Assumptions: Interval ≈ ARCHIVE_CRON_INTERVAL_DAYS for the backlog math.
+# Lab DOM lists step by 10 (7/17/27, 1/11/21, 3/13/23). The month wrap from the
+# last day to the next month's first day is 8–11 days. Lab crontab sets 10.
+# Unset env still defaults to 11 days / 12 h.
 #
 # ---------------------------------------------------------------------------
-# Lab crontab (user jellyflam3), ~10 days (cron has no exact N-day step):
-#   16a  27 7 7,17,27 * *   07:27 on days 7,17,27
-#   08a  19 5 1,11,21 * *   05:19 on days 1,11,21
-#   04a  17 3 3,13,23 * *   03:17 on days 3,13,23
+# Lab crontab (user jellyflam3). Hours are a 2026-10-17 trial (re-evaluate):
+#   16a  43 h/sheep   27 7 7,17,27 * *   07:27 on days 7,17,27
+#   08a  33 h/sheep   19 5 1,11,21 * *   05:19 on days 1,11,21
+#   04a  23 h/sheep   17 3 3,13,23 * *   03:17 on days 3,13,23
 #
-#   17 3 3,13,23 * *  /opt/jellyflam3-server/scripts/cron_archive_seed.sh \
+#   17 3 3,13,23 * *  ARCHIVE_CRON_INTERVAL_DAYS=10 ARCHIVE_EST_HOURS_PER_SHEEP=23 \
+#       /opt/jellyflam3-server/scripts/cron_archive_seed.sh \
 #       >>/var/log/jellyflam3/archive_seed.log 2>&1
-#
-# Script default ARCHIVE_CRON_INTERVAL_DAYS=11 is backlog math, not a DOM list.
 #
 # Ensure /var/log/jellyflam3 exists and is writable by the cron user, e.g.:
 #   sudo mkdir -p /var/log/jellyflam3
@@ -64,7 +65,7 @@ log() {
 
 # Print file header (Purpose through env overrides) and exit.
 usage() {
-  sed -n '2,44p' "$0"
+  sed -n '2,46p' "$0"
   exit 0
 }
 

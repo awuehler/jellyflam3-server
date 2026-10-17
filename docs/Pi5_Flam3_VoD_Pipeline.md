@@ -653,7 +653,7 @@ Render time and scratch disk scale roughly with `nframes`. Moving from 128 → ~
 
 ## Electric Sheep archive seed library (Phase 2 baseline — shipped)
 
-**Status:** **Shipped** as feedstock tooling (`python -m pipeline.seed_inbox --archive`). Cron wrapper: [`scripts/cron_archive_seed.sh`](../scripts/cron_archive_seed.sh) (~10-day staggered lab crontab + inbox backlog gate; script default `ARCHIVE_CRON_INTERVAL_DAYS=11` is the backlog math, not the fleet DOM list). Phase 1 kept hand-picked samples; the archive picker + TV-port path is live. Phase 2 flock UX / peering / pedigree / dynamic duration are complete — do not rebuild the seeder. Daily idle-breed is [`scripts/cron_breed_idle.sh`](../scripts/cron_breed_idle.sh) (lab: **05:11** local). Both wrappers prepend `/usr/local/bin` because cron `PATH` often misses `flam3-genome`.
+**Status:** **Shipped** as feedstock tooling (`python -m pipeline.seed_inbox --archive`). Cron wrapper: [`scripts/cron_archive_seed.sh`](../scripts/cron_archive_seed.sh) (lab crontab steps by 10 days and sets `ARCHIVE_CRON_INTERVAL_DAYS=10` plus a per-host `ARCHIVE_EST_HOURS_PER_SHEEP`; unset env still falls back to 11 days / 12 h). Phase 1 kept hand-picked samples; the archive picker + TV-port path is live. Phase 2 flock UX / peering / pedigree / dynamic duration are complete — do not rebuild the seeder. Daily idle-breed is [`scripts/cron_breed_idle.sh`](../scripts/cron_breed_idle.sh) (lab: **05:11** local). Both wrappers prepend `/usr/local/bin` because cron `PATH` often misses `flam3-genome`.
 
 ### Canonical archive
 

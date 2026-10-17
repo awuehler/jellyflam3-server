@@ -561,13 +561,50 @@ The parents must be different single-flame genomes that can orbit. A parent that
 
 | Cron          | Script                           | Role                                                                                                                                                                          |
 | ------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `11 5 * * *`  | `scripts/cron_breed_idle.sh`     | Daily idle breed when inbox empty (parents weighted by votes)                                                                                                                 |
+| `11 5 * * *`  | `scripts/cron_breed_idle.sh`     | One child or tuple when the inbox count is at or under `breed.idle_breed.inbox_low_water` (example **3**). Count **above** that skips.                                                                 |
 | *optional*    | `scripts/cron_library_rotate.sh` | Oldest-catalog Shears rotate — **not** on lab crontab; [Activate library rotate](#activate-library-rotate) (`23 5 * * `*)                                                     |
 | `41 6 * * *`  | `scripts/cron_share_votes.sh`    | Daily liked sheep → `peers/share-out` (local stage). `status_report.sh` `share_out_flam3` > 0 is the cue to copy into `peers/inbox` ([example 6](#6--vote-then-share) step 4) |
-| Staggered DOM | `scripts/cron_archive_seed.sh`   | ~10-day archive seed per host (skips fetch if sheep still BAD)                                                                                                                |
+| Staggered DOM | `scripts/cron_archive_seed.sh`   | 10-day archive fill. Skips when the sheep disk is still BAD, or when the inbox count is at or above `max_clearable` (lab trial: **16a 5**, **08a 7**, **04a 10**) |
 
 
 Both prepend `/usr/local/bin` for `flam3-*`. Missing real config → **exit 1** (no silent `.yaml.example` fallback).
+
+**Inbox load (operator):**
+
+Daily breed and the archive fill are the two scheduled reloads. Neither looks at the idle gate or the worker. They count files in `paths.genomes_inbox`.
+
+Daily breed (`11 5 * * *`) stages one genome when `inbox_count <= breed.idle_breed.inbox_low_water`. The example value is **3**, so four waiting genomes skip with `inbox_above_low_water`. Set that key in `configs/jellyflam3.yaml`. `0` requires an empty inbox. It also skips when `idle_breed.enabled` is false, when the next archive cron is closer than `min_hours_before_archive` (default **1.0** hour), or when it has no parent to breed. `archive_cron_dom` / `hour` / `minute` must match this host’s archive crontab.
+
+Archive fill skips, in order: the lock is held; the sheep disk is still BAD after rotate; `inbox_count >= max_clearable`. That ceiling is
+
+`max_clearable = floor((ARCHIVE_CRON_INTERVAL_DAYS × 24) / ARCHIVE_EST_HOURS_PER_SHEEP)`.
+
+The day-of-month list steps by **10** (16a 7/17/27, 08a 1/11/21, 04a 3/13/23). The script default of **11** days is only the fallback when the variable is unset. The lab crontab sets `ARCHIVE_CRON_INTERVAL_DAYS=10`. The month wrap from the last listed day onto next month’s first day is 8–11 days; **10** matches the two even gaps. Under the ceiling, the fetch is the smaller of remaining room (`max_clearable − inbox_count`) and `seed_archive.fetch_count` (or a random count from `fetch_count_min` / `fetch_count_max`, default **3–7**).
+
+The 10-day window should drain the inbox down to `inbox_low_water` (lab **3**, the `inbox_above_low_water` line) and leave a few days when the count is at or under that line so daily breed can stage. Hours below are a 2026-10-17 trial, a little above each host’s median job time. Re-measure before treating them as permanent.
+
+```cron
+# 16a — floor(240/43) = 5
+27 7 7,17,27 * *  ARCHIVE_CRON_INTERVAL_DAYS=10 ARCHIVE_EST_HOURS_PER_SHEEP=43 \
+    /opt/jellyflam3-server/scripts/cron_archive_seed.sh \
+    >>/var/log/jellyflam3/archive_seed.log 2>&1
+# 08a — floor(240/33) = 7
+19 5 1,11,21 * *  ARCHIVE_CRON_INTERVAL_DAYS=10 ARCHIVE_EST_HOURS_PER_SHEEP=33 \
+    /opt/jellyflam3-server/scripts/cron_archive_seed.sh \
+    >>/var/log/jellyflam3/archive_seed.log 2>&1
+# 04a — floor(240/23) = 10
+17 3 3,13,23 * *  ARCHIVE_CRON_INTERVAL_DAYS=10 ARCHIVE_EST_HOURS_PER_SHEEP=23 \
+    /opt/jellyflam3-server/scripts/cron_archive_seed.sh \
+    >>/var/log/jellyflam3/archive_seed.log 2>&1
+```
+
+| Host | Hours / sheep | Ceiling | Sheep above low water at a full ceiling | Days until count ≤ 3 | Days left in the window for breed |
+| ---- | ------------- | ------- | --------------------------------------- | -------------------- | ---------------------------------- |
+| **16a** | 43 | 5 | 2 | 3.6 | 6.4 |
+| **08a** | 33 | 7 | 4 | 5.5 | 4.5 |
+| **04a** | 23 | 10 | 7 | 6.7 | 3.3 |
+
+A full ceiling on **04a** leaves about three days at the breed mark. **08a** leaves about four and a half. **16a** leaves about six once the inbox is actually at 5. On 2026-10-17 the waiting counts were **16a 10**, **08a 6**, **04a 4**. Ten genomes at 43 h is about 12.5 days down to 3, so this 16a window stays above the breed mark. The new ceiling stops another fetch; it does not shorten the genomes already waiting.
 
 ### Activate library rotate
 
@@ -1266,7 +1303,7 @@ Persistent journal lives in `/var/log/journal` (`Storage=persistent`; **512M** o
 
 | File                  | Cadence (lab crontab)                                                                | Look for                                                                                                        |
 | --------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| `archive_seed.log`    | ~10-day DOM (16a 07:27 days 7/17/27; 08a 05:19 days 1/11/21; 04a 03:17 days 3/13/23) | `DONE archive seed` or `SKIP` (backlog, sheep still BAD)                                                        |
+| `archive_seed.log`    | ~10-day DOM (16a 07:27 days 7/17/27; 08a 05:19 days 1/11/21; 04a 03:17 days 3/13/23) | `DONE archive seed` or `SKIP` (lock, sheep still BAD, `inbox_count >= max_clearable`)                       |
 | `breed_idle.log`      | Daily 05:11                                                                          | `action=breed`, `action=tuple`, or skip (`inbox_above_low_water`, `archive_cron_imminent`, `parent_pool_empty`) |
 | `share_votes.log`     | Daily 06:41                                                                          | `action=share` / `plan` / `skip`                                                                                |
 | `tailscale_watch.log` | Every 5 min on Opt-In hosts                                                          | `action=ok` / `heal`; exit 1 if still not live                                                                  |

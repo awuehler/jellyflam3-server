@@ -53,7 +53,7 @@ ARCHIVE_EST_HOURS_PER_SHEEP=18 ./scripts/cron_archive_seed.sh --fetch-count 3
 
 1. Counts `*.flam3` / `*.flame` in `paths.genomes_inbox`
 2. Computes `max_clearable = floor((interval_days × 24) / est_hours_per_sheep)`  
-   Script default **11 days** / **12 h/sheep** wall-clock (Gold Sheep Lite + idle-gate). Lab fleet uses **~10-day** day-of-month lists (below); keep `ARCHIVE_CRON_INTERVAL_DAYS` close to the real gap so the backlog math stays conservative.
+   Unset env falls back to **11 days** / **12 h/sheep**. The lab day-of-month list steps by **10**, so the crontab sets `ARCHIVE_CRON_INTERVAL_DAYS=10`. Trial hours (2026-10-17, re-evaluate): **16a 43**, **08a 33**, **04a 23**, ceilings **5 / 7 / 10**.
 3. **Skips** when `inbox_count >= max_clearable` (backlog cannot drain to zero before the next cron)
 4. Otherwise fetches `min(desired_fetch, max_clearable − inbox_count)`
 5. Passes **`--skip-catalog`** by default (`ARCHIVE_SKIP_CATALOG=0` or `--no-skip-catalog` to overwrite catalog sheep)
@@ -62,15 +62,16 @@ The wrapper prepends `/usr/local/bin` to `PATH` (cron is often `/usr/bin:/bin`; 
 
 Lab fleet crontab (user `jellyflam3`, staggered so hosts do not all fetch at once):
 
-| Host | Crontab | Local time |
-|---|---|---|
-| 16a | `27 7 7,17,27 * *` | 07:27 on days 7, 17, 27 |
-| 08a | `19 5 1,11,21 * *` | 05:19 on days 1, 11, 21 |
-| 04a | `17 3 3,13,23 * *` | 03:17 on days 3, 13, 23 |
+| Host | Crontab | Local time | `ARCHIVE_EST_HOURS_PER_SHEEP` | Ceiling at 10 days |
+|---|---|---|---|---|
+| 16a | `27 7 7,17,27 * *` | 07:27 on days 7, 17, 27 | 43 | 5 |
+| 08a | `19 5 1,11,21 * *` | 05:19 on days 1, 11, 21 | 33 | 7 |
+| 04a | `17 3 3,13,23 * *` | 03:17 on days 3, 13, 23 | 23 | 10 |
 
 ```cron
 # Example — 04a. Copy the row for this host from the table above.
-17 3 3,13,23 * *  /opt/jellyflam3-server/scripts/cron_archive_seed.sh \
+17 3 3,13,23 * *  ARCHIVE_CRON_INTERVAL_DAYS=10 ARCHIVE_EST_HOURS_PER_SHEEP=23 \
+    /opt/jellyflam3-server/scripts/cron_archive_seed.sh \
     >>/var/log/jellyflam3/archive_seed.log 2>&1
 ```
 
