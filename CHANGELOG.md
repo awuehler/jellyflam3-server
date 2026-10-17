@@ -6,6 +6,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Roku VoD **1.0.55** Settings `sortMode` orders the poster grid. The default is `filename`. OK also cycles `alias`, `generation`, `duration`, `license`, and `folder` (the previous folder walk). A generation sort shows `breed` on mutate, cross, blend, and interpolate tiles, and `tuple` on tuple tiles. Ambient shuffle is unchanged. Jellyfin SortName stays the filename.
+
 - Named Electric Sheep archive downloads: `python3 -m pipeline.seed_inbox --sheep 247.00505,245.61` and `--from-file sheep.txt` fetch those ids, TV-port them, and append them to the inbox FIFO behind genomes already waiting. A catalog or inbox hit is skipped. A bad id or a failed download is reported and the command exits non-zero. Random `--archive` is unchanged.
 
 - Read-only flock report: `python3 -m pipeline.flock_report` prints live-flock size, Shears condition, gate/drain/worker/share status, vote totals and the top list, and the newest breed, job, refactor, park, and vote timestamps. `--stem` accepts a filename or a catalog alias. `--score` adds refactor verdict counts. Parked `_refactor-preview` and `_refactor-quarantine` trees are counted apart from the live flock.

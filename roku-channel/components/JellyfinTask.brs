@@ -37,7 +37,7 @@ end function
 
 function authHeader() as string
   ' Token in Authorization is what Jellyfin uses to bind Client/Device into /Sessions
-  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.54"", Token=""" + m.top.apiKey + """"
+  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.55"", Token=""" + m.top.apiKey + """"
 end function
 
 ' Lab-verified HLS remux path: prefer main.m3u8 + AudioCodec=aac.
@@ -273,6 +273,137 @@ function pruneToCap(src as object, cap as integer) as object
   return pruned
 end function
 
+function takeFirst(src as object, cap as integer) as object
+  out = []
+  if src = invalid then return out
+  i = 0
+  for each it in src
+    if i >= cap then exit for
+    out.push(it)
+    i = i + 1
+  end for
+  return out
+end function
+
+function sortModeValue() as string
+  raw = m.top.sortMode
+  if raw = invalid then raw = ""
+  tl = LCase(raw.Trim())
+  if tl = "alias" or tl = "generation" or tl = "duration" or tl = "license" or tl = "folder"
+    return tl
+  end if
+  return "filename"
+end function
+
+function isAllDigits(raw as string) as boolean
+  if raw = invalid or raw = "" then return false
+  i = 1
+  while i <= Len(raw)
+    ch = Mid(raw, i, 1)
+    if ch < "0" or ch > "9" then return false
+    i = i + 1
+  end while
+  return true
+end function
+
+function filenameSortKey(it as object) as string
+  name = ""
+  if it <> invalid and it.filename <> invalid then name = LCase(it.filename.Trim())
+  if name = "" or name = "untitled" then return "~"
+  return name
+end function
+
+function aliasSortKey(it as object) as string
+  alias = ""
+  if it <> invalid and it.alias <> invalid then alias = LCase(it.alias.Trim())
+  if alias <> "" then return alias
+  return filenameSortKey(it)
+end function
+
+function licenseSortKey(it as object) as string
+  lic = ""
+  if it <> invalid and it.license <> invalid then lic = LCase(it.license.Trim())
+  if lic = "" then return "~"
+  return lic
+end function
+
+function generationRank(it as object) as integer
+  tag = ""
+  if it <> invalid and it.gridTag <> invalid then tag = it.gridTag
+  if tag = "breed" then return 1
+  if tag = "tuple" then return 2
+  gen = ""
+  if it <> invalid and it.generation <> invalid then gen = it.generation
+  if isAllDigits(gen) then return 0
+  return 3
+end function
+
+function flockSortBefore(a as object, b as object, mode as string) as boolean
+  if mode = "alias"
+    return aliasSortKey(a) < aliasSortKey(b)
+  else if mode = "generation"
+    ra = generationRank(a)
+    rb = generationRank(b)
+    if ra <> rb then return ra < rb
+    if ra = 0
+      gaRaw = "0"
+      gbRaw = "0"
+      if a.generation <> invalid then gaRaw = a.generation
+      if b.generation <> invalid then gbRaw = b.generation
+      ga = Val(gaRaw)
+      gb = Val(gbRaw)
+      if ga <> gb then return ga < gb
+      sa = 0
+      sb = 0
+      saRaw = ""
+      sbRaw = ""
+      if a.sheepId <> invalid then saRaw = a.sheepId
+      if b.sheepId <> invalid then sbRaw = b.sheepId
+      if isAllDigits(saRaw) then sa = Val(saRaw)
+      if isAllDigits(sbRaw) then sb = Val(sbRaw)
+      if sa <> sb then return sa < sb
+    end if
+    return filenameSortKey(a) < filenameSortKey(b)
+  else if mode = "duration"
+    la = 0
+    lb = 0
+    if a <> invalid and a.length <> invalid then la = a.length
+    if b <> invalid and b.length <> invalid then lb = b.length
+    if la <> lb then return la < lb
+    return filenameSortKey(a) < filenameSortKey(b)
+  else if mode = "license"
+    ka = licenseSortKey(a)
+    kb = licenseSortKey(b)
+    if ka <> kb then return ka < kb
+    return filenameSortKey(a) < filenameSortKey(b)
+  end if
+  return filenameSortKey(a) < filenameSortKey(b)
+end function
+
+' Stable insertion sort. folder keeps the folder-walk order from fetchList.
+function sortFlock(items as object, mode as string) as object
+  if items = invalid then return []
+  if mode = "folder" then return items
+  out = []
+  for each it in items
+    out.push(it)
+  end for
+  n = out.count()
+  i = 1
+  while i < n
+    held = out[i]
+    j = i - 1
+    while j >= 0
+      if flockSortBefore(held, out[j], mode) <> true then exit while
+      out[j + 1] = out[j]
+      j = j - 1
+    end while
+    out[j + 1] = held
+    i = i + 1
+  end while
+  return out
+end function
+
 function flockItemFields() as string
   return "Overview,Tags,RunTimeTicks,PrimaryImageAspectRatio,ImageTags,Path"
 end function
@@ -394,7 +525,13 @@ function fetchList() as object
       items.push(mapItem(it, base))
     end if
   end for
-  items = pruneToCap(items, flockIndexCap())
+  mode = sortModeValue()
+  items = sortFlock(items, mode)
+  if mode = "folder"
+    items = pruneToCap(items, flockIndexCap())
+  else
+    items = takeFirst(items, flockIndexCap())
+  end if
   aliasCount = 0
   for each mapped in items
     if mapped.alias <> invalid and mapped.alias <> "" then aliasCount = aliasCount + 1
@@ -547,17 +684,38 @@ function displayTitle(filename as string, alias as string) as string
   return "Untitled"
 end function
 
-function buildMetaLine(durationLabel as string, meta as object) as string
+' Poster tag: numbered gens stay "gen N". Mutations of every breed method
+' share "breed". Tuple clips share "tuple". misc/test stay off the tile.
+function posterGridTag(meta as object, filename as string, mediaPath as string) as string
+  blob = ""
+  if filename <> invalid then blob = filename
+  if mediaPath <> invalid and mediaPath <> "" then blob = blob + " " + mediaPath
+  low = LCase(blob)
+  gen = ""
+  if meta <> invalid and meta.generation <> invalid then gen = LCase(meta.generation)
+  if Instr(1, low, ".tuple.") > 0 or Instr(1, low, "/tuple/") > 0 or Instr(1, low, "\tuple\") > 0 or gen = "tuple"
+    return "tuple"
+  end if
+  if Instr(1, low, ".pedigree.") > 0 or Instr(1, low, "/pedigree/") > 0 or Instr(1, low, "\pedigree\") > 0 or gen = "pedigree"
+    return "breed"
+  end if
+  sheep = ""
+  if meta <> invalid and meta.sheepId <> invalid then sheep = LCase(meta.sheepId)
+  ped = ""
+  if meta <> invalid and meta.pedigree <> invalid then ped = LCase(meta.pedigree)
+  if sheep = "mutate" or sheep = "cross" or sheep = "blend" or sheep = "interpolate" then return "breed"
+  if Instr(1, ped, "mutate") > 0 or Instr(1, ped, "cross") > 0 or Instr(1, ped, "blend") > 0 or Instr(1, ped, "interpolate") > 0
+    return "breed"
+  end if
+  if isAllDigits(gen) then return "gen " + meta.generation
+  return ""
+end function
+
+function buildMetaLine(durationLabel as string, meta as object, filename as string, mediaPath as string) as string
   bits = []
   if durationLabel <> "" then bits.push(durationLabel)
-  if meta.generation <> invalid and meta.generation <> ""
-    gen = LCase(meta.generation)
-    ' Folder classes belong on the detail pedigree/generation chips — they crowd
-    ' cc-xx off the 270px tile (e.g. "23s · gen pedigree · cc-by-nc-sa").
-    if gen <> "pedigree" and gen <> "tuple" and gen <> "misc" and gen <> "test"
-      bits.push("gen " + meta.generation)
-    end if
-  end if
+  tag = posterGridTag(meta, filename, mediaPath)
+  if tag <> "" then bits.push(tag)
   if meta.license <> invalid and meta.license <> ""
     bits.push(meta.license)
   end if
@@ -593,11 +751,12 @@ function mapItem(it as object, base as string) as object
   alias = ""
   if meta.alias <> invalid then alias = meta.alias
   title = displayTitle(filename, alias)
-  metaLine = buildMetaLine(durationLabel, meta)
-  hls = hlsStreamUrl(base, it.Id)
-  mp4 = mp4StreamUrl(base, it.Id)
   mediaPath = ""
   if it.Path <> invalid then mediaPath = it.Path
+  gridTag = posterGridTag(meta, filename, mediaPath)
+  metaLine = buildMetaLine(durationLabel, meta, filename, mediaPath)
+  hls = hlsStreamUrl(base, it.Id)
+  mp4 = mp4StreamUrl(base, it.Id)
   ' url stays HLS for deep-link/list compatibility; PlayerScreen picks via streamMode.
   return {
     id: it.Id
@@ -617,6 +776,7 @@ function mapItem(it as object, base as string) as object
     license: meta.license
     pedigree: meta.pedigree
     sheepId: meta.sheepId
+    gridTag: gridTag
     metaLine: metaLine
     mediaPath: mediaPath
   }

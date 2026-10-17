@@ -233,7 +233,11 @@ sub updateDetailChrome(item as object)
   end if
 
   if m.chipGeneration <> invalid
-    if item.generation <> invalid and item.generation <> ""
+    tag = ""
+    if item.gridTag <> invalid then tag = item.gridTag
+    if tag = "breed" or tag = "tuple"
+      m.chipGeneration.text = tag
+    else if item.generation <> invalid and item.generation <> ""
       m.chipGeneration.text = "Gen " + item.generation
     else
       m.chipGeneration.text = ""
@@ -300,6 +304,14 @@ sub ensureDefaults()
   else
     m.registry.write("titleMode", "filename")
   end if
+  smode = m.registry.read("sortMode")
+  if smode = invalid then smode = ""
+  smode = LCase(smode.Trim())
+  if smode <> "filename" and smode <> "alias" and smode <> "generation" and smode <> "duration" and smode <> "license" and smode <> "folder"
+    m.registry.write("sortMode", "filename")
+  else
+    m.registry.write("sortMode", smode)
+  end if
   m.registry.flush()
 end sub
 
@@ -325,6 +337,16 @@ function titleModeValue() as string
   if v = invalid then return "filename"
   tl = LCase(v.Trim())
   if tl = "alias" then return "alias"
+  return "filename"
+end function
+
+function sortModeValue() as string
+  v = m.registry.read("sortMode")
+  if v = invalid then return "filename"
+  tl = LCase(v.Trim())
+  if tl = "alias" or tl = "generation" or tl = "duration" or tl = "license" or tl = "folder"
+    return tl
+  end if
   return "filename"
 end function
 
@@ -525,6 +547,7 @@ sub startFlockRepoll(force as boolean)
   t.libraryId = m.registry.read("libraryId")
   t.commercialMode = commercialModeEnabled()
   t.titleMode = titleModeValue()
+  t.sortMode = sortModeValue()
   t.command = "list"
   t.control = "RUN"
   m.repollTask = t
@@ -585,6 +608,7 @@ sub refreshFromRegistry()
   m.task.libraryId = m.registry.read("libraryId")
   m.task.commercialMode = commercialModeEnabled()
   m.task.titleMode = titleModeValue()
+  m.task.sortMode = sortModeValue()
   m.task.command = "list"
   m.task.control = "RUN"
 end sub
@@ -645,6 +669,7 @@ function effectiveSettingsSummary(res as object) as string
   else
     summary = summary + " · filename titles"
   end if
+  summary = summary + " · sort " + sortModeValue()
   return summary
 end function
 
@@ -738,6 +763,8 @@ sub bindFlockItemFields(child as object, it as object)
   if it.pedigree <> invalid then child.pedigree = it.pedigree else child.pedigree = ""
   child.addField("sheepId", "string", false)
   if it.sheepId <> invalid then child.sheepId = it.sheepId else child.sheepId = ""
+  child.addField("gridTag", "string", false)
+  if it.gridTag <> invalid then child.gridTag = it.gridTag else child.gridTag = ""
   child.addField("metaLine", "string", false)
   if it.metaLine <> invalid then child.metaLine = it.metaLine else child.metaLine = ""
   child.addField("mediaPath", "string", false)
@@ -1042,6 +1069,7 @@ function handleDeepLink(args as object) as void
   t.libraryId = m.registry.read("libraryId")
   t.commercialMode = commercialModeEnabled()
   t.titleMode = titleModeValue()
+  t.sortMode = sortModeValue()
   t.command = "item"
   t.itemId = cid
   t.control = "RUN"

@@ -9,6 +9,8 @@
     <field id="commercialMode" type="boolean" />
     <!-- filename (default) or alias — Overview Alias: line; Name stays stem -->
     <field id="titleMode" type="string" />
+    <!-- filename (default), alias, generation, duration, license, or folder -->
+    <field id="sortMode" type="string" />
     <field id="command" type="string" />
     <field id="itemId" type="string" />
     <field id="positionTicks" type="integer" />

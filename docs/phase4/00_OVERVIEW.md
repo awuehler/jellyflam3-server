@@ -68,7 +68,7 @@ Phase 4 **products are implemented** as of **v0.3.2** (2026-09-23). Shipped: **t
 
 | Slice | Guide | What landed | Still parked |
 |---|---|---|---|
-| VoD filename vs alias | [09](09_SHEEP_NAMING.md) | VoD **1.0.33** Settings `titleMode` (`filename` default / `alias`); **1.0.39** OK-toggle + immediate flush + Save & Reload. Overview `Alias:` line from ingest + `sheep_naming` push. `Name` stays the stem. | Optional Jellyfin OriginalTitle / SortName-as-alias |
+| VoD filename vs alias | [09](09_SHEEP_NAMING.md) | VoD **1.0.33** Settings `titleMode` (`filename` default / `alias`); **1.0.39** OK-toggle + immediate flush + Save & Reload. **1.0.55** `sortMode` orders the poster grid (`filename` default). Overview `Alias:` line from ingest + `sheep_naming` push. `Name` stays the stem. | Optional Jellyfin OriginalTitle / SortName-as-alias |
 
 ## Opened (2026-09-19, 09 screensaver captions)
 

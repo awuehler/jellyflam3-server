@@ -139,8 +139,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=54" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.54""' in text
+    assert "build_version=55" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.55""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
@@ -230,6 +230,10 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "function isValidStreamMode(raw as string) as boolean" in settings
     assert "function isValidBoolToken(raw as string) as boolean" in settings
     assert "function isValidTitleMode(raw as string) as boolean" in settings
+    assert "function normalizeSortMode(raw as string) as string" in settings
+    assert "function isValidSortMode(raw as string) as boolean" in settings
+    assert '"sortMode"' in settings.split("m.fields", 1)[1].split("]", 1)[0]
+    assert 'id="row_sortMode"' in (VOD / "components" / "SettingsScreen.xml").read_text(encoding="utf-8")
     assert "function isValidBaseUrl(raw as string) as boolean" in settings
     assert "function isHexDashId(raw as string) as boolean" in settings
     assert "function isValidApiKey(raw as string) as boolean" in settings
@@ -306,7 +310,12 @@ def test_roku_vod_wrapped_flock_layout_and_compact_metadata():
     assert "sheep in flock" in home
     assert "column >= itemsPerRow" in home
     assert "bits.push(meta.pedigree)" not in task
-    assert 'gen <> "pedigree"' in task
+    assert "function posterGridTag(" in task
+    assert 'return "breed"' in task
+    assert 'return "tuple"' in task
+    assert "function sortFlock(" in task
+    assert "function sortModeValue() as string" in task
+    assert 't.sortMode = sortModeValue()' in home
     assert 'license = tl' in task
     assert 'id="chipLicense"' in scene
     assert 'width="360"' in scene

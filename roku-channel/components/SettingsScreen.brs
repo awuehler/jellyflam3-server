@@ -1,7 +1,7 @@
 sub init()
   m.top.focusable = true
-  m.fields = ["baseUrl", "apiKey", "userId", "libraryId", "commercialMode", "streamMode", "shuffleFlock", "titleMode"]
-  m.rowIds = ["row_baseUrl", "row_apiKey", "row_userId", "row_libraryId", "row_commercialMode", "row_streamMode", "row_shuffleFlock", "row_titleMode", "row_probeDisplay", "row_save", "row_cancel"]
+  m.fields = ["baseUrl", "apiKey", "userId", "libraryId", "commercialMode", "streamMode", "shuffleFlock", "titleMode", "sortMode"]
+  m.rowIds = ["row_baseUrl", "row_apiKey", "row_userId", "row_libraryId", "row_commercialMode", "row_streamMode", "row_shuffleFlock", "row_titleMode", "row_sortMode", "row_probeDisplay", "row_save", "row_cancel"]
   m.values = {}
   m.idx = 0
   m.registry = CreateObject("roRegistrySection", "JellyFlam3")
@@ -61,6 +61,8 @@ function fieldHint(name as string) as string
     return "OK toggles true/false and saves; true rotates archive gens + pedigree + tuple (skip misc/test); launch still heals leftover false"
   else if name = "titleMode"
     return "OK toggles filename/alias and saves; alias uses Overview Alias: line; missing alias falls back to filename"
+  else if name = "sortMode"
+    return "OK cycles filename, alias, generation, duration, license, folder and saves; filename is the A-Z default"
   else if name = "probeDisplay"
     return "OK=capture roDeviceInfo + POST per-screen profile to Pi :8791 (multi-Roku/Kodi safe; hint only)"
   else if name = "save"
@@ -119,6 +121,19 @@ end function
 function isValidTitleMode(raw as string) as boolean
   v = normalizeTitleMode(raw)
   return (v = "filename" or v = "alias")
+end function
+
+function normalizeSortMode(raw as string) as string
+  if raw = invalid then return ""
+  v = LCase(raw.Trim())
+  if v = "filename" or v = "alias" or v = "generation" or v = "duration" or v = "license" or v = "folder"
+    return v
+  end if
+  return ""
+end function
+
+function isValidSortMode(raw as string) as boolean
+  return normalizeSortMode(raw) <> ""
 end function
 
 function isValidBaseUrl(raw as string) as boolean
@@ -185,6 +200,13 @@ function applyEditedValue(name as string, text as string) as boolean
       return false
     end if
     m.values[name] = normalizeTitleMode(text)
+    return true
+  else if name = "sortMode"
+    if isValidSortMode(text) <> true
+      m.inputNotice = "sortMode invalid (" + text + ") - use filename, alias, generation, duration, license, or folder"
+      return false
+    end if
+    m.values[name] = normalizeSortMode(text)
     return true
   else if name = "baseUrl"
     if isValidBaseUrl(text) <> true
@@ -259,6 +281,9 @@ sub openSettings()
     else if name = "titleMode"
       val = normalizeTitleMode(val)
       if val = "" then val = "filename"
+    else if name = "sortMode"
+      val = normalizeSortMode(val)
+      if val = "" then val = "filename"
     end if
     m.values[name] = val
     refreshRowLabel(name)
@@ -283,6 +308,8 @@ sub refreshRowLabel(name as string)
   else if name = "shuffleFlock"
     if val = "" then shown = "true"
   else if name = "titleMode"
+    if val = "" then shown = "filename"
+  else if name = "sortMode"
     if val = "" then shown = "filename"
   else if val = ""
     shown = "(empty)"
@@ -365,7 +392,7 @@ sub onRowSelected()
 end sub
 
 function isOkToggleField(name as string) as boolean
-  return name = "commercialMode" or name = "streamMode" or name = "shuffleFlock" or name = "titleMode"
+  return name = "commercialMode" or name = "streamMode" or name = "shuffleFlock" or name = "titleMode" or name = "sortMode"
 end function
 
 function nextToggleValue(name as string) as string
@@ -375,6 +402,13 @@ function nextToggleValue(name as string) as string
   if name = "titleMode"
     if cur = "alias" then return "filename"
     return "alias"
+  else if name = "sortMode"
+    if cur = "filename" then return "alias"
+    if cur = "alias" then return "generation"
+    if cur = "generation" then return "duration"
+    if cur = "duration" then return "license"
+    if cur = "license" then return "folder"
+    return "filename"
   else if name = "streamMode"
     if cur = "hls" then return "mp4"
     return "hls"
@@ -752,6 +786,13 @@ sub saveAndClose()
         return
       end if
       val = normalizeTitleMode(val)
+    else if name = "sortMode"
+      if isValidSortMode(val) <> true
+        m.inputNotice = "sortMode invalid - use filename, alias, generation, duration, license, or folder"
+        updateFooter()
+        return
+      end if
+      val = normalizeSortMode(val)
     end if
     m.registry.write(name, val)
   end for

@@ -44,13 +44,14 @@
     <SettingRow id="row_streamMode" translation="[120,438]" />
     <SettingRow id="row_shuffleFlock" translation="[120,496]" />
     <SettingRow id="row_titleMode" translation="[120,554]" />
-    <SettingRow id="row_probeDisplay" translation="[120,612]" />
-    <SettingRow id="row_save" translation="[120,690]" />
-    <SettingRow id="row_cancel" translation="[120,748]" />
+    <SettingRow id="row_sortMode" translation="[120,612]" />
+    <SettingRow id="row_probeDisplay" translation="[120,670]" />
+    <SettingRow id="row_save" translation="[120,748]" />
+    <SettingRow id="row_cancel" translation="[120,806]" />
     <Label
       id="footer"
       text=""
-      translation="[120,830]"
+      translation="[120,880]"
       width="1680"
       height="160"
       wrap="true"
