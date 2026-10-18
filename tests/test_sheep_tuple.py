@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
@@ -17,6 +18,7 @@ from pipeline.sheep_tuple import (
     parent_eligible,
     parse_tuple_ids,
     segment_times,
+    single_control_point_xml,
     stage_nframes,
     stage_tuple_inbox,
     tuple_cfg,
@@ -24,6 +26,8 @@ from pipeline.sheep_tuple import (
     tuple_stem,
     watermark_drawtext_filter,
     watermark_overlay_filter,
+    write_preview_control_point,
+    write_sequence_document,
 )
 
 ORBITABLE = """<flame name="t" size="1920 1080" rotate="90">
@@ -103,6 +107,30 @@ def test_combine_parent_genomes_two_control_points():
     assert body.count("<flame") == 2
     assert 'time="0"' in body
     assert 'time="1"' in body
+
+
+def test_preview_control_point_is_one_flame_and_source_stays_paired(tmp_path: Path):
+    paired = combine_parent_genomes(
+        ORBITABLE,
+        ORBITABLE.replace('name="t"', 'name="u"'),
+        from_stem="electricsheep.243.14985",
+        to_stem="electricsheep.243.17305",
+    )
+    src = tmp_path / "tv_optimized.flam3"
+    src.write_text(paired, encoding="utf-8")
+    dest = write_preview_control_point(src, tmp_path / "quality_preview_flame.flam3")
+    preview = dest.read_text(encoding="utf-8")
+    root = ET.fromstring(preview)
+    assert root.tag == "flame"
+    assert preview.count("<flame") == 1
+    assert "243.17305" not in preview
+    assert src.read_text(encoding="utf-8") == paired
+    assert single_control_point_xml(paired).count("<flame") == 1
+    wrapped = write_sequence_document(src, tmp_path / "sequence_input.flam3")
+    wrapped_root = ET.fromstring(wrapped.read_text(encoding="utf-8"))
+    assert wrapped_root.tag == "flames"
+    assert [el.get("time") for el in wrapped_root if el.tag == "flame"] == ["0", "1"]
+    assert src.read_text(encoding="utf-8") == paired
 
 
 def test_stage_nframes_clamped_to_hard_max(tmp_path: Path):

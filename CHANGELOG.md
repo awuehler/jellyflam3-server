@@ -16,6 +16,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- A tuple saturation preview renders the first control point, so `flam3-render` receives one XML document. Sequencing wraps both control points in one `<flames>` document, which is what `flam3-genome` accepts. The encoded tuple is still checked before it is published.
+
 - Checked-in JSON files carry a short role-and-scope note, and the guides that name those files now match it. The archive manifest is an id pool (`_comment` survives `json.loads` and `--refresh-manifest`; `--sheep` and `--from-file` do not read it). `.devin/wiki.json` is compact DeepWiki routing metadata; its current versions, shipped status, archive/FIFO and license boundaries, page map, and dated pytest count now match the codebase. The git smoke sidecar is not copied onto a catalog ingest. The Tailscale ACL example is an admin paste for `tag:jellyflam3` and `tag:jellyflam3-agent`; the pipeline does not apply it. The sessions fixture is not loaded by the idle-gate tests.
 
 - Runbook contributor notes for commercial vs non-commercial furnaces: `license.commercial_mode` selects the tuple watermark and the NC share-out skip, and the archive cron still downloads a mixed inbox. Open gaps are listed under Layer 3 (archive license filter, breed-vs-catalog license, empty tags, client preset).

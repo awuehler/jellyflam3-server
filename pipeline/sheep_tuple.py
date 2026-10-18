@@ -232,6 +232,46 @@ def combine_parent_genomes(
     return ET.tostring(fa, encoding="unicode") + ET.tostring(fb, encoding="unicode")
 
 
+def single_control_point_xml(xml_text: str) -> str:
+    """One ``<flame>`` document for ``flam3-render``.
+
+    A tuple file is two sibling control points. ``flam3-genome sequence=`` accepts
+    that pair; ``flam3-render`` stops at the first ``</flame>`` and reports the
+    second flame as extra content.
+    """
+    flame = _first_flame(xml_text)
+    return ET.tostring(flame, encoding="unicode")
+
+
+def write_preview_control_point(src: Path, dest: Path) -> Path:
+    """Write the first control point. ``src`` stays the two-flame sequence input."""
+    body = single_control_point_xml(src.read_text(encoding="utf-8", errors="replace"))
+    root = ET.fromstring(body)
+    if root.tag != "flame":
+        raise ValueError(f"preview control point root is {root.tag}, expected flame")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if not body.endswith("\n"):
+        body += "\n"
+    dest.write_text(body, encoding="utf-8")
+    return dest
+
+
+def write_sequence_document(src: Path, dest: Path) -> Path:
+    """Write every control point inside one ``<flames>`` document.
+
+    ``flam3-genome sequence=`` uses the same parser as ``flam3-render`` and
+    rejects a second root. The wrapper keeps both tuple endpoints in one file.
+    """
+    flames = _flames(_parse_root(src.read_text(encoding="utf-8", errors="replace")))
+    if len(flames) < 2:
+        raise ValueError(f"tuple sequence needs 2 control points, found {len(flames)}")
+    parts = [ET.tostring(flame, encoding="unicode") for flame in flames]
+    body = "<flames>\n" + "\n".join(parts) + "\n</flames>\n"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(body, encoding="utf-8")
+    return dest
+
+
 def _default_fonts() -> list[Path]:
     return [
         Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),

@@ -7,8 +7,11 @@ Usage: ``python3 -m pipeline.worker [--once GENOME]`` (polls genomes_inbox by de
 Assumptions: Single-threaded; sheep tax then TV-port then active artistic-quality admission.
   Linear-only, singularity-cloned, frozen single-flame, washed-palette, and visually
   desaturated jobs quarantine before publication. Tuple genomes keep both flames
-  through sheep tax, render three sequence stages, watermark the middle edge, and
-  quarantine when the file is not that three-stage length. Successful genomes
+  through sheep tax. The saturation still renders the first control point, because
+  ``flam3-render`` accepts one XML document; ``flam3-genome sequence=`` receives
+  both control points wrapped in one ``<flames>`` document. The three stages are
+  watermarked on the middle edge, and a tuple whose file is not that length is
+  quarantined. Successful genomes
   archive to genomes_done. A pedigree breed sidecar travels with that genome:
   success copies lineage onto the catalog sidecar and removes the inbox file;
   quarantine keeps the file beside the genome. Startup reaps inbox leftovers.
@@ -51,6 +54,8 @@ from pipeline.sheep_tuple import (
     tuple_cfg,
     watermark_drawtext_filter,
     watermark_overlay_filter,
+    write_preview_control_point,
+    write_sequence_document,
 )
 from pipeline.config import load_config, resolve_path
 from pipeline.cpu_limit import effective_cpus, ffmpeg_thread_args, flam3_nthreads, wrap_cmd
@@ -627,8 +632,15 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
         quality_preview: Path | None = None
         if quality_policy["enabled"] and quality_policy["check_preview_saturation"]:
             wait_for_gate(cfg)
+            # flam3-render parses one document. A tuple's sequence file has two
+            # sibling control points, so the still uses the first flame only.
+            preview_genome = seed_for_sequence
+            if is_tuple:
+                preview_genome = write_preview_control_point(
+                    seed_for_sequence, work / "quality_preview_flame.flam3"
+                )
             quality_preview = render_lite_still(
-                cfg, seed_for_sequence, work / "quality_preview.png"
+                cfg, preview_genome, work / "quality_preview.png"
             )
             preview_gate = assess_image_quality(
                 cfg,
@@ -735,8 +747,13 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
             )
         else:
             sequenced = work / "sequenced.flam3"
+            sequence_genome = seed_for_sequence
+            if is_tuple:
+                sequence_genome = write_sequence_document(
+                    seed_for_sequence, work / "sequence_input.flam3"
+                )
             env = os.environ.copy()
-            env["sequence"] = str(seed_for_sequence)
+            env["sequence"] = str(sequence_genome)
             env["nframes"] = str(seq_nframes)
             if template.is_file():
                 env["template"] = str(template)
