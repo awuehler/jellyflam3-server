@@ -33,6 +33,7 @@ Status: `/var/lib/jellyflam3/idle_gate_status.json` (`gate`, `reason`, `seconds_
 | `configs/jellyflam3.yaml` (`idle_gate`) | config | Poll interval, idle delay, TV client patterns |
 | `/var/lib/jellyflam3/idle_gate_status.json` | config | Gate status SoT for worker / ops |
 | `jellyfin` Sessions API | binary | Playing / TranscodingInfo signals |
+| `tests/fixtures/sessions_tv_playing.json` | fixture | Sample `/Sessions` body for one playing TV. `tests/test_idle_gate.py` builds sessions in code and does not load this file |
 
 ## Exit criteria
 

@@ -241,6 +241,9 @@ seed_archive:
   index_url: "https://electricsheep.com/archives/"
   page_files: ["1.html", "2.html", "3.html"]
   generations: [247, 245, 244, 243, 242, 198, 191, 169, 165]
+  # Id pool for --archive and cron_archive_seed.sh (generation + sheep_id).
+  # No genomes and no license. --sheep and --from-file do not read it.
+  # --refresh-manifest rewrites the list and keeps the file _comment.
   manifest: configs/archive_seed_manifest.json
   cache_dir: genomes/archive_cache
   selection: random

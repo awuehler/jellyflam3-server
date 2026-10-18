@@ -1,4 +1,5 @@
 {
+  "_comment": "Sidecar for the git pedigree smoke genome electricsheep.pedigree.smoke.0001.flam3. Scope: default smoke-render seed (method, parents, license). A furnace ingest writes a new catalog sidecar and does not keep this note.",
   "id": "electricsheep.pedigree.smoke.0001",
   "origin": "local_pedigree",
   "method": "mutate",

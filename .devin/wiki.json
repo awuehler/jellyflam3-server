@@ -1,19 +1,20 @@
 {
+  "_comment": "Compact DeepWiki routing hints for contributors. Scope: repo_notes and page outlines only; canonical docs and code remain authoritative. The furnace, cron jobs, tests, and playback clients do not read this file.",
   "repo_notes": [
     {
       "content": "JellyFlam3 Server is a self-hosted generative media pipeline: flam3 renders flame-fractal genomes to H.264 MP4 loops, catalogs them in Jellyfin under /media/sheep/by-generation/, and streams to Roku (VoD + stills screensaver) and Kodi (video screensaver). The Raspberry Pi is the furnace (render factory); TVs/clients are the pasture (playback only).",
       "author": "Owner"
     },
     {
-      "content": "CANONICAL DOCS — read these first before inferring architecture from code alone:\n- Architecture SoT: docs/Pi5_Flam3_VoD_Pipeline.md\n- Guide index + phase status: docs/README.md\n- Layered user/operator/contributor guide: docs/USER_GUIDE_AND_RUNBOOK.md\n- Vocabulary: docs/glossary.md\n- Per-phase overviews: docs/phase1|phase2|phase3|phase4|phase5/00_OVERVIEW.md\nDo not treat README.md code comments or stale wiki as authoritative over the phase guides.",
+      "content": "CANONICAL DOCS — use these before inferring architecture from code or these hints:\n- Architecture SoT: docs/Pi5_Flam3_VoD_Pipeline.md\n- Guide index + phase status: docs/README.md\n- Layered user/operator/contributor guide: docs/USER_GUIDE_AND_RUNBOOK.md\n- Vocabulary: docs/glossary.md\n- Per-phase overviews: docs/phase1|phase2|phase3|phase4|phase5/00_OVERVIEW.md\nThis file is compact routing metadata for generated pages, not a second source of truth. Prefer links to canonical guides over reproducing long procedures.",
       "author": "Owner"
     },
     {
-      "content": "PHASE STATUS (2026-09-23): Phase 1 complete (Owner OK 2026-07-28). Phase 2 complete (Owner OK 2026-08-08). Phase 3 complete (Owner OK 2026-08-23). Public launch v0.3.0 / v0.3.1 (2026-08-23). Phase 4 implemented v0.3.2 (2026-09-23): tuples, votes, naming, rotate, mesh introduce, worker drain, wrap-once 313, VoD Channel Store submitted pending Roku review. Leftovers: JellyFlam3 Dreams Store listing; optional Jellyfin OriginalTitle/SortName. Clients: VoD 1.0.52 / Roku SS 1.0.11 / Kodi 0.2.13. Phase 5 synopsis parked: two deployments — JellyFlam3 Furnace (Pi) vs LLM Agent Platform (Arduino Ventuno Q); not interchangeable, not overlapping (docs/phase5/). Fleet tracks master.",
+      "content": "PHASE STATUS (2026-10-18): Phase 1 complete (Owner OK 2026-07-28). Phase 2 complete (Owner OK 2026-08-08). Phase 3 complete (Owner OK 2026-08-23). Public launch v0.3.0/v0.3.1; Phase 4 implemented in v0.3.2 (2026-09-23): tuples, votes, naming, rotate, mesh introduce, worker drain, FIFO inbox, wrap-once 313. JellyFlam3 VoD is published on the Roku Channel Store. Leftovers: JellyFlam3 Dreams Store listing; optional Jellyfin OriginalTitle/SortName. Current source manifests: VoD 1.0.55, Roku SS 1.0.11, Kodi 0.2.15. Phase 5 LLM work is parked and split between the Pi furnace and a separate Ventuno Q agent platform. Fleet tracks master.",
       "author": "Owner"
     },
     {
-      "content": "REPO LAYOUT PRIORITIES for documentation:\n- pipeline/ — Python render worker, worker drain, Shears, Hammer, refactor, peering, flock artwork, idle gate, config, link_capacity, library_disk, sheep_tuple, sheep_naming\n- scripts/ — operator shell/Python tools (healthcheck, smoke, packaging, jellyfin_id_dump, client_pack_presets)\n- roku-channel/ — JellyFlam3 VoD BrightScript channel (manifest 1.0.52)\n- roku-screensaver/ — Roku stills screensaver (manifest 1.0.11)\n- kodi-screensaver/screensaver.jellyflam3/ — Kodi ES-dogma video screensaver add-on (0.2.13)\n- docs/phaseN/ — discrete task guides with Boundary/In/Out/Exit tables\n- configs/ — jellyflam3.yaml + hw profiles 16/08/04\n- tests/ — pytest (GitHub Actions on push/PR + release)\n- deploy/ — systemd units, peering templates\n- .github/ — issue templates, Dependabot, release workflow",
+      "content": "REPO LAYOUT PRIORITIES for documentation:\n- pipeline/ — worker, FIFO/drain, archive seed, breed/tuple, Shears/Hammer/refactor, votes/naming/reporting, peering, idle gate, disk/capacity\n- scripts/ — health, cron wrappers, smoke, packaging, jellyfin_id_dump, client presets\n- roku-channel/ — VoD 1.0.55; filename-default grid sort plus alias/generation/duration/license/folder modes\n- roku-screensaver/ — stills screensaver 1.0.11\n- kodi-screensaver/screensaver.jellyflam3/ — video screensaver 0.2.15\n- docs/phaseN/ — implementer guides; USER_GUIDE_AND_RUNBOOK is the operator/contributor path\n- configs/ — example YAML, hardware profiles, tracked archive id manifest; live jellyflam3.yaml is gitignored\n- tests/ — pytest; .github/workflows/tests.yml and release.yml\n- deploy/ — systemd units and admin-applied peering examples",
       "author": "Owner"
     },
     {
@@ -37,15 +38,23 @@
       "author": "Owner"
     },
     {
+      "content": "ARCHIVE FEED + FIFO: configs/archive_seed_manifest.json is a tracked random-pick pool of generation/sheep ids only; no genome XML or license. --archive and cron_archive_seed.sh read it. --sheep and --from-file fetch named ids without reading it. --refresh-manifest scrapes the configured best pages and keeps _comment. Download fallback is named .flam3, genome.html /spex, then sheepserver. Every staging path stamps pipeline.inbox_queue; the worker claims oldest arrival, not lexical filename. Default --skip-catalog avoids re-rendering catalog hits.",
+      "author": "Owner"
+    },
+    {
+      "content": "LICENSE BOUNDARIES: infer_tags_from_genome treats a non-brood nick as human/cc-by and unknown or brood as cc-by-nc. license.commercial_mode does NOT restrict archive downloads or worker ingest; it changes tuple watermark policy and makes share_votes skip NC. Roku commercialMode and Kodi commercial_mode are separate client-side filters. The proposed seed_archive both/commercial/noncommercial selector is documented as a future improvement, not shipped.",
+      "author": "Owner"
+    },
+    {
       "content": "IDLE GATE: jellyflam3-idlegate pauses worker when Jellyfin reports active TV playback (Roku Client=JellyFlam3). Roku Screensaver and Kodi screensaver use Client=JellyFlam3-Screensaver so gate stays open during stills/video screensaver. healthcheck.sh and bringup_check.sh fail closed on bad units, missing gate status, Opt In without live Syncthing+Tailscale. WORKER DRAIN (distinct): python3 -m pipeline.worker_drain request finishes the current inbox job then stops claiming until cancel; flag persists across restart; healthcheck WARNs while drained.",
       "author": "Owner"
     },
     {
-      "content": "DEFERRED / OUT OF SCOPE (do not document as shipped): Continuous live HLS from shuffled MP4s (dropped). Gold Sheep / paid ES masters (never ingest). DeepDream, full social flock network (aspirational). LLM pedigree + LLM poster naming are Phase 5 on a **separate** Ventuno LLM Agent Platform (docs/phase5/) — not on the Pi furnace, not cloud stubs in the worker, not Ventuno-as-furnace. Kodi standalone loop→edge→loop sequencer (tuples play as one catalog MP4). JellyFlam3 Dreams Channel Store leftover (screensaver not cert-clean). Optional Jellyfin OriginalTitle/SortName-as-alias. Auto-promote cancelled. Hours-scale flock timer not needed (wrap-once shipped). Phase 4 implemented v0.3.2 including VoD Store submission pending review.",
+      "content": "DEFERRED / OUT OF SCOPE (do not document as shipped): continuous live HLS from shuffled MP4s; Gold Sheep / paid ES masters; DeepDream and full social flock; Phase 5 LLM pedigree/naming on the separate Ventuno platform; Kodi standalone edge sequencer (tuples are one MP4); JellyFlam3 Dreams Store listing; Jellyfin OriginalTitle/SortName-as-alias; archive commercial/noncommercial download selector; automatic peer promote. VoD Store publication is shipped. HLS remains an opt-in analysis mode with known stale-segment behavior; ambient default is Static MP4.",
       "author": "Owner"
     },
     {
-      "content": "TESTING: python3 -m pytest tests/ -q (~3s local; ~372 tests collected). Fleet uses apt python3-pytest. smoke_render.sh and hls_smoke.sh are Pi/lab scripts not pytest. CI: .github/workflows/tests.yml + release.yml (tag push). ensure_exec_bits.sh --check on every CI run.",
+      "content": "TESTING (2026-10-18): python3 -m pytest tests/ -q; 610 tests currently collect. Fleet uses apt python3-pytest. smoke_render.sh, hls_smoke.sh, and fleet smoke scripts require lab hardware and are not ordinary pytest. CI: .github/workflows/tests.yml plus release.yml on tag push; ensure_exec_bits.sh --check runs in CI. Treat the test count as a dated snapshot.",
       "author": "Owner"
     }
   ],
@@ -72,11 +81,21 @@
     },
     {
       "title": "Render Pipeline and Worker",
-      "purpose": "pipeline/ worker, worker_drain (finish current job then pause claiming), flam3-animate, ffmpeg encode, job states, inbox/catalog paths, smoke vs publish duration bands (7–37s, hard max 120s), cron_breed_idle and cron_archive_seed.",
+      "purpose": "Worker stages from inbox through sheep tax, quality gates, flam3 animation, ffmpeg encode, sidecar/Jellyfin ingest, and genomes/done. Cover FIFO claims, worker_drain, job recovery, dynamic duration, cron_breed_idle, and cron_archive_seed.",
       "parent": "Architecture Overview",
       "page_notes": [
         {
           "content": "Guide: docs/phase1/05_RENDER_PIPELINE.md, docs/phase2/07_PEDIGREE_BREEDING.md, docs/phase2/08_DYNAMIC_DURATION.md"
+        }
+      ]
+    },
+    {
+      "title": "Archive Feed and Inbox FIFO",
+      "purpose": "pipeline/archive_seed.py, seed_inbox.py, inbox_queue.py, and cron_archive_seed.sh: tracked id manifest, named --sheep/--from-file requests, download fallbacks, backlog ceiling, skip-catalog, arrival stamping, and oldest-arrival worker claims.",
+      "parent": "Render Pipeline and Worker",
+      "page_notes": [
+        {
+          "content": "Guides: docs/phase2/01_ARCHIVE_SEED_LIBRARY.md and USER_GUIDE_AND_RUNBOOK Feed the furnace. Manifest has ids only; license filtering of archive downloads is proposed, not shipped."
         }
       ]
     },
@@ -117,7 +136,7 @@
     },
     {
       "title": "Roku VoD Channel",
-      "purpose": "roku-channel/ BrightScript: JellyfinTask flock list, HomeScene/PlayerScreen, Settings registry, commercial mode, shuffleFlock always true (archive gens + pedigree + tuple), HLS vs MP4 streamMode, deep link contentId, wrap-once re-fetch + 313 cap, packaging 1.0.31.",
+      "purpose": "roku-channel/ VoD 1.0.55: child-folder flock merge, HomeScene/PlayerScreen, votes, Settings registry, client commercial filter, HLS vs MP4, deep links, wrap refresh/313 cap, alias titles, and filename-default poster-grid sort.",
       "parent": null,
       "page_notes": [
         {
@@ -127,7 +146,7 @@
     },
     {
       "title": "Roku Screensaver",
-      "purpose": "roku-screensaver/ stills slideshow: StillsTask Primary+Backdrop fetch (ImageTags only; stills/.ignore JPEGs are not URLs), skip tuple, always rotate, commercialMode, wrap-once re-fetch + 313 URL cap (rotate new mix past still on screen), shared JellyFlam3 registry, Theme→Screensavers selection, one-sideload-slot constraint, packaging 1.0.9.",
+      "purpose": "roku-screensaver/ 1.0.11 stills slideshow: Primary+Backdrop ImageTags, skip tuples, always rotate, commercialMode, filename/alias caption, wrap refresh/313 URL cap, package-local registry, Theme selection, and one-sideload-slot constraint.",
       "parent": "Roku VoD Channel",
       "page_notes": [
         {
@@ -137,7 +156,7 @@
     },
     {
       "title": "Kodi Screensaver",
-      "purpose": "kodi-screensaver/screensaver.jellyflam3 add-on: jellyfin_flock.py Static MP4 shuffle, ES-dogma loops-only MVP, LibreELEC install from zip, Client=JellyFlam3-Screensaver, wrap-once re-fetch + 313 cap, version 0.2.9.",
+      "purpose": "Kodi add-on 0.2.15: Static MP4 shuffle, tuples as one clip, filename/alias caption, like/love vote overlay, reconnect handling, commercial filter, LibreELEC zip install, Client=JellyFlam3-Screensaver, wrap refresh, and 313 cap.",
       "parent": null,
       "page_notes": [
         {
@@ -152,7 +171,7 @@
     },
     {
       "title": "Peering and Share Security",
-      "purpose": "Syncthing over Tailscale, *.flam3 mesh, Opt In/Out, promote/land paths, Ed25519/SHA256 sidecars, lab_smoke05_fleet.ps1, share_opt_in health gate.",
+      "purpose": "Syncthing over Tailscale, Opt In/Out and watchdog, *.flam3 land, gated promote, Ed25519/SHA256 integrity, share-out staging, and share_opt_in/share_live health. Auto-promote is cancelled.",
       "parent": "Architecture Overview",
       "page_notes": [
         {
@@ -192,7 +211,7 @@
     },
     {
       "title": "Git Pedigree Sheep",
-      "purpose": "genomes/pedigree/ curated smoke/examples in git, samples layout, demo seed retired, archive Free Sheep as feedstock only.",
+      "purpose": "genomes/pedigree/ curated smoke/examples in git, sample layout, smoke sidecar method/parents/license, demo seed retired, and archive Free Sheep as feedstock only. Furnace ingest writes a new catalog sidecar.",
       "parent": "Render Pipeline and Worker",
       "page_notes": [
         {
@@ -202,7 +221,7 @@
     },
     {
       "title": "Testing and CI",
-      "purpose": "pytest pyramid, test_gate_script_exits, test_roku_packages, test_kodi_jellyfin_flock, GitHub Actions workflow, Phase 10 acceptance checklists and fleet regression.",
+      "purpose": "Pytest suite (610 collected on 2026-10-18), package/source contract tests, GitHub Actions, executable-bit checks, hardware-only smoke scripts, Phase 10 acceptance, and fleet regression.",
       "parent": null,
       "page_notes": [
         {
@@ -211,9 +230,19 @@
       ]
     },
     {
-      "title": "Phase 4 Roadmap",
-      "purpose": "Synopsis of post-launch work: edges/watermark, Roku publish, peer share-path, mesh scripting, library rotate, concurrent clients, viewer feedback, sheep naming RNG. LLM naming/pedigree moved to Phase 5.",
+      "title": "Phase 4 Shipped Features",
+      "purpose": "Implemented v0.3.2 and later polish: tuples/watermark, published Roku VoD, gated peer promote, mesh tooling, library rotate, capacity estimate, votes/share/breed weights, aliases, and sortMode. Name cancelled and parked leftovers explicitly.",
       "parent": "Phase Status"
+    },
+    {
+      "title": "Licensing and Commercial Boundaries",
+      "purpose": "License inference, sidecar tags, private vs commercial furnace behavior, tuple watermark rights, share-out exclusion, and separate Roku/Kodi playback filters. Commercial mode does not currently cull archive downloads or worker inbox.",
+      "parent": "Architecture Overview",
+      "page_notes": [
+        {
+          "content": "Canonical guide: docs/phase1/07_LICENSE_AND_METADATA.md; operator cutover and developer gaps: USER_GUIDE_AND_RUNBOOK Private vs public and Layer 3 commercial/non-commercial sections."
+        }
+      ]
     },
     {
       "title": "Phase 5 Ventuno Q and LLM",
@@ -227,7 +256,7 @@
     },
     {
       "title": "Known Issues and Limits",
-      "purpose": "Operational limits, open concerns, and workarounds: Jellyfin nested flock query, one Roku sideload slot, render latency on Pi, shuffleFlock vs list size, continuous HLS dropped, Gold Sheep out of scope.",
+      "purpose": "Operational limits and workarounds: nested Jellyfin flock query, one Roku sideload slot, Pi render latency, 313 client cap, HLS stale segments/keyframe history, mixed commercial furnace inbox, tuple multi-flame failure triage, and Gold Sheep exclusion.",
       "parent": null,
       "page_notes": [
         {
@@ -237,7 +266,7 @@
           "content": "stills/.ignore: catalog JPEGs are not Jellyfin Primaries or Backdrops. VoD FlockItem shows No poster without ImageTags.Primary. Roku SS mixes Primaries only until BackdropImageTags exist. Images POST must be base64 on Jellyfin 10.11."
         },
         {
-          "content": "Concerns: Jellyfin API behavior may change; child-folder walk capped at 50 direct folders under library; no server-side proxy yet; multi-Roku household needs Phase 4 publish or manual per-TV sideload; secrets in registry on Roku devices."
+          "content": "Concerns: Jellyfin API behavior may change; child-folder walk is capped at 50 direct folders; no server proxy; Store VoD has empty Settings while furnace sideloads may preset secrets; Roku developer mode has one sideload slot; registry secrets remain device-local."
         }
       ]
     }

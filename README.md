@@ -2,6 +2,8 @@
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/awuehler/jellyflam3-server)
 
+DeepWiki hints live in [`.devin/wiki.json`](.devin/wiki.json) (`repo_notes` and `pages`). The furnace, cron jobs, and playback clients do not read that file.
+
 JellyFlam3 Server is a self-hosted generative media server that renders flam3-inspired visuals, processes them with ffmpeg, and serves continuous ambient streams to **Roku** and **Kodi** clients (and any Jellyfin/HLS-capable player on your LAN).
 
 > **Short:** JellyFlam3 Server streams generative dreams, flame fractals, and social-screensaver visuals from a self-hosted media server to TVs and connected displays

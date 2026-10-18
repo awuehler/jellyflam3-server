@@ -420,7 +420,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument(
         "--refresh-manifest",
         action="store_true",
-        help="Re-scrape archive listing pages into configs/archive_seed_manifest.json",
+        help=(
+            "Re-scrape archive listing pages into configs/archive_seed_manifest.json. "
+            "Replaces the id list and keeps the file _comment. "
+            "--sheep and --from-file do not read the manifest."
+        ),
     )
     p.add_argument(
         "--no-tv-port",

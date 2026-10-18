@@ -682,7 +682,7 @@ Use sheep listed on **`1.html`, `2.html`, and `3.html`** under these generations
 
 ### Pipeline intent (implemented)
 
-1. **Discover** sheep IDs from the `1.html` / `2.html` / `3.html` pages → `configs/archive_seed_manifest.json` (`--refresh-manifest`).
+1. **Discover** sheep IDs from the `1.html` / `2.html` / `3.html` pages → `configs/archive_seed_manifest.json` (`--refresh-manifest`). The committed file is that id pool only (no genome XML, no license). `--archive` and the archive cron draw from it. `--sheep` and `--from-file` fetch named ids and do not open the manifest. Refresh replaces the list and keeps the file’s `_comment`.
 2. **Fetch** corresponding `electricsheep.{gen}.{id}.flam3` genomes. The named archive file is tried first. When that 404s, follow the `spex` link on `generation-{N}/sheep/{id}/genome.html` (the body is the raw genome; generation 165 links `old/{id}/spex`). Sheepserver mirrors are the last resort. Skip responses with no `<flame>`.
 3. **Validate** older flock `.flam3` with installed flam3 tools; quarantine failures.
 4. **Random seed selection** — default fetch count random **3–7** (`--fetch-count` to override).

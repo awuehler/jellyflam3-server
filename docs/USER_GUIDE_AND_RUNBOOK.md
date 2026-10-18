@@ -528,6 +528,8 @@ python3 -m pipeline.seed_inbox --from-file sheep.txt
 # --sheep is queued first when both are set. --dry-run prints the queue and does not fetch.
 ```
 
+`--archive` and `scripts/cron_archive_seed.sh` draw from `configs/archive_seed_manifest.json`. That file is generation and sheep id only: no genome XML and no license. `--sheep` and `--from-file` do not open it. `--refresh-manifest` replaces the id list from the live archive and keeps the note in the file.
+
 **Pedigree breed (local genetics):**
 
 ```bash

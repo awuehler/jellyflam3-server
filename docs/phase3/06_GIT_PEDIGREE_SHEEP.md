@@ -89,7 +89,7 @@ Keep the set **tiny** (handful of sheep): enough for smoke duration + one mutate
 | Artifact | Kind | Role |
 |---|---|---|
 | `genomes/pedigree/` | genome | Curated git pedigree root (`origin: local_pedigree`) |
-| `genomes/pedigree/smoke/electricsheep.pedigree.smoke.0001.flam3` (+ sidecar) | genome | Default smoke seed |
+| `genomes/pedigree/smoke/electricsheep.pedigree.smoke.0001.flam3` (+ `.jellyflam3.json`) | genome | Default smoke seed. Sidecar holds method, parents, and license. A furnace ingest writes a new catalog sidecar and does not keep the git note |
 | `genomes/pedigree/examples/` | genome | Docs / mutate–cross example seeds |
 | `genomes/pedigree/README.md` | docs | Curation policy, sheep tax gate, license notes |
 | `scripts/smoke_render.sh` (`SMOKE_SEED` → pedigree smoke) | script | Toolchain smoke against git pedigree |

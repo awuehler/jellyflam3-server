@@ -43,7 +43,7 @@ The hard step remains **first enrollment trust** (who may join the flock tailnet
 | Choice | Detail |
 |---|---|
 | **Method** | Tailscale **pre-auth key** in `secrets.env` as `TS_AUTHKEY` (never commit) |
-| **Tag** | `tag:jellyflam3` — ACL example in [`deploy/peering/tailscale-acl.example.json`](../../deploy/peering/tailscale-acl.example.json) |
+| **Tag** | `tag:jellyflam3` (furnaces) and `tag:jellyflam3-agent` (agent host) in [`deploy/peering/tailscale-acl.example.json`](../../deploy/peering/tailscale-acl.example.json). An admin pastes that example into the tailnet policy. The pipeline does not apply the file. |
 | **User surface** | CLI only: `python3 -m pipeline.peering status \| opt-in \| opt-out \| promote` |
 | **Units** | `jellyflam3-syncthing.service`, `jellyflam3-peering.service` under [`deploy/systemd/`](../../deploy/systemd/) |
 
@@ -186,7 +186,7 @@ test -f genomes/inbox/smoke_peer.flam3 && echo SMOKE_PROMOTE_OK
 
 Smoked on `16a` / `08a` / `04a` (2026-08-11):
 
-1. Apply `deploy/peering/tailscale-acl.example.json` on the tailnet; create tagged pre-auth key(s) → `TS_AUTHKEY` per host (`secrets.env`, never commit).
+1. Paste `deploy/peering/tailscale-acl.example.json` into the tailnet policy (the pipeline does not apply it). It covers `tag:jellyflam3` furnaces and `tag:jellyflam3-agent`. Create tagged pre-auth key(s) → `TS_AUTHKEY` per host (`secrets.env`, never commit).
 2. On each Pi: install Tailscale + Syncthing units; `opt-in`.
 3. **One-time Syncthing mesh introduce** — [Phase 4 / 02](../phase4/02_MESH_INTRODUCE_SCRIPTING.md) `ensure-mesh-local` + gitignored `mesh-join --peers-file` (16a `introducer: true`). Manual add-json remains in [`deploy/peering/README.md`](../../deploy/peering/README.md#syncthing-first-time-mesh-introduce-lab-runbook) (JSON as argv, not stdin):
    - `export HOME=/var/lib/jellyflam3/syncthing`
@@ -229,7 +229,7 @@ Scripting for first-time mesh introduce is **shipped** in Phase 4 / [02](../phas
 | `deploy/systemd/jellyflam3-peering.service` | deploy | Peering host-service unit |
 | `deploy/systemd/jellyflam3-syncthing.service` | deploy | Managed Syncthing lifecycle |
 | `deploy/peering/stignore` | config | `*.flam3` + `*-poster.jpg` share template |
-| `deploy/peering/tailscale-acl.example.json` | config | `tag:jellyflam3` ACL example |
+| `deploy/peering/tailscale-acl.example.json` | config | Example tailnet policy for `tag:jellyflam3` and `tag:jellyflam3-agent`. Admin paste only; the pipeline does not apply it |
 | `tailscale` | binary | Private underlay / Opt In enrollment |
 | `syncthing` | binary | Application sync of peer genomes |
 | `secrets.env` (`TS_AUTHKEY`) | config | Pre-auth key for Opt In |

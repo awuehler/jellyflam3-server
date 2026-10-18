@@ -31,4 +31,6 @@ Robot remix of human parents → **CC BY-NC** (brood). Do not flip license via m
 
 `genomes/pedigree/smoke/electricsheep.pedigree.smoke.0001.flam3`
 
+The matching `.jellyflam3.json` records method, parents, and license for that smoke seed. A furnace ingest writes a new catalog sidecar and does not keep the git note.
+
 Override with `SMOKE_SEED=…` if needed. Fallback (if smoke seed missing): `genomes/pedigree/examples/electricsheep.pedigree.mutate.9334119d.flam3`. Legacy `electricsheep.demo.seed.flam3` was **removed**.

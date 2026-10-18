@@ -1,3 +1,5 @@
+// Role: sample Jellyfin /Sessions body for one TV that is playing.
+// Scope: fixture only. tests/test_idle_gate.py builds sessions in code and does not load this file.
 [
   {
     "Id": "sess1",

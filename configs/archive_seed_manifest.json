@@ -1,4 +1,5 @@
 {
+  "_comment": "Random-pick pool for python3 -m pipeline.seed_inbox --archive and scripts/cron_archive_seed.sh. Scope: generation and sheep id from the Electric Sheep archive best pages listed in this file. No genome XML and no license. --sheep and --from-file do not read this file. --refresh-manifest replaces the sheep list from the live archive and keeps this note.",
   "source": "https://electricsheep.com/archives/",
   "pages": [
     1,

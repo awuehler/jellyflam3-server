@@ -134,7 +134,7 @@ Required when: N≥2 furnaces, or any furnace is off the Ventuno’s L2 (remote 
 
 ### Admin (tailnet, once)
 
-1. Paste the Phase 5 fragment in [`deploy/peering/tailscale-acl.example.json`](../../deploy/peering/tailscale-acl.example.json) into the tailnet ACL (keep furnace `tag:jellyflam3` ↔ `tag:jellyflam3:*`).
+1. Paste the Phase 5 fragment in [`deploy/peering/tailscale-acl.example.json`](../../deploy/peering/tailscale-acl.example.json) into the tailnet ACL (keep furnace `tag:jellyflam3` ↔ `tag:jellyflam3:*`). The example also defines `tag:jellyflam3-agent`. The pipeline does not apply the file.
 2. Create a **reusable tagged pre-auth key** for `tag:jellyflam3-agent` only. Store as `TS_AUTHKEY_AGENT` on **B** (not in git; do not copy furnace `secrets.env` wholesale — [03](03_AI_PLATFORM_GAPS.md) G17).
 3. Confirm furnaces stay on `tag:jellyflam3` via existing Opt In. Agent ACL is SSH **22**, Jellyfin **8096**, display-sink **8791** toward furnaces — not Syncthing **22000**.
 

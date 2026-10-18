@@ -82,7 +82,7 @@ Lab fleet crontab (user `jellyflam3`, staggered so hosts do not all fetch at onc
 - Index: https://electricsheep.com/archives/
 - Per-generation pages: `…/generation-{N}/best/page/1.html`, `2.html`, and `3.html` (404s skipped — e.g. gen **242** has no `3.html`)
 - Generations: `247`, `245`, `244`, `243`, `242`, `198`, `191`, `169`, `165`
-- Manifest: [`configs/archive_seed_manifest.json`](../../configs/archive_seed_manifest.json) (**6380** IDs as of 2026-07-31 refresh across those pages)
+- Manifest: [`configs/archive_seed_manifest.json`](../../configs/archive_seed_manifest.json) (**6380** IDs as of 2026-07-31). Random-pick pool for `--archive` and `scripts/cron_archive_seed.sh`. Each entry is a generation and a sheep id from the best pages above. The file holds no genome XML and no license. `--sheep` and `--from-file` do not read it. `--refresh-manifest` replaces the sheep list from the live archive and keeps the file’s `_comment`.
 
 ## Pipeline (implemented)
 
@@ -108,7 +108,7 @@ Lab fleet crontab (user `jellyflam3`, staggered so hosts do not all fetch at onc
 | `pipeline/seed_inbox.py` (`--archive`, `--sheep`, `--from-file`) | pipeline | Manifest pick or named ids → fetch → TV-port → inbox FIFO |
 | `pipeline/archive_seed.py` | pipeline | Manifest scrape, fetch, materialize helpers |
 | `scripts/cron_archive_seed.sh` | script | Cron wrapper with backlog gate |
-| `configs/archive_seed_manifest.json` | config | Generation / page sheep ID pool |
+| `configs/archive_seed_manifest.json` | config | `--archive` / archive-cron id pool (generation + sheep id). No genomes or license. Named `--sheep` / `--from-file` skip this file. Refresh keeps `_comment` |
 | `pipeline/job_recovery.py` | pipeline | Manual orphan reclaim for long renders |
 | `scripts/status_report.sh` | script | Queue / thermals / live-vs-orphan labels |
 | `configs/jellyflam3.yaml` (`seed_archive`, paths) | config | Inbox paths + TV-optimize settings |

@@ -46,7 +46,7 @@ python3 -m pipeline.seed_inbox --config configs/jellyflam3.yaml --generate 2
 python3 -m pipeline.seed_inbox --config configs/jellyflam3.yaml --mutate genomes/samples/electricsheep.247.00505.flam3 --count 3
 ```
 
-`--archive` loads `configs/archive_seed_manifest.json` (or scrapes with `--refresh-manifest`), downloads `.flam3`, then **TV-ports**: 16:9 **1920×1080**, **Gold Sheep Lite** quality (3-core), and ambient **OkLCh** complementary palette. The worker re-applies the same optimize before sequence/encode/ingest.
+`--archive` loads `configs/archive_seed_manifest.json` (generation and sheep id only; no genome XML and no license), downloads `.flam3`, then **TV-ports**: 16:9 **1920×1080**, **Gold Sheep Lite** quality (3-core), and ambient **OkLCh** complementary palette. The worker re-applies the same optimize before sequence/encode/ingest. `--sheep` and `--from-file` do not open the manifest. `--refresh-manifest` replaces the id list from the live best pages and keeps the file’s `_comment`.
 
 ## Claim order
 

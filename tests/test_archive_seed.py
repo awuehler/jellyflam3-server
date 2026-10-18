@@ -8,6 +8,28 @@ from pipeline.archive_seed import (
 )
 
 
+def test_manifest_comment_round_trips_and_is_not_a_sheep(tmp_path: Path):
+    import json
+
+    from pipeline.archive_seed import MANIFEST_COMMENT, load_manifest, scrape_manifest
+
+    path = tmp_path / "archive_seed_manifest.json"
+    path.write_text(
+        json.dumps(
+            {
+                "_comment": MANIFEST_COMMENT,
+                "sheep": [{"generation": 247, "sheep_id": 1}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    loaded = load_manifest(path)
+    assert [(s.generation, s.sheep_id) for s in loaded] == [(247, 1)]
+    payload = scrape_manifest(gens=[], pages=[])
+    assert payload["_comment"] == MANIFEST_COMMENT
+    assert payload["sheep"] == []
+
+
 def test_parse_sheep_ids_from_listing_html():
     html = """
     <a href="../../sheep/505/view.html">x</a>

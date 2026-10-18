@@ -40,7 +40,8 @@ sudo systemctl daemon-reload
 ```bash
 # Admin: create tagged pre-auth key in Tailscale console; put in secrets.env:
 #   TS_AUTHKEY=tskey-auth-...
-# Apply ACL fragment from tailscale-acl.example.json
+# Admin pastes tailscale-acl.example.json into the tailnet policy.
+# Scope: tag:jellyflam3 furnaces and tag:jellyflam3-agent. The pipeline does not apply the file.
 
 cd /opt/jellyflam3-server
 python3 -m pipeline.peering status --config configs/jellyflam3.yaml

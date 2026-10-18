@@ -1,3 +1,4 @@
+# Role: example tailnet policy. Scope: tag:jellyflam3 furnaces and tag:jellyflam3-agent. The pipeline does not apply this file.
 # Example Tailscale ACL fragment for JellyFlam3 flock peering (guide 05)
 # and the Phase 5 LLM Agent Platform host (phase5/01).
 # Paste into the tailnet policy file (admin console) — do not commit live keys.

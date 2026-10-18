@@ -11,6 +11,7 @@ Thanks for your interest in JellyFlam3 Server. This project is documentation-hea
 | Architecture | [docs/Pi5_Flam3_VoD_Pipeline.md](docs/Pi5_Flam3_VoD_Pipeline.md) (source of truth) |
 | Feature work | [docs/README.md](docs/README.md) — phased guides 1–4 implemented; Phase 5 parked ([docs/phase5/00_OVERVIEW.md](docs/phase5/00_OVERVIEW.md)) |
 | Vocabulary | [docs/glossary.md](docs/glossary.md) |
+| DeepWiki hints | [`.devin/wiki.json`](.devin/wiki.json) — `repo_notes` and `pages` only. The furnace, cron, and clients do not read it |
 
 ## Development setup
 

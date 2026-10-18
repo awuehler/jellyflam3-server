@@ -31,6 +31,14 @@ DEFAULT_GENERATIONS = (247, 245, 244, 243, 242, 198, 191, 169, 165)
 DEFAULT_PAGES = (1, 2, 3)
 ARCHIVE_INDEX = "https://electricsheep.com/archives/"
 USER_AGENT = "jellyflam3-seed/0.1 (+https://github.com/awuehler/jellyflam3-server)"
+# Kept on refresh so the committed manifest still explains itself after a scrape.
+MANIFEST_COMMENT = (
+    "Random-pick pool for python3 -m pipeline.seed_inbox --archive and "
+    "scripts/cron_archive_seed.sh. Scope: generation and sheep id from the "
+    "Electric Sheep archive best pages listed in this file. No genome XML and "
+    "no license. --sheep and --from-file do not read this file. "
+    "--refresh-manifest replaces the sheep list from the live archive and keeps this note."
+)
 
 _SHEEP_VIEW = re.compile(r"/sheep/(\d+)/view\.html", re.I)
 _FLAME_OK = re.compile(r"<flame\b", re.I)
@@ -246,6 +254,7 @@ def scrape_manifest(
     for gen in gen_list:
         sheep.extend(scrape_generation(gen, page_list))
     payload = {
+        "_comment": MANIFEST_COMMENT,
         "source": ARCHIVE_INDEX,
         "pages": page_list,
         "generations": gen_list,
