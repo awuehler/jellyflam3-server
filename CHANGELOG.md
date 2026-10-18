@@ -16,6 +16,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Runbook contributor notes for commercial vs non-commercial furnaces: `license.commercial_mode` selects the tuple watermark and the NC share-out skip, and the archive cron still downloads a mixed inbox. Open gaps are listed under Layer 3 (archive license filter, breed-vs-catalog license, empty tags, client preset).
+
 - Archive fetch reads the `spex` link on `genome.html` when the named `electricsheep.{gen}.{id}.flam3` is missing, so older generations (including generation 165's `old/{id}/spex`) still download. The named archive file is tried first. Sheepserver mirrors are last.
 
 - Display-sink votes and Fetch TV display accept `X-JellyFlam3-Token` as `DISPLAY_SINK_TOKEN` or the furnace `JELLYFIN_API_KEY`. Store Roku **1.0.54** and Kodi screensaver **0.2.15** send the sink token when a furnace sideload provisioned one, otherwise the Jellyfin API key. A failed vote still dismisses immediately. Channel Store zips stay `--no-presets`. The API key can authorize those writes as well as Jellyfin access.

@@ -8,7 +8,7 @@ One document, **three layers**. Pick your layer and stay there — you should no
 | **[Layer 1 — End user](#layer-1--end-user)**         | Household / viewer          | Watch ambient loops, use Roku or Kodi screensaver, request an archive sheep, fix “nothing plays” without SSH             |
 | **[Worked examples](#worked-examples)**              | Viewer + operator           | First-evening stories (VoD gate, screensaver, two Rokus, peer receive, drain, vote/share, **vote sweep**, **vote top**) |
 | **[Layer 2 — Operator](#layer-2--operator-runbook)** | Pi owner / homelab operator | Keep the flock healthy, seed/breed/delete sheep, peering, health gates, fleet updates, **private ↔ public**             |
-| **[Layer 3 — Contributor](#layer-3--contributor)**   | Developer / maintainer      | Run tests, change pipeline code, CI, deploy conventions                                                                 |
+| **[Layer 3 — Contributor](#layer-3--contributor)**   | Developer / maintainer      | Run tests, change pipeline code, CI, deploy conventions, commercial vs non-commercial gaps                              |
 
 
 **Terms:** [glossary.md](glossary.md) · **Architecture (SoT):** [Pi5_Flam3_VoD_Pipeline.md](Pi5_Flam3_VoD_Pipeline.md) · **Install from zero:** [phase2/09_PI_FROM_SCRATCH.md](phase2/09_PI_FROM_SCRATCH.md)
@@ -1512,7 +1512,7 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 | Link capacity / N_max                | `pipeline/link_capacity.py`, `docs/phase4/07_CONCURRENT_CLIENTS.md`                                                                                                                                                           |
 | Library disk check / rotate          | `pipeline/library_disk.py`, `pipeline/library_rotate.py`, `docs/phase4/06_LIBRARY_DISK_ROTATE.md`                                                                                                                             |
 | Sheep aliases                        | `pipeline/sheep_naming.py`, `docs/phase4/09_SHEEP_NAMING.md` (LLM: [phase5/02](phase5/02_LLM_INTEGRATION.md) on agent platform)                                                                                               |
-| License / Cesari watermark           | [NOTICE](../NOTICE), [phase1/07](phase1/07_LICENSE_AND_METADATA.md), [watermark README](media/watermark/README.md), [Private vs public](#private-vs-public-furnace), [Use your own PNG](#use-your-own-png-private-and-public) |
+| License / Cesari watermark           | [NOTICE](../NOTICE), [phase1/07](phase1/07_LICENSE_AND_METADATA.md), [watermark README](media/watermark/README.md), [Private vs public](#private-vs-public-furnace), [Commercial and non-commercial furnaces](#commercial-and-non-commercial-furnaces), [Use your own PNG](#use-your-own-png-private-and-public) |
 | Catalog posters / stills             | [Catalog posters](#catalog-posters-after-render) — `jellyfin.attach_posters` + `stills.enabled`; Roku SS Primary + Backdrop                                                                                                   |
 | Roku screensaver                     | `roku-screensaver/`, [phase3/01](phase3/01_SCREENSAVERS_AND_STILLS.md)                                                                                                                                                        |
 | Roku client                          | `roku-channel/`, `docs/phase1/08_ROKU_BRIGHTSCRIPT.md`, [CLIENT_CHANNEL_ART.md](CLIENT_CHANNEL_ART.md)                                                                                                                        |
@@ -1522,12 +1522,45 @@ Key test modules added for review hardening: `test_gate_script_exits.py`, `test_
 
 
 
+### Commercial and non-commercial furnaces
+
+Operator cutover stays in [Private vs public furnace](#private-vs-public-furnace). This section is the code map. License rules in detail: [phase1/07](phase1/07_LICENSE_AND_METADATA.md).
+
+A private furnace is `license.commercial_mode: false` (the example file and the code default). A commercial furnace is that same key set to `true`. Both postures share one inbox, one worker, and one archive cron. The flag leaves the download and the render alone.
+
+| Behavior | Private (`false`) | Commercial (`true`) |
+| --- | --- | --- |
+| New tuple edge | Cesari PNG, or the operator PNG when `watermark.image` points at one | Cesari file is skipped. An operator PNG still burns. Otherwise the attribution sentence |
+| Share-out | Loved sheep copy, including CC BY-NC | `pipeline/share_votes.py` skips a sidecar whose tags hit `exclude_tags` (default `cc-by-nc`), reason `commercial_nc` |
+| Archive cron, `--sheep`, `--from-file` | Mixed download | Mixed download |
+| Worker | Renders the inbox | Renders the inbox |
+| Daily breed and `peering promote` | Stage into the inbox | Stage into the inbox |
+| Roku `commercialMode` / Kodi `commercial_mode` | Separate client toggles, default off. A furnace-built zip presets `commercialMode=false` | Same clients. The furnace flag does not flip the TV |
+
+An archive genome is stamped after the XML is fetched. `infer_tags_from_genome` in `pipeline/license_filter.py` treats a `nick` other than `brood` as `human` and `cc-by`. Any other genome, including a missing nick, is `cc-by-nc`. The manifest in `pipeline/archive_seed.py` stores a generation and a sheep id. `parse_sheep_ids` keeps `/sheep/<id>/view.html`. `stage_archive` draws `max(count * 4, count + 8)` candidates so catalog skips and failed downloads can still fill the request. That draw does not read a license.
+
+The worker writes the catalog sidecar from `infer_tags_from_genome` on the genome it just rendered (`pipeline/worker.py`). Daily breed writes another license on the inbox sidecar: `inherit_license_tags` forces `cc-by-nc` when any parent is `human` or `cc-by-nc`. `merge_pedigree_lineage` copies `origin`, `method`, `parents`, `generation`, `bred_at`, and `cross_method`. The breed sidecar’s `license` and `tags` stay off the catalog.
+
+A client with commercial-safe on hides `cc-by-nc` and hides items that have no license tag. `is_commercial_allowed` allows an empty tag list, because it only rejects a tag that sits in `exclude_tags`. Jellyfin web, and a stock Jellyfin Roku client, list the library with no tag filter.
+
+#### Potential improvements
+
+Recorded 2026-10-17 from the archive-feed review. Not scheduled.
+
+- Add `seed_archive.license` with `both` (default; current cron), `commercial`, and `noncommercial`. Apply it in `stage_archive` and `stage_named_archive` after `fetch_flam3`, using `infer_tags_from_genome`, and leave a rejected genome in the archive cache. The random draw has to continue until the requested count is staged or the attempt budget is spent. A commercial-only pass rejects most algorithm sheep inside today’s `count * 4` budget. Named `--sheep` and `--from-file` should log a license skip and continue the list. Dry-run should stay download-free and say the license check happens after fetch. Keep this key off `license.commercial_mode`. That boolean already selects the tuple watermark and the share-out skip.
+- Decide whether a commercial furnace should refuse NC at the worker. Today `commercial_mode: true` still ingests NC from the archive, from breed, from promote, and from `--samples`, `--generate`, and `--mutate`. An archive-only filter leaves those other doors open.
+- Pick one license for pedigree children. The breed sidecar forces NC for a human parent. The catalog tag follows the child genome’s `nick`, so a child that keeps a human nick is published as `cc-by` while the breed file says `cc-by-nc`.
+- Align empty tags. Commercial clients hide untagged items. `is_commercial_allowed` allows them, so share-out on a commercial furnace can still copy an untagged sidecar.
+- Preset a furnace-built Roku zip from the live `license.commercial_mode`, or add a pack-time override. The zip still writes `commercialMode=false`, and a sideload keeps whatever the TV already saved.
+- A commercial cutover leaves NC MP4s in `/media/sheep/by-generation/`. Clients hide them. Jellyfin web still lists them. A collection filter or a Shears pass would be a separate tool.
+- Parent-pool votes can still breed an NC child on a commercial furnace. See [Future consideration — vote outcomes](#future-consideration--vote-outcomes).
+
 ### Future consideration — vote outcomes
 
 Recorded 2026-10-03 from the vote-path review. Not scheduled. The first-vote weight (`1 + votes ** power`) and the one-time share copy are already in `pipeline/breed_idle.py` and `pipeline/share_votes.py`.
 
 - Four parent-pool stems are listed twice on the lab furnaces (`242.00483`, `242.02652`, `243.13770`, and pedigree mutate `9334119d`): once under `genomes/done` and again under `genomes/samples` or `genomes/pedigree`. Each identity holds two uniform tickets before any vote. Drawing by stem once would remove that.
-- License follows the parents, not the screen that voted. If any parent is CC BY-NC or human, the child is forced CC BY-NC. A Roku with commercial mode off, on the same Pi as a commercial-mode Roku, can vote an NC sheep into the shared pool, and that child then drops out of the commercial flock.
+- License follows the parents, not the screen that voted. If any parent is CC BY-NC or human, the breed sidecar forces the child to CC BY-NC. The catalog tag is inferred again from the child genome’s nick, so the published license can differ; see [Commercial and non-commercial furnaces](#commercial-and-non-commercial-furnaces). A Roku with commercial mode off, on the same Pi as a commercial-mode Roku, can vote an NC sheep into the shared pool, and that child then drops out of the commercial flock.
 - Re-votes are unlimited and `deviceId` is discarded. One remote replaying a sheep can outgrow the rest of the household, and a later per-device cap cannot be reconstructed from the sidecar.
 - There is no decay. After the first vote, that sheep’s advantage lasts until `python3 -m pipeline.sheep_votes sweep --confirm SWEEP`.
 - The Roku screensaver never posts. A household that mostly runs the screensaver produces an empty tally. A Kodi screensaver on that Pi writes the same counter the Rokus use.
