@@ -2,7 +2,29 @@
 
 Sideloadable SceneGraph channel that lists sheep from Jellyfin with **poster tiles** (`FlockItem`). Tiles use `ImageTags.Primary` only — empty tag shows the **No poster** placeholder (`stills/.ignore` JPEGs are not Primaries). **Ambient loop** defaults to Static MP4; HLS remux remains available for lab compare.
 
-**1.0.55:** Settings `sortMode` orders the poster grid. Default is `filename` (A–Z stems). OK cycles `alias`, `generation`, `duration`, `license`, and `folder`. Generation order is numeric gen and sheep id, then every breed method under the tile tag `breed`, then tuples under `tuple`. A sorted flock above 313 keeps the first 313 of that order. `folder` is the previous folder walk and still keeps a random 313. Ambient shuffle is a separate queue. **1.0.54:** votes and Fetch TV display send registry `displaySinkToken` when a furnace sideload preset filled it, otherwise the Jellyfin API key. Store zips stay `--no-presets` (no token, no Jellyfin key). A failed vote still dismisses immediately; Settings has no token row. **1.0.53:** a playback error replays the same URL once before the sheep is dropped from the flock. The banner shows the alias (or filename) plus the Video error and stays up while the furnace is probed. **1.0.52:** Store resubmission revision (same channel as 1.0.51). The Channel Store zip uses `--no-presets` so Settings stay empty — no Funnel host and no Jellyfin key. **1.0.51:** `AppLaunchComplete` fires from `HomeScene` at a fully rendered, operable screen (flock, actionable empty/error state, or deep-link playback) instead of at `screen.Show()`; a 5 s guard covers an unreachable furnace and defers while a pre-home Settings dialog is open. **1.0.50:** playback fallback is one-way to Static MP4 — `hls → mp4` still recovers, `mp4 → hls` no longer does. Jellyfin returns these keyframe-sparse loops as a single HLS segment (whole clip behind `#EXTINF:6.0`), which blows past Roku cert **3.6**'s 8 s start budget. **1.0.49:** HD-only splash/icon (`splash_screen_hd`, `mm_icon_focus_hd`); no SD manifest keys. **1.0.48 cert 5.2:** `m.input = CreateObject("roInput")` stays alive; `roInputEvent` requires `DoesExist("mediatype")` and `DoesExist("contentid")` (Roku sample strings). **1.0.47 public-app compliance:** `roInput` uses documented casing (`SetMessagePort` / `IsInput` / `GetInfo`); pre-home dialog beacons cover every Settings screen opened before the flock renders. Store static analysis scans the **uploaded package**, so re-package the `.pkg` on a Roku from this sideload before re-submitting. **1.0.46:** first-run credential Settings fire `AppDialogInitiate` / `AppDialogComplete`; text fields use `StandardKeyboardDialog` (not `KeyboardDialog`). **1.0.45:** `supports_input_launch=1` + `roInputEvent`; `rsg_version=1.3`; no deprecated manifest `subtitle`; `roAppMemoryMonitor` plus `EnableLowGeneralMemoryEvent` fallback. **1.0.44** added `AppLaunchComplete` after Scene show and excluded numbered source-art PNGs (under Roku's 4 MB limit).
+**1.0.55:** Settings `sortMode` orders the poster grid. Default is `filename` (A–Z stems). OK cycles `alias`, `generation`, `duration`, `license`, and `folder`. Generation order is numeric gen and sheep id, then every breed method under the tile tag `breed`, then tuples under `tuple`. A sorted flock above 313 keeps the first 313 of that order. `folder` is the previous folder walk and still keeps a random 313. Ambient shuffle is a separate queue.
+
+The **1.0.54:** votes and Fetch TV display send registry `displaySinkToken` when a furnace sideload preset filled it, otherwise the Jellyfin API key. Store zips stay `--no-presets` (no token, no Jellyfin key). A failed vote still dismisses immediately; Settings has no token row. 
+
+The **1.0.53:** a playback error replays the same URL once before the sheep is dropped from the flock. The banner shows the alias (or filename) plus the Video error and stays up while the furnace is probed.
+
+The **1.0.52:** Store resubmission revision (same channel as 1.0.51). The Channel Store zip uses `--no-presets` so Settings stay empty — no Funnel host and no Jellyfin key.
+
+The **1.0.51:** `AppLaunchComplete` fires from `HomeScene` at a fully rendered, operable screen (flock, actionable empty/error state, or deep-link playback) instead of at `screen.Show()`; a 5 s guard covers an unreachable furnace and defers while a pre-home Settings dialog is open.
+
+The **1.0.50:** playback fallback is one-way to Static MP4 — `hls → mp4` still recovers, `mp4 → hls` no longer does. Jellyfin returns these keyframe-sparse loops as a single HLS segment (whole clip behind `#EXTINF:6.0`), which blows past Roku cert **3.6**'s 8 s start budget.
+
+The **1.0.49:** HD-only splash/icon (`splash_screen_hd`, `mm_icon_focus_hd`); no SD manifest keys.
+
+The **1.0.48 cert 5.2:** `m.input = CreateObject("roInput")` stays alive; `roInputEvent` requires `DoesExist("mediatype")` and `DoesExist("contentid")` (Roku sample strings).
+
+The **1.0.47 public-app compliance:** `roInput` uses documented casing (`SetMessagePort` / `IsInput` / `GetInfo`); pre-home dialog beacons cover every Settings screen opened before the flock renders. Store static analysis scans the **uploaded package**, so re-package the `.pkg` on a Roku from this sideload before re-submitting.
+
+The **1.0.46:** first-run credential Settings fire `AppDialogInitiate` / `AppDialogComplete`; text fields use `StandardKeyboardDialog` (not `KeyboardDialog`).
+
+The **1.0.45:** `supports_input_launch=1` + `roInputEvent`; `rsg_version=1.3`; no deprecated manifest `subtitle`; `roAppMemoryMonitor` plus `EnableLowGeneralMemoryEvent` fallback.
+
+The **1.0.44:** added `AppLaunchComplete` after Scene show and excluded numbered source-art PNGs (under Roku's 4 MB limit).
 
 ## Playback
 
@@ -13,19 +35,22 @@ Sideloadable SceneGraph channel that lists sheep from Jellyfin with **poster til
 
 Roku VOD **cannot gapless-loop** HTTP MP4/HLS with the Video node (`Video.loop` still rebuffers). Channel uses seek-before-EOF; residual hitch is accepted for now. Do **not** use `master.m3u8` on Jellyfin 10.11.
 
-If a sheep is quarantined or Shears-deleted while a clip is queued, **1.0.29+** drops that id after HLS↔MP4 fallback fails, re-polls the flock (30s rate limit), and continues. A failed open does not POST Playing. **1.0.30** always persists `shuffleFlock=true` so an upgrade cannot leave the TV looping one sheep. **1.0.31** treats a wrap as one random permutation of the in-memory list, then re-fetches Jellyfin (HTTP Limit 5000, randomly prune to 313). The new mix is rotated so the first item is not the clip that just finished. Overnight ingest appears without exiting ambient.
+The **1.0.43 unreachable furnace:** list fetch failures that look like a timeout stay on a waiting screen (Retry + 30s auto-retry). A clip that fails because the Pi is down does **not** skip through the whole flock into “empty library.” Session Capabilities POST is fire-and-forget so cold-fail is one 15s wait, not two.
 
-The **1.0.36** flock browser wraps every six posters into vertically scrollable rows (three rows visible at once; 270×152 tiles leave a right gutter so column 6 is not clipped). Home copy is **Ambient Dreams** and **N sheep in flock**. Tile metadata is duration, a short tag, and the full `cc-*` license (including `cc-by-sa` and `cc-by-nc-sa`). The tag is `gen N` for a numbered generation, `breed` for mutate / cross / blend / interpolate, and `tuple` for a tuple clip. `misc` and `test` stay off the tile. The detail pedigree chip still shows the raw pedigree tag. While the next MP4 connects, the lower-left status shows `{alias}(MP4)` when available.
+The **1.0.42 settings toggles:** highlight `commercialMode`, `streamMode`, `shuffleFlock`, `titleMode`, or `sortMode` and press **OK** to cycle the values; each press writes and flushes immediately. **Save & Reload** refreshes the flock. Text credentials still use the keyboard. `sortMode` arrived in **1.0.55**.
 
-**1.0.37 settings and controls:** keyboard **OK** validates and persists that field immediately; Back returns without discarding accepted edits. Boolean/title reads are canonicalized. The home status reports effective commercial filtering and alias/fallback counts. NC tags always override safe tags, including conflicting-tag data and deep links. PlayerScreen owns focus so Roku Video cannot swallow vote keys. **1.0.39** replaces Done with **Save & Reload**.
+The **1.0.39 title mode:** highlight `titleMode` and press **OK** to toggle `filename` ↔ `alias`; the value is written and flushed immediately. **Save & Reload** replaces **Done** and fetches the flock with the effective mode. Sheep without an `Alias:` Overview line still show their filename. **1.0.39** replaces Done with **Save & Reload**.
 
-**1.0.38 vote map:** two-tier only — **OK** love, **Right** like, **Down** dismiss overlay, **Up / Back** exit playback. No plain `vote` POST from the channel. Same arrows as a keyboard (Enter / Right / Down / Up-Esc) so a later Kodi overlay can match.
+The **1.0.38 vote map:** two-tier only — **OK** love, **Right** like, **Down** dismiss overlay, **Up / Back** exit playback. No plain `vote` POST from the channel. Same arrows as a keyboard (Enter / Right / Down / Up-Esc) so a later Kodi overlay can match.
 
-**1.0.43 unreachable furnace:** list fetch failures that look like a timeout stay on a waiting screen (Retry + 30s auto-retry). A clip that fails because the Pi is down does **not** skip through the whole flock into “empty library.” Session Capabilities POST is fire-and-forget so cold-fail is one 15s wait, not two.
+The **1.0.37 settings and controls:** keyboard **OK** validates and persists that field immediately; Back returns without discarding accepted edits. Boolean/title reads are canonicalized. The home status reports effective commercial filtering and alias/fallback counts. NC tags always override safe tags, including conflicting-tag data and deep links. PlayerScreen owns focus so Roku Video cannot swallow vote keys.
 
-**1.0.42 settings toggles:** highlight `commercialMode`, `streamMode`, `shuffleFlock`, `titleMode`, or `sortMode` and press **OK** to cycle the values; each press writes and flushes immediately. **Save & Reload** refreshes the flock. Text credentials still use the keyboard. `sortMode` arrived in **1.0.55**.
+The **1.0.36 flock browser:** wraps every six posters into vertically scrollable rows (three rows visible at once; 270×152 tiles leave a right gutter so column 6 is not clipped). Home copy is **Ambient Dreams** and **N sheep in flock**. Tile metadata is duration, a short tag, and the full `cc-*` license (including `cc-by-sa` and `cc-by-nc-sa`). The tag is `gen N` for a numbered generation, `breed` for mutate / cross / blend / interpolate, and `tuple` for a tuple clip. `misc` and `test` stay off the tile. The detail pedigree chip still shows the raw pedigree tag. While the next MP4 connects, the lower-left status shows `{alias}(MP4)` when available.
 
-**1.0.39 title mode:** highlight `titleMode` and press **OK** to toggle `filename` ↔ `alias`; the value is written and flushed immediately. **Save & Reload** replaces **Done** and fetches the flock with the effective mode. Sheep without an `Alias:` Overview line still show their filename.
+The **1.0.31:** treats a wrap as one random permutation of the in-memory list, then re-fetches Jellyfin (HTTP Limit 5000, randomly prune to 313). The new mix is rotated so the first item is not the clip that just finished. Overnight ingest appears without exiting ambient.
+
+If a sheep is quarantined or Shears-deleted while a clip is queued, the **1.0.29+** drops that id after HLS↔MP4 fallback fails, re-polls the flock (30s rate limit), and continues. A failed open does not POST Playing. The **1.0.30** always persists `shuffleFlock=true` so an upgrade cannot leave the TV looping one sheep.
+
 
 ## Settings version
 
