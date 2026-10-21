@@ -11,9 +11,9 @@ function onKeyEvent(key as string, press as boolean) as boolean
     m.top.requestSettings = true
     return true
   end if
-  ' A full row or a tall list wraps in the RowList itself. Only a short
-  ' row or a short list needs a deferred jump, and that jump must not run
-  ' inside this handler.
+  ' A tall list wraps vertically in the RowList itself. Every horizontal
+  ' edge jumps after this handler returns. A full row of five tiles is
+  ' already on screen, so fixedFocusWrap does not wrap it.
   if wrapGridKey(key) then return true
   return false
 end function
@@ -36,8 +36,6 @@ function wrapGridKey(key as string) as boolean
 
   if key = "right" or key = "left"
     if colCount <= 1 then return false
-    ' Five tiles fill the 1760px row, so fixedFocusWrap slides that row.
-    if colCount >= 5 then return false
     if key = "right" and col < colCount - 1 then return false
     if key = "left" and col > 0 then return false
     dest = 0

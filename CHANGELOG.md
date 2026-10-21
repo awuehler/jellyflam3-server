@@ -18,6 +18,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Roku VoD **1.0.60** wraps a full poster row the same way as a short row. Five tiles already fill the screen, so RowList `fixedFocusWrap` stops at the last tile. Left and Right at either end now set `jumpToRowItem` after the key handler returns. Vertical wrap is unchanged.
+
 - Roku VoD **1.0.59** wraps a full poster row with RowList `fixedFocusWrap`, and a flock taller than the screen with `vertFocusAnimationStyle` `fixedFocusWrap`. A short row or a flock of two or three rows still wraps, by setting the `jumpToRowItem` field after the key handler returns. **1.0.58** called `jumpToItem` as a function from that handler. That field is write-only, and the call froze the channel on the first wrap.
 
 - Roku VoD **1.0.58** wraps the poster grid at both ends. Left and Right jump to the other end of the current row. Up and Down jump to the other end of the flock and keep the same column, clamped when the destination row is shorter. A flock of one tile or one row stays put at that edge. Lists that fit in the three on-screen rows float the highlight. A taller flock keeps the highlight fixed and slides the rows.
