@@ -4,7 +4,7 @@ Sideloadable SceneGraph channel that lists sheep from Jellyfin with **poster til
 
 **Jellyfin:** HLS playback requires Jellyfin **12.0 or later** with its default authorization, and was confirmed on **12.2.0**. That release rejects the legacy `api_key` query parameter on `main.m3u8`. The channel sends `ApiKey`, which is the query parameter Jellyfin still accepts. The Video node cannot attach an `Authorization` header to the stream URL.
 
-**1.0.58:** the poster grid wraps. Left and Right jump to the other end of the current row. Up and Down jump to the other end of the flock and stay in the same column when that row has one. One tile, or one row, does not wrap. Three or fewer rows float the highlight. A taller flock keeps the highlight fixed and slides the rows under it.
+**1.0.59:** a full row wraps with RowList `fixedFocusWrap`. A flock taller than the three on-screen rows wraps with `fixedFocusWrap` on the vertical axis. A short row, or a flock of two or three rows, wraps by setting `jumpToRowItem` after the key handler returns. One tile, or one row, does not wrap. **1.0.58** called `jumpToItem` during the key handler and froze on the first wrap.
 
 **1.0.57:** the HLS playlist URL uses `ApiKey`. A playlist requested with `api_key` is refused before Jellyfin starts a remux. The poster grid is five 16:9 tiles (336×189, 20 px apart). Five tiles fill the same 1760 px width as the detail banner, so the row's right edge lines up with that banner and the tile caption can show `cc-by-nc-sa`.
 

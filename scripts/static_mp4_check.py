@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
 
-"""Negative check: Jellyfin 12 rejects legacy HLS auth, and Static MP4 still plays.
+"""Purpose: Negative check that Static MP4 still plays when legacy HLS auth is rejected.
 
 The Roku Video node cannot be driven from pytest. This checks the two URLs that
 node would use. ``api_key`` on ``main.m3u8`` must be rejected. The same item's
 ``stream.mp4?Static=true`` must return an MP4 ``ftyp`` box.
 
+Requirements: python3; secrets.env with JELLYFIN_URL, JELLYFIN_API_KEY, JELLYFIN_USER_ID.
+
 Usage (on a furnace, from the repo root):
   python3 scripts/static_mp4_check.py
   STATIC_MP4_ITEM=<id> python3 scripts/static_mp4_check.py
 
-Success prints ``STATIC_MP4_OK`` and exits 0. A rejected playlist or an
-unplayable MP4 exits 1. The item id and API key are not printed.
+When to run: After a Jellyfin upgrade, or when an HLS client falls back to Static MP4.
+Success: prints ``STATIC_MP4_OK`` and exits 0.
+Fail: Jellyfin accepts api_key on the playlist, or the Static MP4 response is not a playable MP4.
+The item id and API key are not printed.
+Docs: docs/phase2/03_HLS_CLIENT_STREAMING.md
 """
 
 from __future__ import annotations

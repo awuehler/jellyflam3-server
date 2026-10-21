@@ -128,7 +128,7 @@
       itemSpacing="[0,12]"
       showRowLabel="[false]"
       drawFocusFeedback="false"
-      rowFocusAnimationStyle="fixedFocus"
+      rowFocusAnimationStyle="fixedFocusWrap"
       vertFocusAnimationStyle="floatingFocus"
       focusable="true" />
     <BusySpinner

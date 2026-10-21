@@ -18,6 +18,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Roku VoD **1.0.59** wraps a full poster row with RowList `fixedFocusWrap`, and a flock taller than the screen with `vertFocusAnimationStyle` `fixedFocusWrap`. A short row or a flock of two or three rows still wraps, by setting the `jumpToRowItem` field after the key handler returns. **1.0.58** called `jumpToItem` as a function from that handler. That field is write-only, and the call froze the channel on the first wrap.
+
 - Roku VoD **1.0.58** wraps the poster grid at both ends. Left and Right jump to the other end of the current row. Up and Down jump to the other end of the flock and keep the same column, clamped when the destination row is shorter. A flock of one tile or one row stays put at that edge. Lists that fit in the three on-screen rows float the highlight. A taller flock keeps the highlight fixed and slides the rows.
 
 - Roku VoD **1.0.57** authenticates the HLS playlist with `ApiKey`. Jellyfin 12.0 and later reject the legacy `api_key` query parameter on `/Videos/{id}/main.m3u8` when legacy authorization is off, which is the 12.0 default. Confirmed on Jellyfin **12.2.0**: `ApiKey` returns the playlist and its segments, and `api_key` returns 401. The Roku Video node cannot send an `Authorization` header, so the query parameter is the supported form. Static MP4 playback does not use this route. `scripts/hls_smoke.sh` uses the same parameter. The poster grid is five 336×189 tiles per row. That row is 1760 pixels wide, the same width as the detail banner, so the last tile's right edge lines up with the banner and the license caption has room for `cc-by-nc-sa`.

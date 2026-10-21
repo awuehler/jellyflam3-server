@@ -4,4 +4,7 @@
   <interface>
     <field id="requestSettings" type="boolean" alwaysNotify="true" />
   </interface>
+  <children>
+    <Timer id="wrapTimer" repeat="false" duration="0.05" />
+  </children>
 </component>

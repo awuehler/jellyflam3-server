@@ -600,13 +600,13 @@ sub rebuildFlockRow()
   applyVerticalFocusStyle()
 end sub
 
-' Rows that fit on screen let the highlight float. A taller flock keeps the
-' highlight fixed and slides the rows, which is the RowList style for a long list.
+' Rows that fit on screen let the highlight float. A taller flock uses the
+' RowList wrap style so Up and Down slide to the other end.
 sub applyVerticalFocusStyle()
   if m.rowList = invalid or m.rowList.content = invalid then return
   rows = m.rowList.content.getChildCount()
   style = "floatingFocus"
-  if rows > 3 then style = "fixedFocus"
+  if rows > 3 then style = "fixedFocusWrap"
   m.rowList.vertFocusAnimationStyle = style
 end sub
 
