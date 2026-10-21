@@ -129,6 +129,7 @@
       showRowLabel="[false]"
       drawFocusFeedback="false"
       rowFocusAnimationStyle="fixedFocus"
+      vertFocusAnimationStyle="floatingFocus"
       focusable="true" />
     <BusySpinner
       id="spinner"

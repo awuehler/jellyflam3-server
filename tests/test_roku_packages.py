@@ -139,8 +139,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=57" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.57""' in text
+    assert "build_version=58" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.58""' in text
     hls = text[text.index("function hlsStreamUrl") : text.index("function mp4StreamUrl")]
     assert "&ApiKey=" in hls
     assert "api_key=" not in hls
@@ -315,6 +315,16 @@ def test_roku_vod_wrapped_flock_layout_and_compact_metadata():
     assert 'showRowLabel="[false]"' in scene
     assert 'drawFocusFeedback="false"' in scene
     assert 'rowFocusAnimationStyle="fixedFocus"' in scene
+    assert 'vertFocusAnimationStyle="floatingFocus"' in scene
+    assert "sub applyVerticalFocusStyle()" in home
+    assert "if rows > 3 then style = \"fixedFocus\"" in home
+    grid = (VOD / "components" / "FlockRowList.brs").read_text(encoding="utf-8")
+    assert "function wrapGridKey(key as string) as boolean" in grid
+    assert "function clampedColumn(rowIndex as integer, column as integer) as integer" in grid
+    assert "m.top.jumpToItem(row, dest)" in grid
+    assert "m.top.jumpToItem(destRow, clampedColumn(destRow, col))" in grid
+    assert "if colCount <= 1 then return false" in grid
+    assert "if rowCount <= 1 then return false" in grid
     assert 'translation="[80,316]"' in scene
     assert 'translation="[80,380]"' in scene
     assert "itemsPerRow = 5" in home

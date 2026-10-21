@@ -6,6 +6,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- `scripts/static_mp4_smoke.sh` checks the HLS fallback URL. On Jellyfin 12 the legacy `api_key` playlist request must return 401, and `stream.mp4?Static=true` for the same item must return an MP4 `ftyp` box. It does not drive a Roku.
+
 - Roku VoD **1.0.55** Settings `sortMode` orders the poster grid. The default is `filename`. OK also cycles `alias`, `generation`, `duration`, `license`, and `folder` (the previous folder walk). A generation sort shows `breed` on mutate, cross, blend, and interpolate tiles, and `tuple` on tuple tiles. Ambient shuffle is unchanged. Jellyfin SortName stays the filename.
 
 - Named Electric Sheep archive downloads: `python3 -m pipeline.seed_inbox --sheep 247.00505,245.61` and `--from-file sheep.txt` fetch those ids, TV-port them, and append them to the inbox FIFO behind genomes already waiting. A catalog or inbox hit is skipped. A bad id or a failed download is reported and the command exits non-zero. Random `--archive` is unchanged.
@@ -15,6 +17,8 @@ All notable changes to this project are documented here. Format loosely follows 
 - Roku VoD **1.0.52** Channel Store zip: revision bump for resubmission. `--no-presets` builds `dist/jellyflam3-roku-store.zip` with empty Settings (no `registry/jellyflam3-presets.json`, no Funnel host, no Jellyfin key). Behavior matches **1.0.51**.
 
 ### Changed
+
+- Roku VoD **1.0.58** wraps the poster grid at both ends. Left and Right jump to the other end of the current row. Up and Down jump to the other end of the flock and keep the same column, clamped when the destination row is shorter. A flock of one tile or one row stays put at that edge. Lists that fit in the three on-screen rows float the highlight. A taller flock keeps the highlight fixed and slides the rows.
 
 - Roku VoD **1.0.57** authenticates the HLS playlist with `ApiKey`. Jellyfin 12.0 and later reject the legacy `api_key` query parameter on `/Videos/{id}/main.m3u8` when legacy authorization is off, which is the 12.0 default. Confirmed on Jellyfin **12.2.0**: `ApiKey` returns the playlist and its segments, and `api_key` returns 401. The Roku Video node cannot send an `Authorization` header, so the query parameter is the supported form. Static MP4 playback does not use this route. `scripts/hls_smoke.sh` uses the same parameter. The poster grid is five 336×189 tiles per row. That row is 1760 pixels wide, the same width as the detail banner, so the last tile's right edge lines up with the banner and the license caption has room for `cc-by-nc-sa`.
 
