@@ -16,6 +16,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Roku VoD **1.0.57** authenticates the HLS playlist with `ApiKey`. Jellyfin 12.0 and later reject the legacy `api_key` query parameter on `/Videos/{id}/main.m3u8` when legacy authorization is off, which is the 12.0 default. Confirmed on Jellyfin **12.2.0**: `ApiKey` returns the playlist and its segments, and `api_key` returns 401. The Roku Video node cannot send an `Authorization` header, so the query parameter is the supported form. Static MP4 playback does not use this route. `scripts/hls_smoke.sh` uses the same parameter. The poster grid is five 336×189 tiles per row. That row is 1760 pixels wide, the same width as the detail banner, so the last tile's right edge lines up with the banner and the license caption has room for `cc-by-nc-sa`.
+
 - Roku VoD **1.0.56** bounds automatic recovery after three consecutive
   immediate playback failures and returns to the intact poster grid instead
   of dropping the flock one item at a time. A successful Video start resets

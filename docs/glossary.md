@@ -271,7 +271,7 @@ Jellyfin **remux**es H.264+AAC master into HLS segments (copy codecs, no full tr
 
 ### HLS
 
-HTTP Live Streaming via Jellyfin: `main.m3u8?MediaSourceId={id}&AudioCodec=aac`. Phase 2 first-class delivery; long sessions may hit remux lifecycle limits — MP4 fallback documented.
+HTTP Live Streaming via Jellyfin: `main.m3u8?MediaSourceId={id}&ApiKey=…&AudioCodec=aac`. Jellyfin 12.0+ rejects the legacy `api_key` query parameter on this route (confirmed 12.2.0). Long sessions may hit remux lifecycle limits — MP4 fallback documented.
 
 ### PlaybackInfo
 

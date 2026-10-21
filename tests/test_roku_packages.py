@@ -139,8 +139,12 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=56" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.56""' in text
+    assert "build_version=57" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.57""' in text
+    hls = text[text.index("function hlsStreamUrl") : text.index("function mp4StreamUrl")]
+    assert "&ApiKey=" in hls
+    assert "api_key=" not in hls
+    assert "AudioCodec=aac" in hls
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
@@ -313,9 +317,11 @@ def test_roku_vod_wrapped_flock_layout_and_compact_metadata():
     assert 'rowFocusAnimationStyle="fixedFocus"' in scene
     assert 'translation="[80,316]"' in scene
     assert 'translation="[80,380]"' in scene
-    assert "itemsPerRow = 6" in home
-    assert 'rowItemSize="[[270,152]]"' in scene
-    assert 'width="270"' in (VOD / "components" / "FlockItem.xml").read_text(encoding="utf-8")
+    assert "itemsPerRow = 5" in home
+    assert 'rowItemSize="[[336,189]]"' in scene
+    assert 'itemSize="[1760,200]"' in scene
+    assert 'width="336"' in (VOD / "components" / "FlockItem.xml").read_text(encoding="utf-8")
+    assert 'width="320"' in (VOD / "components" / "FlockItem.xml").read_text(encoding="utf-8")
     assert "sheep in flock" in home
     assert "column >= itemsPerRow" in home
     assert "bits.push(meta.pedigree)" not in task

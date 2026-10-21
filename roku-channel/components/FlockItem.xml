@@ -10,19 +10,19 @@
     <!-- Poster tile + placeholder when no Primary -->
     <Rectangle
       id="bg"
-      width="270"
-      height="152"
+      width="336"
+      height="189"
       color="0x1A1A28FF" />
     <Poster
       id="poster"
-      width="270"
-      height="152"
+      width="336"
+      height="189"
       loadDisplayMode="scaleToZoom"
       visible="false" />
     <Label
       id="placeholder"
-      translation="[16,56]"
-      width="238"
+      translation="[16,74]"
+      width="304"
       height="40"
       text="No poster"
       horizAlign="center"
@@ -31,20 +31,20 @@
       visible="true" />
     <Rectangle
       id="focusRing"
-      width="270"
-      height="152"
+      width="336"
+      height="189"
       color="0xE8E8F060"
       visible="false" />
     <Rectangle
       id="titleBar"
-      translation="[0,104]"
-      width="270"
+      translation="[0,141]"
+      width="336"
       height="48"
       color="0x0A0A12CC" />
     <Label
       id="title"
-      translation="[8,106]"
-      width="254"
+      translation="[8,143]"
+      width="320"
       height="24"
       font="font:SmallestSystemFont"
       color="0xE8E8F0FF"
@@ -52,8 +52,8 @@
       text="" />
     <Label
       id="meta"
-      translation="[8,128]"
-      width="254"
+      translation="[8,165]"
+      width="320"
       height="22"
       font="font:SmallestSystemFont"
       color="0xA0A0B8FF"

@@ -47,14 +47,16 @@ Phase 1 optimized masters for **Direct Play** (static MP4) to save Pi CPU. Phase
 
 ## Jellyfin endpoints (operator cheat sheet)
 
-Lab Jellyfin **10.11.11**. Prefer PlaybackInfo negotiation for apps; for VLC/manual smoke use the **media playlist** URL below.
+Lab history below is Jellyfin **10.11.11**. The fleet now runs Jellyfin **12.2.0**. Prefer PlaybackInfo negotiation for apps; for VLC/manual smoke use the **media playlist** URL below.
+
+**Jellyfin 12.0 and later** (confirmed **12.2.0**) reject the legacy `api_key` query parameter on `main.m3u8` and on the `.ts` URLs in that playlist. Legacy authorization is off by default. The accepted query parameter is `ApiKey`. A player that cannot set an `Authorization` header, including the Roku Video node, has to put `ApiKey` on the playlist URL; Jellyfin copies it onto each segment. `api_key` on that route returns 401 and starts no remux. Static MP4 (`stream.mp4?Static=true`) still plays without that parameter.
 
 | Mode | Typical client use |
 |---|---|
 | **PlaybackInfo** | `POST /Items/{id}/PlaybackInfo?UserId=…` — reports DirectPlay / DirectStream / Transcode |
-| **HLS (preferred smoke)** | `…/Videos/{id}/main.m3u8?MediaSourceId={id}&api_key=…&AudioCodec=aac` |
-| **HLS master** | `…/Videos/{id}/master.m3u8?MediaSourceId={id}&api_key=…` — on 10.11.11 may embed broken `AudioCodec=m3u8` in the variant line; **do not rely on it** for DoD |
-| **Static MP4** | `…/Videos/{id}/stream.mp4?Static=true&api_key=…` (Phase 1 Direct Play; keep for ambient loop) |
+| **HLS (preferred smoke)** | `…/Videos/{id}/main.m3u8?MediaSourceId={id}&ApiKey=…&AudioCodec=aac` |
+| **HLS master** | `…/Videos/{id}/master.m3u8?MediaSourceId={id}&ApiKey=…` — on 10.11.11 may embed broken `AudioCodec=m3u8` in the variant line; **do not rely on it** for DoD |
+| **Static MP4** | `…/Videos/{id}/stream.mp4?Static=true` (Phase 1 Direct Play; keep for ambient loop) |
 
 ### Playback policy (piece A — locked for Gold Sheep Lite)
 
@@ -77,7 +79,7 @@ Dashboard sanity (Playback / Transcoding): allow Direct Stream / remux for H.264
 
 | Concern | Policy |
 |---|---|
-| **HLS remux path (D)** | `{base}/Videos/{id}/main.m3u8?MediaSourceId={id}&api_key=…&AudioCodec=aac` — lab-verified; not `master.m3u8` |
+| **HLS remux path (D)** | `{base}/Videos/{id}/main.m3u8?MediaSourceId={id}&ApiKey=…&AudioCodec=aac` — required on Jellyfin 12.0+; not `master.m3u8` |
 | **Ambient default (E)** | **`streamMode=mp4`** → Static Direct Play (lighter rebuffer than HLS remux on each cycle) |
 | **Reloop mechanic (E)** | **Seek-to-0** near EOF (`position` ≥ duration−0.4s) + `finished` backup; **`Video.loop=false`** (native loop still gaps and fights seek) |
 | **Lab finding** | Owner OK 2026-08-01: both gap on Roku VOD; **MP4 seek-reloop hitch shorter** than HLS (keep ambient default = mp4) |
@@ -102,7 +104,7 @@ Dashboard sanity (Playback / Transcoding): allow Direct Stream / remux for H.264
 ```text
 # Preferred (lab-verified remux) — replace host, itemId, api_key
 # Use the Pi LAN (or Tailscale) IP — not 127.0.0.1 — from a desktop player.
-http://JELLYFIN_LAN:8096/Videos/{itemId}/main.m3u8?MediaSourceId={itemId}&api_key=YOUR_KEY&AudioCodec=aac
+http://JELLYFIN_LAN:8096/Videos/{itemId}/main.m3u8?MediaSourceId={itemId}&ApiKey=YOUR_KEY&AudioCodec=aac
 ```
 
 - On the Pi, `./scripts/hls_smoke.sh` prints `VLC_URL` with a **client-facing** host (`JELLYFIN_PUBLIC_URL` / `JELLYFIN_LAN_HOST` / auto-detect). API probes may still use `JELLYFIN_URL=http://127.0.0.1:8096`.

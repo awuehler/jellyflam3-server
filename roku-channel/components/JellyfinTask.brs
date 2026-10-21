@@ -37,13 +37,15 @@ end function
 
 function authHeader() as string
   ' Token in Authorization is what Jellyfin uses to bind Client/Device into /Sessions
-  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.56"", Token=""" + m.top.apiKey + """"
+  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.57"", Token=""" + m.top.apiKey + """"
 end function
 
 ' Lab-verified HLS remux path: prefer main.m3u8 + AudioCodec=aac.
 ' Avoid master.m3u8 — Jellyfin 10.11 may inject AudioCodec=m3u8 → ffmpeg exit 8.
+' Jellyfin 12.0+ rejects the legacy api_key query parameter on this route.
+' The Video node cannot send an Authorization header, so the playlist carries ApiKey.
 function hlsStreamUrl(base as string, itemId as string) as string
-  return base + "/Videos/" + itemId + "/main.m3u8?MediaSourceId=" + itemId + "&api_key=" + m.top.apiKey + "&AudioCodec=aac"
+  return base + "/Videos/" + itemId + "/main.m3u8?MediaSourceId=" + itemId + "&ApiKey=" + m.top.apiKey + "&AudioCodec=aac"
 end function
 
 function mp4StreamUrl(base as string, itemId as string) as string

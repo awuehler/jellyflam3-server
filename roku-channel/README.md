@@ -2,6 +2,10 @@
 
 Sideloadable SceneGraph channel that lists sheep from Jellyfin with **poster tiles** (`FlockItem`). Tiles use `ImageTags.Primary` only — empty tag shows the **No poster** placeholder (`stills/.ignore` JPEGs are not Primaries). **Ambient loop** defaults to Static MP4; HLS remux remains available for lab compare.
 
+**Jellyfin:** HLS playback requires Jellyfin **12.0 or later** with its default authorization, and was confirmed on **12.2.0**. That release rejects the legacy `api_key` query parameter on `main.m3u8`. The channel sends `ApiKey`, which is the query parameter Jellyfin still accepts. The Video node cannot attach an `Authorization` header to the stream URL.
+
+**1.0.57:** the HLS playlist URL uses `ApiKey`. A playlist requested with `api_key` is refused before Jellyfin starts a remux. The poster grid is five 16:9 tiles (336×189, 20 px apart). Five tiles fill the same 1760 px width as the detail banner, so the row's right edge lines up with that banner and the tile caption can show `cc-by-nc-sa`.
+
 **1.0.55:** Settings `sortMode` orders the poster grid. Default is `filename` (A–Z stems). OK cycles `alias`, `generation`, `duration`, `license`, and `folder`. Generation order is numeric gen and sheep id, then every breed method under the tile tag `breed`, then tuples under `tuple`. A sorted flock above 313 keeps the first 313 of that order. `folder` is the previous folder walk and still keeps a random 313. Ambient shuffle is a separate queue.
 
 The **1.0.54:** votes and Fetch TV display send registry `displaySinkToken` when a furnace sideload preset filled it, otherwise the Jellyfin API key. Store zips stay `--no-presets` (no token, no Jellyfin key). A failed vote still dismisses immediately; Settings has no token row. 
@@ -31,7 +35,7 @@ The **1.0.44:** added `AppLaunchComplete` after Scene show and excluded numbered
 | `streamMode` (registry) | URL | `streamFormat` | Sessions | Notes |
 |------|-----|----------------|----------|-------|
 | **`mp4` (default)** | `/Videos/{id}/stream.mp4?Static=true&api_key=…` | `mp4` | `DirectPlay` | Ambient default; seek-to-0 reloop |
-| **`hls`** | `/Videos/{id}/main.m3u8?MediaSourceId={id}&api_key=…&AudioCodec=aac` | `hls` | `DirectStream` | Remux compare; usually longer reloop gap |
+| **`hls`** | `/Videos/{id}/main.m3u8?MediaSourceId={id}&ApiKey=…&AudioCodec=aac` | `hls` | `DirectStream` | Remux compare; usually longer reloop gap. Jellyfin 12.0+ requires `ApiKey` |
 
 Roku VOD **cannot gapless-loop** HTTP MP4/HLS with the Video node (`Video.loop` still rebuffers). Channel uses seek-before-EOF; residual hitch is accepted for now. Do **not** use `master.m3u8` on Jellyfin 10.11.
 

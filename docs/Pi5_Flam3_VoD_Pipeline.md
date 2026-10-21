@@ -144,7 +144,7 @@ Prefer remux-friendly masters so Pi CPU is not spent re-encoding on every view:
   - List flock: `GET /Users/{userId}/Items?ParentId={sheepLibraryId}&IncludeItemTypes=Movie`
   - Artwork: Jellyfin image endpoints for Primary/Backdrop
   - Play: set Video node `url` to authenticated HLS remux  
-    `https://jellyfin.example/Videos/{itemId}/main.m3u8?MediaSourceId={itemId}&api_key=…&AudioCodec=aac`  
+    `https://jellyfin.example/Videos/{itemId}/main.m3u8?MediaSourceId={itemId}&ApiKey=…&AudioCodec=aac`  
     with MP4 fallback `…/stream.mp4?Static=true&api_key=…` on error or when ambient loop needs it  
     (avoid `master.m3u8` on Jellyfin 10.11 — may inject broken `AudioCodec=m3u8`)
 - `streamformat`: `"hls"` for Jellyfin HLS (Phase 2 default path); `"mp4"` for static Direct Play fallback.

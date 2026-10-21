@@ -93,7 +93,8 @@ for s in ms.get("MediaStreams") or []:
 PY
 
 # Prefer media playlist with explicit AAC (master.m3u8 may inject AudioCodec=m3u8 on JF 10.11).
-HLS_PATH="/Videos/${ITEM_ID}/main.m3u8?MediaSourceId=${ITEM_ID}&api_key=${JELLYFIN_API_KEY}&AudioCodec=aac"
+# Jellyfin 12.0+ rejects api_key on this route; ApiKey is the accepted query parameter.
+HLS_PATH="/Videos/${ITEM_ID}/main.m3u8?MediaSourceId=${ITEM_ID}&ApiKey=${JELLYFIN_API_KEY}&AudioCodec=aac"
 HLS="${BASE}${HLS_PATH}"
 VLC_URL="${PUBLIC_BASE}${HLS_PATH}"
 STATIC="${BASE}/Videos/${ITEM_ID}/stream.mp4?Static=true&api_key=${JELLYFIN_API_KEY}"

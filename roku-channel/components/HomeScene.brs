@@ -584,7 +584,7 @@ sub rebuildFlockRow()
   if m.player <> invalid then return
   if m.items = invalid then m.items = []
   content = createObject("roSGNode", "ContentNode")
-  itemsPerRow = 6
+  itemsPerRow = 5
   row = invalid
   column = itemsPerRow
   for each it in m.items

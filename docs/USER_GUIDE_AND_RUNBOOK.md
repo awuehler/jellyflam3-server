@@ -947,7 +947,7 @@ powershell -NoProfile -File scripts/lab_smoke05_fleet.ps1
 | Roku VoD / Screensaver | `registry/jellyflam3-presets.json` in the zip; first launch writes empty `JellyFlam3` registry keys |
 | Kodi screensaver       | `resources/settings.xml` default values in the staged zip                                           |
 
-Household Rokus install **JellyFlam3** from the Channel Store and type Settings. Each furnace Pi can still produce a sideload zip pointed at **its own** Jellyfin (`http://<that-pi-lan-ip>:8096`). Do not commit preset JSON or distribute those zips outside the household — they contain the API key. Current VoD sideload is **1.0.52** (same channel as 1.0.51: launch beacon at an operable home screen; one-way MP4 stream fallback; HD-only splash/icon; cert **5.2** `roInput`; `rsg_version=1.3`).
+Household Rokus install **JellyFlam3** from the Channel Store and type Settings. Each furnace Pi can still produce a sideload zip pointed at **its own** Jellyfin (`http://<that-pi-lan-ip>:8096`). Do not commit preset JSON or distribute those zips outside the household — they contain the API key. Current VoD sideload is **1.0.57**. Its HLS playlist uses `ApiKey`, which Jellyfin **12.0+** requires (confirmed on **12.2.0**). Earlier behavior remains: launch beacon at an operable home screen; one-way MP4 stream fallback; HD-only splash/icon; cert **5.2** `roInput`; `rsg_version=1.3`.
 
 The Roku **Channel Store** zip ships with **empty Settings**: no `registry/jellyflam3-presets.json`, no Funnel host, no Jellyfin key. First-run users type their own server in Settings. `--no-presets` skips the furnace preset step so a Pi build cannot bake the LAN `baseUrl`. Pack to a separate zip so the household artifact keeps its presets.
 
@@ -1286,6 +1286,8 @@ Rotated copies are `*.log-YYYYMMDD-HHMMSS`, then `.gz` after **11 days**, delete
 Kodi screensaver messages go to **Kodi’s** log on the pasture box (`/storage/.kodi/temp/kodi.log` on LibreELEC), not to the furnace.
 
 ### Leftover HLS segment
+
+**Jellyfin 12.0 and later** (this fleet is **12.2.0**) reject the legacy `api_key` query parameter on `main.m3u8`. The log line is `AuthenticationScheme: "CustomAuthentication" was challenged`, and no remux starts. The playlist URL has to use `ApiKey`. Roku VoD **1.0.57** does. Static MP4 does not use that route. Detail: [phase2/03 endpoints](phase2/03_HLS_CLIENT_STREAMING.md#jellyfin-endpoints-operator-cheat-sheet).
 
 An HLS remux writes `.ts` files under `/var/cache/jellyflam3/transcodes` only while that ffmpeg job is running. After the job ends, Jellyfin refuses a later request for the same segment, including a file left from a previous day. The Jellyfin log (and `journalctl -u jellyfin`) shows:
 
