@@ -348,6 +348,25 @@ function currentStreamUrl() as string
   return ""
 end function
 
+' A missing HLS segment belongs to a remux job that Jellyfin already discarded.
+' Reload a distinct manifest session instead of asking Roku to keep using that
+' job's stale segment URL.  The server creates the replacement remux from the
+' catalog MP4; it cannot re-create an individual deleted .ts file.
+function freshHlsUrl(url as string) as string
+  if url = "" then return ""
+  dt = CreateObject("roDateTime")
+  ' Jellyfin expects PlaySessionId to be a GUID-shaped value.
+  t = dt.AsSeconds().toStr()
+  while Len(t) < 8
+    t = "0" + t
+  end while
+  tail = t + Int(Rnd(1000000)).toStr() + "000000000000"
+  nonce = Left(t, 8) + "-0000-4000-8000-" + Right(tail, 12)
+  sep = "&"
+  if Instr(1, url, "?") = 0 then sep = "?"
+  return url + sep + "PlaySessionId=jf3-" + nonce
+end function
+
 ' One replay of the URL that just failed. A single short glitch must not drop the sheep.
 function trySameUrlRetry() as boolean
   if m.sameUrlRetried = true then return false
@@ -355,6 +374,10 @@ function trySameUrlRetry() as boolean
   if url = "" then return false
   fmt = m.streamFormat
   if fmt = invalid or fmt = "" then fmt = "mp4"
+  if fmt = "hls" then
+    url = freshHlsUrl(url)
+    m.hlsUrl = url
+  end if
   m.sameUrlRetried = true
   m.reloopPending = false
   stopPlaybackReport()
@@ -392,6 +415,9 @@ sub onState()
   st = m.video.state
   if st = "playing"
     m.reloopPending = false
+    ' HomeScene uses this to clear the bounded immediate-failure run.  Do this
+    ' before the playback report: a real start is proof the selected URL worked.
+    m.top.playbackStarted = true
     if m.reportedPlaying = false and m.itemId <> ""
       postPlayback("playing")
       m.reportedPlaying = true

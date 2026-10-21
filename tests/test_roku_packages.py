@@ -139,8 +139,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=55" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.55""' in text
+    assert "build_version=56" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.56""' in text
     home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
     assert '"pedigree": true' in home
     assert '"tuple": true' in home
@@ -148,6 +148,10 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "if sf.Trim() = \"\"" not in home
     assert 'return registryBoolEnabled("shuffleFlock", true)' in home
     assert "sub onPlaybackFailed()" in home
+    assert "m.maxSuccessivePlaybackFailures = 3" in home
+    assert "m.failedPlaybackIds = []" in home
+    assert "sub onPlaybackStarted()" in home
+    assert "function wasPlaybackFailedThisRun(item as object)" in home
     assert "sub probeFurnaceReach()" in home
     assert "sub onReachResult()" in home
     assert "sub showUnreachableUi(raw as string)" in home
@@ -157,8 +161,13 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "sub maybeRepollFlock()" in home
     assert "sub maybeWrapRefetchFlock()" in home
     assert "sub rotateQueuePast(lastId as string)" in home
+    player = (VOD / "components" / "PlayerScreen.brs").read_text(encoding="utf-8")
+    assert "function freshHlsUrl(url as string)" in player
+    assert 'PlaySessionId=jf3-' in player
+    assert 'altFmt = "mp4"' in player
+    assert 'startVideo(altUrl, altFmt)' in player
     assert "sub startFlockRepoll(force as boolean)" in home
-    assert "sub dropItemFromFlock(deadId as string)" in home
+    assert "sub dropItemFromFlock(deadId as string)" not in home
     assert "function flockRepollMinSec() as integer" in home
     assert "return 30" in home
     assert "function flockIndexCap() as integer" in text

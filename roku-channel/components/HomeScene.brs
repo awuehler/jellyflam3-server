@@ -17,6 +17,11 @@ sub init()
   m.shuffleQueue = []
   m.currentPlayId = ""
   m.advancingClip = false
+  ' A remux failure does not prove that the catalog item disappeared. Bound
+  ' automatic recovery, then return to the intact poster grid.
+  m.successivePlaybackFailures = 0
+  m.maxSuccessivePlaybackFailures = 3
+  m.failedPlaybackIds = []
   m.lastRepollSec = 0
   m.repollTask = invalid
   m.reachTask = invalid
@@ -491,36 +496,38 @@ function nowUnixSec() as integer
   return dt.AsSeconds()
 end function
 
-sub dropItemFromFlock(deadId as string)
-  if deadId = invalid or deadId = "" then return
-  kept = []
-  if m.items = invalid then m.items = []
-  for each it in m.items
-    iid = ""
-    if it.id <> invalid then iid = it.id
-    if iid <> deadId then kept.push(it)
-  end for
-  m.items = kept
-  m.flockCount = kept.count()
-  q = []
-  if m.shuffleQueue <> invalid
-    for each it in m.shuffleQueue
-      iid = ""
-      if it.id <> invalid then iid = it.id
-      if iid <> deadId then q.push(it)
-    end for
-  end if
-  m.shuffleQueue = q
-end sub
-
 function takeNextRemainingItem() as object
   if shuffleFlockEnabled()
-    nxt = takeNextShuffleItem()
-    if nxt <> invalid then return nxt
+    while true
+      nxt = takeNextShuffleItem()
+      if nxt = invalid then exit while
+      if not wasPlaybackFailedThisRun(nxt) then return nxt
+    end while
   end if
   if m.items = invalid or m.items.count() = 0 then return invalid
-  return m.items[0]
+  for each it in m.items
+    if not wasPlaybackFailedThisRun(it) then return it
+  end for
+  return invalid
 end function
+
+function wasPlaybackFailedThisRun(item as object) as boolean
+  if item = invalid or item.id = invalid or item.id = "" then return false
+  if m.failedPlaybackIds = invalid then return false
+  for each id in m.failedPlaybackIds
+    if id = item.id then return true
+  end for
+  return false
+end function
+
+sub rememberPlaybackFailure(id as string)
+  if id = invalid or id = "" then return
+  if m.failedPlaybackIds = invalid then m.failedPlaybackIds = []
+  for each seen in m.failedPlaybackIds
+    if seen = id then return
+  end for
+  m.failedPlaybackIds.push(id)
+end sub
 
 sub maybeRepollFlock()
   startFlockRepoll(false)
@@ -827,6 +834,9 @@ sub onRowItemSelected()
   idx = m.rowList.rowItemSelected
   row = m.rowList.content.getChild(idx[0])
   item = row.getChild(idx[1])
+  ' A deliberate grid selection starts a fresh recovery run.
+  m.successivePlaybackFailures = 0
+  m.failedPlaybackIds = []
   if shuffleFlockEnabled()
     startId = ""
     if item <> invalid and item.jellyfinId <> invalid then startId = item.jellyfinId
@@ -857,6 +867,7 @@ sub playItem(item as object)
   player.observeField("close", "onPlayerClose")
   player.observeField("clipFinished", "onClipFinished")
   player.observeField("playbackFailed", "onPlaybackFailed")
+  player.observeField("playbackStarted", "onPlaybackStarted")
   player.allowShuffleAdvance = shuffleAdvanceAllowed()
   hls = ""
   if item.hlsUrl <> invalid then hls = item.hlsUrl
@@ -930,8 +941,27 @@ sub onPlaybackFailed()
   m.advancingClip = true
   deadId = ""
   if m.currentPlayId <> invalid then deadId = m.currentPlayId
+  rememberPlaybackFailure(deadId)
+  m.successivePlaybackFailures = m.successivePlaybackFailures + 1
+  if m.successivePlaybackFailures >= m.maxSuccessivePlaybackFailures
+    stopPlayer()
+    m.advancingClip = false
+    rebuildFlockRow()
+    setUiState("ready", "Playback stopped after " + m.maxSuccessivePlaybackFailures.toStr() + " immediate failures — select a sheep or Retry")
+    if m.rowList <> invalid then m.rowList.setFocus(true)
+    return
+  end if
   m.pendingDeadId = deadId
   probeFurnaceReach()
+end sub
+
+sub onPlaybackStarted()
+  if m.player = invalid then return
+  if m.player.playbackStarted <> true then return
+  ' A real Video playing state means the URL succeeded.  The next unrelated
+  ' failure starts a new bounded recovery run.
+  m.successivePlaybackFailures = 0
+  m.failedPlaybackIds = []
 end sub
 
 sub probeFurnaceReach()
@@ -965,19 +995,16 @@ sub onReachResult()
   end if
   deadId = m.pendingDeadId
   m.pendingDeadId = ""
-  dropItemFromFlock(deadId)
+  ' Keep the catalog list.  HLS's missing .ts warning is a transient remux
+  ' lifecycle failure, not confirmation that this Jellyfin item is gone.
   maybeRepollFlock()
-  if m.flockCount = 0 or m.items = invalid or m.items.count() = 0
-    stopPlayer()
-    m.advancingClip = false
-    showEmptyUi()
-    return
-  end if
   nextIt = takeNextRemainingItem()
   if nextIt = invalid
     stopPlayer()
     m.advancingClip = false
-    showEmptyUi()
+    rebuildFlockRow()
+    setUiState("ready", "Playback failed — flock retained; select a sheep or Retry")
+    if m.rowList <> invalid then m.rowList.setFocus(true)
     return
   end if
   if m.status <> invalid

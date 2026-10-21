@@ -8,6 +8,7 @@
     <field id="close" type="boolean" alwaysNotify="true" />
     <field id="clipFinished" type="boolean" alwaysNotify="true" />
     <field id="playbackFailed" type="boolean" alwaysNotify="true" />
+    <field id="playbackStarted" type="boolean" alwaysNotify="true" />
     <field id="allowShuffleAdvance" type="boolean" />
   </interface>
   <children>
