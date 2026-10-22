@@ -37,7 +37,7 @@ end function
 
 function authHeader() as string
   ' Token in Authorization is what Jellyfin uses to bind Client/Device into /Sessions
-  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.60"", Token=""" + m.top.apiKey + """"
+  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.61"", Token=""" + m.top.apiKey + """"
 end function
 
 ' Lab-verified HLS remux path: prefer main.m3u8 + AudioCodec=aac.
@@ -61,9 +61,8 @@ function httpRequestWait(method as string, url as string, body as string, timeou
   port = CreateObject("roMessagePort")
   xfer.SetPort(port)
   xfer.SetCertificatesFile("common:/certs/ca-bundle.crt")
-  xfer.InitClientCertificates()
-  xfer.EnablePeerVerification(false)
-  xfer.EnableHostVerification(false)
+  xfer.EnablePeerVerification(true)
+  xfer.EnableHostVerification(true)
   xfer.RetainBodyOnError(true)
   xfer.AddHeader("Accept", "application/json")
   xfer.AddHeader("Authorization", authHeader())
@@ -114,9 +113,8 @@ function httpPostJson(url as string, body as string, sinkToken as string) as obj
   port = CreateObject("roMessagePort")
   xfer.SetPort(port)
   xfer.SetCertificatesFile("common:/certs/ca-bundle.crt")
-  xfer.InitClientCertificates()
-  xfer.EnablePeerVerification(false)
-  xfer.EnableHostVerification(false)
+  xfer.EnablePeerVerification(true)
+  xfer.EnableHostVerification(true)
   xfer.RetainBodyOnError(true)
   xfer.AddHeader("Accept", "application/json")
   xfer.AddHeader("Content-Type", "application/json")
@@ -207,9 +205,8 @@ sub registerSession(base as string)
   port = CreateObject("roMessagePort")
   xfer.SetPort(port)
   xfer.SetCertificatesFile("common:/certs/ca-bundle.crt")
-  xfer.InitClientCertificates()
-  xfer.EnablePeerVerification(false)
-  xfer.EnableHostVerification(false)
+  xfer.EnablePeerVerification(true)
+  xfer.EnableHostVerification(true)
   xfer.AddHeader("Accept", "application/json")
   xfer.AddHeader("Authorization", authHeader())
   xfer.AddHeader("X-Emby-Authorization", authHeader())
