@@ -4,6 +4,8 @@ Sideloadable SceneGraph channel that lists sheep from Jellyfin with **poster til
 
 **Jellyfin:** HLS playback requires Jellyfin **12.0 or later** with its default authorization, and was confirmed on **12.2.0**. That release rejects the legacy `api_key` query parameter on `main.m3u8`. The channel sends `ApiKey`, which is the query parameter Jellyfin still accepts. The Video node cannot attach an `Authorization` header to the stream URL.
 
+**1.0.62:** a furnace lookup that fails with `Domain name not found` is tried once more after 3 seconds. The poster grid keeps Roku's failure text. The unreachable screen still retries every 30 seconds.
+
 **1.0.61:** removes the deprecated Roku client-certificate initialization from Jellyfin and display-sink requests. These services do not use mutual TLS, so device attestation is not needed. HTTPS continues to use Roku's CA bundle and now verifies the server certificate and hostname. HTTP/IP connections are unchanged.
 
 **1.0.60:** Left and Right wrap every row that has more than one tile, including a full row of five. Those five tiles already fill the screen, so `fixedFocusWrap` does not wrap them. The jump is `jumpToRowItem`, set after the key handler returns. A flock taller than the three on-screen rows still wraps vertically with `fixedFocusWrap`. One tile, or one row, does not wrap.

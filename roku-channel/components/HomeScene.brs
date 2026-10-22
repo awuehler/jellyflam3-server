@@ -60,6 +60,7 @@ function isUnreachableError(raw as string) as boolean
   if raw = invalid or raw = "" then return false
   low = LCase(raw)
   if Instr(1, low, "timeout") > 0 then return true
+  if Instr(1, low, "domain name not found") > 0 then return true
   if Instr(1, low, "cannot reach") > 0 then return true
   if Instr(1, low, "connection") > 0 then return true
   if Instr(1, low, "failed to start") > 0 then return true
@@ -72,7 +73,9 @@ function friendlyError(raw as string) as string
   msg = raw
   low = LCase(msg)
   if isUnreachableError(msg)
-    return "Waiting for the furnace — is the Pi Jellyfin URL reachable from this Roku?"
+    ' Keep Roku's own words, such as "Domain name not found".
+    if Len(msg) > 140 then return Left(msg, 137) + "…"
+    return msg
   else if Instr(1, low, "apikey") > 0 or Instr(1, low, "401") > 0 or Instr(1, low, "unauthorized") > 0
     return "Auth failed — check apiKey in Settings"
   else if Instr(1, low, "userid") > 0

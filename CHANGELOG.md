@@ -18,6 +18,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Roku VoD **1.0.62** shows Roku's own furnace-lookup failure, including `Domain name not found`, on the poster grid. A cold resolver gets one retry of that request after 3 seconds. Later failures in the same load are not delayed again. The screen still retries every 30 seconds.
+
 - Roku VoD **1.0.61** removes deprecated `InitClientCertificates()` calls from ordinary HTTPS requests. Jellyfin and the display sink do not use Roku mutual TLS, so device attestation is not required. The channel retains Roku's CA bundle and now verifies the HTTPS peer and hostname. HTTP/IP connections are unchanged.
 
 - Roku VoD **1.0.60** wraps a full poster row the same way as a short row. Five tiles already fill the screen, so RowList `fixedFocusWrap` stops at the last tile. Left and Right at either end now set `jumpToRowItem` after the key handler returns. Vertical wrap is unchanged.

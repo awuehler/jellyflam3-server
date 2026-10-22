@@ -3,6 +3,7 @@ sub init()
 end sub
 
 sub runTask()
+  m.dnsRetryUsed = false
   out = {}
   cmd = m.top.command
   if cmd = "item"
@@ -37,7 +38,7 @@ end function
 
 function authHeader() as string
   ' Token in Authorization is what Jellyfin uses to bind Client/Device into /Sessions
-  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.61"", Token=""" + m.top.apiKey + """"
+  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.62"", Token=""" + m.top.apiKey + """"
 end function
 
 ' Lab-verified HLS remux path: prefer main.m3u8 + AudioCodec=aac.
@@ -100,7 +101,19 @@ function httpRequestWait(method as string, url as string, body as string, timeou
   respBody = msg.GetString()
   reason = msg.GetFailureReason()
   if reason = invalid then reason = ""
+  ' A cold Roku resolver can miss a hostname once. One pause covers that
+  ' without turning every later failure into a second wait.
+  if m.dnsRetryUsed <> true and isDnsLookupFailure(reason)
+    m.dnsRetryUsed = true
+    Sleep(3000)
+    return httpRequestWait(method, url, body, timeoutMs)
+  end if
   return { code: code, body: respBody, reason: reason }
+end function
+
+function isDnsLookupFailure(reason as string) as boolean
+  if reason = invalid or reason = "" then return false
+  return Instr(1, LCase(reason), "domain name not found") > 0
 end function
 
 function httpGet(url as string) as object

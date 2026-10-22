@@ -54,7 +54,7 @@ Furnace-built zips often pre-fill these. If the flock is empty, open VoD **Setti
 | Symptom | Try this |
 |---|---|
 | Empty flock / blank screensaver | Re-open VoD Settings; save; same Wi‑Fi as the Pi |
-| “Waiting for the furnace” / cannot connect | URL must be the Pi’s **LAN IP**, not `127.0.0.1`. Wait or Retry — VoD 1.0.43+ / Kodi 0.2.11+ retry every 30s |
+| “Waiting for the furnace” / `Domain name not found` | The status line shows Roku’s own words. VoD 1.0.62 retries that lookup once after 3 seconds, then every 30 seconds. A power cycle, or Roku Settings → Network → Check connection, clears a stuck resolver. The URL may be the Pi LAN address or the Funnel hostname. |
 | Sideloaded screensaver replaced a sideloaded VoD | Install **JellyFlam3** from the Channel Store, or re-sideload the VoD zip |
 | Kodi black / settings hint | Add-on **Configure** → furnace LAN URL |
 | Kodi “waiting for the furnace” | Pi or Jellyfin is down; leave idle — it reconnects |

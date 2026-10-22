@@ -139,8 +139,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=61" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.61""' in text
+    assert "build_version=62" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.62""' in text
     hls = text[text.index("function hlsStreamUrl") : text.index("function mp4StreamUrl")]
     assert "&ApiKey=" in hls
     assert "api_key=" not in hls
@@ -165,6 +165,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "sub onReachResult()" in home
     assert "sub showUnreachableUi(raw as string)" in home
     assert "function isUnreachableError(raw as string)" in home
+    assert 'Instr(1, low, "domain name not found") > 0' in home
+    assert "Waiting for the furnace — is the Pi Jellyfin URL reachable" not in home
     assert "function reconnectIntervalSec() as integer" in home
     assert "sub startReconnectTimer()" in home
     assert "sub maybeRepollFlock()" in home
@@ -231,6 +233,11 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "/v1/sheep-votes" in text
     assert "function postSheepVote() as object" in text
     assert "function probeReach() as object" in text
+    assert "function isDnsLookupFailure(reason as string) as boolean" in text
+    assert 'Instr(1, LCase(reason), "domain name not found") > 0' in text
+    assert "m.dnsRetryUsed = false" in text
+    assert "Sleep(3000)" in text
+    assert "m.dnsRetryUsed <> true and isDnsLookupFailure(reason)" in text
     assert "function httpRequestWait(" in text
     assert "m.sessionXfer = xfer" in text
     assert "/System/Info/Public" in text
