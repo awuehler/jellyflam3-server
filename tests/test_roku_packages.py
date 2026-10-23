@@ -93,6 +93,15 @@ def test_roku_vod_stream_fallback_never_escalates_to_hls():
     assert 'if m.streamFormat = "hls" and m.mp4Url <> ""' in player
     assert 'else if m.streamFormat = "mp4" and m.hlsUrl <> ""' not in player
     assert 'altFmt = "hls"' not in player
+    suspended = player[player.index("function mp4FallbackSuspended") : player.index("function hlsRetryCap")]
+    assert "return true" in suspended
+    fallback = player[player.index("function tryAltFallback") : player.index("sub onState")]
+    assert fallback.index("mp4FallbackSuspended()") < fallback.index('altFmt = "mp4"')
+    retry = player[player.index("function trySameUrlRetry") : player.index("function tryAltFallback")]
+    assert "m.hlsRetryCount >= hlsRetryCap()" in retry
+    assert "freshHlsUrl(url)" in retry
+    cap = player[player.index("function hlsRetryCap") : player.index("function trySameUrlRetry")]
+    assert "return 8" in cap
 
 
 def test_roku_screensaver_tree_has_manifest_and_entry():
@@ -139,8 +148,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=63" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.63""' in text
+    assert "build_version=64" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.64""' in text
     hls = text[text.index("function hlsStreamUrl") : text.index("function mp4StreamUrl")]
     assert "&ApiKey=" in hls
     assert "api_key=" not in hls

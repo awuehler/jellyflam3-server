@@ -18,6 +18,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Roku VoD **1.0.64** keeps a slow HLS remux on HLS. The Static MP4 fallback is suspended while Tailscale Funnel latency makes that remux look failed, because the MP4 fetch is what the Roku channel test is rejecting. Each failure asks for a fresh HLS session, up to 8 times, and a start clears the count. `mp4FallbackSuspended()` returns true; return false there to restore the HLS-to-MP4 switch. A failed MP4 still does not escalate to HLS.
+
 - Roku VoD **1.0.63** sends each TV's Roku channel client id as the Jellyfin `DeviceId`. Display profiles already used that id. The old shared `jellyflam3-roku` value made every set one session, so the idle gate could not tell which screen was playing. `Client` stays `JellyFlam3`. If the client id is missing, the header uses `roku-` plus the model, then `roku-unknown`, matching Fetch TV display.
 
 - Roku VoD **1.0.62** shows Roku's own furnace-lookup failure, including `Domain name not found`, on the poster grid. A cold resolver gets one retry of that request after 3 seconds. Later failures in the same load are not delayed again. The screen still retries every 30 seconds.

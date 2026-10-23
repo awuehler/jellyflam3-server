@@ -4,6 +4,8 @@ Sideloadable SceneGraph channel that lists sheep from Jellyfin with **poster til
 
 **Jellyfin:** HLS playback requires Jellyfin **12.0 or later** with its default authorization, and was confirmed on **12.2.0**. That release rejects the legacy `api_key` query parameter on `main.m3u8`. The channel sends `ApiKey`, which is the query parameter Jellyfin still accepts. The Video node cannot attach an `Authorization` header to the stream URL.
 
+**1.0.64:** a slow HLS remux stays on HLS. The one-way switch to Static MP4 is suspended, because Funnel latency was sending the Roku channel test to an MP4 that fails. The player requests a fresh HLS session up to 8 times. Set `mp4FallbackSuspended()` to return false to restore the switch. Playback that starts on MP4 is unchanged, and a failed MP4 still does not move to HLS.
+
 **1.0.63:** the Jellyfin session header uses this Roku's `GetChannelClientId()` as `DeviceId`. Each TV is its own session, which is the same id Fetch TV display and sheep votes already send. `Client` stays `JellyFlam3` and `Device` stays `Roku`, so the idle gate still sees the channel. A missing client id falls back to `roku-` plus the model, then `roku-unknown`.
 
 **1.0.62:** a furnace lookup that fails with `Domain name not found` is tried once more after 3 seconds. The poster grid keeps Roku's failure text. The unreachable screen still retries every 30 seconds.

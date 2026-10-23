@@ -28,6 +28,7 @@ sub init()
   m.lengthSec = 0
   m.triedAltFallback = false
   m.sameUrlRetried = false
+  m.hlsRetryCount = 0
   m.errorDispatch = false
   m.reloopPending = false
   m.advancePending = false
@@ -108,6 +109,7 @@ sub playSheep(item as object)
   m.reportedPlaying = false
   m.triedAltFallback = false
   m.sameUrlRetried = false
+  m.hlsRetryCount = 0
   m.errorDispatch = false
   m.reloopPending = false
   m.advancePending = false
@@ -285,8 +287,9 @@ sub showPlaybackFailureChrome()
   showLoadChrome(playbackFailureLine())
 end sub
 
-' One same-URL retry, then the existing HLS→MP4 fallback. Both callers share this so a
-' paired onError/onState cannot drop the sheep before the retry starts.
+' One same-URL retry, then the HLS→MP4 fallback when that fallback is enabled.
+' A slow Funnel HLS stays on HLS. Both callers share this so a paired
+' onError/onState cannot drop the sheep before the retry starts.
 sub handlePlaybackError()
   if m.failureSignaled = true then return
   if m.advancePending = true then return
@@ -306,7 +309,7 @@ sub handlePlaybackError()
   m.errorDispatch = false
 end sub
 
-' After the same-URL retry and HLS→MP4 fallback fail, tell HomeScene to drop this id.
+' After the HLS retries and, when enabled, the MP4 fallback fail, tell HomeScene.
 ' Do not POST Playing — stopPlaybackReport is a no-op when reportedPlaying is false.
 sub signalPlaybackFailed()
   if m.failureSignaled = true then return
@@ -367,9 +370,25 @@ function freshHlsUrl(url as string) as string
   return url + sep + "PlaySessionId=jf3-" + nonce
 end function
 
+' Temporary while Funnel latency makes a slow HLS look failed. Static MP4 is
+' what the Roku channel test is rejecting. Return false to restore the switch.
+function mp4FallbackSuspended() as boolean
+  return true
+end function
+
+function hlsRetryCap() as integer
+  return 8
+end function
+
 ' One replay of the URL that just failed. A single short glitch must not drop the sheep.
+' While the MP4 fallback is suspended, a failed HLS asks for a fresh remux again.
 function trySameUrlRetry() as boolean
-  if m.sameUrlRetried = true then return false
+  persistHls = (m.streamFormat = "hls" and mp4FallbackSuspended())
+  if persistHls = true
+    if m.hlsRetryCount >= hlsRetryCap() then return false
+  else if m.sameUrlRetried = true
+    return false
+  end if
   url = currentStreamUrl()
   if url = "" then return false
   fmt = m.streamFormat
@@ -378,16 +397,23 @@ function trySameUrlRetry() as boolean
     url = freshHlsUrl(url)
     m.hlsUrl = url
   end if
-  m.sameUrlRetried = true
+  if persistHls = true
+    m.hlsRetryCount = m.hlsRetryCount + 1
+  else
+    m.sameUrlRetried = true
+  end if
   m.reloopPending = false
   stopPlaybackReport()
   m.video.control = "stop"
   startVideo(url, fmt)
-  showLoadChrome("Retrying " + displayNameForUi() + "...")
+  label = "Retrying " + displayNameForUi()
+  if persistHls = true then label = label + " (HLS " + m.hlsRetryCount.toStr() + ")"
+  showLoadChrome(label + "...")
   return true
 end function
 
 function tryAltFallback() as boolean
+  if mp4FallbackSuspended() then return false
   if m.triedAltFallback = true then return false
   altUrl = ""
   altFmt = ""
@@ -415,6 +441,7 @@ sub onState()
   st = m.video.state
   if st = "playing"
     m.reloopPending = false
+    m.hlsRetryCount = 0
     ' HomeScene uses this to clear the bounded immediate-failure run.  Do this
     ' before the playback report: a real start is proof the selected URL worked.
     m.top.playbackStarted = true
