@@ -139,8 +139,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=62" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.62""' in text
+    assert "build_version=63" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.63""' in text
     hls = text[text.index("function hlsStreamUrl") : text.index("function mp4StreamUrl")]
     assert "&ApiKey=" in hls
     assert "api_key=" not in hls
@@ -314,6 +314,27 @@ def test_roku_commercial_mode_does_not_query_tags():
     ss_set = (SS / "components" / "ScreenSaverSettings.brs").read_text(encoding="utf-8")
     assert 'm.credFields = ["baseUrl", "apiKey", "userId", "libraryId"]' in ss_set
     assert "sub editCred(name as string)" in ss_set
+
+
+def test_roku_vod_session_device_id_is_per_tv():
+    """Jellyfin DeviceId is this Roku's channel client id, not one shared string."""
+    text = (VOD / "components" / "JellyfinTask.brs").read_text(encoding="utf-8")
+    header = text[text.index("function authHeader") : text.index("function hlsStreamUrl")]
+    identity = text[text.index("function channelDeviceId") : text.index("function authHeader")]
+    assert "channelDeviceId()" in header
+    assert 'Client=""JellyFlam3""' in header
+    assert 'Device=""Roku""' in header
+    assert 'DeviceId=""jellyflam3-roku""' not in text
+    assert "GetChannelClientId()" in identity
+    assert "GetModel()" in identity
+    assert 'id = "roku-unknown"' in identity
+    settings = (VOD / "components" / "SettingsScreen.brs").read_text(encoding="utf-8")
+    assert "GetChannelClientId()" in settings
+    assert 'deviceId = "roku-unknown"' in settings
+    player = (VOD / "components" / "PlayerScreen.brs").read_text(encoding="utf-8")
+    assert "GetChannelClientId()" in player
+    screensaver = (SS / "components" / "StillsTask.brs").read_text(encoding="utf-8")
+    assert 'DeviceId=""jellyflam3-screensaver""' in screensaver
 
 
 def test_roku_vod_wrapped_flock_layout_and_compact_metadata():

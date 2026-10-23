@@ -183,6 +183,26 @@ def test_is_gate_open_bootstrap_blocks_tv(tmp_path, monkeypatch):
     assert not (tmp_path / "status.json").is_file()
 
 
+def test_per_tv_device_id_still_matches_the_gate(tmp_path):
+    """Unique DeviceIds stay separate sessions. Client JellyFlam3 is what matches."""
+    cfg = _cfg(tmp_path)
+    playing = {
+        "Client": "JellyFlam3",
+        "DeviceName": "Roku",
+        "DeviceId": "8f3c1a0e-4b2d-4e91-9c0a-71d2e6aa10b4",
+        "NowPlayingItem": {"Name": "dream"},
+    }
+    idle = {
+        "Client": "JellyFlam3",
+        "DeviceName": "Roku",
+        "DeviceId": "b91e0c44-77aa-4d10-8f33-2c6d9e01aa55",
+    }
+    playing_decision = should_block_render([playing], cfg)
+    idle_decision = should_block_render([idle], cfg)
+    assert playing_decision.blocked and playing_decision.reason == "active_tv_client"
+    assert idle_decision.blocked is False
+
+
 def test_block_tv_recent_checkin(tmp_path):
     cfg = _cfg(tmp_path)
     cfg["idle_gate"]["active_within_seconds"] = 120

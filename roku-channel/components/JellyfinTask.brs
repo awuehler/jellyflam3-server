@@ -36,9 +36,29 @@ function trimSlash(base as string) as string
   return b
 end function
 
+' Same id Fetch TV display stores: this channel's client id, else the model, else a placeholder.
+' A shared DeviceId makes every TV one Jellyfin session.
+function channelDeviceId() as string
+  if m.channelDeviceId <> invalid and m.channelDeviceId <> "" then return m.channelDeviceId
+  id = ""
+  di = CreateObject("roDeviceInfo")
+  if di <> invalid
+    cid = di.GetChannelClientId()
+    if cid <> invalid and cid <> "" then id = cid.toStr()
+    if id = ""
+      model = di.GetModel()
+      if model <> invalid and model <> "" then id = "roku-" + model.toStr()
+    end if
+  end if
+  if id = "" then id = "roku-unknown"
+  m.channelDeviceId = id
+  return id
+end function
+
 function authHeader() as string
-  ' Token in Authorization is what Jellyfin uses to bind Client/Device into /Sessions
-  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""jellyflam3-roku"", Version=""1.0.62"", Token=""" + m.top.apiKey + """"
+  ' Token in Authorization is what Jellyfin uses to bind Client/Device into /Sessions.
+  ' DeviceId is per TV so two screens stay two sessions. Client stays JellyFlam3.
+  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""" + channelDeviceId() + """, Version=""1.0.63"", Token=""" + m.top.apiKey + """"
 end function
 
 ' Lab-verified HLS remux path: prefer main.m3u8 + AudioCodec=aac.

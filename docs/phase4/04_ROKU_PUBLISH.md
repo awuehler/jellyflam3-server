@@ -59,7 +59,7 @@ Do not merge VoD and screensaver into one zip (Roku policy: no `RunScreenSaver` 
 ### C — Roku / SceneGraph best-practices
 
 1. Focus, Back stack, empty/loading/error states, deep link regression (VoD); screensaver remains **image-only** (no `Video`, no Sessions/Playing).
-2. Client / DeviceName strings stable for idle-gate (`JellyFlam3` VoD vs `JellyFlam3-Screensaver`); DeviceId / screen identity unique **per physical Roku**.
+2. Client / DeviceName strings stable for idle-gate (`JellyFlam3` VoD vs `JellyFlam3-Screensaver`). VoD **1.0.63** sends `GetChannelClientId()` as the Jellyfin `DeviceId`, so each physical Roku is its own session. The screensaver still uses a shared `jellyflam3-screensaver` id and does not report playback.
 3. Debug ports: VoD **8085**, screensaver context **8087**; package scripts keep POSIX zip paths.
 4. Do **not** embed `RunScreenSaver` / `screensaver_title` inside the VoD streaming app (Roku policy — packages stay separate).
 5. Store static analysis (VoD **1.0.52**, behavior from **1.0.51**): HD-only `splash_screen_hd` / `mm_icon_focus_hd` (no `*_sd` keys); `supports_input_launch=1` + retained `m.input` / `roInputEvent` with `DoesExist("mediatype")` and `DoesExist("contentid")` (cert **5.2**); `rsg_version=1.3`; no deprecated VoD `subtitle`; `roAppMemoryMonitor` + `EnableLowGeneralMemoryEvent`; `AppDialogInitiate`/`AppDialogComplete` around pre-home Settings; `StandardKeyboardDialog` for text fields. Keep sideload zips under **4 MB** (numbered source-art PNGs stay out of the VoD package).

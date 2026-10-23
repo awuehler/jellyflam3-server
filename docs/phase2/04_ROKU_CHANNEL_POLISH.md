@@ -68,7 +68,7 @@ Households will have **more than one** ambient screen. The Pi sink must **track 
    - `POST/PUT /v1/display-profiles` — upsert JSON body
    - `GET /v1/display-profiles` — list summaries
    - `GET /healthz`
-3. Channel **1.0.22+**: after **Fetch TV display**, POSTs profile with `client=JellyFlam3` and `deviceId` from `GetChannelClientId()`; sink URL defaults to `http://{baseUrl-host}:8791` (override registry `displaySinkUrl`). Roku `FormatJson` lowercases AA keys (`deviceid`); the sink accepts case-insensitive field names and stores camelCase.
+3. Channel **1.0.22+**: after **Fetch TV display**, POSTs profile with `client=JellyFlam3` and `deviceId` from `GetChannelClientId()`; sink URL defaults to `http://{baseUrl-host}:8791` (override registry `displaySinkUrl`). Roku `FormatJson` lowercases AA keys (`deviceid`); the sink accepts case-insensitive field names and stores camelCase. VoD **1.0.63** uses that same client id as the Jellyfin session `DeviceId`.
 4. **`DISPLAY_SINK_TOKEN` is optional.** The unit (`--host 0.0.0.0`) starts when this furnace’s `secrets.env` has that token **or** `JELLYFIN_API_KEY`. Store Roku and ordinary Kodi send the API key. A furnace sideload may also carry `displaySinkToken` (VoD Settings has no token row). Both secrets empty → sink exits 2 and crash-loops (`Restart=on-failure`). `--allow-unauthenticated` is lab-only and is not in the unit file. Household steps: [USER_GUIDE](../USER_GUIDE_AND_RUNBOOK.md#display-sink-token-how--where--when). The API key then also authorizes vote and display-profile writes.
 5. **Kodi / 3rd screens:** same schema via CLI (no Roku UI required):
    ```bash

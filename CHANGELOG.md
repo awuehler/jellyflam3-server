@@ -18,6 +18,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Roku VoD **1.0.63** sends each TV's Roku channel client id as the Jellyfin `DeviceId`. Display profiles already used that id. The old shared `jellyflam3-roku` value made every set one session, so the idle gate could not tell which screen was playing. `Client` stays `JellyFlam3`. If the client id is missing, the header uses `roku-` plus the model, then `roku-unknown`, matching Fetch TV display.
+
 - Roku VoD **1.0.62** shows Roku's own furnace-lookup failure, including `Domain name not found`, on the poster grid. A cold resolver gets one retry of that request after 3 seconds. Later failures in the same load are not delayed again. The screen still retries every 30 seconds.
 
 - Roku VoD **1.0.61** removes deprecated `InitClientCertificates()` calls from ordinary HTTPS requests. Jellyfin and the display sink do not use Roku mutual TLS, so device attestation is not required. The channel retains Roku's CA bundle and now verifies the HTTPS peer and hostname. HTTP/IP connections are unchanged.

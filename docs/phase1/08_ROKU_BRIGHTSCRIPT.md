@@ -86,7 +86,7 @@ Validated on a LAN Roku with build **1.0.8**: deep link started 1080p Direct Pla
 
 ## Idle-gate session identity
 
-HTTP calls send `Client="JellyFlam3"`, `Device="Roku"`, `DeviceId="jellyflam3-roku"` and POST `/Sessions/Capabilities/Full` so `GET /Sessions` matches `idle_gate.tv_client_patterns`.
+HTTP calls send `Client="JellyFlam3"`, `Device="Roku"`, and `DeviceId` from `roDeviceInfo.GetChannelClientId()` (VoD **1.0.63**). That id is per TV, the same value Fetch TV display stores. A missing client id uses `roku-` plus the model, then `roku-unknown`. The channel also POSTs `/Sessions/Capabilities/Full` so `GET /Sessions` matches `idle_gate.tv_client_patterns` on `Client` / `Device`. Builds before **1.0.63** sent the shared `DeviceId` `jellyflam3-roku`, which collapsed every set into one session.
 
 Note: build **1.0.9+** reports `/Sessions/Playing` (and progress/stopped) from `PlayerScreen` so idle-gate can see Direct Play. Identity alone (`Capabilities/Full`) is not enough for `NowPlayingItem`.
 
@@ -111,4 +111,4 @@ Note: build **1.0.9+** reports `/Sessions/Playing` (and progress/stopped) from `
 - [x] Sideload succeeds; RowList shows items
 - [x] Playback loops; Back works
 - [x] Deep link ECP smoke (`launch/dev?contentId=…`)
-- [x] Session visible as JellyFlam3/Roku (`DeviceId=jellyflam3-roku`)
+- [x] Session visible as JellyFlam3/Roku, with `DeviceId` equal to that TV's channel client id (**1.0.63**)
