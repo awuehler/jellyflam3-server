@@ -1,7 +1,7 @@
 sub init()
   m.top.focusable = true
-  m.fields = ["baseUrl", "apiKey", "userId", "libraryId", "commercialMode", "streamMode", "shuffleFlock", "titleMode", "sortMode"]
-  m.rowIds = ["row_baseUrl", "row_apiKey", "row_userId", "row_libraryId", "row_commercialMode", "row_streamMode", "row_shuffleFlock", "row_titleMode", "row_sortMode", "row_probeDisplay", "row_save", "row_cancel"]
+  m.fields = ["baseUrl", "apiKey", "userId", "libraryId", "commercialMode", "streamMode", "mp4Fallback", "shuffleFlock", "titleMode", "sortMode"]
+  m.rowIds = ["row_baseUrl", "row_apiKey", "row_userId", "row_libraryId", "row_commercialMode", "row_streamMode", "row_mp4Fallback", "row_shuffleFlock", "row_titleMode", "row_sortMode", "row_probeDisplay", "row_save", "row_cancel"]
   m.values = {}
   m.idx = 0
   m.registry = CreateObject("roRegistrySection", "JellyFlam3")
@@ -57,6 +57,8 @@ function fieldHint(name as string) as string
     return "OK toggles true/false and saves; true=commercial flock (hide NC; keep CC BY / CC0 / PD); false=show all"
   else if name = "streamMode"
     return "OK toggles mp4/hls and saves; mp4=ambient Direct Play loop; hls=Jellyfin remux compare"
+  else if name = "mp4Fallback"
+    return "OK toggles true/false and saves; true lets a failed HLS remux switch to Static MP4; false keeps retrying HLS"
   else if name = "shuffleFlock"
     return "OK toggles true/false and saves; true rotates archive gens + pedigree + tuple (skip misc/test); launch still heals leftover false"
   else if name = "titleMode"
@@ -180,6 +182,13 @@ function applyEditedValue(name as string, text as string) as boolean
     end if
     m.values[name] = LCase(text)
     return true
+  else if name = "mp4Fallback"
+    if isValidBoolToken(text) <> true
+      m.inputNotice = "mp4Fallback invalid (" + text + ") - use true or false"
+      return false
+    end if
+    m.values[name] = normalizeBool(text, false)
+    return true
   else if name = "commercialMode"
     if isValidBoolToken(text) <> true
       m.inputNotice = "commercialMode invalid (" + text + ") - use true or false"
@@ -274,6 +283,8 @@ sub openSettings()
       if m.streamModeCorrected = true
         m.streamModeNotice = "streamMode was invalid - using mp4"
       end if
+    else if name = "mp4Fallback"
+      val = normalizeBool(val, false)
     else if name = "commercialMode"
       val = normalizeBool(val, false)
     else if name = "shuffleFlock"
@@ -303,6 +314,8 @@ sub refreshRowLabel(name as string)
   else if name = "streamMode"
     if val = "" then val = "mp4"
     shown = val
+  else if name = "mp4Fallback"
+    if val = "" then shown = "false"
   else if name = "commercialMode"
     if val = "" then shown = "false"
   else if name = "shuffleFlock"
@@ -392,7 +405,7 @@ sub onRowSelected()
 end sub
 
 function isOkToggleField(name as string) as boolean
-  return name = "commercialMode" or name = "streamMode" or name = "shuffleFlock" or name = "titleMode" or name = "sortMode"
+  return name = "commercialMode" or name = "streamMode" or name = "mp4Fallback" or name = "shuffleFlock" or name = "titleMode" or name = "sortMode"
 end function
 
 function nextToggleValue(name as string) as string
@@ -412,6 +425,9 @@ function nextToggleValue(name as string) as string
   else if name = "streamMode"
     if cur = "hls" then return "mp4"
     return "hls"
+  else if name = "mp4Fallback"
+    if cur = "true" then return "false"
+    return "true"
   else if name = "commercialMode"
     if cur = "true" then return "false"
     return "true"
@@ -765,6 +781,13 @@ sub saveAndClose()
         return
       end if
       val = LCase(val.Trim())
+    else if name = "mp4Fallback"
+      if isValidBoolToken(val) <> true
+        m.inputNotice = "mp4Fallback invalid - use true or false"
+        updateFooter()
+        return
+      end if
+      val = normalizeBool(val, false)
     else if name = "commercialMode"
       if isValidBoolToken(val) <> true
         m.inputNotice = "commercialMode invalid - use true or false"

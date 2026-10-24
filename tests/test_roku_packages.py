@@ -71,6 +71,63 @@ def test_roku_vod_tree_has_manifest_and_entry():
     assert (VOD / "components" / "RegistryPresets.brs").is_file()
 
 
+def test_roku_vod_deep_link_plays_jellyfin_content_id():
+    """Roku deep link: contentId is the Jellyfin item id and that clip plays directly."""
+    manifest = (VOD / "manifest").read_text(encoding="utf-8")
+    assert "supports_input_launch=1" in manifest
+
+    main = (VOD / "source" / "main.brs").read_text(encoding="utf-8")
+    assert "sub Main(args as dynamic)" in main
+    cold = main[main.index("sub Main") : main.index('m.input = CreateObject("roInput")')]
+    assert "applyDeepLink(scene, args)" in cold
+    warm = main[main.index('type(msg) = "roInputEvent"') : main.index('msgType = "roAppMemoryNotificationEvent"')]
+    assert 'info.DoesExist("mediatype")' in warm
+    assert 'info.DoesExist("contentid")' in warm
+    assert "mediaType = info.mediatype" in warm
+    assert "contentId = info.contentid" in warm
+    assert "applyDeepLink(scene, { mediaType: mediaType, contentId: contentId })" in warm
+    apply = main[main.index("sub applyDeepLink") : main.index("sub attachAppMemoryMonitor")]
+    assert 'scene.callFunc("handleDeepLink", params)' in apply
+
+    scene = (VOD / "components" / "HomeScene.xml").read_text(encoding="utf-8")
+    assert '<function name="handleDeepLink" />' in scene
+
+    home = (VOD / "components" / "HomeScene.brs").read_text(encoding="utf-8")
+    handler = home[home.index("function handleDeepLink") : home.index("function onKeyEvent")]
+    assert "args.contentId" in handler
+    assert "args.contentID" in handler
+    assert "args.contentid" in handler
+    assert 'if cid = invalid or cid = "" then return' in handler
+    assert "args.mediaType" in handler
+    assert "args.mediatype" in handler
+    assert handler.index("args.mediaType") < handler.index('t.command = "item"')
+    assert 't.observeField("resultJson", "onDeepLinkResult")' in handler
+    assert 't.command = "item"' in handler
+    assert "t.itemId = cid" in handler
+
+    result = home[home.index("sub onDeepLinkResult") : home.index("sub onRowItemFocused")]
+    assert 'showErrorUi("Deep link miss — item not found")' in result
+    assert "bindFlockItemFields(node, it)" in result
+    assert result.index("bindFlockItemFields(node, it)") < result.index("playItem(node)")
+
+    play = home[home.index("sub playItem(item as object)") : home.index("sub playItemFromData")]
+    assert play.index("stopPlayer()") < play.index('createObject("roSGNode", "PlayerScreen")')
+    assert "item.jellyfinId" in play
+    bind = home[home.index("sub bindFlockItemFields") : home.index("sub onDeepLinkResult")]
+    assert "child.jellyfinId = it.id" in bind
+    listing = home[home.index("sub onTaskResult") : home.index("sub bindFlockItemFields")]
+    assert "playItem(" not in listing
+
+    jf = (VOD / "components" / "JellyfinTask.brs").read_text(encoding="utf-8")
+    task = jf[jf.index("sub runTask") : jf.index("function trimSlash")]
+    assert 'if cmd = "item"' in task
+    assert "fetchOne(m.top.itemId)" in task
+    one = jf[jf.index("function fetchOne") : jf.index("function reportPlayback")]
+    assert '"/Users/" + m.top.userId + "/Items/" + itemId' in one
+    mapped = jf[jf.index("function mapItem") : jf.index("function fetchOne")]
+    assert "id: it.Id" in mapped
+
+
 def test_roku_vod_launch_beacon_marks_an_operable_screen():
     """Roku measures AppLaunchComplete against the first render pass after it fires."""
     main = (VOD / "source" / "main.brs").read_text(encoding="utf-8")
@@ -94,6 +151,8 @@ def test_roku_vod_stream_fallback_never_escalates_to_hls():
     assert 'else if m.streamFormat = "mp4" and m.hlsUrl <> ""' not in player
     assert 'altFmt = "hls"' not in player
     suspended = player[player.index("function mp4FallbackSuspended") : player.index("function hlsRetryCap")]
+    assert 'm.registry.read("mp4Fallback")' in suspended
+    assert "return false" in suspended
     assert "return true" in suspended
     fallback = player[player.index("function tryAltFallback") : player.index("sub onState")]
     assert fallback.index("mp4FallbackSuspended()") < fallback.index('altFmt = "mp4"')
@@ -129,6 +188,11 @@ def test_roku_packagers_exclude_all_numbered_source_art():
     assert "(-not $NoPresets)" in ps1
     assert "images/*-[0-9][0-9].png" in sh
     assert "--no-presets" in sh
+    assert "--cert" in sh
+    assert "JELLYFIN_STREAM_MODE=hls" in sh
+    assert "JELLYFIN_MP4_FALLBACK=false" in sh
+    assert "Cert" in ps1
+    assert 'JELLYFIN_STREAM_MODE = "hls"' in ps1
     assert 'if [[ "$NO_PRESETS" -eq 0' in sh
     assert "p.stem[-2:].isdigit()" in sh
 
@@ -148,8 +212,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=64" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.64""' in text
+    assert "build_version=65" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.65""' in text
     hls = text[text.index("function hlsStreamUrl") : text.index("function mp4StreamUrl")]
     assert "&ApiKey=" in hls
     assert "api_key=" not in hls
@@ -268,6 +332,9 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "function isValidSortMode(raw as string) as boolean" in settings
     assert '"sortMode"' in settings.split("m.fields", 1)[1].split("]", 1)[0]
     assert 'id="row_sortMode"' in (VOD / "components" / "SettingsScreen.xml").read_text(encoding="utf-8")
+    assert '"mp4Fallback"' in settings.split("m.fields", 1)[1].split("]", 1)[0]
+    assert 'id="row_mp4Fallback"' in (VOD / "components" / "SettingsScreen.xml").read_text(encoding="utf-8")
+    assert 'name = "mp4Fallback"' in settings
     assert "function isValidBaseUrl(raw as string) as boolean" in settings
     assert "function isHexDashId(raw as string) as boolean" in settings
     assert "function isValidApiKey(raw as string) as boolean" in settings

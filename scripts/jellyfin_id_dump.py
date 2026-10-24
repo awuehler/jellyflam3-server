@@ -83,6 +83,24 @@ def stream_mode_pref() -> str:
     return mode if mode in ("mp4", "hls") else "mp4"
 
 
+def mp4_fallback_pref(stream_mode: str | None = None) -> str:
+    """Whether a failed HLS remux may switch to Static MP4.
+
+    Household packs leave this ``true``. A cert pack (``JELLYFIN_STREAM_MODE=hls``,
+    or ``package_roku_channel.sh --cert``) leaves it ``false`` so the lab stays on HLS.
+    ``JELLYFIN_MP4_FALLBACK=true|false`` overrides that.
+    """
+    raw = (os.environ.get("JELLYFIN_MP4_FALLBACK") or "").strip().lower()
+    if raw in ("1", "true", "yes", "on"):
+        return "true"
+    if raw in ("0", "false", "no", "off"):
+        return "false"
+    mode = stream_mode if stream_mode is not None else stream_mode_pref()
+    if (mode or "").strip().lower() == "hls":
+        return "false"
+    return "true"
+
+
 def _generation_from_item(it: dict[str, Any]) -> str:
     """Best-effort generation id from Tags, by-generation path, or electricsheep name."""
     for t in it.get("Tags") or []:
@@ -334,6 +352,7 @@ def build_report(
         "libraryId": lib,
         "commercialMode": "false",
         "streamMode": stream_mode_pref(),
+        "mp4Fallback": mp4_fallback_pref(stream_mode_pref()),
         "shuffleFlock": "true",
     }
 
@@ -393,6 +412,7 @@ def print_human(report: dict[str, Any]) -> None:
         "libraryId",
         "commercialMode",
         "streamMode",
+        "mp4Fallback",
         "shuffleFlock",
     ):
         print(f"  {k}={rs.get(k, '')}")

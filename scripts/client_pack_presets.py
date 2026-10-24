@@ -46,6 +46,7 @@ ROKU_KEYS = (
     "libraryId",
     "commercialMode",
     "streamMode",
+    "mp4Fallback",
     "shuffleFlock",
 )
 KODI_MAP = {
@@ -100,6 +101,12 @@ def normalize_roku_settings(settings: dict[str, Any]) -> dict[str, str]:
     """
     out = {k: _preset_str(settings.get(k)) for k in ROKU_KEYS}
     out["shuffleFlock"] = "true"
+    env_mode = (os.environ.get("JELLYFIN_STREAM_MODE") or "").strip().lower()
+    if env_mode in ("mp4", "hls"):
+        out["streamMode"] = env_mode
+    elif out.get("streamMode") not in ("mp4", "hls"):
+        out["streamMode"] = "mp4"
+    out["mp4Fallback"] = jfd.mp4_fallback_pref(out.get("streamMode") or "mp4")
     token = (os.environ.get("DISPLAY_SINK_TOKEN") or "").strip()
     if not token:
         token = _preset_str(settings.get("displaySinkToken"))

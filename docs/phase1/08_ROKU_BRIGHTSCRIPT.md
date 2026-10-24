@@ -19,7 +19,7 @@ Custom JellyFlam3 channel only — not jellyfin-roku, not screensaver.
 | `components/SettingsScreen.*` / `SettingRow.*` | Registry editor for credentials |
 | `images/` | `mm_icon_focus_hd.png` (290×218), `splash-screen.png` (1280×720). Generative refresh: [CLIENT_CHANNEL_ART.md](../CLIENT_CHANNEL_ART.md) |
 
-Settings registry section `JellyFlam3`: `baseUrl`, `apiKey`, `userId`, `libraryId`, `commercialMode`, `streamMode`, `shuffleFlock`, `titleMode`, `sortMode`.
+Settings registry section `JellyFlam3`: `baseUrl`, `apiKey`, `userId`, `libraryId`, `commercialMode`, `streamMode`, `mp4Fallback`, `shuffleFlock`, `titleMode`, `sortMode`.
 
 VoD **1.0.37+** persists each valid keyboard edit when **OK** is pressed; Back does not discard accepted edits. In **1.0.42**, `commercialMode`, `streamMode`, `shuffleFlock`, and `titleMode` are OK-toggles with an immediate registry flush; **Save & Reload** refreshes the flock. **1.0.55** adds `sortMode` to that OK cycle (`filename` default, then `alias`, `generation`, `duration`, `license`, `folder`). Text credentials still use the keyboard. Boolean/title reads are normalized at startup. Home status shows effective commercial filtering and alias fallback counts. NC tags override safe tags regardless of order, including deep links. PlayerScreen—not Video—owns playback focus so vote keys are not swallowed. **1.0.38** overlay: **OK** love, **Right** like, **Down** dismiss, **Up/Back** exit (keyboard Enter / Right / Down / Up-Esc). **1.0.40** shows that map on one 55% line in the last **7 s** (name left, keys right). **1.0.41** puts loading-next on the same bar and SmallSystemFont so the two banners swap in place.
 

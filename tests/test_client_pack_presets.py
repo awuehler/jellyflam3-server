@@ -33,6 +33,37 @@ def _import_id_dump():
     return jfd
 
 
+def test_mp4_fallback_pref_follows_stream_mode(monkeypatch: pytest.MonkeyPatch):
+    jfd = _import_id_dump()
+    monkeypatch.delenv("JELLYFIN_MP4_FALLBACK", raising=False)
+    monkeypatch.delenv("JELLYFIN_STREAM_MODE", raising=False)
+    assert jfd.mp4_fallback_pref("mp4") == "true"
+    assert jfd.mp4_fallback_pref("hls") == "false"
+    monkeypatch.setenv("JELLYFIN_MP4_FALLBACK", "true")
+    assert jfd.mp4_fallback_pref("hls") == "true"
+    monkeypatch.setenv("JELLYFIN_MP4_FALLBACK", "false")
+    assert jfd.mp4_fallback_pref("mp4") == "false"
+
+
+def test_cert_env_overrides_cached_stream_mode(monkeypatch: pytest.MonkeyPatch):
+    cpp = _import_presets()
+    monkeypatch.setenv("JELLYFIN_STREAM_MODE", "hls")
+    monkeypatch.setenv("JELLYFIN_MP4_FALLBACK", "false")
+    out = cpp.normalize_roku_settings(
+        {
+            "baseUrl": "http://example:8096",
+            "apiKey": "k",
+            "userId": "u",
+            "libraryId": "l",
+            "streamMode": "mp4",
+            "mp4Fallback": "true",
+        }
+    )
+    assert out["streamMode"] == "hls"
+    assert out["mp4Fallback"] == "false"
+    assert out["shuffleFlock"] == "true"
+
+
 def test_stream_mode_pref_defaults_to_mp4(monkeypatch: pytest.MonkeyPatch):
     jfd = _import_id_dump()
     monkeypatch.delenv("JELLYFIN_STREAM_MODE", raising=False)
@@ -145,8 +176,10 @@ def test_roku_sideload_preset_includes_sink_token_when_set(
     assert data["apiKey"] == "k"
 
 
-def test_normalize_roku_settings_forces_shuffle_true():
+def test_normalize_roku_settings_forces_shuffle_true(monkeypatch: pytest.MonkeyPatch):
     cpp = _import_presets()
+    monkeypatch.delenv("JELLYFIN_STREAM_MODE", raising=False)
+    monkeypatch.delenv("JELLYFIN_MP4_FALLBACK", raising=False)
     out = cpp.normalize_roku_settings(
         {
             "baseUrl": "http://example:8096",
@@ -160,6 +193,8 @@ def test_normalize_roku_settings_forces_shuffle_true():
     )
     assert out["shuffleFlock"] == "true"
     assert out["commercialMode"] == "false"
+    assert out["streamMode"] == "mp4"
+    assert out["mp4Fallback"] == "true"
 
 
 def test_prepare_packaging_skips_without_furnace(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):

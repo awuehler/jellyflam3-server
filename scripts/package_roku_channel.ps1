@@ -2,8 +2,10 @@
 #
 # Requirements: PowerShell 5.1 or 7+; .NET System.IO.Compression.FileSystem.
 #
-# Usage: .\scripts\package_roku_channel.ps1 [-NoPresets] [OutPath]
+# Usage: .\scripts\package_roku_channel.ps1 [-NoPresets] [-Cert] [OutPath]
 #   -NoPresets  Channel Store zip: skip Jellyfin presets (empty Settings).
+#   -Cert       Preset streamMode=hls and mp4Fallback=false for a certification pack.
+#               Household packs omit this and stay on Static MP4 with the fallback on.
 #
 # When to run: Windows operator packaging before sideload / Phase 3 RC. Default: dist\jellyflam3-roku.zip
 # Success: Zip entries at archive root with forward-slash paths (manifest, source/, …).
@@ -18,7 +20,8 @@
 
 param(
   [string]$OutPath = "",
-  [switch]$NoPresets
+  [switch]$NoPresets,
+  [switch]$Cert
 )
 $Root = Split-Path -Parent $PSScriptRoot
 if (-not $OutPath) { $OutPath = Join-Path $Root "dist\jellyflam3-roku.zip" }
@@ -26,6 +29,10 @@ $Channel = Join-Path $Root "roku-channel"
 New-Item -ItemType Directory -Force -Path (Split-Path $OutPath) | Out-Null
 if (Test-Path $OutPath) { Remove-Item -Force $OutPath }
 
+if ($Cert) {
+  $env:JELLYFIN_STREAM_MODE = "hls"
+  $env:JELLYFIN_MP4_FALLBACK = "false"
+}
 if (-not $NoPresets) {
   python (Join-Path $Root "scripts\client_pack_presets.py") prepare --roku-registry (Join-Path $Channel "registry") 2>$null | Out-Null
 }

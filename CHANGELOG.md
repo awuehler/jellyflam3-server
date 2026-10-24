@@ -18,6 +18,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Roku VoD **1.0.65** lets a certification pack start on HLS while household sideloads stay on Static MP4. `package_roku_channel.sh --cert` (or `JELLYFIN_STREAM_MODE=hls`) writes `streamMode=hls` and `mp4Fallback=false`, so the lab hits the HLS retry and does not switch to MP4. A household pack leaves `streamMode=mp4` and `mp4Fallback=true`. Settings **OK** on `mp4Fallback` turns that switch back on. An empty `mp4Fallback` still keeps HLS on HLS.
+
 - Roku VoD **1.0.64** keeps a slow HLS remux on HLS. The Static MP4 fallback is suspended while Tailscale Funnel latency makes that remux look failed, because the MP4 fetch is what the Roku channel test is rejecting. Each failure asks for a fresh HLS session, up to 8 times, and a start clears the count. `mp4FallbackSuspended()` returns true; return false there to restore the HLS-to-MP4 switch. A failed MP4 still does not escalate to HLS.
 
 - Roku VoD **1.0.63** sends each TV's Roku channel client id as the Jellyfin `DeviceId`. Display profiles already used that id. The old shared `jellyflam3-roku` value made every set one session, so the idle gate could not tell which screen was playing. `Client` stays `JellyFlam3`. If the client id is missing, the header uses `roku-` plus the model, then `roku-unknown`, matching Fetch TV display.

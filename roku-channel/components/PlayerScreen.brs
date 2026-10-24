@@ -370,9 +370,13 @@ function freshHlsUrl(url as string) as string
   return url + sep + "PlaySessionId=jf3-" + nonce
 end function
 
-' Temporary while Funnel latency makes a slow HLS look failed. Static MP4 is
-' what the Roku channel test is rejecting. Return false to restore the switch.
+' Empty or false keeps a slow HLS remux on HLS. Settings mp4Fallback=true
+' restores the one-way switch to Static MP4 without a code edit.
 function mp4FallbackSuspended() as boolean
+  v = m.registry.read("mp4Fallback")
+  if v = invalid then return true
+  t = LCase(v.Trim())
+  if t = "true" or t = "on" or t = "yes" or t = "1" then return false
   return true
 end function
 

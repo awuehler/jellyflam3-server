@@ -4,7 +4,9 @@ Sideloadable SceneGraph channel that lists sheep from Jellyfin with **poster til
 
 **Jellyfin:** HLS playback requires Jellyfin **12.0 or later** with its default authorization, and was confirmed on **12.2.0**. That release rejects the legacy `api_key` query parameter on `main.m3u8`. The channel sends `ApiKey`, which is the query parameter Jellyfin still accepts. The Video node cannot attach an `Authorization` header to the stream URL.
 
-**1.0.64:** a slow HLS remux stays on HLS. The one-way switch to Static MP4 is suspended, because Funnel latency was sending the Roku channel test to an MP4 that fails. The player requests a fresh HLS session up to 8 times. Set `mp4FallbackSuspended()` to return false to restore the switch. Playback that starts on MP4 is unchanged, and a failed MP4 still does not move to HLS.
+**1.0.65:** a certification pack can ship `streamMode=hls` and `mp4Fallback=false` (`package_roku_channel.sh --cert`). Household sideloads stay on `mp4` with `mp4Fallback=true`. Settings **OK** on `mp4Fallback` turns the Static MP4 switch back on. An empty value still keeps a slow HLS remux on HLS for up to 8 fresh sessions. Playback that starts on MP4 is unchanged, and a failed MP4 still does not move to HLS.
+
+**1.0.64:** a slow HLS remux stays on HLS. The one-way switch to Static MP4 is suspended, because Funnel latency was sending the Roku channel test to an MP4 that fails. The player requests a fresh HLS session up to 8 times. Playback that starts on MP4 is unchanged, and a failed MP4 still does not move to HLS.
 
 **1.0.63:** the Jellyfin session header uses this Roku's `GetChannelClientId()` as `DeviceId`. Each TV is its own session, which is the same id Fetch TV display and sheep votes already send. `Client` stays `JellyFlam3` and `Device` stays `Roku`, so the idle gate still sees the channel. A missing client id falls back to `roku-` plus the model, then `roku-unknown`.
 
@@ -81,7 +83,8 @@ Section `JellyFlam3` (edit in-channel via **Settings** button, **\* Options**, o
 | `userId` | Jellyfin user id (required) |
 | `libraryId` | Sheep library ParentId (recommended) |
 | `commercialMode` | `true` / `false` — **OK** toggles in Settings (**1.0.42**). Client-side filter on Items **Tags** only: keep `cc-by` / `cc0` / PD / `cc-by-sa`; hide NC and untagged items. NC overrides safe tags regardless of order. Do **not** use Jellyfin `Tags=` query params. Overview `License:` is display-only |
-| `streamMode` | `mp4` (ambient loop default) or `hls` (remux compare) — **OK** toggles in Settings (**1.0.42**) |
+| `streamMode` | `mp4` (ambient loop default) or `hls` (remux compare) — **OK** toggles in Settings (**1.0.42**). A `--cert` pack presets `hls`; household packs stay `mp4` |
+| `mp4Fallback` | `true` / `false` — **OK** toggles in Settings (**1.0.65**). `true` lets a failed HLS remux switch to Static MP4. `false` or empty keeps retrying HLS. Household presets write `true`; a `--cert` pack writes `false` |
 | `shuffleFlock` | `true` / `false` — **OK** toggles in Settings (**1.0.42**). `true` rotates archive gens (`247…165`) plus pedigree/tuple at EOF (skips `misc`/`test`). Channel **1.0.30** still rewrites `true` on launch so a leftover `false` cannot survive a cold start. |
 | `titleMode` | `filename` (default) or `alias` — flock rows + player chrome (**1.0.33**). **OK** toggles in Settings (**1.0.39** / **1.0.42**). Alias is Overview `Alias:`; missing alias falls back to `Name`. Roku screensaver **1.0.11+** has its own Settings toggle for the same key (same registry section only while sharing the developer slot). |
 | `sortMode` | `filename` (default), `alias`, `generation`, `duration`, `license`, or `folder` (**1.0.55**). **OK** cycles and saves. Orders the poster grid only. Missing alias sorts by filename. |

@@ -24,7 +24,7 @@ function applyJellyFlam3PackPresets(reg as object) as boolean
   data = ParseJson(raw)
   if data = invalid then return false
 
-  keys = ["baseUrl", "apiKey", "userId", "libraryId", "commercialMode", "streamMode", "displaySinkToken"]
+  keys = ["baseUrl", "apiKey", "userId", "libraryId", "commercialMode", "streamMode", "mp4Fallback", "displaySinkToken"]
   wrote = false
   for each k in keys
     v = jsonPresetStr(data.lookup(k))

@@ -3,8 +3,10 @@
 # Purpose: Build a sideloadable Roku channel zip for the Developer Application Installer.
 # Requirements: bash; zip preferred, else python3 with zipfile.
 #
-# Usage: ./scripts/package_roku_channel.sh [--no-presets] [out.zip]
+# Usage: ./scripts/package_roku_channel.sh [--no-presets] [--cert] [out.zip]
 #   --no-presets  Channel Store zip: skip Jellyfin presets (empty Settings).
+#   --cert        Preset streamMode=hls and mp4Fallback=false for a certification pack.
+#                 Household packs omit this and stay on Static MP4 with the fallback on.
 #
 # When to run: Before sideload / Phase 3 RC packaging. Default: dist/jellyflam3-roku.zip
 # Success: Zip entries at archive root (manifest, source/, components/, images/) — not a nested folder.
@@ -18,12 +20,18 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CHANNEL="$ROOT/roku-channel"
 OUT="$ROOT/dist/jellyflam3-roku.zip"
 NO_PRESETS=0
+CERT=0
 for arg in "$@"; do
   case "$arg" in
     --no-presets) NO_PRESETS=1 ;;
+    --cert) CERT=1 ;;
     *) OUT="$arg" ;;
   esac
 done
+if [[ "$CERT" -eq 1 ]]; then
+  export JELLYFIN_STREAM_MODE=hls
+  export JELLYFIN_MP4_FALLBACK=false
+fi
 
 mkdir -p "$(dirname "$OUT")"
 rm -f "$OUT"
