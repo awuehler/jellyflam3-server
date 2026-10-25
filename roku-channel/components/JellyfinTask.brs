@@ -58,7 +58,7 @@ end function
 function authHeader() as string
   ' Token in Authorization is what Jellyfin uses to bind Client/Device into /Sessions.
   ' DeviceId is per TV so two screens stay two sessions. Client stays JellyFlam3.
-  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""" + channelDeviceId() + """, Version=""1.0.65"", Token=""" + m.top.apiKey + """"
+  return "MediaBrowser Client=""JellyFlam3"", Device=""Roku"", DeviceId=""" + channelDeviceId() + """, Version=""1.0.66"", Token=""" + m.top.apiKey + """"
 end function
 
 ' Lab-verified HLS remux path: prefer main.m3u8 + AudioCodec=aac.

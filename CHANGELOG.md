@@ -18,6 +18,10 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Pillow is now `>=13.0.0`. Image use stays `Image.open`, resize, and draw. Pillow 13 requires Python 3.11 or newer; CI is 3.12 and the furnaces are 3.13.
+
+- Roku VoD **1.0.66** is a revision bump. Playback matches **1.0.65**: household packs stay on Static MP4 with `mp4Fallback=true`, and a `--cert` pack stays on HLS with the MP4 switch off.
+
 - Roku VoD **1.0.65** lets a certification pack start on HLS while household sideloads stay on Static MP4. `package_roku_channel.sh --cert` (or `JELLYFIN_STREAM_MODE=hls`) writes `streamMode=hls` and `mp4Fallback=false`, so the lab hits the HLS retry and does not switch to MP4. A household pack leaves `streamMode=mp4` and `mp4Fallback=true`. Settings **OK** on `mp4Fallback` turns that switch back on. An empty `mp4Fallback` still keeps HLS on HLS.
 
 - Roku VoD **1.0.64** keeps a slow HLS remux on HLS. The Static MP4 fallback is suspended while Tailscale Funnel latency makes that remux look failed, because the MP4 fetch is what the Roku channel test is rejecting. Each failure asks for a fresh HLS session, up to 8 times, and a start clears the count. `mp4FallbackSuspended()` returns true; return false there to restore the HLS-to-MP4 switch. A failed MP4 still does not escalate to HLS.

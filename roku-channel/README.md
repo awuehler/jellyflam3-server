@@ -4,6 +4,8 @@ Sideloadable SceneGraph channel that lists sheep from Jellyfin with **poster til
 
 **Jellyfin:** HLS playback requires Jellyfin **12.0 or later** with its default authorization, and was confirmed on **12.2.0**. That release rejects the legacy `api_key` query parameter on `main.m3u8`. The channel sends `ApiKey`, which is the query parameter Jellyfin still accepts. The Video node cannot attach an `Authorization` header to the stream URL.
 
+**1.0.66:** revision bump. Playback is the same as **1.0.65**.
+
 **1.0.65:** a certification pack can ship `streamMode=hls` and `mp4Fallback=false` (`package_roku_channel.sh --cert`). Household sideloads stay on `mp4` with `mp4Fallback=true`. Settings **OK** on `mp4Fallback` turns the Static MP4 switch back on. An empty value still keeps a slow HLS remux on HLS for up to 8 fresh sessions. Playback that starts on MP4 is unchanged, and a failed MP4 still does not move to HLS.
 
 **1.0.64:** a slow HLS remux stays on HLS. The one-way switch to Static MP4 is suspended, because Funnel latency was sending the Roku channel test to an MP4 that fails. The player requests a fresh HLS session up to 8 times. Playback that starts on MP4 is unchanged, and a failed MP4 still does not move to HLS.
