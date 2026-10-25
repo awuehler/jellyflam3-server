@@ -42,6 +42,7 @@ sub init()
   m.homeReady = false
   m.launchCredentialDialog = false
   m.launchBeaconFired = false
+  m.playDeepLinkHls = false
   m.launchBeaconTimer = invalid
   startLaunchBeaconGuard()
   m.registry = CreateObject("roRegistrySection", "JellyFlam3")
@@ -817,6 +818,9 @@ sub onDeepLinkResult()
   m.pendingDeepLink = ""
   node = createObject("roSGNode", "ContentNode")
   bindFlockItemFields(node, it)
+  ' Lab deep links and poster-grid picks share this package. The deep link
+  ' itself starts on HLS; the grid still follows registry streamMode.
+  m.playDeepLinkHls = true
   setUiState("ready", "Playing deep link")
   if shuffleFlockEnabled()
     startId = ""
@@ -873,6 +877,8 @@ end sub
 
 sub playItem(item as object)
   if item = invalid then return
+  deepLink = (m.playDeepLinkHls = true)
+  m.playDeepLinkHls = false
   m.advancingClip = false
   stopPlayer()
   player = createObject("roSGNode", "PlayerScreen")
@@ -909,6 +915,7 @@ sub playItem(item as object)
     mediaPath: mediaPath
     sheepId: sheepId
     generation: generation
+    deepLink: deepLink
   })
   player.setFocus(true)
 end sub

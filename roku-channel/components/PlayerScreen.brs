@@ -20,6 +20,7 @@ sub init()
   m.itemId = ""
   m.reportedPlaying = false
   m.streamFormat = "mp4"
+  m.deepLinkHls = false
   m.hlsUrl = ""
   m.mp4Url = ""
   m.title = ""
@@ -127,6 +128,7 @@ sub playSheep(item as object)
   m.generation = ""
   m.stem = ""
   m.voteDismissed = false
+  m.deepLinkHls = false
   hideVoteOverlay()
   if item <> invalid
     if item.hlsUrl <> invalid and item.hlsUrl <> ""
@@ -143,10 +145,14 @@ sub playSheep(item as object)
     if item.sheepId <> invalid then m.sheepId = item.sheepId
     if item.generation <> invalid then m.generation = item.generation
     if item.stem <> invalid then m.stem = item.stem
+    if item.deepLink = true then m.deepLinkHls = true
   end if
   if m.stem = "" then m.stem = stemFromPlayback()
 
   mode = resolveStreamMode()
+  ' A deep link is the Roku lab playback path. Same package as the store and
+  ' the homelab sideload: that launch stays on HLS. Grid playback does not.
+  if m.deepLinkHls = true and m.hlsUrl <> "" then mode = "hls"
   if mode = "hls" and m.hlsUrl <> ""
     m.streamFormat = "hls"
     startVideo(m.hlsUrl, "hls")
@@ -373,6 +379,7 @@ end function
 ' Empty or false keeps a slow HLS remux on HLS. Settings mp4Fallback=true
 ' restores the one-way switch to Static MP4 without a code edit.
 function mp4FallbackSuspended() as boolean
+  if m.deepLinkHls = true then return true
   v = m.registry.read("mp4Fallback")
   if v = invalid then return true
   t = LCase(v.Trim())

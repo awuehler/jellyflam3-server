@@ -18,6 +18,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Changed
 
+- Roku VoD **1.0.67** plays a deep link on HLS and does not switch that launch to Static MP4. Poster-grid playback still follows `streamMode`. The store package and the homelab sideload are this same channel.
+
 - Pillow is now `>=13.0.0`. Image use stays `Image.open`, resize, and draw. Pillow 13 requires Python 3.11 or newer; CI is 3.12 and the furnaces are 3.13.
 
 - Roku VoD **1.0.66** is a revision bump. Playback matches **1.0.65**: household packs stay on Static MP4 with `mp4Fallback=true`, and a `--cert` pack stays on HLS with the MP4 switch off.

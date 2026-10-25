@@ -108,7 +108,11 @@ def test_roku_vod_deep_link_plays_jellyfin_content_id():
     result = home[home.index("sub onDeepLinkResult") : home.index("sub onRowItemFocused")]
     assert 'showErrorUi("Deep link miss — item not found")' in result
     assert "bindFlockItemFields(node, it)" in result
-    assert result.index("bindFlockItemFields(node, it)") < result.index("playItem(node)")
+    assert "m.playDeepLinkHls = true" in result
+    assert result.index("m.playDeepLinkHls = true") < result.index("playItem(node)")
+    play = home[home.index("sub playItem(item as object)") : home.index("sub playItemFromData")]
+    assert "deepLink: deepLink" in play
+    assert "m.playDeepLinkHls = false" in play
 
     play = home[home.index("sub playItem(item as object)") : home.index("sub playItemFromData")]
     assert play.index("stopPlayer()") < play.index('createObject("roSGNode", "PlayerScreen")')
@@ -150,7 +154,11 @@ def test_roku_vod_stream_fallback_never_escalates_to_hls():
     assert 'if m.streamFormat = "hls" and m.mp4Url <> ""' in player
     assert 'else if m.streamFormat = "mp4" and m.hlsUrl <> ""' not in player
     assert 'altFmt = "hls"' not in player
+    sheep = player[player.index("sub playSheep") : player.index("sub startVideo")]
+    assert 'if m.deepLinkHls = true and m.hlsUrl <> "" then mode = "hls"' in sheep
+    assert sheep.index("item.deepLink = true") < sheep.index("mode = resolveStreamMode()")
     suspended = player[player.index("function mp4FallbackSuspended") : player.index("function hlsRetryCap")]
+    assert "if m.deepLinkHls = true then return true" in suspended
     assert 'm.registry.read("mp4Fallback")' in suspended
     assert "return false" in suspended
     assert "return true" in suspended
@@ -212,8 +220,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=66" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.66""' in text
+    assert "build_version=67" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.67""' in text
     hls = text[text.index("function hlsStreamUrl") : text.index("function mp4StreamUrl")]
     assert "&ApiKey=" in hls
     assert "api_key=" not in hls
