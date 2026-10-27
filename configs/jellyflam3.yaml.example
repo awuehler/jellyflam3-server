@@ -196,6 +196,11 @@ worker:
   requeue_orphans: true
 
 # Ambient living-room TV palette (OkLCh dual-pole). mode: off | complementary | split_complementary
+# Inline <color rgb> is sampled as-is. palette="N" is loaded from flam3-palettes.xml
+# (palette.flam3_palettes, else FLAM3_PALETTES, else the distro file) and then sampled.
+# A missing strip is not replaced with gray. An unknown index is left for flam3-render.
+# No colors and no index is refused (palette_unresolved). Grayscale palettes are
+# excluded by quality_gate.palette_washed_out.
 palette:
   mode: complementary
   space: oklch

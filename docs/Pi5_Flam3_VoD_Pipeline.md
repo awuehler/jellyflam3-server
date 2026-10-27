@@ -706,11 +706,28 @@ seed_archive:
 
 Classic archives often ship `size="800 592"` (or similar) and older `version=` strings. TV-port rewrites size/scale; treat **format drift** as first-class: multi-root concatenated flames, missing attrs, and NC vs BY licenses. Prefer fail → `genomes/quarantine/` over silent bad masters. Many listing IDs **404** on mirrors — seeder skips and retries another pick.
 
+Older generations often omit the `<color rgb="...">` strip and name a builtin flam3 palette with `palette="N"` (an index into `flam3-palettes.xml`, not a count of N colors). Generations **165**, **169**, and **191** are usually index-only. Later generations, including **198** and **247**, usually already carry 256 inline colors. TV-port handles both; see [Older genomes, with or without a color strip](#older-genomes-with-or-without-a-color-strip). A grayscale builtin palette is still excluded.
+
 ---
 
 ## Complementary ambient-TV palettes (baseline shipped)
 
 **Status:** **Shipped** in the TV-optimize path (`pipeline/palette_harmony.py` + `pipeline/tv_optimize.py`) — OkLCh complementary (default) / split-complementary dual-pole rewrite of the 256 flam3 `<color>` entries, chroma-capped for living-room ambient. Split-comp presets and curator-hex UX remain Phase 2 polish; stills consumers arrive in Phase 3.
+
+### Older genomes, with or without a color strip
+
+TV-port never substitutes gray `(180, 180, 200)` for a missing color strip.
+
+| Genome | What TV-port does |
+|---|---|
+| Inline `<color rgb="...">` | Sample the most chromatic of those colors (`source=inline`) and rewrite a 256-color harmony gradient. |
+| No inline colors, and `palette="N"` is in the installed `flam3-palettes.xml` | Load that palette’s 256 colors, apply the flame `hue` (0 and 1 leave the colors alone), sample the most chromatic, and rewrite the same way (`source=index`). |
+| Index present, palette file missing or without that number | Leave the XML unchanged (`source=deferred`). `flam3-render` loads the index. The washed-palette check is skipped. The preview still’s saturation decides. |
+| Neither colors nor a palette index | Refuse before render (`source=unresolved`, reason `palette_unresolved`). The claimed genome goes to quarantine. |
+
+Palette file search order: `palette.flam3_palettes`, then `FLAM3_PALETTES`, then `/usr/local/share/flam3/flam3-palettes.xml`, then `/usr/share/flam3/flam3-palettes.xml`.
+
+**Grayscale palettes are excluded.** When the sampled accent is gray — a builtin grayscale palette, or an inline strip that is already gray — both harmony poles stay under `quality_gate.palette_max_chroma` (default **0.40**, RGB channel spread). `palette_washed_out` quarantines the genome before animation, so the furnace does not publish it. A deferred index that renders gray is still kept out by the preview check (`catalog_desaturated`, mean channel spread under **0.12**).
 
 **Product intent:** tint flame renders with **complementary (and related) color harmonies** optimized for **ambient living-room TV screens**—Jellyfin clients on smart TVs, Roku/Kodi screensavers, and dedicated VoD clients alike. This is a **server-side furnace** feature that bakes Rec.709-safe color into the catalog masters; it is **not** a Roku BrightScript-only look and **not** “any palette dump.”
 
@@ -733,7 +750,7 @@ Do **not** treat generic Lospec/ASE libraries as the feature. Those may supply *
 | **Asymmetric lightness** | Bright accent / darker opposite (or vice versa)—avoids washed mid-gray flames on large HDR/SDR living-room panels |
 | **Saturation ceiling** | Cap chroma for ambient use; living-room TVs punish neon dual-tones at night |
 | **Gamut / transfer** | Target **Rec.709 / limited** encode path already used for Direct Play; no client-side LUT required |
-| **Seed source** | Genome accent, curator hex, or sampled dominant from a still—**not** full AI-image-as-genome |
+| **Seed source** | Inline `rgb` colors, a resolved flam3 `palette="N"` index, or a curator hex. A missing strip is not replaced with gray. Grayscale palettes are excluded |
 | **flam3 hook** | Rasterize harmony to a **256×1 (or 1×256) PNG/PPM** and pass flam3 **`image=`** (palette replace); optional alternate: curated entries in `flam3-palettes.xml` / palette index. Global `hue_rotation` alone is **not** sufficient (shift ≠ complementary pair) |
 | **Client surface** | Baked into MP4 (and Phase 3 stills); works for **any** ambient TV client of the flock—Roku is one consumer, not the owner of the aesthetic |
 

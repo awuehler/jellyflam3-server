@@ -195,7 +195,7 @@ Default on: do not re-stage archive picks that already have a catalog MP4. Keeps
 
 ### TV-port
 
-Resize/rewrite genome for TV: **1920×1080**, scale, **Gold Sheep Lite** quality attrs, **OkLCh** palette. `pipeline/tv_optimize.py` + `palette_harmony.py`.
+Resize/rewrite genome for TV: **1920×1080**, scale, **Gold Sheep Lite** quality attrs, **OkLCh** palette. `pipeline/tv_optimize.py` + `palette_harmony.py`. Inline `rgb` colors are sampled directly. A flam3 `palette="N"` index is loaded from `flam3-palettes.xml` first. A missing strip is not replaced with gray. A grayscale palette is excluded (`palette_washed_out`).
 
 ### Gold Sheep Lite
 
@@ -207,7 +207,7 @@ Named quality preset in config (`gold_sheep_lite`, `compact` on **-04** profile 
 
 ### OkLCh palette
 
-Perceptual color harmony: complementary (default) or split-complementary dual-pole rewrite of 256 flam3 colors, chroma-capped for ambient TV. Baked into masters (not client LUT).
+Perceptual color harmony: complementary (default) or split-complementary dual-pole rewrite of 256 flam3 colors, chroma-capped for ambient TV. Baked into masters (not client LUT). Older genomes may supply those colors inline or only as `palette="N"`. Grayscale palettes stay out of the catalog.
 
 ### VoD
 

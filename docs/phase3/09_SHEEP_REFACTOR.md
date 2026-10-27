@@ -52,7 +52,7 @@ sheep created before active enforcement; report itself still performs no moves.
 | Enumerate flock | `pipeline.media_layout`, catalog + `*.jellyflam3.json` sidecars | Same Id space as Shears / Jellyfin |
 | Genome hygiene | `pipeline.sheep_tax` (`scan_file` / batch) | Fail → score hard / quarantine candidate |
 | Palette / TV policy signals | `pipeline.palette_harmony`, `pipeline.tv_optimize` (inspect XML attrs; optional dry OkLCh pass) | Detect neon clash, missing Gold Sheep Lite knobs, non-16:9 |
-| **Current complementary palette** | `pipeline.palette_harmony` (`sample_genome_accent`, `harmony_poles`, `HarmonyResult`) | Report **must** include current harmony: `mode`, `seed_hex`, `complement_hex` (optional pole / sample strip). Aligns with cfg `palette.mode: complementary \| split_complementary \| off` |
+| **Current complementary palette** | `pipeline.palette_harmony` (`sample_genome_accent`, `resolve_indexed_palette`, `harmony_poles`, `HarmonyResult`) | Report **must** include current harmony: `mode`, `seed_hex`, `complement_hex`, `source`. `source` is `inline` (rgb strip), `index` (flam3 `palette="N"` resolved from `flam3-palettes.xml`), `curator`, `deferred` (index left for the renderer), or `unresolved` (neither colors nor an index). A grayscale palette reports `palette_washed_out` and the furnace excludes it. |
 | Duration band | `pipeline.choose_duration` + sidecar `duration` / ffprobe | Outside soft/hard band → failing |
 | Poster / artwork | `pipeline.poster`, `pipeline.backfill_posters`, `pipeline.flock_artwork` | Missing / black Primary → failing |
 | Encode sanity | ffprobe on catalog MP4 (fps, pix_fmt, bitrate heuristics) | Wrong profile → re-encode candidate |
@@ -69,7 +69,7 @@ sheep created before active enforcement; report itself still performs no moves.
   "mode": "complementary",
   "seed_hex": "#a1c4ff",
   "complement_hex": "#ffb38a",
-  "source": "genome_accent"
+  "source": "inline"
 }
 ```
 
@@ -124,7 +124,7 @@ Config: `paths.refactor_preview_root` optional; default `media_library/_refactor
 | Flag | Effect |
 |---|---|
 | `--palette-mode complementary\|split_complementary\|off` | Overrides cfg `palette.mode` for this sheep / preview / apply |
-| `--palette-seed #RRGGBB` | Optional seed override (else `sample_genome_accent`) |
+| `--palette-seed #RRGGBB` | Optional seed override (else the inline accent, or the resolved `palette="N"` colors) |
 | `--preview-poster` | Run Pathway P; write preview genome+MP4+poster under `_refactor-preview/`; refresh Jellyfin; do not replace live catalog |
 | `--discard` | Remove `_refactor-preview/<id>/` and soft-refresh Jellyfin |
 | `--no-jellyfin-refresh` | Skip library refresh (unit tests / offline) |

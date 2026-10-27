@@ -34,7 +34,7 @@ Archive and hand genomes often drift: broken XML, unknown attributes, obsolete `
 
 ### Order
 
-**Tax → TV-port** (OkLCh / Gold Sheep Lite size). Tax does not fight TV-optimize rewrites.
+**Tax → TV-port** (OkLCh / Gold Sheep Lite size). Tax clamps an existing color `index` to 0–255 and does not expand `palette="N"` into `<color>` entries. TV-port resolves that index from `flam3-palettes.xml` when the genome has no `rgb` strip. Tax does not fight TV-optimize rewrites. A grayscale palette is excluded later by the worker’s `palette_washed_out` check, not by tax.
 
 ### CLI
 

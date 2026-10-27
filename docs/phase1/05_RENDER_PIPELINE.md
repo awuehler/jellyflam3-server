@@ -55,8 +55,8 @@ The running worker claims **one** inbox genome at a time: the oldest arrival (FI
 ## Steps
 
 1. Claim the oldest `.flam3` / `.flame` in the inbox, or run `--once` (inbox claim skips when drain is requested — [Worker drain](../USER_GUIDE_AND_RUNBOOK.md#worker-drain-pause-before-next-sheep))
-2. Sheep Tax, then TV-optimize: 16:9 + Gold Sheep Lite quality + OkLCh palette. Tax failure (`xml_invalid`, `no_flame`, `read_error`, `write_error`, or `multi_flame` when policy is `reject` / `quarantine`) quarantines before TV-optimize. Default `strip_to_first` keeps the first flame and continues.
-3. **Active pre-render gate:** quarantine linear-only, `singularity="cloned"`, frozen single-flame, or washed-palette genomes before full animation.
+2. Sheep Tax, then TV-optimize: 16:9 + Gold Sheep Lite quality + OkLCh palette. Inline `<color rgb="...">` is sampled as it stands. A genome that only has `palette="N"` (typical of older generations such as **165**, **169**, and **191**) is resolved from `flam3-palettes.xml` and then sampled. A missing strip is not replaced with gray. An index the palette file cannot load is left for `flam3-render`. Tax failure (`xml_invalid`, `no_flame`, `read_error`, `write_error`, or `multi_flame` when policy is `reject` / `quarantine`) quarantines before TV-optimize. Default `strip_to_first` keeps the first flame and continues.
+3. **Active pre-render gate:** quarantine linear-only, `singularity="cloned"`, frozen single-flame, washed-palette, or unresolved-palette genomes before full animation. A grayscale palette fails `palette_washed_out` (both poles under chroma **0.40**) and is excluded. `palette_unresolved` is a genome with neither colors nor an index.
 4. Render one Lite preview still; quarantine when mean saturation is below `quality_gate.desat_mean_max` (default **0.12**).
 5. Choose duration / nframes (fixed **23 s** default → **552** frames @ 24 fps).
 6. `flam3-genome sequence=` with `configs/templates/electricsheep.tv.1080p.flam3` template.
