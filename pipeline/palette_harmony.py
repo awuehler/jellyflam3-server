@@ -1,18 +1,20 @@
 """Purpose: Ambient-TV palette harmonies in OkLCh (no third-party color deps).
 
-Requirements: stdlib only (math, re, xml.etree); flam3 XML with ``<color index=… rgb=…>`` strips.
+Requirements: stdlib only (math, re, xml.etree). Inline ``<color rgb=…>`` strips are sampled directly. A flam3 ``palette="N"`` index is resolved from ``flam3-palettes.xml`` before sampling.
 
 Usage: ``apply_palette_harmony(xml_text, cfg)`` from TV-optimize / worker; helpers for OkLCh convert + dual-pole gradients.
 
-Assumptions: Rewrites toward complementary / split-complementary dual-pole gradients suited to living-room ambient viewing; ``palette.mode`` off/none skips.
+Assumptions: Rewrites toward complementary / split-complementary dual-pole gradients suited to living-room ambient viewing; ``palette.mode`` off/none skips. A missing color strip is never replaced with gray. An unresolved palette index is left for flam3-render; a genome with neither colors nor an index is refused.
 """
 
 from __future__ import annotations
 
 import math
+import os
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Iterable
 
 
@@ -93,6 +95,8 @@ class HarmonyResult:
     seed_hex: str
     complement_hex: str
     xml: str
+    # inline | index | curator | deferred | unresolved
+    source: str = "inline"
 
 
 def _parse_rgb_attr(val: str) -> tuple[int, int, int] | None:
@@ -116,19 +120,194 @@ def _rgb_to_hex(r: int, g: int, b: int) -> str:
     return f"#{r:02x}{g:02x}{b:02x}"
 
 
-def sample_genome_accent(xml_text: str) -> tuple[int, int, int]:
-    """Pick the most chromatic existing palette color as the harmony seed."""
-    best = (180, 180, 200)
+_PALETTE_CACHE: dict[str, tuple[int, dict[int, list[tuple[int, int, int]]]]] = {}
+
+
+def _most_chromatic(colors: Iterable[tuple[int, int, int]]) -> tuple[int, int, int] | None:
+    best: tuple[int, int, int] | None = None
     best_c = -1.0
-    for m in re.finditer(r'rgb\s*=\s*"([^"]+)"', xml_text, re.I):
-        rgb = _parse_rgb_attr(m.group(1))
-        if not rgb:
-            continue
-        _L, C, _h = srgb_to_oklch(*rgb)
-        if C > best_c:
-            best_c = C
+    for rgb in colors:
+        _L, chroma, _h = srgb_to_oklch(*rgb)
+        if chroma > best_c:
+            best_c = chroma
             best = rgb
     return best
+
+
+def sample_genome_accent(xml_text: str) -> tuple[int, int, int] | None:
+    """Pick the most chromatic inline ``rgb`` color, or None when the strip is absent."""
+    found: list[tuple[int, int, int]] = []
+    for m in re.finditer(r'rgb\s*=\s*"([^"]+)"', xml_text, re.I):
+        rgb = _parse_rgb_attr(m.group(1))
+        if rgb:
+            found.append(rgb)
+    return _most_chromatic(found)
+
+
+def _rgb_to_hsv(r: int, g: int, b: int) -> tuple[float, float, float]:
+    rf, gf, bf = r / 255.0, g / 255.0, b / 255.0
+    mx, mn = max(rf, gf, bf), min(rf, gf, bf)
+    delta = mx - mn
+    if delta == 0 or mx == 0:
+        return 0.0, 0.0, mx
+    if mx == rf:
+        hue = ((gf - bf) / delta) % 6.0
+    elif mx == gf:
+        hue = (bf - rf) / delta + 2.0
+    else:
+        hue = (rf - gf) / delta + 4.0
+    return (hue / 6.0) % 1.0, delta / mx, mx
+
+
+def _hsv_to_rgb(h: float, s: float, v: float) -> tuple[int, int, int]:
+    h = h % 1.0
+    sector = int(h * 6.0) % 6
+    frac = h * 6.0 - int(h * 6.0)
+    p = v * (1.0 - s)
+    q = v * (1.0 - frac * s)
+    t = v * (1.0 - (1.0 - frac) * s)
+    rf, gf, bf = (
+        (v, t, p),
+        (q, v, p),
+        (p, v, t),
+        (p, q, v),
+        (t, p, v),
+        (v, p, q),
+    )[sector]
+    return int(round(rf * 255)), int(round(gf * 255)), int(round(bf * 255))
+
+
+def rotate_palette_hue(
+    colors: Iterable[tuple[int, int, int]],
+    hue: float,
+) -> list[tuple[int, int, int]]:
+    """Rotate each color by flam3's 0–1 hue attribute. 0 and 1 leave the color in place."""
+    turn = float(hue) % 1.0
+    if turn == 0.0:
+        return list(colors)
+    out: list[tuple[int, int, int]] = []
+    for r, g, b in colors:
+        h, s, v = _rgb_to_hsv(r, g, b)
+        out.append(_hsv_to_rgb(h + turn, s, v))
+    return out
+
+
+def _colors_from_palette_data(data: str) -> list[tuple[int, int, int]] | None:
+    hexes = re.sub(r"[^0-9A-Fa-f]", "", data or "")
+    width = 8 if len(hexes) >= 256 * 8 else 6
+    if len(hexes) < 256 * width:
+        return None
+    colors: list[tuple[int, int, int]] = []
+    for i in range(256):
+        chunk = hexes[i * width : i * width + 6]
+        colors.append((int(chunk[0:2], 16), int(chunk[2:4], 16), int(chunk[4:6], 16)))
+    return colors
+
+
+def parse_flam3_palettes(xml_text: str) -> dict[int, list[tuple[int, int, int]]]:
+    """Index flam3 palette numbers to their 256 RGB entries."""
+    root = ET.fromstring(xml_text)
+    table: dict[int, list[tuple[int, int, int]]] = {}
+    for el in root.iter("palette"):
+        number = el.get("number")
+        if number is None:
+            continue
+        try:
+            index = int(float(number))
+        except ValueError:
+            continue
+        colors = _colors_from_palette_data(el.get("data") or el.text or "")
+        if colors:
+            table[index] = colors
+    return table
+
+
+def flam3_palette_paths(cfg: dict[str, Any] | None = None) -> list[Path]:
+    pal = (cfg or {}).get("palette") or {}
+    paths: list[Path] = []
+    configured = pal.get("flam3_palettes")
+    if configured:
+        paths.append(Path(str(configured)))
+    env = os.environ.get("FLAM3_PALETTES")
+    if env:
+        paths.append(Path(env))
+    paths.extend(
+        [
+            Path("/usr/local/share/flam3/flam3-palettes.xml"),
+            Path("/usr/share/flam3/flam3-palettes.xml"),
+        ]
+    )
+    return paths
+
+
+def load_flam3_palettes(cfg: dict[str, Any] | None = None) -> dict[int, list[tuple[int, int, int]]] | None:
+    """Load the first readable flam3 palette file. None when no file is installed."""
+    for path in flam3_palette_paths(cfg):
+        try:
+            stat = path.stat()
+        except OSError:
+            continue
+        cached = _PALETTE_CACHE.get(str(path))
+        if cached and cached[0] == stat.st_mtime_ns:
+            return cached[1]
+        try:
+            table = parse_flam3_palettes(path.read_text(encoding="utf-8", errors="replace"))
+        except (OSError, ET.ParseError):
+            continue
+        if table:
+            _PALETTE_CACHE[str(path)] = (stat.st_mtime_ns, table)
+            return table
+    return None
+
+
+def _flame_palette_refs(xml_text: str) -> list[tuple[int | None, float]]:
+    """Each flame's palette index and hue, in document order."""
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError:
+        try:
+            root = ET.fromstring(f"<flames>{xml_text}</flames>")
+        except ET.ParseError:
+            return []
+    flames = [root] if root.tag == "flame" else list(root.iter("flame"))
+    refs: list[tuple[int | None, float]] = []
+    for flame in flames:
+        raw = flame.get("palette")
+        index: int | None
+        try:
+            index = int(float(raw)) if raw not in (None, "") else None
+        except ValueError:
+            index = None
+        if index is not None and index < 0:
+            index = None
+        try:
+            hue = float(flame.get("hue") or 0.0)
+        except ValueError:
+            hue = 0.0
+        refs.append((index, hue))
+    return refs
+
+
+def resolve_indexed_palette(
+    xml_text: str,
+    cfg: dict[str, Any] | None = None,
+    *,
+    palette_table: dict[int, list[tuple[int, int, int]]] | None = None,
+) -> list[tuple[int, int, int]] | None:
+    """Colors for every resolvable palette index. None when an index cannot be loaded."""
+    refs = [(index, hue) for index, hue in _flame_palette_refs(xml_text) if index is not None]
+    if not refs:
+        return None
+    table = palette_table if palette_table is not None else load_flam3_palettes(cfg)
+    if not table:
+        return None
+    colors: list[tuple[int, int, int]] = []
+    for index, hue in refs:
+        found = table.get(index)
+        if not found:
+            return None
+        colors.extend(rotate_palette_hue(found, hue))
+    return colors or None
 
 
 def harmony_poles(
@@ -227,20 +406,15 @@ def rewrite_flam3_palette(
     return decl + ET.tostring(root, encoding="unicode")
 
 
-def apply_palette_harmony(xml_text: str, cfg: dict[str, Any]) -> HarmonyResult | None:
-    """Apply cfg ``palette`` harmony; return result + rewritten XML, or None if disabled."""
+def _rewrite_from_seed(
+    xml_text: str,
+    cfg: dict[str, Any],
+    seed_rgb: tuple[int, int, int],
+    *,
+    mode: str,
+    source: str,
+) -> HarmonyResult:
     pal = cfg.get("palette") or {}
-    # Default on for ambient TV unless explicitly disabled
-    mode = str(pal.get("mode", "complementary")).lower()
-    if mode in ("", "off", "none", "false", "0"):
-        return None
-
-    seed_src = str(pal.get("seed") or "genome_accent")
-    if seed_src == "curator_hex" and pal.get("curator_hex"):
-        seed_rgb = _hex_to_rgb(str(pal["curator_hex"]))
-    else:
-        seed_rgb = sample_genome_accent(xml_text)
-
     pole_a, pole_b = harmony_poles(
         seed_rgb,
         mode=mode,
@@ -249,10 +423,55 @@ def apply_palette_harmony(xml_text: str, cfg: dict[str, Any]) -> HarmonyResult |
         saturation_cap=float(pal.get("saturation_cap", 0.55)),
     )
     colors = dual_pole_gradient(pole_a, pole_b, 256)
-    out = rewrite_flam3_palette(xml_text, colors)
     return HarmonyResult(
         mode=mode,
         seed_hex=_rgb_to_hex(*pole_a),
         complement_hex=_rgb_to_hex(*pole_b),
-        xml=out,
+        xml=rewrite_flam3_palette(xml_text, colors),
+        source=source,
+    )
+
+
+def apply_palette_harmony(
+    xml_text: str,
+    cfg: dict[str, Any],
+    *,
+    palette_table: dict[int, list[tuple[int, int, int]]] | None = None,
+) -> HarmonyResult | None:
+    """Apply cfg ``palette`` harmony.
+
+    Inline colors are sampled as they stand. A flam3 palette index is resolved
+    and sampled when the palette file has that number. An index that cannot be
+    resolved is left unchanged (``source="deferred"``) so flam3-render can load
+    it and the preview gate can judge the still. A genome with neither colors
+    nor an index is ``source="unresolved"`` and must not be rendered.
+    """
+    pal = cfg.get("palette") or {}
+    mode = str(pal.get("mode", "complementary")).lower()
+    if mode in ("", "off", "none", "false", "0"):
+        return None
+
+    seed_src = str(pal.get("seed") or "genome_accent")
+    if seed_src == "curator_hex" and pal.get("curator_hex"):
+        return _rewrite_from_seed(
+            xml_text, cfg, _hex_to_rgb(str(pal["curator_hex"])), mode=mode, source="curator"
+        )
+
+    accent = sample_genome_accent(xml_text)
+    if accent is not None:
+        return _rewrite_from_seed(xml_text, cfg, accent, mode=mode, source="inline")
+
+    indexed = resolve_indexed_palette(xml_text, cfg, palette_table=palette_table)
+    if indexed:
+        accent = _most_chromatic(indexed)
+        if accent is not None:
+            return _rewrite_from_seed(xml_text, cfg, accent, mode=mode, source="index")
+
+    has_index = any(index is not None for index, _hue in _flame_palette_refs(xml_text))
+    if has_index:
+        return HarmonyResult(
+            mode=mode, seed_hex="", complement_hex="", xml=xml_text, source="deferred"
+        )
+    return HarmonyResult(
+        mode=mode, seed_hex="", complement_hex="", xml=xml_text, source="unresolved"
     )

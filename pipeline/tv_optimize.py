@@ -111,10 +111,11 @@ def tv_optimize_xml(xml_text: str, cfg: dict[str, Any]) -> tuple[str, HarmonyRes
     harmony = apply_palette_harmony(xml, cfg)
     if harmony is not None:
         log.info(
-            "palette mode=%s seed=%s complement=%s",
+            "palette mode=%s source=%s seed=%s complement=%s",
             harmony.mode,
-            harmony.seed_hex,
-            harmony.complement_hex,
+            harmony.source,
+            harmony.seed_hex or "-",
+            harmony.complement_hex or "-",
         )
         return harmony.xml, harmony
     return xml, None

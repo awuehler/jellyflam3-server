@@ -386,7 +386,13 @@ def default_fetch_count(cfg: dict[str, Any] | None = None) -> int:
 
 def tv_port_xml(xml_text: str, cfg: dict[str, Any]) -> str:
     """TV-port: 16:9 aspect, Gold Sheep Lite quality, ambient palette."""
-    xml, _harmony = tv_optimize_xml(xml_text, cfg)
+    from pipeline.quality_gate import QualityGateRejected
+
+    xml, harmony = tv_optimize_xml(xml_text, cfg)
+    if harmony is not None and harmony.source == "unresolved":
+        raise QualityGateRejected(
+            "quality gate pre_render_genome rejected: palette_unresolved"
+        )
     return xml
 
 

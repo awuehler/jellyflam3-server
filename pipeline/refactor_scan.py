@@ -204,7 +204,7 @@ def _palette_block(xml_text: str, cfg: dict[str, Any]) -> dict[str, Any]:
         "mode": result.mode,
         "seed_hex": result.seed_hex,
         "complement_hex": result.complement_hex,
-        "source": seed_src,
+        "source": result.source or seed_src,
     }
 
 

@@ -407,8 +407,14 @@ def run_apply(
             "mode": harmony.mode,
             "seed_hex": harmony.seed_hex,
             "complement_hex": harmony.complement_hex,
-            "source": str((work_cfg.get("palette") or {}).get("seed") or "genome_accent"),
+            "source": harmony.source,
         }
+        if harmony.source == "unresolved":
+            from pipeline.quality_gate import QualityGateRejected
+
+            raise QualityGateRejected(
+                "quality gate pre_render_genome rejected: palette_unresolved"
+            )
 
     inbox = resolve_path(cfg, "genomes_inbox")
     # Name as if staging the catalog stem so worker keeps the stable Id.

@@ -605,6 +605,15 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
         # TV-port: 16:9 aspect + Gold Sheep Lite quality + ambient OkLCh palette
         optimized = work / "tv_optimized.flam3"
         _dest, harmony = tv_optimize_file(seed_src, optimized, cfg)
+        if harmony is not None and harmony.source == "unresolved":
+            unresolved = {
+                "stage": "pre_render_genome",
+                "status": "rejected",
+                "reasons": ["palette_unresolved"],
+                "metrics": {"palette_source": "unresolved"},
+            }
+            record_quality_check(state, work, unresolved)
+            enforce_quality(unresolved)
         seed_for_sequence = optimized
 
         genome_xml = optimized.read_text(encoding="utf-8", errors="replace")
@@ -613,11 +622,13 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
         is_tuple = is_tuple_stem(base_name)
         quality_policy = quality_gate_cfg(cfg)
         palette = None
-        if harmony is not None:
+        # A deferred index has no rewritten poles. The preview still judges color.
+        if harmony is not None and harmony.source in ("inline", "index", "curator"):
             palette = {
                 "mode": harmony.mode,
                 "seed_hex": harmony.seed_hex,
                 "complement_hex": harmony.complement_hex,
+                "source": harmony.source,
             }
 
         genome_gate = assess_genome_quality(
@@ -909,11 +920,12 @@ def process_genome(cfg: dict[str, Any], src: Path) -> Path:
                 "image": (wm.get("image") or "") if style == "image" else "",
             }
             sidecar["segments"] = duration_meta.get("segments") or segment_times(cfg)
-        if harmony is not None:
+        if harmony is not None and harmony.source != "unresolved":
             sidecar["palette"] = {
                 "mode": harmony.mode,
-                "seed_hex": harmony.seed_hex,
-                "complement_hex": harmony.complement_hex,
+                "source": harmony.source,
+                "seed_hex": harmony.seed_hex or None,
+                "complement_hex": harmony.complement_hex or None,
             }
         # Prior catalog sidecar is still on disk (install_catalog_mp4 rotates the MP4 only).
         try:

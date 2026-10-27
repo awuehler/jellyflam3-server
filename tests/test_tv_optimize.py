@@ -1,4 +1,7 @@
-from pipeline.archive_seed import default_fetch_count
+import pytest
+
+from pipeline.archive_seed import default_fetch_count, tv_port_xml
+from pipeline.quality_gate import QualityGateRejected
 from pipeline.palette_harmony import (
     apply_palette_harmony,
     dual_pole_gradient,
@@ -36,6 +39,45 @@ def test_apply_palette_rewrites_colors():
     assert result.seed_hex.startswith("#")
     assert 'size="800 592"' in result.xml or "800 592" in result.xml
     assert result.xml.count("<color") == 256
+
+
+def test_palette_index_is_resolved_before_sampling():
+    table = {71: [(220, 20, 20)] * 256}
+    xml = '<flame palette="71" hue="0" size="640 480"><xform weight="1" linear="1" coefs="1 0 0 1 0 0"/></flame>'
+    result = apply_palette_harmony(
+        xml, {"palette": {"mode": "complementary"}}, palette_table=table
+    )
+    assert result is not None
+    assert result.source == "index"
+    assert result.seed_hex != "#b5b5c9"
+    assert result.xml.count("<color") == 256
+
+
+def test_unresolved_palette_index_is_left_for_the_renderer():
+    xml = '<flame palette="71" size="640 480"><xform weight="1" linear="1" coefs="1 0 0 1 0 0"/></flame>'
+    result = apply_palette_harmony(
+        xml, {"palette": {"mode": "complementary"}}, palette_table={}
+    )
+    assert result is not None
+    assert result.source == "deferred"
+    assert 'palette="71"' in result.xml
+    assert "<color" not in result.xml
+
+
+def test_missing_palette_is_unresolved():
+    xml = '<flame size="640 480"><xform weight="1" linear="1" coefs="1 0 0 1 0 0"/></flame>'
+    result = apply_palette_harmony(
+        xml, {"palette": {"mode": "complementary"}}, palette_table={}
+    )
+    assert result is not None
+    assert result.source == "unresolved"
+    assert "<color" not in result.xml
+
+
+def test_tv_port_refuses_a_genome_with_no_palette():
+    xml = '<flame size="640 480"><xform weight="1" linear="1" coefs="1 0 0 1 0 0"/></flame>'
+    with pytest.raises(QualityGateRejected, match="palette_unresolved"):
+        tv_port_xml(xml, {"palette": {"mode": "complementary"}, "render": {"edition": "off"}})
 
 
 def test_palette_off():
