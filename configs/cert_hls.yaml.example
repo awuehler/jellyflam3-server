@@ -1,0 +1,47 @@
+# Roku App Behavior Analysis HLS stand-in.
+# Copy to configs/cert_hls.yaml (gitignored) and run on the furnace:
+#   python3 scripts/cert_hls_server.py --config configs/cert_hls.yaml
+# That encodes each sheep, checks Tailscale Funnel, and serves.
+# It does not turn Funnel on and it does not take Jellyfin's port 8096.
+# Point Funnel at `port` only for the lab run, then point it back at 8096.
+#
+# The API key and user id come from the environment (secrets.env). Do not
+# write them into this file.
+
+listen_host: 127.0.0.1
+port: 8097
+document_root: /var/cache/jellyflam3/cert-hls
+log_file: /var/log/jellyflam3/cert-hls.log
+media_library: /media/sheep
+
+# Names of environment variables. The values stay in secrets.env.
+api_key_env: JELLYFIN_API_KEY
+user_id_env: JELLYFIN_USER_ID
+
+encode:
+  width: 1280
+  height: 720
+  video_bitrate: 1500k
+  audio_bitrate: 128k
+  hls_time: 3
+  fps: 24
+  preset: veryfast
+  timeout_sec: 1800
+
+# Check only. expected_host empty accepts whatever host `tailscale funnel status` reports.
+# backend_host is the address Funnel must proxy to.
+funnel:
+  expected_host: ""
+  backend_host: 127.0.0.1
+
+# Optional override when jellyfin-ffmpeg is not on PATH.
+# tools:
+#   ffmpeg: /usr/lib/jellyfin-ffmpeg/ffmpeg
+#   ffprobe: /usr/lib/jellyfin-ffmpeg/ffprobe
+
+# sheep is the catalog stem. content_id is the Jellyfin item id the lab deep-links.
+# source empty uses {media_library}/by-generation/{generation}/{sheep}.mp4.
+sheep:
+  - sheep: electricsheep.169.00000
+    content_id: REPLACE_WITH_ITEM_ID
+    source: ""

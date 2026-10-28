@@ -5,6 +5,9 @@ secrets.env.*
 configs/jellyflam3.yaml
 configs/jellyflam3.yaml.*
 !configs/jellyflam3.yaml.example
+configs/cert_hls.yaml
+configs/cert_hls.yaml.*
+!configs/cert_hls.yaml.example
 !.gitkeep
 
 # Python
