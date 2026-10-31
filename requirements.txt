@@ -4,4 +4,4 @@ cryptography>=50.0.2
 Pillow>=13.0.0
 
 # Test / CI
-pytest>=9.1.1
+pytest>=9.2.0
