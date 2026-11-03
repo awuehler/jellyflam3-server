@@ -37,7 +37,7 @@ Architecture SoT remains [Pi5_Flam3_VoD_Pipeline.md](../Pi5_Flam3_VoD_Pipeline.m
 |---|---|
 | Phase 5 products | **Parked** (2026-09-10) — docs only |
 | A — Furnace | **Shipped** on Pi — not re-specified here; see [phase2/09](../phase2/09_PI_FROM_SCRATCH.md) |
-| B — LLM Agent Platform host | Parked — [01](01_VENTUNO_Q_HOST.md) (Ventuno BOM + INT4 model store, bring-up, **non-furnace**) |
+| B — LLM Agent Platform host | Parked — [01](01_VENTUNO_Q_HOST.md) (Ventuno BOM + INT4 model store, bring-up, **fan curve**, **non-furnace**) |
 | Agent ↔ furnace contracts | Parked — [02](02_LLM_INTEGRATION.md) (naming, breeding; vision pipeline; **VoD-as-camera**) |
 | Agent-platform gaps | Parked — [03](03_AI_PLATFORM_GAPS.md) |
 | Phase 4 products | Unchanged except **02 mesh closed**; share-out hop → [04](04_PEER_SHARE_MESH.md) — [../phase4/00_OVERVIEW.md](../phase4/00_OVERVIEW.md) |
@@ -62,7 +62,7 @@ This is the deferred **LLM-assisted pedigree** note from [phase2/07](../phase2/0
 | # | Guide | Focus |
 |---|---|---|
 | 00 | This file | Two-deployment split / parked DoD |
-| 01 | [01_VENTUNO_Q_HOST.md](01_VENTUNO_Q_HOST.md) | Deployment B BOM, power/disks, bring-up — **not** a furnace port |
+| 01 | [01_VENTUNO_Q_HOST.md](01_VENTUNO_Q_HOST.md) | Deployment B BOM, power/disks, **fan curve**, bring-up — **not** a furnace port |
 | 02 | [02_LLM_INTEGRATION.md](02_LLM_INTEGRATION.md) | Agent → furnace map; **vision pipeline**; **VoD-as-camera** |
 | 03 | [03_AI_PLATFORM_GAPS.md](03_AI_PLATFORM_GAPS.md) | NPU / RAM / thermal / driver / eval / **Hexagon+GPU** gaps **on B** |
 | 04 | [04_PEER_SHARE_MESH.md](04_PEER_SHARE_MESH.md) | Furnace share-out → inbox hop; promote vs sendreceive delete (parked) |

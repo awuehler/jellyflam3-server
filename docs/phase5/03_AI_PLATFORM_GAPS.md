@@ -35,7 +35,7 @@ Arbitrary Hugging Face checkpoints do not run. Workflow remains: AI Hub curated 
 
 ### G3 — Thermal and power on B
 
-NPU + NVMe heat is unknown. Barrel PSU only ([01](01_VENTUNO_Q_HOST.md)). **Work:** thermals under VLM load. Do not compare to 16a flam3 throttling — different host, different workload.
+NPU + NVMe heat is unknown. Barrel PSU only ([01](01_VENTUNO_Q_HOST.md)). Vendor DT has **no `cooling-maps`**, so the EMC2305 cooling device is orphaned from thermal zones; writing PWM **`0`** makes this fan fail safe to full speed. **Work:** enable the temperature-throttled userspace curve on B ([01 fan control](01_VENTUNO_Q_HOST.md#fan-control-temperature-throttled)); lab hottest-zone + `pwm1`/`fan1_input` under VLM load; confirm `emc2305` hwmon binds every boot (probe-order / `waiting_for_supplier` races). Do not compare to 16a flam3 throttling — different host, different workload.
 
 ### G4 — Driver / distro maturity on B
 
@@ -180,7 +180,7 @@ Parked until Owner opens implementation. Not DoD for first RC unless promoted.
 
 ## Exit criteria (when opened)
 
-- [ ] Lab notes for G3/G4 (thermals, kernel, model load) **on B**
+- [ ] Lab notes for G3/G4 (thermals with [fan curve](01_VENTUNO_Q_HOST.md#fan-control-temperature-throttled), kernel, model load) **on B**
 - [ ] Written runner choice for G5; INT4 session switch labbed (one hot 7–8B)
 - [ ] G18 H4: small GPU VLM + HTP Instruct RSS/thermals; co-resident or on-demand written
 - [ ] G16: A continues if B is stopped; B refuses writes if A is gone

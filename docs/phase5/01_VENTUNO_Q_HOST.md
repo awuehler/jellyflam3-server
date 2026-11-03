@@ -124,6 +124,90 @@ Furnace mounts (`/media/sheep`, `/var/cache/jellyflam3`, bind `/var/lib/jellyfla
 
 **Power (B):** 12–24 V. Sustained NPU inference is not a 15 W USB-C workload. Confirm draw on the first lab unit.
 
+## Fan control (temperature-throttled)
+
+On-board cooling is a Microchip **EMC2305** PWM fan controller (`compatible = "microchip,emc2305"`). Vendor device trees ship **no `cooling-maps`**, so Linux thermal zones do **not** drive the fan under load; trip points are almost all **passive** (SoC throttles instead). Until Arduino ships active thermal maps, **B** needs a small **userspace** curve — same class of host hygiene as Tailscale enroll, not a furnace concern.
+
+Community lab note ([forum #1463356 §5](https://forum.arduino.cc/t/ventuno-q-fan-runs-at-full-speed-after-launching-an-mcu-sketch-in-arduino-app-lab/1463356/5)): writing PWM **`0`** is interpreted by this fan as a **lost signal** and it **fails safe to ~100%** (~5300 RPM) even when cool. Duty **1–255** works. Long NPU runs reported ~38–40 °C on a quiet floor. (A separate App Lab / MCU-programming stuck-fan bug was fixed in ArduinoCore-zephyr **1.1.0**; that does **not** replace the missing cooling-maps curve for inference.)
+
+**Prerequisite:** `emc2305` must bind. If `/sys/bus/i2c/devices/*/waiting_for_supplier` stays set and no `emc2305` appears under `/sys/class/hwmon/*/name`, userspace cannot throttle — reboot and re-check; external airflow until the hwmon exists ([03](03_AI_PLATFORM_GAPS.md#g3--thermal-and-power-on-b)).
+
+### Confirm / smoke
+
+```bash
+# Find the EMC2305 hwmon (number varies; do not hard-code hwmon0 in scripts)
+grep . /sys/class/hwmon/*/name
+H=$(dirname "$(grep -l emc2305 /sys/class/hwmon/*/name)")
+
+grep . "$H"/pwm* "$H"/fan*_input
+# Stuck-full pattern: pwm1=0 and fan1_input ≈ 5000+ RPM while cool
+
+# Manual prove (only while cool): half duty should drop RPM; 0 should NOT be used in service
+echo 128 | sudo tee "$H/pwm1"
+cat "$H/fan1_input"   # expect ~3000 RPM class; 255 ≈ full; 0 ≈ full (fail-safe)
+```
+
+### Configuration (defaults)
+
+| Knob | Default | Meaning |
+|---|---|---|
+| Floor PWM | `60` | Quiet idle (~1500 RPM class). **Never `0`.** Chip may round (~25-step); ~51 is OK. |
+| Ramp start | `38` °C | Hold floor at or below this (hottest `thermal_zone*/temp`) |
+| Full speed | `75` °C | PWM `255` |
+| Poll | `5` s | Re-read temps; write PWM only when the duty changes |
+| Service | `jellyflam3-agent-fan.service` | B only; not a furnace unit |
+
+Ramp (integer °C `T`): `P = 60 + (T - 38) * 195 / 37` while `38 < T < 75` (`195 = 255 − 60`, `37 = 75 − 38`).
+
+Illustrative drop-in (planned under `deploy/` when 01 opens; install paths match agent host, not App Lab phone-SSH one-liners):
+
+```bash
+# /usr/local/bin/jf3agent-fancurve.sh  — B only; never echo 0 to pwm1
+#!/bin/sh
+set -eu
+H=$(dirname "$(grep -l emc2305 /sys/class/hwmon/*/name)")
+while true; do
+  T=$(cat /sys/class/thermal/thermal_zone*/temp | sort -n | tail -1)
+  T=$((T / 1000))
+  if [ "$T" -le 38 ]; then P=60
+  elif [ "$T" -ge 75 ]; then P=255
+  else P=$((60 + (T - 38) * 195 / 37)); fi
+  cur=$(cat "$H/pwm1")
+  [ "$cur" != "$P" ] && echo "$P" > "$H/pwm1"
+  sleep 5
+done
+```
+
+```ini
+# /etc/systemd/system/jellyflam3-agent-fan.service
+[Unit]
+Description=JellyFlam3 agent fan curve (EMC2305; never PWM 0)
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/jf3agent-fancurve.sh
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo install -m 755 jf3agent-fancurve.sh /usr/local/bin/jf3agent-fancurve.sh
+sudo cp jellyflam3-agent-fan.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now jellyflam3-agent-fan.service
+systemctl is-active jellyflam3-agent-fan.service   # expect active
+cat "$H/pwm1" "$H/fan1_input"                      # cool: PWM ~51–60, ~1500 RPM
+# Under NPU/VLM load: watch -n2 cat "$H/pwm1" "$H/fan1_input"
+```
+
+Tune floor / trip points in the script, then `sudo systemctl restart jellyflam3-agent-fan.service`. Undo returns the fan to kernel-idle PWM `0` (loud when cool) — only for lab comparison.
+
+Log PWM + hottest zone under VLM load as part of [C5](#c--network-to-a) / [03 G3](03_AI_PLATFORM_GAPS.md#g3--thermal-and-power-on-b). Do **not** install this unit on a furnace Pi.
+
 ## Tailscale (flock tailnet)
 
 The flock’s private underlay is **Tailscale**, not a campus VLAN. When **two or more** Raspberry Pi furnaces Opt In to share genomes ([phase2/05](../phase2/05_SYNCTHING_GENOME_PEERING.md)), they already live on that tailnet (`tag:jellyflam3`). The LLM Agent Platform **must join the same tailnet** so one B can reach every A (SSH, Jellyfin Images / Static VoD, display-sink) even when the Pis are not on one Ethernet switch.
@@ -210,6 +294,7 @@ These are **agent-platform** tasks, not a port of the Pi furnace playbook. Each 
 | B4 | **Forbid** furnace stack: no `install_flam3.sh`, no `install_jellyfin.sh`, no idle-gate, no worker units | check script | Fail closed if `flam3-animate` or `jellyfin` is present |
 | B5 | Python 3 + tests for **agent** adapters only (fake runner in CI) | `tests/` | Furnace pytest stays on Pi / GHA |
 | B6 | NVMe layout: `models/{llama31-8b-int4,qwen25-7b-int4,mistral-7b-int4,vlm-2b-int4}/` + `scratch/convert/` | fstab | One Instruct `model_id`; VLM id separate; two sessions |
+| B7 | Temperature-throttled fan service (`jellyflam3-agent-fan`) — EMC2305; **never PWM 0** | `deploy/` + systemd | [Fan control](#fan-control-temperature-throttled); fail closed if `emc2305` hwmon absent |
 
 ### C — Network to A
 
@@ -219,7 +304,7 @@ These are **agent-platform** tasks, not a port of the Pi furnace playbook. Each 
 | C2 | SSH key **agent → each furnace** for CLI apply (or token to a small sink **on each A**) | `authorized_keys` on **every A** | [phase1/09](../phase1/09_RUNTIME_AND_OPS.md) |
 | C3 | Virtual-camera fetch: Images Primary/Backdrop on **single-sheep** Items; optional silent `stream.mp4?Static=true` grab | [02](02_LLM_INTEGRATION.md#vod-as-camera) | [phase2/02](../phase2/02_JELLYFIN_FLOCK_UX.md), [phase2/03](../phase2/03_HLS_CLIENT_STREAMING.md) |
 | C4 | Jellyfin client id `jf3agent-vlm` (not `jellyflam3-*`); **each** A `idle_gate.ignore_client_patterns` | furnace yaml | Must not close the gate ([phase1/06](../phase1/06_IDLE_GATE.md)) |
-| C5 | Thermal log under VLM load (not flam3) | runbook | |
+| C5 | Thermal log under VLM load (not flam3): hottest zone + `pwm1` / `fan1_input` with fan service active | runbook | [Fan control](#fan-control-temperature-throttled) |
 | C6 | Tailscale enroll `tag:jellyflam3-agent` when N≥2 (or off-L2); **no** Syncthing | [tailscale](#tailscale-flock-tailnet) | [phase2/05](../phase2/05_SYNCTHING_GENOME_PEERING.md); ACL example |
 
 ### D — Explicit non-tasks (do not “port”)
@@ -244,9 +329,10 @@ These are **agent-platform** tasks, not a port of the Pi furnace playbook. Each 
 | Artifact | Kind | Role |
 |---|---|---|
 | Agent systemd unit + config | deploy | Runtime on **B** only |
+| `jellyflam3-agent-fan.service` + `jf3agent-fancurve.sh` | deploy | EMC2305 curve; never PWM 0 ([fan](#fan-control-temperature-throttled)) |
 | Bring-up check: furnace stack absent | script | Fail if flam3/Jellyfin/worker found |
 | This guide | docs | BOM + non-furnace bring-up |
-| Lab notes | docs | Thermals, model RSS, LAN RTT to 16a |
+| Lab notes | docs | Thermals (PWM/RPM + zones), model RSS, LAN RTT to 16a |
 
 ## Non-goals
 
@@ -265,6 +351,7 @@ These are **agent-platform** tasks, not a port of the Pi furnace playbook. Each 
 - [ ] Local model loads; reach **each** configured A (LAN and/or Tailscale MagicDNS / `100.x`)
 - [ ] N≥2: B on `tag:jellyflam3-agent`; Syncthing **absent**; ACL allows 22/8096/8791 to furnaces only
 - [ ] Barrel PSU in use; BOM matches purchase (or is corrected)
+- [ ] `jellyflam3-agent-fan` active; cool idle is quiet floor (PWM ≠ 0); curve responds under VLM/NPU load
 - [ ] Tasks A–C closed or deferred to [03](03_AI_PLATFORM_GAPS.md)
 - [ ] Operator docs state A vs B in one paragraph
 
