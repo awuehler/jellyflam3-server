@@ -4,6 +4,8 @@ Sideloadable SceneGraph channel that lists sheep from Jellyfin with **poster til
 
 **Jellyfin:** HLS playback requires Jellyfin **12.0 or later** with its default authorization, and was confirmed on **12.2.0**. That release rejects the legacy `api_key` query parameter on `main.m3u8`. The channel sends `ApiKey`, which is the query parameter Jellyfin still accepts. The Video node cannot attach an `Authorization` header to the stream URL.
 
+**1.0.68:** Settings **Prepare package profile** posts the live JellyFlam3 registry to the furnace. Pack with `./scripts/package_roku_channel.sh --from-package-profile` so Application Packager embeds those Office Settings literally. Deep-link HLS behavior matches **1.0.67**.
+
 **1.0.67:** a deep link starts on HLS and stays there. Choosing a poster still follows `streamMode` (`mp4` by default). This is the store package and the homelab sideload.
 
 **1.0.66:** revision bump. Playback is the same as **1.0.65**.

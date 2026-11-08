@@ -146,14 +146,24 @@ def fetch_roku_settings(
     return out
 
 
-def write_roku_registry_dir(registry_dir: Path, settings: dict[str, str]) -> Path:
-    """Write ``registry/jellyflam3-presets.json`` for Roku sideload packages."""
+def write_roku_registry_dir(
+    registry_dir: Path,
+    settings: dict[str, str],
+    *,
+    source: str = "jellyfin_id_dump",
+    literal: bool = False,
+) -> Path:
+    """Write ``registry/jellyflam3-presets.json`` for Roku sideload packages.
+
+    ``literal`` keeps Office-captured values as posted (no shuffle/stream defaults).
+    """
     registry_dir.mkdir(parents=True, exist_ok=True)
     out = registry_dir / PRESET_NAME
+    body = dict(settings) if literal else normalize_roku_settings(settings)
     payload = {
         "rokuRegistrySection": "JellyFlam3",
-        **normalize_roku_settings(settings),
-        "source": "jellyfin_id_dump",
+        **body,
+        "source": source,
     }
     out.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     return out
@@ -198,9 +208,47 @@ def prepare_packaging(
     root: Path | None = None,
     roku_registry: Path | None = None,
     kodi_settings: Path | None = None,
+    from_package_profile: bool = False,
+    package_profile_path: Path | None = None,
 ) -> bool:
-    """Fetch presets on furnace hosts and apply to requested package targets."""
+    """Fetch presets on furnace hosts and apply to requested package targets.
+
+    ``from_package_profile`` embeds the Office-captured Settings literally and
+    does not rewrite streamMode / mp4Fallback from the environment.
+    """
     repo = root or ROOT
+    if from_package_profile:
+        from pipeline.roku_package_profile import (  # noqa: PLC0415
+            default_profile_path,
+            load_package_profile,
+        )
+
+        profile_path = package_profile_path or default_profile_path()
+        try:
+            settings = load_package_profile(profile_path)
+        except (OSError, ValueError) as exc:
+            print(f"client_pack_presets: package profile failed: {exc}", file=sys.stderr)
+            return False
+        if roku_registry is not None:
+            path = write_roku_registry_dir(
+                roku_registry,
+                settings,
+                source="roku_settings_capture",
+                literal=True,
+            )
+            print(f"client_pack_presets: roku registry -> {path} (from Office package profile)")
+        if kodi_settings is not None:
+            apply_kodi_settings(kodi_settings, settings)
+            print(f"client_pack_presets: kodi settings -> {kodi_settings}")
+        base = settings.get("baseUrl") or ""
+        kind = "funnel" if "ts.net" in base else "lan" if base else "empty"
+        print(
+            "client_pack_presets: source=roku_settings_capture "
+            f"baseUrl_kind={kind} streamMode={settings.get('streamMode')} "
+            f"mp4Fallback={settings.get('mp4Fallback')}"
+        )
+        return True
+
     if not is_furnace_host(repo):
         print("client_pack_presets: skip (no furnace secrets.env with Jellyfin URL + API key)")
         return False
@@ -217,7 +265,10 @@ def prepare_packaging(
     masked = {**settings, "apiKey": _mask_api_key(settings.get("apiKey", ""))}
     if masked.get("displaySinkToken"):
         masked["displaySinkToken"] = "***"
-    print(f"client_pack_presets: baseUrl={masked.get('baseUrl')} userId={masked.get('userId')} libraryId={masked.get('libraryId')}")
+    print(
+        f"client_pack_presets: baseUrl={masked.get('baseUrl')} "
+        f"userId={masked.get('userId')} libraryId={masked.get('libraryId')}"
+    )
     return True
 
 
@@ -267,6 +318,17 @@ def main() -> int:
         type=Path,
         help="Kodi screensaver resources/settings.xml to patch",
     )
+    prep.add_argument(
+        "--from-package-profile",
+        action="store_true",
+        help="Embed /var/lib/jellyflam3/roku-package-profile.json literally (Office capture)",
+    )
+    prep.add_argument(
+        "--package-profile",
+        type=Path,
+        default=None,
+        help="Override path to the captured Office package profile JSON",
+    )
     strip = sub.add_parser("strip-cr", help="Rewrite CR/CRLF to LF under a staged add-on tree")
     strip.add_argument(
         "--dir",
@@ -280,7 +342,11 @@ def main() -> int:
             config=Path(args.config),
             roku_registry=args.roku_registry,
             kodi_settings=args.kodi_settings,
+            from_package_profile=bool(args.from_package_profile),
+            package_profile_path=args.package_profile,
         )
+        if args.from_package_profile:
+            return 0 if ok else 1
         return 0 if ok or not is_furnace_host() else 1
     if args.cmd == "strip-cr":
         n = strip_cr_in_dir(args.dir)

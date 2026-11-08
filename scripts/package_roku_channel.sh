@@ -3,10 +3,13 @@
 # Purpose: Build a sideloadable Roku channel zip for the Developer Application Installer.
 # Requirements: bash; zip preferred, else python3 with zipfile.
 #
-# Usage: ./scripts/package_roku_channel.sh [--no-presets] [--cert] [out.zip]
-#   --no-presets  Channel Store zip: skip Jellyfin presets (empty Settings).
-#   --cert        Preset streamMode=hls and mp4Fallback=false for a certification pack.
-#                 Household packs omit this and stay on Static MP4 with the fallback on.
+# Usage: ./scripts/package_roku_channel.sh [--no-presets] [--cert] [--from-package-profile] [out.zip]
+#   --no-presets            Channel Store zip: skip Jellyfin presets (empty Settings).
+#   --cert                  Preset streamMode=hls and mp4Fallback=false for a certification pack.
+#                           Household packs omit this and stay on Static MP4 with the fallback on.
+#   --from-package-profile  Embed Office Settings captured at
+#                           /var/lib/jellyflam3/roku-package-profile.json literally.
+#                           Do not combine with --cert (Office values win).
 #
 # When to run: Before sideload / Phase 3 RC packaging. Default: dist/jellyflam3-roku.zip
 # Success: Zip entries at archive root (manifest, source/, components/, images/) — not a nested folder.
@@ -21,13 +24,19 @@ CHANNEL="$ROOT/roku-channel"
 OUT="$ROOT/dist/jellyflam3-roku.zip"
 NO_PRESETS=0
 CERT=0
+FROM_PROFILE=0
 for arg in "$@"; do
   case "$arg" in
     --no-presets) NO_PRESETS=1 ;;
     --cert) CERT=1 ;;
+    --from-package-profile) FROM_PROFILE=1 ;;
     *) OUT="$arg" ;;
   esac
 done
+if [[ "$FROM_PROFILE" -eq 1 && "$CERT" -eq 1 ]]; then
+  echo "package_roku_channel: use --from-package-profile or --cert, not both" >&2
+  exit 2
+fi
 if [[ "$CERT" -eq 1 ]]; then
   export JELLYFIN_STREAM_MODE=hls
   export JELLYFIN_MP4_FALLBACK=false
@@ -37,7 +46,13 @@ mkdir -p "$(dirname "$OUT")"
 rm -f "$OUT"
 
 if [[ "$NO_PRESETS" -eq 0 ]]; then
-  python3 "$ROOT/scripts/client_pack_presets.py" prepare --roku-registry "$CHANNEL/registry" || true
+  if [[ "$FROM_PROFILE" -eq 1 ]]; then
+    python3 "$ROOT/scripts/client_pack_presets.py" prepare \
+      --roku-registry "$CHANNEL/registry" \
+      --from-package-profile
+  else
+    python3 "$ROOT/scripts/client_pack_presets.py" prepare --roku-registry "$CHANNEL/registry" || true
+  fi
 fi
 
 # Roku expects zip contents at archive root (manifest, source/, components/, images/, registry/)

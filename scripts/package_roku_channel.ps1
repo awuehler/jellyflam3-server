@@ -2,10 +2,11 @@
 #
 # Requirements: PowerShell 5.1 or 7+; .NET System.IO.Compression.FileSystem.
 #
-# Usage: .\scripts\package_roku_channel.ps1 [-NoPresets] [-Cert] [OutPath]
-#   -NoPresets  Channel Store zip: skip Jellyfin presets (empty Settings).
-#   -Cert       Preset streamMode=hls and mp4Fallback=false for a certification pack.
-#               Household packs omit this and stay on Static MP4 with the fallback on.
+# Usage: .\scripts\package_roku_channel.ps1 [-NoPresets] [-Cert] [-FromPackageProfile] [OutPath]
+#   -NoPresets            Channel Store zip: skip Jellyfin presets (empty Settings).
+#   -Cert                 Preset streamMode=hls and mp4Fallback=false for a certification pack.
+#                         Household packs omit this and stay on Static MP4 with the fallback on.
+#   -FromPackageProfile   Embed Office Settings from the captured furnace package profile.
 #
 # When to run: Windows operator packaging before sideload / Phase 3 RC. Default: dist\jellyflam3-roku.zip
 # Success: Zip entries at archive root with forward-slash paths (manifest, source/, …).
@@ -21,7 +22,8 @@
 param(
   [string]$OutPath = "",
   [switch]$NoPresets,
-  [switch]$Cert
+  [switch]$Cert,
+  [switch]$FromPackageProfile
 )
 $Root = Split-Path -Parent $PSScriptRoot
 if (-not $OutPath) { $OutPath = Join-Path $Root "dist\jellyflam3-roku.zip" }
@@ -29,12 +31,20 @@ $Channel = Join-Path $Root "roku-channel"
 New-Item -ItemType Directory -Force -Path (Split-Path $OutPath) | Out-Null
 if (Test-Path $OutPath) { Remove-Item -Force $OutPath }
 
+if ($FromPackageProfile -and $Cert) {
+  throw "package_roku_channel: use -FromPackageProfile or -Cert, not both"
+}
 if ($Cert) {
   $env:JELLYFIN_STREAM_MODE = "hls"
   $env:JELLYFIN_MP4_FALLBACK = "false"
 }
 if (-not $NoPresets) {
-  python (Join-Path $Root "scripts\client_pack_presets.py") prepare --roku-registry (Join-Path $Channel "registry") 2>$null | Out-Null
+  if ($FromPackageProfile) {
+    python (Join-Path $Root "scripts\client_pack_presets.py") prepare --roku-registry (Join-Path $Channel "registry") --from-package-profile
+    if ($LASTEXITCODE -ne 0) { throw "package profile prepare failed" }
+  } else {
+    python (Join-Path $Root "scripts\client_pack_presets.py") prepare --roku-registry (Join-Path $Channel "registry") 2>$null | Out-Null
+  }
 }
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem

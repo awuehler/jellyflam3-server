@@ -220,8 +220,17 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=67" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.67""' in text
+    assert "build_version=68" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.68""' in text
+    assert "function postRokuPackageProfile() as object" in text
+    assert "/v1/roku-package-profile" in text
+    settings = (VOD / "components" / "SettingsScreen.brs").read_text(encoding="utf-8")
+    assert "row_packageProfile" in settings
+    assert "sub postPackageProfileToPi()" in settings
+    assert 'command = "rokuPackageProfile"' in settings
+    assert "--from-package-profile" in (ROOT / "scripts" / "package_roku_channel.sh").read_text(
+        encoding="utf-8"
+    )
     hls = text[text.index("function hlsStreamUrl") : text.index("function mp4StreamUrl")]
     assert "&ApiKey=" in hls
     assert "api_key=" not in hls

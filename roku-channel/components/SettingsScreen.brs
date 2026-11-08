@@ -1,7 +1,8 @@
 sub init()
   m.top.focusable = true
   m.fields = ["baseUrl", "apiKey", "userId", "libraryId", "commercialMode", "streamMode", "mp4Fallback", "shuffleFlock", "titleMode", "sortMode"]
-  m.rowIds = ["row_baseUrl", "row_apiKey", "row_userId", "row_libraryId", "row_commercialMode", "row_streamMode", "row_mp4Fallback", "row_shuffleFlock", "row_titleMode", "row_sortMode", "row_probeDisplay", "row_save", "row_cancel"]
+  m.rowIds = ["row_baseUrl", "row_apiKey", "row_userId", "row_libraryId", "row_commercialMode", "row_streamMode", "row_mp4Fallback", "row_shuffleFlock", "row_titleMode", "row_sortMode", "row_probeDisplay", "row_packageProfile", "row_save", "row_cancel"]
+  m.packageProfileNotice = ""
   m.values = {}
   m.idx = 0
   m.registry = CreateObject("roRegistrySection", "JellyFlam3")
@@ -67,6 +68,8 @@ function fieldHint(name as string) as string
     return "OK cycles filename, alias, generation, duration, license, folder and saves; filename is the A-Z default"
   else if name = "probeDisplay"
     return "OK=capture roDeviceInfo + POST per-screen profile to Pi :8791 (multi-Roku/Kodi safe; hint only)"
+  else if name = "packageProfile"
+    return "OK=POST these Settings to the furnace so packaging embeds them literally for Roku lab/App Packager"
   else if name = "save"
     return "Save & Reload - persist settings and reload flock"
   else if name = "cancel"
@@ -270,9 +273,20 @@ sub refreshProbeRowLabel()
   end if
 end sub
 
+sub refreshPackageProfileRowLabel()
+  notice = m.packageProfileNotice
+  if notice = invalid then notice = ""
+  if notice = ""
+    m.top.findNode("row_packageProfile").label = "Prepare package profile"
+  else
+    m.top.findNode("row_packageProfile").label = "Prepare package profile: " + notice
+  end if
+end sub
+
 sub openSettings()
   m.streamModeNotice = ""
   m.inputNotice = ""
+  m.packageProfileNotice = ""
   m.displaySummary = readDisplaySummary()
   refreshVersionLabel()
   for each name in m.fields
@@ -302,6 +316,7 @@ sub openSettings()
   m.top.findNode("row_save").label = "Save & Reload"
   m.top.findNode("row_cancel").label = "Back"
   refreshProbeRowLabel()
+  refreshPackageProfileRowLabel()
   focusIndex(0)
 end sub
 
@@ -349,6 +364,9 @@ sub updateFooter()
   if name = "probeDisplay" and m.displaySummary <> ""
     line = line + " | " + m.displaySummary
   end if
+  if name = "packageProfile" and m.packageProfileNotice <> ""
+    line = line + " | " + m.packageProfileNotice
+  end if
   m.top.findNode("footer").text = line
 end sub
 
@@ -394,6 +412,9 @@ sub onRowSelected()
     return
   else if id = "row_probeDisplay"
     probeAndSaveDisplay()
+    return
+  else if id = "row_packageProfile"
+    postPackageProfileToPi()
     return
   end if
   name = Mid(id, 5) ' strip "row_"
@@ -662,6 +683,107 @@ sub onDisplaySinkResult()
     m.displaySummary = baseSummary + " | Pi " + err
   end if
   refreshProbeRowLabel()
+  updateFooter()
+end sub
+
+sub postPackageProfileToPi()
+  sink = resolveDisplaySinkUrl()
+  if sink = ""
+    m.packageProfileNotice = "Pi sink URL unknown (set baseUrl)"
+    refreshPackageProfileRowLabel()
+    updateFooter()
+    return
+  end if
+  base = ""
+  if m.values <> invalid and m.values["baseUrl"] <> invalid then base = m.values["baseUrl"]
+  if base = invalid or base = "" then base = m.registry.read("baseUrl")
+  if base = invalid then base = ""
+  apiKey = ""
+  if m.values <> invalid and m.values["apiKey"] <> invalid then apiKey = m.values["apiKey"]
+  if apiKey = invalid or apiKey = "" then apiKey = m.registry.read("apiKey")
+  if apiKey = invalid then apiKey = ""
+  userId = ""
+  if m.values <> invalid and m.values["userId"] <> invalid then userId = m.values["userId"]
+  if userId = invalid or userId = "" then userId = m.registry.read("userId")
+  if userId = invalid then userId = ""
+  if base = "" or apiKey = "" or userId = ""
+    m.packageProfileNotice = "need baseUrl, apiKey, and userId"
+    refreshPackageProfileRowLabel()
+    updateFooter()
+    return
+  end if
+  profile = {
+    baseUrl: base
+    apiKey: apiKey
+    userId: userId
+    libraryId: readSettingValue("libraryId")
+    commercialMode: readSettingValue("commercialMode")
+    streamMode: readSettingValue("streamMode")
+    mp4Fallback: readSettingValue("mp4Fallback")
+    shuffleFlock: readSettingValue("shuffleFlock")
+    titleMode: readSettingValue("titleMode")
+    sortMode: readSettingValue("sortMode")
+    deviceId: channelDeviceIdForSettings()
+    channelVersion: channelVersionString()
+  }
+  token = sinkAuthToken(m.registry)
+  sinkToken = m.registry.read("displaySinkToken")
+  if sinkToken <> invalid and sinkToken <> "" then profile.displaySinkToken = sinkToken
+  m.packageProfileNotice = "uploading…"
+  refreshPackageProfileRowLabel()
+  updateFooter()
+  m.packageProfileTask = createObject("roSGNode", "JellyfinTask")
+  m.packageProfileTask.observeField("resultJson", "onPackageProfileResult")
+  m.packageProfileTask.command = "rokuPackageProfile"
+  m.packageProfileTask.displaySinkUrl = sink
+  m.packageProfileTask.sinkToken = token
+  m.packageProfileTask.profileJson = FormatJson(profile)
+  m.packageProfileTask.control = "RUN"
+end sub
+
+function readSettingValue(name as string) as string
+  if m.values <> invalid and m.values[name] <> invalid and m.values[name] <> ""
+    return m.values[name]
+  end if
+  val = m.registry.read(name)
+  if val = invalid then return ""
+  return val
+end function
+
+function channelDeviceIdForSettings() as string
+  di = CreateObject("roDeviceInfo")
+  if di = invalid then return ""
+  cid = di.GetChannelClientId()
+  if cid <> invalid and cid <> "" then return cid.toStr()
+  model = di.GetModel()
+  if model <> invalid and model <> "" then return "roku-" + model.toStr()
+  return "roku-unknown"
+end function
+
+sub onPackageProfileResult()
+  if m.packageProfileTask = invalid then return
+  raw = m.packageProfileTask.resultJson
+  m.packageProfileTask = invalid
+  res = invalid
+  if raw <> invalid and raw <> "" then res = ParseJson(raw)
+  if res = invalid
+    m.packageProfileNotice = "bad response"
+  else if res.ok = true
+    kind = ""
+    if res.baseUrlKind <> invalid then kind = res.baseUrlKind
+    mode = ""
+    if res.streamMode <> invalid then mode = res.streamMode
+    if kind <> "" and mode <> ""
+      m.packageProfileNotice = "Pi OK " + kind + " " + mode
+    else
+      m.packageProfileNotice = "Pi OK"
+    end if
+  else
+    err = "upload failed"
+    if res.error <> invalid then err = res.error
+    m.packageProfileNotice = err
+  end if
+  refreshPackageProfileRowLabel()
   updateFooter()
 end sub
 

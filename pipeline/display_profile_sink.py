@@ -1,18 +1,20 @@
-"""Purpose: LAN HTTP sink for display profiles and sidecar sheep votes.
+"""Purpose: LAN HTTP sink for display profiles, sheep votes, and Roku package profiles.
 
-Requirements: Writable display_profiles dir; catalog media_library for votes.
-  A non-loopback bind (the systemd unit uses 0.0.0.0) needs DISPLAY_SINK_TOKEN
-  or JELLYFIN_API_KEY in secrets.env. Both missing → exit 2; with
-  Restart=on-failure that is a crash loop. --allow-unauthenticated is lab-only
-  and is not in the unit file.
+Requirements: Writable display_profiles dir; catalog media_library for votes;
+  writable roku package-profile path. A non-loopback bind (the systemd unit uses
+  0.0.0.0) needs DISPLAY_SINK_TOKEN or JELLYFIN_API_KEY in secrets.env. Both
+  missing → exit 2; with Restart=on-failure that is a crash loop.
+  --allow-unauthenticated is lab-only and is not in the unit file.
 
 Usage:
   python3 -m pipeline.display_profile_sink --config configs/jellyflam3.yaml
   GET /healthz | GET/POST/PUT /v1/display-profiles | POST /v1/sheep-votes
+  | GET/POST /v1/roku-package-profile
   (header X-JellyFlam3-Token: DISPLAY_SINK_TOKEN or the furnace Jellyfin API key)
 
 Assumptions: Profile POSTs upsert one file per client+deviceId. Vote POSTs rewrite
   that sheep's catalog sidecar ``viewer_feedback`` only (no /var/lib store).
+  A Roku package-profile POST stores Office Settings for furnace packaging.
   Auth is fail-closed: a protected route needs a matching sink token or Jellyfin
   API key unless --allow-unauthenticated. The Jellyfin key therefore also
   authorizes these writes. Vote traffic is not a Jellyfin Sessions client
@@ -36,6 +38,12 @@ from pipeline.display_profiles import (
     profiles_dir_from_cfg,
     upsert_profile,
 )
+from pipeline.roku_package_profile import (
+    default_profile_path,
+    profile_path_from_cfg,
+    save_package_profile,
+    status_payload as package_profile_status,
+)
 from pipeline.sheep_votes import InvalidVote, StemNotFound, apply_vote
 
 DEFAULT_PORT = 8791
@@ -44,6 +52,7 @@ DEFAULT_PORT = 8791
 class _State:
     profiles_dir: Path = Path("/var/lib/jellyflam3/display_profiles")
     media_root: Path = Path("/media/sheep")
+    package_profile_path: Path = default_profile_path()
     token: str = ""
     jellyfin_api_key: str = ""
     allow_unauthenticated: bool = False
@@ -149,6 +158,12 @@ class Handler(BaseHTTPRequestHandler):
                 return
             self._send(200, {"ok": True, "profiles": list_profiles(STATE.profiles_dir)})
             return
+        if path == "/v1/roku-package-profile":
+            if not self._check_token():
+                self._send(401, {"ok": False, "error": "unauthorized"})
+                return
+            self._send(200, package_profile_status(STATE.package_profile_path))
+            return
         self._send(404, {"ok": False, "error": "not found"})
 
     def do_POST(self) -> None:  # noqa: N802
@@ -156,10 +171,31 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/v1/sheep-votes":
             self._sheep_vote()
             return
+        if path == "/v1/roku-package-profile":
+            self._roku_package_profile()
+            return
         self._upsert()
 
     def do_PUT(self) -> None:  # noqa: N802
         self._upsert()
+
+    def _roku_package_profile(self) -> None:
+        """POST handler: store Office Settings for a literal package preset."""
+        if not self._check_token():
+            self._discard_body()
+            self._send(401, {"ok": False, "error": "unauthorized"})
+            return
+        try:
+            raw = self._read_json()
+            out_path = save_package_profile(STATE.package_profile_path, raw)
+            status = package_profile_status(out_path)
+        except ValueError as e:
+            self._send(400, {"ok": False, "error": str(e)})
+            return
+        except Exception as e:  # noqa: BLE001
+            self._send(500, {"ok": False, "error": str(e)})
+            return
+        self._send(200, {"ok": True, "file": out_path.name, "path": str(out_path), **status})
 
     def _sheep_vote(self) -> None:
         """POST handler: increment sidecar viewer_feedback (unlimited re-vote)."""
@@ -266,6 +302,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     STATE.profiles_dir = profiles_dir_from_cfg(cfg)
     STATE.profiles_dir.mkdir(parents=True, exist_ok=True)
+    STATE.package_profile_path = profile_path_from_cfg(cfg if cfg else None)
+    STATE.package_profile_path.parent.mkdir(parents=True, exist_ok=True)
     try:
         STATE.media_root = resolve_path(cfg, "media_library") if cfg else Path("/media/sheep")
     except (KeyError, TypeError, ValueError):

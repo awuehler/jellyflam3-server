@@ -47,14 +47,15 @@
     <SettingRow id="row_titleMode" translation="[120,612]" />
     <SettingRow id="row_sortMode" translation="[120,670]" />
     <SettingRow id="row_probeDisplay" translation="[120,728]" />
-    <SettingRow id="row_save" translation="[120,786]" />
-    <SettingRow id="row_cancel" translation="[120,844]" />
+    <SettingRow id="row_packageProfile" translation="[120,786]" />
+    <SettingRow id="row_save" translation="[120,844]" />
+    <SettingRow id="row_cancel" translation="[120,902]" />
     <Label
       id="footer"
       text=""
-      translation="[120,916]"
+      translation="[120,960]"
       width="1680"
-      height="140"
+      height="100"
       wrap="true"
       color="0xC8C8D0FF"
       font="font:SmallestSystemFont" />
