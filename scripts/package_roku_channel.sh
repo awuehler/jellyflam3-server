@@ -42,6 +42,11 @@ if [[ "$CERT" -eq 1 ]]; then
   export JELLYFIN_MP4_FALLBACK=false
 fi
 
+# zip runs after cd into roku-channel/; relative OUT would land under that tree.
+if [[ "$OUT" != /* ]]; then
+  OUT="$ROOT/$OUT"
+fi
+
 mkdir -p "$(dirname "$OUT")"
 rm -f "$OUT"
 
