@@ -66,13 +66,29 @@ def _as_str(value: Any) -> str:
     return str(value).strip()
 
 
+def _field(raw: dict[str, Any], *names: str) -> str:
+    """Read a Settings field; exact then case-insensitive (Roku FormatJson lowercases keys)."""
+    for name in names:
+        if name in raw and raw[name] is not None:
+            text = _as_str(raw[name])
+            if text:
+                return text
+    lower_map = {str(k).lower(): v for k, v in raw.items()}
+    for name in names:
+        if name.lower() in lower_map and lower_map[name.lower()] is not None:
+            text = _as_str(lower_map[name.lower()])
+            if text:
+                return text
+    return ""
+
+
 def normalize_package_profile(raw: dict[str, Any]) -> dict[str, str]:
     """Copy known Settings keys as strings. Reject missing connection fields."""
     if not isinstance(raw, dict):
         raise ValueError("JSON object required")
     out: dict[str, str] = {}
     for key in PROFILE_KEYS:
-        text = _as_str(raw.get(key))
+        text = _field(raw, key)
         if text:
             out[key] = text
     for key in _REQUIRED:
@@ -102,10 +118,10 @@ def save_package_profile(path: Path, raw: dict[str, Any]) -> Path:
         "capturedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         **settings,
     }
-    device_id = _as_str(raw.get("deviceId") or raw.get("channelDeviceId"))
+    device_id = _field(raw, "deviceId", "channelDeviceId", "deviceid", "channeldeviceid")
     if device_id:
         payload["deviceId"] = device_id
-    channel_version = _as_str(raw.get("channelVersion"))
+    channel_version = _field(raw, "channelVersion", "channelversion")
     if channel_version:
         payload["channelVersion"] = channel_version
     tmp = path.with_suffix(path.suffix + ".tmp")

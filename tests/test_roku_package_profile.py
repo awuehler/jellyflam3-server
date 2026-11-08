@@ -50,6 +50,26 @@ def test_normalize_requires_connection_fields():
         )
 
 
+def test_normalize_accepts_roku_lowercased_keys():
+    """Roku FormatJson lowercases AA keys on the wire."""
+    out = normalize_package_profile(
+        {
+            "baseurl": "https://rpi-jellyflam3-16a.tail801167.ts.net",
+            "apikey": "secret-key-value",
+            "userid": "user-guid",
+            "libraryid": "lib-guid",
+            "streammode": "hls",
+            "mp4fallback": "false",
+            "displaysinkurl": "http://192.168.156.162:8791",
+        }
+    )
+    assert out["baseUrl"].endswith("ts.net")
+    assert out["apiKey"] == "secret-key-value"
+    assert out["userId"] == "user-guid"
+    assert out["streamMode"] == "hls"
+    assert out["displaySinkUrl"] == "http://192.168.156.162:8791"
+
+
 def test_save_and_status_hide_secrets(tmp_path: Path):
     path = tmp_path / "roku-package-profile.json"
     save_package_profile(

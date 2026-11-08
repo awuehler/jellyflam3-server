@@ -248,7 +248,14 @@ function postRokuPackageProfile() as object
   if resp.code <> 200
     detail = "HTTP " + resp.code.toStr()
     if resp.reason <> invalid and resp.reason <> "" then detail = detail + ": " + resp.reason
-    if resp.body <> invalid and resp.body <> "" then detail = detail + " " + Left(resp.body, 120)
+    if resp.body <> invalid and resp.body <> ""
+      errObj = ParseJson(resp.body)
+      if errObj <> invalid and errObj.error <> invalid and errObj.error <> ""
+        detail = detail + " " + errObj.error.toStr()
+      else
+        detail = detail + " " + Left(resp.body, 120)
+      end if
+    end if
     return { ok: false, error: "package profile failed — " + detail, debugUrl: url }
   end if
   parsed = invalid
