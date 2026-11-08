@@ -220,8 +220,8 @@ def test_roku_commercial_mode_does_not_query_tags():
     assert "isCommercialSafe" in text
     assert "fetchItemsViaChildFolders" in text
     assert "mergeItemsById" in text
-    assert "build_version=68" in (VOD / "manifest").read_text(encoding="utf-8")
-    assert 'Version=""1.0.68""' in text
+    assert "build_version=69" in (VOD / "manifest").read_text(encoding="utf-8")
+    assert 'Version=""1.0.69""' in text
     assert "function postRokuPackageProfile() as object" in text
     assert "/v1/roku-package-profile" in text
     settings = (VOD / "components" / "SettingsScreen.brs").read_text(encoding="utf-8")
