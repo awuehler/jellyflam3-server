@@ -1,7 +1,7 @@
 sub init()
   m.top.focusable = true
-  m.fields = ["baseUrl", "apiKey", "userId", "libraryId", "commercialMode", "streamMode", "mp4Fallback", "shuffleFlock", "titleMode", "sortMode"]
-  m.rowIds = ["row_baseUrl", "row_apiKey", "row_userId", "row_libraryId", "row_commercialMode", "row_streamMode", "row_mp4Fallback", "row_shuffleFlock", "row_titleMode", "row_sortMode", "row_probeDisplay", "row_packageProfile", "row_save", "row_cancel"]
+  m.fields = ["baseUrl", "apiKey", "userId", "libraryId", "displaySinkUrl", "commercialMode", "streamMode", "mp4Fallback", "shuffleFlock", "titleMode", "sortMode"]
+  m.rowIds = ["row_baseUrl", "row_apiKey", "row_userId", "row_libraryId", "row_displaySinkUrl", "row_commercialMode", "row_streamMode", "row_mp4Fallback", "row_shuffleFlock", "row_titleMode", "row_sortMode", "row_probeDisplay", "row_packageProfile", "row_save", "row_cancel"]
   m.packageProfileNotice = ""
   m.values = {}
   m.idx = 0
@@ -54,6 +54,8 @@ function fieldHint(name as string) as string
     return "Jellyfin user GUID (required)"
   else if name = "libraryId"
     return "Sheep library ParentId (recommended)"
+  else if name = "displaySinkUrl"
+    return "Furnace LAN http://IP:8791 when baseUrl is Funnel (*.ts.net); leave empty for LAN Jellyfin host"
   else if name = "commercialMode"
     return "OK toggles true/false and saves; true=commercial flock (hide NC; keep CC BY / CC0 / PD); false=show all"
   else if name = "streamMode"
@@ -223,6 +225,13 @@ function applyEditedValue(name as string, text as string) as boolean
   else if name = "baseUrl"
     if isValidBaseUrl(text) <> true
       m.inputNotice = "baseUrl invalid - use http:// or https:// host (no trailing slash)"
+      return false
+    end if
+    m.values[name] = text
+    return true
+  else if name = "displaySinkUrl"
+    if text <> "" and isValidBaseUrl(text) <> true
+      m.inputNotice = "displaySinkUrl invalid - use http://FURNACE_LAN:8791 (no trailing slash)"
       return false
     end if
     m.values[name] = text
@@ -486,8 +495,19 @@ function hostFromBaseUrl(base as string) as string
   return b
 end function
 
+' Tailscale Funnel / MagicDNS hosts are not the furnace LAN vote/profile sink.
+function hostIsFunnel(host as string) as boolean
+  if host = invalid or host = "" then return false
+  h = LCase(host.Trim())
+  if Right(h, 7) = ".ts.net" then return true
+  return false
+end function
+
 function resolveDisplaySinkUrl() as string
   explicit = m.registry.read("displaySinkUrl")
+  if m.values <> invalid and m.values["displaySinkUrl"] <> invalid and m.values["displaySinkUrl"] <> ""
+    explicit = m.values["displaySinkUrl"]
+  end if
   if explicit <> invalid and explicit <> ""
     u = explicit.Trim()
     while Len(u) > 0 and Right(u, 1) = "/"
@@ -502,7 +522,20 @@ function resolveDisplaySinkUrl() as string
   end if
   host = hostFromBaseUrl(base)
   if host = "" then return ""
+  ' Funnel HTTPS does not proxy :8791 — require an explicit LAN displaySinkUrl.
+  if hostIsFunnel(host) then return ""
   return "http://" + host + ":8791"
+end function
+
+function displaySinkMissingHint() as string
+  base = ""
+  if m.values <> invalid and m.values["baseUrl"] <> invalid then base = m.values["baseUrl"]
+  if base = invalid or base = "" then base = m.registry.read("baseUrl")
+  if base = invalid then base = ""
+  if hostIsFunnel(hostFromBaseUrl(base))
+    return "Funnel baseUrl needs displaySinkUrl http://FURNACE_LAN:8791"
+  end if
+  return "Pi sink URL unknown (set baseUrl or displaySinkUrl)"
 end function
 
 ' roDeviceInfo -> registry, then POST per-screen profile to Pi sink.
@@ -642,7 +675,7 @@ end sub
 sub postDisplayProfileToPi(profile as object)
   sink = resolveDisplaySinkUrl()
   if sink = ""
-    m.displaySummary = readDisplaySummary() + " | Pi sink URL unknown (set baseUrl)"
+    m.displaySummary = readDisplaySummary() + " | " + displaySinkMissingHint()
     refreshProbeRowLabel()
     updateFooter()
     return
@@ -689,7 +722,7 @@ end sub
 sub postPackageProfileToPi()
   sink = resolveDisplaySinkUrl()
   if sink = ""
-    m.packageProfileNotice = "Pi sink URL unknown (set baseUrl)"
+    m.packageProfileNotice = displaySinkMissingHint()
     refreshPackageProfileRowLabel()
     updateFooter()
     return
@@ -723,6 +756,7 @@ sub postPackageProfileToPi()
     shuffleFlock: readSettingValue("shuffleFlock")
     titleMode: readSettingValue("titleMode")
     sortMode: readSettingValue("sortMode")
+    displaySinkUrl: sink
     deviceId: channelDeviceIdForSettings()
     channelVersion: channelVersionString()
   }
@@ -848,7 +882,7 @@ sub dismissKeyboard(applyOk as boolean)
       ' value that the keyboard's OK button already accepted.
       val = m.values[name]
       if val = invalid then val = ""
-      if name = "baseUrl"
+      if name = "baseUrl" or name = "displaySinkUrl"
         while Len(val) > 0 and Right(val, 1) = "/"
           val = Left(val, Len(val) - 1)
         end while
@@ -881,6 +915,16 @@ sub saveAndClose()
       end while
       if isValidBaseUrl(val) <> true
         m.inputNotice = "baseUrl invalid - use http:// or https:// host"
+        updateFooter()
+        return
+      end if
+    else if name = "displaySinkUrl"
+      val = val.Trim()
+      while Len(val) > 0 and Right(val, 1) = "/"
+        val = Left(val, Len(val) - 1)
+      end while
+      if val <> "" and isValidBaseUrl(val) <> true
+        m.inputNotice = "displaySinkUrl invalid - use http://FURNACE_LAN:8791"
         updateFooter()
         return
       end if

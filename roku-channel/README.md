@@ -4,6 +4,8 @@ Sideloadable SceneGraph channel that lists sheep from Jellyfin with **poster til
 
 **Jellyfin:** HLS playback requires Jellyfin **12.0 or later** with its default authorization, and was confirmed on **12.2.0**. That release rejects the legacy `api_key` query parameter on `main.m3u8`. The channel sends `ApiKey`, which is the query parameter Jellyfin still accepts. The Video node cannot attach an `Authorization` header to the stream URL.
 
+**1.0.69:** Funnel `baseUrl` (`*.ts.net`) no longer invents `http://funnel-host:8791` for display/vote/package-profile posts (Funnel does not expose that port). Set Settings **displaySinkUrl** to the furnace LAN `http://IP:8791`, or let a furnace sideload fill it. **Prepare package profile** records that sink URL with the rest of Settings. Deep-link HLS matches **1.0.67**.
+
 **1.0.68:** Settings **Prepare package profile** posts the live JellyFlam3 registry to the furnace. Pack with `./scripts/package_roku_channel.sh --from-package-profile` so Application Packager embeds those Office Settings literally. Deep-link HLS behavior matches **1.0.67**.
 
 **1.0.67:** a deep link starts on HLS and stays there. Choosing a poster still follows `streamMode` (`mp4` by default). This is the store package and the homelab sideload.
@@ -102,7 +104,7 @@ Section `JellyFlam3` (edit in-channel via **Settings** button, **\* Options**, o
 | `deviceModel` / `deviceModelName` | Roku model strings |
 | `capturedAt` / `displaySummary` | Probe timestamp + one-line summary |
 
-Display keys are **hints only**. **Fetch TV display** also POSTs to `http://{baseUrl-host}:8791/v1/display-profiles` (**one JSON file per screen**). Roku `FormatJson` lowercases AA keys; the Pi sink accepts case-insensitive field names. Override with registry `displaySinkUrl`. Furnace systemd sink **requires** `DISPLAY_SINK_TOKEN` in that Pi’s `secrets.env`; set Roku `displaySinkToken` to match (header `X-JellyFlam3-Token`). Kodi/other clients: `python3 -m pipeline.display_profiles upsert --client Kodi --device-id …`.
+Display keys are **hints only**. **Fetch TV display** also POSTs to `http://{baseUrl-host}:8791/v1/display-profiles` (**one JSON file per screen**), except when `baseUrl` is Tailscale Funnel (`*.ts.net`) — then Settings **displaySinkUrl** must be the furnace LAN `http://IP:8791`. Roku `FormatJson` lowercases AA keys; the Pi sink accepts case-insensitive field names. Furnace systemd sink **requires** `DISPLAY_SINK_TOKEN` in that Pi’s `secrets.env`; set Roku `displaySinkToken` to match (header `X-JellyFlam3-Token`). Kodi/other clients: `python3 -m pipeline.display_profiles upsert --client Kodi --device-id …`.
 
 ## Flock item metadata
 

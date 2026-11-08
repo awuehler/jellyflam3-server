@@ -36,6 +36,7 @@ PROFILE_KEYS = (
     "shuffleFlock",
     "titleMode",
     "sortMode",
+    "displaySinkUrl",
     "displaySinkToken",
 )
 
@@ -161,6 +162,7 @@ def status_payload(path: Path) -> dict[str, Any]:
         "hasApiKey": bool(settings.get("apiKey")),
         "hasUserId": bool(settings.get("userId")),
         "hasLibraryId": bool(settings.get("libraryId")),
+        "hasDisplaySinkUrl": bool(settings.get("displaySinkUrl")),
     }
 
 

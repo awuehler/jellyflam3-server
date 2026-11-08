@@ -24,7 +24,9 @@ function applyJellyFlam3PackPresets(reg as object) as boolean
   data = ParseJson(raw)
   if data = invalid then return false
 
-  keys = ["baseUrl", "apiKey", "userId", "libraryId", "commercialMode", "streamMode", "mp4Fallback", "displaySinkToken"]
+  ' displaySinkUrl is required when baseUrl is Tailscale Funnel (*.ts.net): Funnel
+  ' does not expose furnace :8791, so Fetch TV display / package profile / votes need LAN.
+  keys = ["baseUrl", "apiKey", "userId", "libraryId", "commercialMode", "streamMode", "mp4Fallback", "displaySinkUrl", "displaySinkToken"]
   wrote = false
   for each k in keys
     v = jsonPresetStr(data.lookup(k))

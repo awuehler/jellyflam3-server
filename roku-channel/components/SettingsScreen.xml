@@ -36,24 +36,25 @@
       wrap="true"
       font="font:SmallSystemFont"
       color="0xA0A0B0FF" />
-    <SettingRow id="row_baseUrl" translation="[120,148]" />
-    <SettingRow id="row_apiKey" translation="[120,206]" />
-    <SettingRow id="row_userId" translation="[120,264]" />
-    <SettingRow id="row_libraryId" translation="[120,322]" />
-    <SettingRow id="row_commercialMode" translation="[120,380]" />
-    <SettingRow id="row_streamMode" translation="[120,438]" />
-    <SettingRow id="row_mp4Fallback" translation="[120,496]" />
-    <SettingRow id="row_shuffleFlock" translation="[120,554]" />
-    <SettingRow id="row_titleMode" translation="[120,612]" />
-    <SettingRow id="row_sortMode" translation="[120,670]" />
-    <SettingRow id="row_probeDisplay" translation="[120,728]" />
-    <SettingRow id="row_packageProfile" translation="[120,786]" />
-    <SettingRow id="row_save" translation="[120,844]" />
-    <SettingRow id="row_cancel" translation="[120,902]" />
+    <SettingRow id="row_baseUrl" translation="[120,140]" />
+    <SettingRow id="row_apiKey" translation="[120,192]" />
+    <SettingRow id="row_userId" translation="[120,244]" />
+    <SettingRow id="row_libraryId" translation="[120,296]" />
+    <SettingRow id="row_displaySinkUrl" translation="[120,348]" />
+    <SettingRow id="row_commercialMode" translation="[120,400]" />
+    <SettingRow id="row_streamMode" translation="[120,452]" />
+    <SettingRow id="row_mp4Fallback" translation="[120,504]" />
+    <SettingRow id="row_shuffleFlock" translation="[120,556]" />
+    <SettingRow id="row_titleMode" translation="[120,608]" />
+    <SettingRow id="row_sortMode" translation="[120,660]" />
+    <SettingRow id="row_probeDisplay" translation="[120,712]" />
+    <SettingRow id="row_packageProfile" translation="[120,764]" />
+    <SettingRow id="row_save" translation="[120,816]" />
+    <SettingRow id="row_cancel" translation="[120,868]" />
     <Label
       id="footer"
       text=""
-      translation="[120,960]"
+      translation="[120,930]"
       width="1680"
       height="100"
       wrap="true"

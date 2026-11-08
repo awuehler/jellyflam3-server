@@ -627,6 +627,13 @@ function hostFromBaseUrl(base as string) as string
   return b
 end function
 
+function hostIsFunnel(host as string) as boolean
+  if host = invalid or host = "" then return false
+  h = LCase(host.Trim())
+  if Right(h, 7) = ".ts.net" then return true
+  return false
+end function
+
 function resolveDisplaySinkUrl() as string
   explicit = m.registry.read("displaySinkUrl")
   if explicit <> invalid and explicit <> ""
@@ -640,6 +647,7 @@ function resolveDisplaySinkUrl() as string
   if base = invalid then base = ""
   host = hostFromBaseUrl(base)
   if host = "" then return ""
+  if hostIsFunnel(host) then return ""
   return "http://" + host + ":8791"
 end function
 

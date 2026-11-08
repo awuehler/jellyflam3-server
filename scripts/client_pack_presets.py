@@ -48,6 +48,7 @@ ROKU_KEYS = (
     "streamMode",
     "mp4Fallback",
     "shuffleFlock",
+    "displaySinkUrl",
 )
 KODI_MAP = {
     "server_url": "baseUrl",
@@ -57,8 +58,18 @@ KODI_MAP = {
 }
 
 
+def _host_is_funnel(host: str) -> bool:
+    h = (host or "").strip().lower()
+    return h.endswith(".ts.net")
+
+
+def _host_is_loopback(host: str) -> bool:
+    h = (host or "").strip().lower()
+    return h in ("127.0.0.1", "localhost", "::1")
+
+
 def _sink_url_from_base(base_url: str, port: int = 8791) -> str:
-    """Match Kodi ``sink_url_from_jellyfin``: HTTP vote sink on the Jellyfin host."""
+    """HTTP vote/profile sink on the Jellyfin host. Skip Funnel and loopback hosts."""
     raw = (base_url or "").strip()
     if not raw:
         return ""
@@ -66,9 +77,50 @@ def _sink_url_from_base(base_url: str, port: int = 8791) -> str:
         raw = "http://" + raw
     parsed = urllib.parse.urlparse(raw)
     host = parsed.hostname or ""
-    if not host:
+    if not host or _host_is_funnel(host) or _host_is_loopback(host):
         return ""
     return "http://%s:%s" % (host, int(port))
+
+
+def furnace_lan_ips() -> list[str]:
+    """Non-loopback IPv4 addresses on this host (for Roku LAN displaySinkUrl)."""
+    import subprocess
+
+    try:
+        text = subprocess.check_output(["hostname", "-I"], text=True, timeout=2)
+    except (OSError, subprocess.SubprocessError):
+        return []
+    out: list[str] = []
+    for tok in text.split():
+        if not tok or ":" in tok or tok.startswith("127."):
+            continue
+        out.append(tok)
+    return out
+
+
+def furnace_lan_sink_url(port: int = 8791) -> str:
+    """LAN ``http://IP:8791`` for Office Rokus when Jellyfin URL is loopback or Funnel.
+
+    Prefer ``DISPLAY_SINK_URL``, then a non-loopback derive from ``JELLYFIN_URL``,
+    then a local ``192.168.*`` address (wlan preferred when several).
+    """
+    explicit = (os.environ.get("DISPLAY_SINK_URL") or "").strip().rstrip("/")
+    if explicit:
+        return explicit
+    derived = _sink_url_from_base(os.environ.get("JELLYFIN_URL") or "", port=port)
+    if derived:
+        return derived
+    ips = furnace_lan_ips()
+    if not ips:
+        return ""
+    preferred = [ip for ip in ips if ip.startswith("192.168.")]
+    # Household furnaces historically advertise the wlan address first to Office.
+    pick = (preferred or ips)[0]
+    for ip in preferred:
+        if ip.endswith(".162"):
+            pick = ip
+            break
+    return "http://%s:%s" % (pick, int(port))
 
 
 def is_furnace_host(root: Path | None = None) -> bool:
@@ -112,6 +164,17 @@ def normalize_roku_settings(settings: dict[str, Any]) -> dict[str, str]:
         token = _preset_str(settings.get("displaySinkToken"))
     if token:
         out["displaySinkToken"] = token
+    sink = _preset_str(settings.get("displaySinkUrl") or settings.get("display_sink_url"))
+    if not sink:
+        # Prefer deriving from Jellyfin host when it is a real LAN/DNS name.
+        sink = _sink_url_from_base(out.get("baseUrl") or "")
+    if not sink:
+        # Funnel (*.ts.net) or loopback Jellyfin URL — Roku needs the furnace LAN IP.
+        sink = furnace_lan_sink_url()
+    if sink:
+        out["displaySinkUrl"] = sink.rstrip("/")
+    elif "displaySinkUrl" in out and not out["displaySinkUrl"]:
+        del out["displaySinkUrl"]
     return out
 
 
@@ -229,6 +292,11 @@ def prepare_packaging(
         except (OSError, ValueError) as exc:
             print(f"client_pack_presets: package profile failed: {exc}", file=sys.stderr)
             return False
+        # Funnel baseUrl cannot derive :8791; ensure a LAN sink is embedded for Office.
+        if not (settings.get("displaySinkUrl") or "").strip():
+            sink = furnace_lan_sink_url()
+            if sink:
+                settings = {**settings, "displaySinkUrl": sink}
         if roku_registry is not None:
             path = write_roku_registry_dir(
                 roku_registry,
@@ -242,10 +310,11 @@ def prepare_packaging(
             print(f"client_pack_presets: kodi settings -> {kodi_settings}")
         base = settings.get("baseUrl") or ""
         kind = "funnel" if "ts.net" in base else "lan" if base else "empty"
+        has_sink = "yes" if (settings.get("displaySinkUrl") or "").strip() else "no"
         print(
             "client_pack_presets: source=roku_settings_capture "
             f"baseUrl_kind={kind} streamMode={settings.get('streamMode')} "
-            f"mp4Fallback={settings.get('mp4Fallback')}"
+            f"mp4Fallback={settings.get('mp4Fallback')} displaySinkUrl={has_sink}"
         )
         return True
 

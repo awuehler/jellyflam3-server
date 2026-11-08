@@ -250,8 +250,38 @@ def test_roku_packages_include_registry_presets_helper():
     assert "applyJellyFlam3PackPresets" in vod
     assert "applyJellyFlam3PackPresets" in ss
     assert "jsonPresetStr" in vod
+    assert "displaySinkUrl" in vod
     assert 'reg.write("shuffleFlock"' not in vod
     assert 'reg.write("shuffleFlock"' not in ss
+
+
+def test_sink_url_skips_funnel_and_loopback(monkeypatch: pytest.MonkeyPatch):
+    cpp = _import_presets()
+    assert cpp._sink_url_from_base("https://rpi.example.ts.net") == ""
+    assert cpp._sink_url_from_base("http://127.0.0.1:8096") == ""
+    assert cpp._sink_url_from_base("http://192.168.1.100:8096") == "http://192.168.1.100:8791"
+    monkeypatch.setenv("DISPLAY_SINK_URL", "http://192.168.156.162:8791/")
+    assert cpp.furnace_lan_sink_url() == "http://192.168.156.162:8791"
+
+
+def test_normalize_adds_lan_sink_for_funnel_base(monkeypatch: pytest.MonkeyPatch):
+    cpp = _import_presets()
+    monkeypatch.delenv("JELLYFIN_STREAM_MODE", raising=False)
+    monkeypatch.delenv("JELLYFIN_MP4_FALLBACK", raising=False)
+    monkeypatch.delenv("DISPLAY_SINK_URL", raising=False)
+    monkeypatch.delenv("JELLYFIN_URL", raising=False)
+    monkeypatch.setattr(cpp, "furnace_lan_ips", lambda: ["192.168.156.167", "192.168.156.162"])
+    out = cpp.normalize_roku_settings(
+        {
+            "baseUrl": "https://rpi-jellyflam3-16a.tail801167.ts.net",
+            "apiKey": "k",
+            "userId": "u",
+            "libraryId": "l",
+            "streamMode": "hls",
+        }
+    )
+    assert out["displaySinkUrl"] == "http://192.168.156.162:8791"
+    assert out["streamMode"] == "hls"
 
 
 def test_strip_cr_in_dir_rewrites_crlf_xml(tmp_path: Path):
