@@ -39,6 +39,10 @@ funnel:
 #   ffmpeg: /usr/lib/jellyfin-ffmpeg/ffmpeg
 #   ffprobe: /usr/lib/jellyfin-ffmpeg/ffprobe
 
+# Each sheep also gets a mid-loop primary.jpg under document_root/{content_id}/
+# so the channel can show poster tiles via /Items/{id}/Images/Primary.
+# Refresh posters without re-encoding: python3 scripts/cert_hls_server.py posters --config …
+#
 # sheep is the catalog stem. content_id is the Jellyfin item id the lab deep-links.
 # source empty uses {media_library}/by-generation/{generation}/{sheep}.mp4.
 sheep:

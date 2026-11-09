@@ -6,6 +6,8 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ### Added
 
+- Cert HLS stand-in extracts mid-loop `primary.jpg` per sheep and serves Jellyfin-shaped `ImageTags.Primary` plus `GET /Items/{id}/Images/Primary` so Funnel lab poster tiles are not empty. Refresh without re-encoding: `python3 scripts/cert_hls_server.py posters --config configs/cert_hls.yaml`.
+
 - Roku VoD **1.0.69** Settings **displaySinkUrl** for furnace LAN `:8791` when `baseUrl` is Tailscale Funnel. Funnel HTTPS does not proxy the display sink, so Prepare package profile / Fetch TV display / votes no longer invent `http://*.ts.net:8791` (that timed out). Furnace packaging embeds a LAN sink URL into sideload presets when missing.
 
 - Roku VoD **1.0.68** Settings **Prepare package profile** posts the live JellyFlam3 registry to the furnace (`POST /v1/roku-package-profile`). Packaging with `./scripts/package_roku_channel.sh --from-package-profile` embeds those Office Settings literally into `registry/jellyflam3-presets.json` so Application Packager can submit one package that matches the TV used for packaging. The capture file stays on the furnace and is not committed.

@@ -77,6 +77,14 @@ def _fake_run(argv, cwd=None, check=False, capture_output=True, text=True, timeo
             return subprocess.CompletedProcess(argv, 0, "0\n", "")
         return subprocess.CompletedProcess(argv, 0, "12.0\n", "")
     if name == "ffmpeg":
+        # Poster extract writes an absolute primary.jpg path as the last arg.
+        if str(argv[-1]).endswith(".jpg"):
+            Path(argv[-1]).parent.mkdir(parents=True, exist_ok=True)
+            # Minimal JFIF so Content-Type image/jpeg responses are non-empty.
+            Path(argv[-1]).write_bytes(
+                b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xd9"
+            )
+            return subprocess.CompletedProcess(argv, 0, "", "")
         out = Path(cwd)
         out.mkdir(parents=True, exist_ok=True)
         (out / "main.m3u8").write_text("#EXTM3U\n#EXTINF:3.0,\nseg_000.ts\n#EXT-X-ENDLIST\n", encoding="utf-8")
@@ -158,7 +166,9 @@ def test_setup_encodes_and_rejects_a_funnel_pointed_at_jellyfin(tmp_path: Path, 
     catalog = json.loads((tmp_path / "hls" / "catalog.json").read_text(encoding="utf-8"))
     assert catalog["sheep"][0]["content_id"] == "item-one"
     assert catalog["sheep"][0]["run_time_ticks"] == 120_000_000
+    assert catalog["sheep"][0]["primary"] == "primary.jpg"
     assert (tmp_path / "hls" / "item-one" / "seg_000.ts").is_file()
+    assert (tmp_path / "hls" / "item-one" / "primary.jpg").is_file()
     log_text = Path(cfg["log_file"]).read_text(encoding="utf-8")
     assert "FUNNEL_MISMATCH" in log_text
     assert "lab-token" not in log_text
@@ -170,6 +180,9 @@ def test_server_answers_channel_urls_and_redacts_the_log(tmp_path: Path):
     item.mkdir(parents=True)
     (item / "main.m3u8").write_text("#EXTM3U\nseg_000.ts\n", encoding="utf-8")
     (item / "seg_000.ts").write_bytes(b"\x47" * 188)
+    (item / "primary.jpg").write_bytes(
+        b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xd9"
+    )
     hls.write_catalog(
         root,
         [
@@ -178,6 +191,8 @@ def test_server_answers_channel_urls_and_redacts_the_log(tmp_path: Path):
                 "content_id": "item-one",
                 "run_time_ticks": 120_000_000,
                 "playlist": "main.m3u8",
+                "primary": "primary.jpg",
+                "primary_tag": "cert",
             }
         ],
     )
@@ -204,11 +219,18 @@ def test_server_answers_channel_urls_and_redacts_the_log(tmp_path: Path):
         )
         body = json.loads(urllib.request.urlopen(items, timeout=5).read())
         assert body["Items"][0]["Name"] == "electricsheep.169.00000"
+        assert body["Items"][0]["ImageTags"]["Primary"] == "cert"
         one = urllib.request.Request(
             base + "/Users/user-1/Items/item-one",
             headers={"Authorization": 'MediaBrowser Token="lab-token"'},
         )
         assert json.loads(urllib.request.urlopen(one, timeout=5).read())["RunTimeTicks"] == 120_000_000
+        poster = urllib.request.urlopen(
+            base + "/Items/item-one/Images/Primary?maxWidth=320&api_key=lab-token", timeout=5
+        )
+        assert poster.status == 200
+        assert poster.headers.get_content_type() == "image/jpeg"
+        assert poster.read()[:2] == b"\xff\xd8"
         progress = urllib.request.Request(
             base + "/Sessions/Playing/Progress",
             data=b"{}",

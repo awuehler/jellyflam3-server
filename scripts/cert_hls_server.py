@@ -14,11 +14,14 @@ API key and user id. A filled configs/cert_hls.yaml (see the example).
 Usage (on a furnace, from the repo root):
   python3 scripts/cert_hls_server.py --config configs/cert_hls.yaml
   python3 scripts/cert_hls_server.py setup --config configs/cert_hls.yaml
+  python3 scripts/cert_hls_server.py posters --config configs/cert_hls.yaml
   python3 scripts/cert_hls_server.py check --config configs/cert_hls.yaml
   python3 scripts/cert_hls_server.py serve --config configs/cert_hls.yaml
 
-The bare command encodes, checks Funnel, and serves. setup stops after the
-check. serve uses segments setup already wrote. check only reads Funnel.
+The bare command encodes, extracts mid-loop Primary JPEGs, checks Funnel, and
+serves. setup stops after the check. posters refreshes JPEGs without re-encoding.
+serve uses segments setup already wrote. check only reads Funnel. The channel
+reads ``ImageTags.Primary`` and ``GET /Items/{id}/Images/Primary``.
 
 Success: setup prints HLS_READY and FUNNEL_OK. A Funnel miss prints FUNNEL_MISMATCH
 and exits 2 without listening. The access log records method, redacted path, and
@@ -55,6 +58,8 @@ from pipeline.config import load_dotenv  # noqa: E402
 
 LOG = logging.getLogger("jellyflam3.cert_hls")
 CATALOG_NAME = "catalog.json"
+PRIMARY_NAME = "primary.jpg"
+PRIMARY_TAG = "cert"
 JELLYFIN_PORT = 8096
 SHEEP_NAME = re.compile(r"^electricsheep\.(\d+)\.([0-9A-Za-z_-]+)$")
 CONTENT_ID = re.compile(r"^[A-Za-z0-9_-]+$")
@@ -341,6 +346,44 @@ def encode_entry(
         raise SystemExit(f"ffmpeg failed for {entry['sheep']}: {detail}")
 
 
+def extract_primary_poster(
+    source: Path,
+    dest: Path,
+    *,
+    ffmpeg: str,
+    duration: float,
+    run: Run,
+    timeout: int,
+) -> Path:
+    """Write a mid-loop JPEG next to the HLS playlist for ``/Items/.../Images/Primary``."""
+    dest.mkdir(parents=True, exist_ok=True)
+    out = dest / PRIMARY_NAME
+    seek = max(0.0, float(duration) / 2.0)
+    proc = _run(
+        [
+            ffmpeg,
+            "-y",
+            "-ss",
+            f"{seek:.3f}",
+            "-i",
+            str(source),
+            "-frames:v",
+            "1",
+            "-q:v",
+            "2",
+            str(out),
+        ],
+        run,
+        cwd=None,
+        timeout=timeout,
+    )
+    if proc.returncode != 0 or not out.is_file() or out.stat().st_size <= 0:
+        tail = (proc.stderr or proc.stdout or "").strip().splitlines()
+        detail = tail[-1] if tail else f"exit {proc.returncode}"
+        raise SystemExit(f"poster extract failed for {source.name}: {detail}")
+    return out
+
+
 def write_catalog(root: Path, items: list[dict[str, Any]]) -> Path:
     root.mkdir(parents=True, exist_ok=True)
     dest = root / CATALOG_NAME
@@ -466,18 +509,78 @@ def build_hls(cfg: Mapping[str, Any], run: Run) -> Path:
             ffmpeg,
             run,
         )
+        extract_primary_poster(
+            source,
+            dest,
+            ffmpeg=ffmpeg,
+            duration=duration,
+            run=run,
+            timeout=int(options["timeout_sec"]),
+        )
         items.append(
             {
                 "sheep": entry["sheep"],
                 "content_id": entry["content_id"],
                 "run_time_ticks": int(round(duration * 10_000_000)),
                 "playlist": "main.m3u8",
+                "primary": PRIMARY_NAME,
+                "primary_tag": PRIMARY_TAG,
             }
         )
-        LOG.info("encoded %s segments=%s", entry["sheep"], len(list(dest.glob('seg_*.ts'))))
+        LOG.info(
+            "encoded %s segments=%s poster=%s",
+            entry["sheep"],
+            len(list(dest.glob("seg_*.ts"))),
+            PRIMARY_NAME,
+        )
     catalog = write_catalog(root, items)
     LOG.info("HLS_READY sheep=%s root=%s", len(items), root)
     return catalog
+
+
+def build_posters(cfg: Mapping[str, Any], run: Run) -> Path:
+    """Refresh Primary JPEGs for an existing cert catalog without re-encoding HLS."""
+    root = document_root(cfg)
+    catalog = load_catalog(root)
+    by_id = {str(row.get("content_id") or ""): row for row in catalog}
+    options = encode_options(cfg)
+    media = Path(str(cfg.get("media_library") or "/media/sheep"))
+    ffmpeg = tool_path(cfg, "ffmpeg")
+    ffprobe = tool_path(cfg, "ffprobe")
+    timeout = int(options["timeout_sec"])
+    updated: list[dict[str, Any]] = []
+    for entry in sheep_entries(cfg):
+        source = source_for(entry, media)
+        if not source.is_file():
+            raise SystemExit(f"source missing for {entry['sheep']}: {source}")
+        dest = root / entry["content_id"]
+        if not (dest / "main.m3u8").is_file():
+            raise SystemExit(f"missing HLS for {entry['sheep']}; run setup first")
+        duration = probe_duration(ffprobe, source, run, timeout)
+        extract_primary_poster(
+            source,
+            dest,
+            ffmpeg=ffmpeg,
+            duration=duration,
+            run=run,
+            timeout=timeout,
+        )
+        row = dict(by_id.get(entry["content_id"]) or {})
+        row.update(
+            {
+                "sheep": entry["sheep"],
+                "content_id": entry["content_id"],
+                "run_time_ticks": int(row.get("run_time_ticks") or round(duration * 10_000_000)),
+                "playlist": row.get("playlist") or "main.m3u8",
+                "primary": PRIMARY_NAME,
+                "primary_tag": PRIMARY_TAG,
+            }
+        )
+        updated.append(row)
+        LOG.info("poster %s -> %s", entry["sheep"], dest / PRIMARY_NAME)
+    catalog_path = write_catalog(root, updated)
+    LOG.info("POSTERS_READY sheep=%s root=%s", len(updated), root)
+    return catalog_path
 
 
 def check_funnel(cfg: Mapping[str, Any], run: Run) -> dict[str, Any]:
@@ -512,6 +615,11 @@ def token_ok(presented: str, expected: str) -> bool:
 
 
 def item_json(row: Mapping[str, Any]) -> dict[str, Any]:
+    """Jellyfin-shaped item. Primary tag is set only after posters/setup wrote one."""
+    tags: dict[str, str] = {}
+    tag = str(row.get("primary_tag") or "").strip()
+    if tag:
+        tags["Primary"] = tag
     return {
         "Id": row["content_id"],
         "Name": row["sheep"],
@@ -520,7 +628,8 @@ def item_json(row: Mapping[str, Any]) -> dict[str, Any]:
         "Overview": "",
         "RunTimeTicks": int(row.get("run_time_ticks") or 0),
         "Tags": [],
-        "ImageTags": {},
+        "ImageTags": tags,
+        "PrimaryImageAspectRatio": 16 / 9,
         "Path": row["sheep"] + ".mp4",
     }
 
@@ -576,6 +685,24 @@ def dispatch(
 
     if method == "POST" and parts and parts[0] == "Sessions":
         return 204, "application/json", b""
+
+    # Channel poster URL: /Items/{id}/Images/Primary?maxWidth=320&api_key=…
+    if method in ("GET", "HEAD") and len(parts) == 4 and parts[0] == "Items" and parts[2] == "Images":
+        row = by_id.get(parts[1])
+        if row is None:
+            return 404, "application/json", b'{"error":"unknown item"}'
+        kind = parts[3]
+        if kind != "Primary":
+            return 404, "application/json", b'{"error":"unknown image"}'
+        filename = str(row.get("primary") or PRIMARY_NAME)
+        file_path = (root / parts[1] / filename).resolve()
+        try:
+            file_path.relative_to((root / parts[1]).resolve())
+        except ValueError:
+            return 404, "application/json", b'{"error":"bad path"}'
+        if not file_path.is_file():
+            return 404, "application/json", b'{"error":"missing poster"}'
+        return 200, "image/jpeg", file_path.read_bytes()
 
     if method == "GET" and len(parts) >= 3 and parts[0] == "Users" and parts[2] == "Items":
         if user_id and parts[1] != user_id:
@@ -708,6 +835,14 @@ def command_setup(cfg: Mapping[str, Any], run: Run) -> int:
     return 0 if report["ok"] else 2
 
 
+def command_posters(cfg: Mapping[str, Any], run: Run) -> int:
+    """Extract Primary JPEGs for sheep already encoded under document_root."""
+    require_secrets(cfg)
+    listen_port(cfg)
+    build_posters(cfg, run)
+    return 0
+
+
 def command_run(cfg: Mapping[str, Any], run: Run) -> int:
     code = command_setup(cfg, run)
     if code != 0:
@@ -720,7 +855,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Pre-cut HLS stand-in for Roku lab playback")
     parser.add_argument("--config", required=True, type=Path)
     sub = parser.add_subparsers(dest="cmd")
-    sub.add_parser("setup", help="Encode sheep and check Funnel")
+    sub.add_parser("setup", help="Encode sheep, extract posters, and check Funnel")
+    sub.add_parser("posters", help="Extract Primary JPEGs without re-encoding HLS")
     sub.add_parser("check", help="Check Funnel only")
     sub.add_parser("serve", help="Serve an existing document root")
     sub.add_parser("run", help="Encode, check Funnel, then serve")
@@ -736,6 +872,8 @@ def main(argv: list[str] | None = None) -> int:
         return serve_forever(cfg)
     if command == "setup":
         return command_setup(cfg, subprocess.run)
+    if command == "posters":
+        return command_posters(cfg, subprocess.run)
     return command_run(cfg, subprocess.run)
 
 
