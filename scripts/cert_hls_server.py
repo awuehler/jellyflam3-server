@@ -13,10 +13,10 @@ API key and user id. A filled configs/cert_hls.yaml (see the example).
 
 Usage (on a furnace, from the repo root):
   python3 scripts/cert_hls_server.py --config configs/cert_hls.yaml
-  python3 scripts/cert_hls_server.py setup --config configs/cert_hls.yaml
-  python3 scripts/cert_hls_server.py posters --config configs/cert_hls.yaml
-  python3 scripts/cert_hls_server.py check --config configs/cert_hls.yaml
-  python3 scripts/cert_hls_server.py serve --config configs/cert_hls.yaml
+  python3 scripts/cert_hls_server.py --config configs/cert_hls.yaml setup
+  python3 scripts/cert_hls_server.py --config configs/cert_hls.yaml posters
+  python3 scripts/cert_hls_server.py --config configs/cert_hls.yaml check
+  python3 scripts/cert_hls_server.py --config configs/cert_hls.yaml serve
 
 The bare command encodes, extracts mid-loop Primary JPEGs, checks Funnel, and
 serves. setup stops after the check. posters refreshes JPEGs without re-encoding.
