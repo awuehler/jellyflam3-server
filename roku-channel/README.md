@@ -136,7 +136,11 @@ Prints `baseUrl` / `apiKey` / `userId` / `libraryId` (and optional item Guids). 
 
 ## Build + sideload
 
-**Furnace packaging (recommended):** on a Pi with `secrets.env`, `package_roku_channel.*` runs `client_pack_presets.py` and includes `registry/jellyflam3-presets.json` in the zip. On first launch, `applyJellyFlam3PackPresets()` writes empty `JellyFlam3` registry keys from that file. Each furnace host (`16a` / `08a` / `04a`) produces a zip for **its** Jellyfin URL.
+**Cert / App Behavior Analysis:** the tracked `registry/jellyflam3-presets.json` (`source=repo_cert`) holds the Funnel lab Settings that passed Roku validation. Pack with `./scripts/package_roku_channel.sh --cert` (embeds that file; does not rewrite it from `secrets.env`). Sideload → Installer → **Package** → upload. Keep Funnel on the cert HLS stand-in (`8097`) for the lab run. Details: [docs/phase4/04_ROKU_PUBLISH.md](../docs/phase4/04_ROKU_PUBLISH.md).
+
+**Household furnace packaging:** on a Pi with `secrets.env`, `package_roku_channel.*` (no `--cert`) runs `client_pack_presets.py` and may overwrite the working-tree presets with that furnace’s LAN Jellyfin URL. Restore the tracked cert file with `git checkout -- roku-channel/registry/jellyflam3-presets.json` before committing. On first launch, `applyJellyFlam3PackPresets()` fills empty `JellyFlam3` registry keys only.
+
+**Channel Store / release zip:** `./scripts/package_roku_channel.sh --no-presets` (empty Settings; no Funnel host or API key).
 
 ```bash
 cd /opt/jellyflam3-server

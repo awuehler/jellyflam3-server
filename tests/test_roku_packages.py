@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import zipfile
 from pathlib import Path
 
@@ -197,12 +198,27 @@ def test_roku_packagers_exclude_all_numbered_source_art():
     assert "images/*-[0-9][0-9].png" in sh
     assert "--no-presets" in sh
     assert "--cert" in sh
-    assert "JELLYFIN_STREAM_MODE=hls" in sh
-    assert "JELLYFIN_MP4_FALLBACK=false" in sh
+    assert "committed jellyflam3-presets.json" in sh
+    assert "--cert needs committed" in sh
     assert "Cert" in ps1
-    assert 'JELLYFIN_STREAM_MODE = "hls"' in ps1
+    assert "committed jellyflam3-presets.json" in ps1
     assert 'if [[ "$NO_PRESETS" -eq 0' in sh
     assert "p.stem[-2:].isdigit()" in sh
+
+
+def test_roku_cert_presets_are_tracked_for_lab_validation():
+    """Funnel lab / App Behavior Analysis embeds this committed registry file."""
+    path = VOD / "registry" / "jellyflam3-presets.json"
+    assert path.is_file(), "commit roku-channel/registry/jellyflam3-presets.json for --cert"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    assert data.get("source") == "repo_cert"
+    assert "ts.net" in (data.get("baseUrl") or "")
+    assert data.get("streamMode") == "hls"
+    assert data.get("mp4Fallback") == "false"
+    assert data.get("displaySinkUrl", "").endswith(":8791")
+    for key in ("apiKey", "userId", "libraryId", "displaySinkToken"):
+        assert data.get(key), f"cert presets missing {key}"
+    # Do not assert secret values — only that the required keys exist.
 
 
 def test_roku_screensaver_zip_is_archive_root(tmp_path: Path):

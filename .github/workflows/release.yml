@@ -42,7 +42,8 @@ jobs:
 
       - name: Build generic client packages
         run: |
-          bash scripts/package_roku_channel.sh
+          # Store/generic VoD zip must not embed the Funnel lab presets.
+          bash scripts/package_roku_channel.sh --no-presets
           bash scripts/package_roku_screensaver.sh
           bash scripts/package_kodi_screensaver.sh
           ls -la dist/

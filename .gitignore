@@ -63,7 +63,8 @@ Thumbs.db
 
 # Roku / Kodi package artifacts
 roku-channel/*.zip
-roku-channel/registry/jellyflam3-presets.json
+# VoD jellyflam3-presets.json is tracked (Funnel lab / App Behavior Analysis).
+# Screensaver furnace fills stay local:
 roku-screensaver/registry/jellyflam3-presets.json
 dist/
 kodi-screensaver/**/placeholder.mp4

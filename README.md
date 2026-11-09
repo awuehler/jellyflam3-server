@@ -52,7 +52,7 @@ Full design: [docs/Pi5_Flam3_VoD_Pipeline.md](docs/Pi5_Flam3_VoD_Pipeline.md).
 
 ## Documentation
 
-Phases 1–4 are **complete** (`v0.3.2` — [overview](docs/phase4/00_OVERVIEW.md); JellyFlam3 VoD is in the Roku Channel Store). **Phase 5** (parked): Pi furnace vs Ventuno LLM Agent Platform (separate hosts) — [docs/phase5/](docs/phase5/00_OVERVIEW.md).
+Phases 1–4 are **complete** (`v0.3.3` — [overview](docs/phase4/00_OVERVIEW.md); JellyFlam3 VoD is in the Roku Channel Store). **Phase 5** (parked): Pi furnace vs Ventuno LLM Agent Platform (separate hosts) — [docs/phase5/](docs/phase5/00_OVERVIEW.md).
 
 - **Phase 1** — [docs/phase1/](docs/phase1/) · [00_OVERVIEW.md](docs/phase1/00_OVERVIEW.md)
 - **Phase 2** — [docs/phase2/](docs/phase2/) · [00_OVERVIEW.md](docs/phase2/00_OVERVIEW.md)

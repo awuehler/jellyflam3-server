@@ -1,0 +1,16 @@
+{
+  "rokuRegistrySection": "JellyFlam3",
+  "baseUrl": "https://rpi-jellyflam3-16a.tail801167.ts.net",
+  "apiKey": "62e39b7d60b24ff388944c64b8f60fa8",
+  "userId": "b9e4af2c05634f5b83a3e172f6b88ea9",
+  "libraryId": "7e2008759c6d963645e9ae2529e58184",
+  "commercialMode": "false",
+  "streamMode": "hls",
+  "mp4Fallback": "false",
+  "shuffleFlock": "true",
+  "titleMode": "filename",
+  "sortMode": "filename",
+  "displaySinkUrl": "http://192.168.156.162:8791",
+  "displaySinkToken": "gJiWzaurEQopCIJ2JCz_Ak4F6PTpFI1r",
+  "source": "repo_cert"
+}

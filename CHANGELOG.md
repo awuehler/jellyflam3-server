@@ -4,13 +4,19 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+## [v0.3.3] — 2026-11-08
+
+Roku App Behavior Analysis path with committed Funnel lab presets, cert HLS Primary posters, VoD **1.0.69**, and palette-index resolve for older genomes. Client tip: Roku VoD **1.0.69**.
+
 ### Added
 
-- Cert HLS stand-in extracts mid-loop `primary.jpg` per sheep and serves Jellyfin-shaped `ImageTags.Primary` plus `GET /Items/{id}/Images/Primary` so Funnel lab poster tiles are not empty. Refresh without re-encoding: `python3 scripts/cert_hls_server.py posters --config configs/cert_hls.yaml`.
+- Tracked `roku-channel/registry/jellyflam3-presets.json` (`source=repo_cert`) for Roku validation: Funnel `baseUrl`, HLS, LAN `displaySinkUrl`, and lab credentials. `./scripts/package_roku_channel.sh --cert` embeds that file as-is. GitHub Release VoD zips use `--no-presets`. Process: [docs/phase4/04_ROKU_PUBLISH.md](docs/phase4/04_ROKU_PUBLISH.md).
+
+- Cert HLS stand-in extracts mid-loop `primary.jpg` per sheep and serves Jellyfin-shaped `ImageTags.Primary` plus `GET /Items/{id}/Images/Primary` so Funnel lab poster tiles are not empty. Refresh without re-encoding: `python3 scripts/cert_hls_server.py --config configs/cert_hls.yaml posters`.
 
 - Roku VoD **1.0.69** Settings **displaySinkUrl** for furnace LAN `:8791` when `baseUrl` is Tailscale Funnel. Funnel HTTPS does not proxy the display sink, so Prepare package profile / Fetch TV display / votes no longer invent `http://*.ts.net:8791` (that timed out). Furnace packaging embeds a LAN sink URL into sideload presets when missing.
 
-- Roku VoD **1.0.68** Settings **Prepare package profile** posts the live JellyFlam3 registry to the furnace (`POST /v1/roku-package-profile`). Packaging with `./scripts/package_roku_channel.sh --from-package-profile` embeds those Office Settings literally into `registry/jellyflam3-presets.json` so Application Packager can submit one package that matches the TV used for packaging. The capture file stays on the furnace and is not committed.
+- Roku VoD **1.0.68** Settings **Prepare package profile** posts the live JellyFlam3 registry to the furnace (`POST /v1/roku-package-profile`). Packaging with `./scripts/package_roku_channel.sh --from-package-profile` embeds those Office Settings literally. Use that path to refresh the tracked cert presets when lab credentials change.
 
 - `scripts/static_mp4_smoke.sh` checks the HLS fallback URL. On Jellyfin 12 the legacy `api_key` playlist request must return 401, and `stream.mp4?Static=true` for the same item must return an MP4 `ftyp` box. It does not drive a Roku.
 
@@ -32,7 +38,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 - Roku VoD **1.0.66** is a revision bump. Playback matches **1.0.65**: household packs stay on Static MP4 with `mp4Fallback=true`, and a `--cert` pack stays on HLS with the MP4 switch off.
 
-- Roku VoD **1.0.65** lets a certification pack start on HLS while household sideloads stay on Static MP4. `package_roku_channel.sh --cert` (or `JELLYFIN_STREAM_MODE=hls`) writes `streamMode=hls` and `mp4Fallback=false`, so the lab hits the HLS retry and does not switch to MP4. A household pack leaves `streamMode=mp4` and `mp4Fallback=true`. Settings **OK** on `mp4Fallback` turns that switch back on. An empty `mp4Fallback` still keeps HLS on HLS.
+- Roku VoD **1.0.65** lets a certification pack start on HLS while household sideloads stay on Static MP4. From **v0.3.3**, `--cert` embeds the committed Funnel presets (already `streamMode=hls` / `mp4Fallback=false`) instead of rewriting from `secrets.env`. A household pack leaves `streamMode=mp4` and `mp4Fallback=true`. Settings **OK** on `mp4Fallback` turns that switch back on. An empty `mp4Fallback` still keeps HLS on HLS.
 
 - Roku VoD **1.0.64** keeps a slow HLS remux on HLS. The Static MP4 fallback is suspended while Tailscale Funnel latency makes that remux look failed, because the MP4 fetch is what the Roku channel test is rejecting. Each failure asks for a fresh HLS session, up to 8 times, and a start clears the count. `mp4FallbackSuspended()` returns true; return false there to restore the HLS-to-MP4 switch. A failed MP4 still does not escalate to HLS.
 
@@ -106,7 +112,7 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [v0.3.2] — 2026-09-23
 
-Phase 4 close-out. Tuples, votes, naming, mesh introduce, library rotate, worker drain, and Roku VoD Channel Store submission (review completed after this tag; the channel is published — see Unreleased). **117** commits since `v0.3.1`.
+Phase 4 close-out. Tuples, votes, naming, mesh introduce, library rotate, worker drain, and Roku VoD Channel Store submission (review completed after this tag; the channel is published — see **v0.3.3**). **117** commits since `v0.3.1`.
 
 Client tip: Roku VoD **1.0.51**, Roku screensaver **1.0.11**, Kodi screensaver **0.2.13**.
 

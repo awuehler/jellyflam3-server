@@ -5,8 +5,9 @@
 #
 # Usage: ./scripts/package_roku_channel.sh [--no-presets] [--cert] [--from-package-profile] [out.zip]
 #   --no-presets            Channel Store zip: skip Jellyfin presets (empty Settings).
-#   --cert                  Preset streamMode=hls and mp4Fallback=false for a certification pack.
-#                           Household packs omit this and stay on Static MP4 with the fallback on.
+#   --cert                  Embed the committed Funnel lab presets
+#                           (roku-channel/registry/jellyflam3-presets.json) as-is.
+#                           Do not regenerate from secrets.env (that would bake LAN).
 #   --from-package-profile  Embed Office Settings captured at
 #                           /var/lib/jellyflam3/roku-package-profile.json literally.
 #                           Do not combine with --cert (Office values win).
@@ -14,9 +15,10 @@
 # When to run: Before sideload / Phase 3 RC packaging. Default: dist/jellyflam3-roku.zip
 # Success: Zip entries at archive root (manifest, source/, components/, images/) — not a nested folder.
 # Fail: Missing roku-channel/ tree. Roku allows one sideload at a time (replaces screensaver zip).
-# Docs: docs/phase2/04_ROKU_CHANNEL_POLISH.md ; docs/phase3/10_TESTING_AND_ACCEPTANCE.md
+# Docs: docs/phase4/04_ROKU_PUBLISH.md (cert presets); docs/phase2/04_ROKU_CHANNEL_POLISH.md
 #
 # Assumptions: roku-channel/ has manifest, source/, components/, images/ at archive root.
+# Cert: committed jellyflam3-presets.json must exist (Funnel baseUrl, HLS, displaySinkUrl).
 
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -37,10 +39,6 @@ if [[ "$FROM_PROFILE" -eq 1 && "$CERT" -eq 1 ]]; then
   echo "package_roku_channel: use --from-package-profile or --cert, not both" >&2
   exit 2
 fi
-if [[ "$CERT" -eq 1 ]]; then
-  export JELLYFIN_STREAM_MODE=hls
-  export JELLYFIN_MP4_FALLBACK=false
-fi
 
 # zip runs after cd into roku-channel/; relative OUT would land under that tree.
 if [[ "$OUT" != /* ]]; then
@@ -50,12 +48,22 @@ fi
 mkdir -p "$(dirname "$OUT")"
 rm -f "$OUT"
 
+PRESETS="$CHANNEL/registry/jellyflam3-presets.json"
 if [[ "$NO_PRESETS" -eq 0 ]]; then
   if [[ "$FROM_PROFILE" -eq 1 ]]; then
     python3 "$ROOT/scripts/client_pack_presets.py" prepare \
       --roku-registry "$CHANNEL/registry" \
       --from-package-profile
+  elif [[ "$CERT" -eq 1 ]]; then
+    if [[ ! -f "$PRESETS" ]]; then
+      echo "package_roku_channel: --cert needs committed $PRESETS" >&2
+      exit 2
+    fi
+    echo "package_roku_channel: --cert using committed jellyflam3-presets.json"
   else
+    # Household furnace fill (LAN Jellyfin). Overwrites the working tree presets;
+    # restore with git checkout -- roku-channel/registry/jellyflam3-presets.json
+    # before committing. Release CI uses --no-presets instead.
     python3 "$ROOT/scripts/client_pack_presets.py" prepare --roku-registry "$CHANNEL/registry" || true
   fi
 fi

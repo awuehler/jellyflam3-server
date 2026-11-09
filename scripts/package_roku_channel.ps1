@@ -4,8 +4,7 @@
 #
 # Usage: .\scripts\package_roku_channel.ps1 [-NoPresets] [-Cert] [-FromPackageProfile] [OutPath]
 #   -NoPresets            Channel Store zip: skip Jellyfin presets (empty Settings).
-#   -Cert                 Preset streamMode=hls and mp4Fallback=false for a certification pack.
-#                         Household packs omit this and stay on Static MP4 with the fallback on.
+#   -Cert                 Embed committed Funnel lab presets (registry\jellyflam3-presets.json).
 #   -FromPackageProfile   Embed Office Settings from the captured furnace package profile.
 #
 # When to run: Windows operator packaging before sideload / Phase 3 RC. Default: dist\jellyflam3-roku.zip
@@ -34,14 +33,16 @@ if (Test-Path $OutPath) { Remove-Item -Force $OutPath }
 if ($FromPackageProfile -and $Cert) {
   throw "package_roku_channel: use -FromPackageProfile or -Cert, not both"
 }
-if ($Cert) {
-  $env:JELLYFIN_STREAM_MODE = "hls"
-  $env:JELLYFIN_MP4_FALLBACK = "false"
-}
+$Presets = Join-Path $Channel "registry\jellyflam3-presets.json"
 if (-not $NoPresets) {
   if ($FromPackageProfile) {
     python (Join-Path $Root "scripts\client_pack_presets.py") prepare --roku-registry (Join-Path $Channel "registry") --from-package-profile
     if ($LASTEXITCODE -ne 0) { throw "package profile prepare failed" }
+  } elseif ($Cert) {
+    if (-not (Test-Path $Presets)) {
+      throw "package_roku_channel: -Cert needs committed $Presets"
+    }
+    Write-Host "package_roku_channel: -Cert using committed jellyflam3-presets.json"
   } else {
     python (Join-Path $Root "scripts\client_pack_presets.py") prepare --roku-registry (Join-Path $Channel "registry") 2>$null | Out-Null
   }
